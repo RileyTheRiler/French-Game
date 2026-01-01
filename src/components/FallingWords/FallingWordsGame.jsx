@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVocabulary } from '../../context/VocabularyContext';
@@ -23,7 +23,7 @@ const FallingWordsGame = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
 
-    const { getDueWords, updateWordProgress } = useVocabulary();
+    const { getPracticeQueue, updateWordProgress, markWordSeen } = useVocabulary();
 
     // Game State (Visual)
     const [score, setScore] = useState(0);
@@ -67,7 +67,7 @@ const FallingWordsGame = () => {
     // Initialize
     useEffect(() => {
         try {
-            const words = getDueWords();
+            const words = getPracticeQueue('fallingWords', 40);
             if (!words || words.length === 0) {
                 console.warn("No words available!");
                 validWords.current = [];
@@ -92,7 +92,7 @@ const FallingWordsGame = () => {
             isPlayingRef.current = false;
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
-    }, []);
+    }, [getPracticeQueue]);
 
     const spawnWord = () => {
         if (validWords.current.length === 0) return;
@@ -109,8 +109,11 @@ const FallingWordsGame = () => {
             x: randomX,
             y: -10,
             isMatched: false,
+            mastery: randomWord.level,
+            lastSeen: randomWord.lastSeen,
         };
 
+        markWordSeen(randomWord.id);
         activeWordsRef.current.push(newWord);
     };
 
@@ -346,6 +349,8 @@ const FallingWordsGame = () => {
                             x={word.x}
                             y={word.y}
                             isMatched={false}
+                            mastery={word.mastery}
+                            lastSeen={word.lastSeen}
                         />
                     ))}
 

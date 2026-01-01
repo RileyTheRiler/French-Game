@@ -1,40 +1,46 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, Check, X, RotateCcw } from 'lucide-react';
+import { Volume2, Check, X, RotateCcw, Pin, Clock3, BellOff } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
 import { speak } from '../utils/audio';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
+import { formatRelativeTime } from '../utils/time';
 
 import { useNavigate } from 'react-router-dom';
 
 const FlashcardMode = ({ mode = 'standard' }) => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { getDueWords, updateWordProgress, vocabulary } = useVocabulary();
-
-    const getStudyQueue = () => {
-        let pool = vocabulary;
-        if (mode === 'standard') {
-            pool = [...vocabulary].sort((a, b) => a.level - b.level);
-        } else if (mode === 'mix') {
-            pool = [...vocabulary].sort(() => Math.random() - 0.5);
-        }
-        return pool.slice(0, 10); // Smaller sets for better focus
-    };
+    const { updateWordProgress, getPracticeQueue, markWordSeen, togglePinWord, snoozeWord, clearSnooze } = useVocabulary();
 
     const [queue, setQueue] = useState([]);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [sessionComplete, setSessionComplete] = useState(false);
+    const currentWord = queue[currentCardIndex];
 
     useEffect(() => {
-        setQueue(getStudyQueue());
-    }, [mode]);
+        const queueForMode = getPracticeQueue(mode === 'mix' ? 'dailyMix' : 'flashcards', 10);
+        setQueue(prev => {
+            const prevIds = prev.map(w => w.id).join(',');
+            const nextIds = queueForMode.map(w => w.id).join(',');
+            if (prevIds === nextIds && prev.length === queueForMode.length) {
+                return queueForMode;
+            }
+            setCurrentCardIndex(0);
+            setSessionComplete(false);
+            return queueForMode;
+        });
+    }, [mode, getPracticeQueue]);
 
-    const currentWord = queue[currentCardIndex];
+    useEffect(() => {
+        if (currentWord) {
+            markWordSeen(currentWord.id);
+        }
+    }, [currentWord?.id, markWordSeen]);
 
     const handleFlip = () => {
         setIsFlipped(!isFlipped);
@@ -71,7 +77,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                     </p>
                     <div className="flex gap-4">
                         <Button size="lg" onClick={() => {
-                            setQueue(getStudyQueue());
+                            setQueue(getPracticeQueue(mode === 'mix' ? 'dailyMix' : 'flashcards', 10));
                             setCurrentCardIndex(0);
                             setSessionComplete(false);
                         }}>
@@ -85,6 +91,10 @@ const FlashcardMode = ({ mode = 'standard' }) => {
             </GameLayout>
         );
     }
+
+    const now = Date.now();
+    const isSnoozed = currentWord?.snoozeUntil && currentWord.snoozeUntil > now;
+    const metaTooltip = currentWord ? `Lvl ${currentWord.level} • Last seen ${formatRelativeTime(currentWord.lastSeen)}${currentWord.pinned ? ' • Pinned' : ''}` : '';
 
     return (
         <GameLayout
@@ -116,6 +126,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                         <Card
                             className="absolute inset-0 backface-hidden flex flex-col items-center justify-center bg-slate-900 border-white/10 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.6)] rounded-[40px] overflow-hidden"
                             style={{ backfaceVisibility: "hidden" }}
+                            title={metaTooltip}
                         >
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(99,102,241,0.15),_transparent)]" />
                             <Badge variant="primary" className="absolute top-8 left-8 bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-bold px-4 py-1">Lvl {currentWord.level}</Badge>
@@ -142,6 +153,31 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                             </Button>
                         </Card>
                     </motion.div>
+                </div>
+
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm text-slate-400">
+                    <Badge variant="outline" className="bg-white/5 border-white/10 flex items-center gap-2">
+                        <Clock3 size={14} /> Last seen: {formatRelativeTime(currentWord.lastSeen)}
+                    </Badge>
+                    <Badge variant="primary" className="flex items-center gap-2">
+                        Mastery Lvl {currentWord.level}
+                    </Badge>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`rounded-full ${currentWord.pinned ? 'text-emerald-300' : ''}`}
+                        onClick={() => togglePinWord(currentWord.id)}
+                    >
+                        <Pin size={14} /> {currentWord.pinned ? 'Unpin' : 'Pin'}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full"
+                        onClick={() => isSnoozed ? clearSnooze(currentWord.id) : snoozeWord(currentWord.id)}
+                    >
+                        <BellOff size={14} /> {isSnoozed ? 'Unsnooze' : 'Snooze 6h'}
+                    </Button>
                 </div>
 
                 {/* Grading Controls */}
