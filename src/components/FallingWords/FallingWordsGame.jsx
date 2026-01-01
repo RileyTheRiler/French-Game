@@ -272,6 +272,22 @@ const FallingWordsGame = () => {
         if (inputRef.current) inputRef.current.focus();
     });
 
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                onExit();
+            }
+            if (gameOver && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                restartGame();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [gameOver, onExit]);
+
     if (activeWordsRef.current === null) return <div>Loading...</div>;
 
     return (
@@ -284,7 +300,7 @@ const FallingWordsGame = () => {
                     <Badge variant="primary" className="text-lg py-1 px-4">
                         Score: {score}
                     </Badge>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1" aria-label={`${lives} lives remaining`} role="status">
                         {Array(INITIAL_LIVES).fill(0).map((_, i) => (
                             <motion.span
                                 key={i}
@@ -301,6 +317,8 @@ const FallingWordsGame = () => {
                         size="sm"
                         onClick={() => setIsZenMode(!isZenMode)}
                         className="rounded-full"
+                        aria-pressed={isZenMode}
+                        aria-label={`Toggle ${isZenMode ? 'Zen' : 'Challenge'} mode`}
                     >
                         {isZenMode ? 'Zen Mode' : 'Challenge'}
                     </Button>
@@ -380,6 +398,7 @@ const FallingWordsGame = () => {
                             placeholder="Type the French translation..."
                             className="w-full p-4 bg-transparent text-white text-center text-2xl font-bold focus:outline-none placeholder:text-slate-600"
                             disabled={gameOver}
+                            aria-label="Type the matching French word"
                         />
                     </Card>
                 </div>
@@ -388,7 +407,7 @@ const FallingWordsGame = () => {
             {/* Game Over Modal */}
             <AnimatePresence>
                 {gameOver && (
-                    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50">
+                    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Game over">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}

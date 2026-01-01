@@ -2,6 +2,10 @@ import React, { createContext, useContext, useEffect, useMemo, useState, useCall
 import { useProgress } from './ProgressContext';
 import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
 import { calculateNextReview, getInitialState, isPassingGrade, normalizeGrade } from '../utils/srs';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { useProgress } from './ProgressContext';
+import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
+import { speak } from '../utils/audio';
 
 const VocabularyContext = createContext();
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -45,10 +49,23 @@ const INITIAL_VOCABULARY = vocabularyList.map(word => hydrateWord({
 
 export const VocabularyProvider = ({ children }) => {
     const { addXP } = useProgress();
+    const audioCacheRef = useRef({});
     const [vocabulary, setVocabulary] = useState(() => {
         const saved = localStorage.getItem('frenchApp_vocab');
         const parsed = saved ? JSON.parse(saved) : INITIAL_VOCABULARY;
         return parsed.map(hydrateWord);
+        if (!saved) return INITIAL_VOCABULARY;
+
+        try {
+            const parsed = JSON.parse(saved);
+            const savedMap = Object.fromEntries(parsed.map(word => [word.id, word]));
+            return INITIAL_VOCABULARY.map(word => ({
+                ...word,
+                ...(savedMap[word.id] || {})
+            }));
+        } catch {
+            return INITIAL_VOCABULARY;
+        }
     });
 
     useEffect(() => {
@@ -56,6 +73,7 @@ export const VocabularyProvider = ({ children }) => {
     }, [vocabulary]);
 
     const resetVocabulary = () => {
+        audioCacheRef.current = {};
         setVocabulary(INITIAL_VOCABULARY);
         localStorage.setItem('frenchApp_vocab', JSON.stringify(INITIAL_VOCABULARY));
     };
@@ -107,6 +125,49 @@ export const VocabularyProvider = ({ children }) => {
     }, [addXP]);
 
     const getDueWords = useCallback(() => {
+    const isAudioEnabled = () => {
+        const saved = localStorage.getItem('frenchApp_audio');
+        return saved === null ? true : JSON.parse(saved);
+    };
+
+    const buildAudioElement = (word) => {
+        if (!word?.audioUrl) return null;
+        const audio = new Audio(word.audioUrl);
+        audio.preload = 'auto';
+        audioCacheRef.current[word.id] = audio;
+        return audio;
+    };
+
+    const preloadAudioForWords = (words = []) => {
+        words.forEach(word => {
+            if (!word) return;
+            if (!audioCacheRef.current[word.id]) {
+                buildAudioElement(word);
+            }
+        });
+    };
+
+    const playWordAudio = (wordOrId) => {
+        if (!isAudioEnabled()) return;
+
+        const word = typeof wordOrId === 'string'
+            ? vocabulary.find(entry => entry.id === wordOrId)
+            : wordOrId;
+
+        if (!word) return;
+
+        const cached = audioCacheRef.current[word.id] || buildAudioElement(word);
+
+        if (cached) {
+            cached.currentTime = 0;
+            cached.play().catch(() => speak(word.french));
+            return;
+        }
+
+        speak(word.french);
+    };
+
+    const getDueWords = () => {
         const now = Date.now();
         return vocabulary
             .map(hydrateWord)
@@ -136,8 +197,23 @@ export const VocabularyProvider = ({ children }) => {
         getAllCategories
     }), [vocabulary, getDueWords, getWeightedPracticeWords, updateWordProgress]);
 
+    useEffect(() => {
+        preloadAudioForWords(getDueWords());
+    }, []);
+
     return (
         <VocabularyContext.Provider value={contextValue}>
+        <VocabularyContext.Provider value={{
+            vocabulary,
+            updateWordProgress,
+            getDueWords,
+            resetVocabulary,
+            CATEGORIES,
+            getVocabularyByCategory,
+            getAllCategories,
+            preloadAudioForWords,
+            playWordAudio
+        }}>
             {children}
         </VocabularyContext.Provider>
     );

@@ -37,6 +37,42 @@ body {
   overflow-x: hidden;
 }
 
+body.reduced-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+body[data-theme="midnight"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --accent-primary: #8b5cf6;
+  --accent-secondary: #ec4899;
+}
+
+body[data-theme="dawn"] {
+  --bg-primary: #1f2933;
+  --bg-secondary: #27303b;
+  --bg-tertiary: #303c48;
+  --accent-primary: #f97316;
+  --accent-secondary: #f43f5e;
+}
+
+body[data-theme="forest"] {
+  --bg-primary: #0b1323;
+  --bg-secondary: #132030;
+  --bg-tertiary: #1b2e42;
+  --accent-primary: #22c55e;
+  --accent-secondary: #10b981;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent-primary);
+  outline-offset: 3px;
+}
+
 @layer components {
   .glass-panel {
     @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl;
