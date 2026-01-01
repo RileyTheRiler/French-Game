@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, Check, X, RotateCcw } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
@@ -13,17 +13,17 @@ import { useNavigate } from 'react-router-dom';
 const FlashcardMode = ({ mode = 'standard' }) => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { getDueWords, updateWordProgress, vocabulary } = useVocabulary();
+    const { updateWordProgress, vocabulary, getWeightedPracticeWords } = useVocabulary();
 
-    const getStudyQueue = () => {
-        let pool = vocabulary;
-        if (mode === 'standard') {
-            pool = [...vocabulary].sort((a, b) => a.level - b.level);
-        } else if (mode === 'mix') {
-            pool = [...vocabulary].sort(() => Math.random() - 0.5);
+    const getStudyQueue = useCallback(() => {
+        let pool = getWeightedPracticeWords ? getWeightedPracticeWords(20) : vocabulary;
+        if (mode === 'mix') {
+            pool = [...pool].sort(() => Math.random() - 0.5);
+        } else {
+            pool = [...pool].sort((a, b) => (a.srs?.dueDate || 0) - (b.srs?.dueDate || 0));
         }
         return pool.slice(0, 10); // Smaller sets for better focus
-    };
+    }, [getWeightedPracticeWords, vocabulary, mode]);
 
     const [queue, setQueue] = useState([]);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -32,7 +32,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
 
     useEffect(() => {
         setQueue(getStudyQueue());
-    }, [mode]);
+    }, [getStudyQueue]);
 
     const currentWord = queue[currentCardIndex];
 
@@ -43,9 +43,9 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         }
     };
 
-    const handleGrading = (success) => {
+    const handleGrading = (grade) => {
         if (!currentWord) return;
-        updateWordProgress(currentWord.id, success);
+        updateWordProgress(currentWord.id, grade);
         setIsFlipped(false);
         if (currentCardIndex < queue.length - 1) {
             setCurrentCardIndex(prev => prev + 1);
@@ -146,30 +146,46 @@ const FlashcardMode = ({ mode = 'standard' }) => {
 
                 {/* Grading Controls */}
                 <AnimatePresence>
-                    {isFlipped && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex gap-6 mt-12"
-                        >
-                            <Button
-                                variant="danger"
-                                size="lg"
-                                className="px-12 py-6 rounded-2xl"
-                                onClick={() => handleGrading(false)}
-                            >
-                                <X className="mr-2" /> Hard
-                            </Button>
-                            <Button
-                                variant="default"
-                                size="lg"
-                                className="px-12 py-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500"
-                                onClick={() => handleGrading(true)}
-                            >
-                                <Check className="mr-2" /> Easy
-                            </Button>
-                        </motion.div>
-                    )}
+                            {isFlipped && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex flex-wrap gap-4 mt-12 justify-center"
+                                >
+                                    <Button
+                                        variant="danger"
+                                        size="lg"
+                                        className="px-10 py-6 rounded-2xl"
+                                        onClick={() => handleGrading('again')}
+                                    >
+                                        <X className="mr-2" /> Again
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="lg"
+                                        className="px-10 py-6 rounded-2xl"
+                                        onClick={() => handleGrading('hard')}
+                                    >
+                                        Hard
+                                    </Button>
+                                    <Button
+                                        variant="default"
+                                        size="lg"
+                                        className="px-10 py-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500"
+                                        onClick={() => handleGrading('good')}
+                                    >
+                                        Good
+                                    </Button>
+                                    <Button
+                                        variant="default"
+                                        size="lg"
+                                        className="px-10 py-6 rounded-2xl bg-blue-600 hover:bg-blue-500"
+                                        onClick={() => handleGrading('easy')}
+                                    >
+                                        Easy
+                                    </Button>
+                                </motion.div>
+                            )}
                 </AnimatePresence>
             </div>
         </GameLayout>

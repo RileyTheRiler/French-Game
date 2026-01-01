@@ -24,12 +24,13 @@ const StudySession = () => {
         }
     };
 
-    const handleResult = (success) => {
-        if (success) SoundManager.playSuccess();
+    const handleResult = (grade) => {
+        const passing = grade !== 'again';
+        if (passing) SoundManager.playSuccess();
         else SoundManager.playFailure();
 
         const currentWord = dueWords[currentIndex];
-        updateWordProgress(currentWord.id, success);
+        updateWordProgress(currentWord.id, grade);
 
         setIsFlipped(false);
 
@@ -118,18 +119,30 @@ const StudySession = () => {
 
             {/* Controls */}
             {isFlipped && (
-                <div className="flex gap-4 mt-8 animate-fade-in">
+                <div className="flex flex-wrap gap-4 mt-8 animate-fade-in justify-center">
                     <button
-                        onClick={(e) => { e.stopPropagation(); handleResult(false); }}
-                        className="px-8 py-4 bg-red-600 rounded-xl font-bold hover:bg-red-500 transition-colors shadow-lg"
+                        onClick={(e) => { e.stopPropagation(); handleResult('again'); }}
+                        className="px-6 py-4 bg-red-600 rounded-xl font-bold hover:bg-red-500 transition-colors shadow-lg min-w-[120px]"
                     >
                         Again
                     </button>
                     <button
-                        onClick={(e) => { e.stopPropagation(); handleResult(true); }}
-                        className="px-8 py-4 bg-green-600 rounded-xl font-bold hover:bg-green-500 transition-colors shadow-lg"
+                        onClick={(e) => { e.stopPropagation(); handleResult('hard'); }}
+                        className="px-6 py-4 bg-amber-600 rounded-xl font-bold hover:bg-amber-500 transition-colors shadow-lg min-w-[120px]"
+                    >
+                        Hard
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleResult('good'); }}
+                        className="px-6 py-4 bg-green-600 rounded-xl font-bold hover:bg-green-500 transition-colors shadow-lg min-w-[120px]"
                     >
                         Good
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); handleResult('easy'); }}
+                        className="px-6 py-4 bg-blue-600 rounded-xl font-bold hover:bg-blue-500 transition-colors shadow-lg min-w-[120px]"
+                    >
+                        Easy
                     </button>
                 </div>
             )}

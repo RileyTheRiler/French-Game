@@ -1,29 +1,107 @@
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Award, Check, Lightbulb, Volume2, X } from 'lucide-react';
+import { useVocabulary } from '../context/VocabularyContext';
+import { useProgress } from '../context/ProgressContext';
+import { GameLayout } from './layout/GameLayout';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import { Card } from './ui/Card';
 import SoundManager from '../utils/SoundManager';
+import { speak } from '../utils/audio';
 
-// ... (imports remain same)
+const CHALLENGE_TYPES = {
+    MULTIPLE_CHOICE: 'multiple-choice',
+    LISTENING: 'listening',
+    REVERSE_FLASHCARD: 'reverse-flashcard'
+};
+
+const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+
+const buildOptions = (word, vocabulary) => {
+    const distractors = shuffle(vocabulary.filter(w => w.id !== word.id)).slice(0, 3);
+    return shuffle([word.english, ...distractors.map(w => w.english)]);
+};
+
+const createChallenge = (word, vocabulary, availableTypes) => {
+    const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+    const base = { word, type };
+
+    if ([CHALLENGE_TYPES.MULTIPLE_CHOICE, CHALLENGE_TYPES.LISTENING].includes(type)) {
+        return { ...base, options: buildOptions(word, vocabulary) };
+    }
+
+    return base;
+};
+
+const buildSessionQueue = (words, vocabulary) => {
+    const types = vocabulary.length >= 4
+        ? Object.values(CHALLENGE_TYPES)
+        : [CHALLENGE_TYPES.MULTIPLE_CHOICE];
+
+    return words.map(word => createChallenge(word, vocabulary, types));
+};
 
 const DailyMix = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    // ...
+
+    const { vocabulary, getWeightedPracticeWords, updateWordProgress } = useVocabulary();
+    const { addXP, addCoins } = useProgress();
+
+    const [sessionQueue, setSessionQueue] = useState([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isAnswered, setIsAnswered] = useState(false);
+    const [isCorrect, setIsCorrect] = useState(false);
+    const [selectedOption, setSelectedOption] = useState(null);
+    const [sessionComplete, setSessionComplete] = useState(false);
+    const [totalXP, setTotalXP] = useState(0);
+    const [isRevealed, setIsRevealed] = useState(false);
+
+    const currentChallenge = sessionQueue[currentIndex];
+
+    const readyQueue = useMemo(() => {
+        const pool = getWeightedPracticeWords ? getWeightedPracticeWords(12) : vocabulary;
+        if (!pool || pool.length === 0) return [];
+        return buildSessionQueue(pool.slice(0, 10), vocabulary);
+    }, [getWeightedPracticeWords, vocabulary]);
+
+    useEffect(() => {
+        setSessionQueue(readyQueue);
+        setCurrentIndex(0);
+        setSessionComplete(false);
+        setIsAnswered(false);
+        setIsRevealed(false);
+    }, [readyQueue]);
 
     const handleAnswer = (answer) => {
         if (isAnswered) return;
-
         const correct = answer === currentChallenge.word.english;
         setIsCorrect(correct);
         setIsAnswered(true);
         setSelectedOption(answer);
 
+        updateWordProgress(currentChallenge.word.id, correct ? 'good' : 'again');
+
         if (correct) {
             SoundManager.playMatch();
             setTotalXP(prev => prev + 15);
-            updateWordProgress(currentChallenge.word.id, true);
         } else {
             SoundManager.playMiss();
-            updateWordProgress(currentChallenge.word.id, false);
         }
+    };
+
+    const handleSelfGrade = (grade) => {
+        const correct = grade !== 'again';
+        updateWordProgress(currentChallenge.word.id, grade);
+        if (correct) {
+            SoundManager.playMatch();
+            setTotalXP(prev => prev + 15);
+        } else {
+            SoundManager.playMiss();
+        }
+        handleNext();
     };
 
     const handleNext = () => {
@@ -32,19 +110,20 @@ const DailyMix = () => {
             setIsAnswered(false);
             setIsCorrect(false);
             setSelectedOption(null);
+            setIsRevealed(false);
         } else {
             addXP(totalXP);
-            addCoins(20); // Bonus for completing daily mix
+            addCoins(20);
             SoundManager.playLevelUp();
             setSessionComplete(true);
         }
     };
 
-    if (vocabulary.length < 4) {
+    if (!sessionQueue.length) {
         return (
             <GameLayout title="Daily Mix" onBack={onExit}>
                 <div className="h-[60vh] flex flex-col items-center justify-center text-center p-8">
-                    <p className="text-xl text-slate-400">You need at least 4 words in your vocabulary to start a Daily Mix!</p>
+                    <p className="text-xl text-slate-400">You need at least one word ready to study before starting Daily Mix.</p>
                     <Button className="mt-8" onClick={onExit}>Go Back</Button>
                 </div>
             </GameLayout>
@@ -64,7 +143,7 @@ const DailyMix = () => {
                     </motion.div>
                     <h2 className="text-5xl font-black mb-4 title-gradient">Daily Mix Done!</h2>
                     <p className="text-slate-400 mb-8 max-w-md text-lg">
-                        Fantastic job! You've practiced with interleaving to boost your memory retention.
+                        Fantastic job! Recently missed items were prioritized to keep you sharp.
                     </p>
                     <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-12 w-full max-w-xs flex flex-col items-center shadow-2xl">
                         <span className="text-slate-400 uppercase tracking-widest text-xs font-bold mb-2">Rewards</span>
@@ -149,10 +228,10 @@ const DailyMix = () => {
                                 exit={{ opacity: 0, y: -20 }}
                                 className="w-full max-w-lg"
                             >
-                                {!isAnswered ? (
+                                {!isRevealed ? (
                                     <Card
                                         className="h-64 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-colors border-dashed border-2 border-white/10"
-                                        onClick={() => handleAnswer(currentChallenge.word.english)}
+                                        onClick={() => setIsRevealed(true)}
                                     >
                                         <p className="text-slate-500 uppercase tracking-widest font-bold">Think of the French word</p>
                                         <p className="mt-4 text-indigo-400 font-bold">Click to show answer</p>
@@ -160,18 +239,30 @@ const DailyMix = () => {
                                 ) : (
                                     <Card className="h-64 flex flex-col items-center justify-center bg-indigo-950/20 border-indigo-500/30">
                                         <h3 className="text-4xl font-black text-indigo-300">{currentChallenge.word.french}</h3>
-                                        <div className="mt-12 flex gap-4 w-full px-6">
+                                        <div className="mt-12 flex gap-3 w-full px-6 flex-wrap">
                                             <Button
                                                 className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/20 h-14"
-                                                onClick={() => { setIsCorrect(false); handleNext(); }}
+                                                onClick={() => handleSelfGrade('again')}
                                             >
-                                                <X className="mr-2" /> Wrong
+                                                <X className="mr-2" /> Again
+                                            </Button>
+                                            <Button
+                                                className="flex-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/20 h-14"
+                                                onClick={() => handleSelfGrade('hard')}
+                                            >
+                                                Hard
                                             </Button>
                                             <Button
                                                 className="flex-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 h-14"
-                                                onClick={() => { setIsCorrect(true); handleNext(); }}
+                                                onClick={() => handleSelfGrade('good')}
                                             >
-                                                <Check className="mr-2" /> Correct
+                                                Good
+                                            </Button>
+                                            <Button
+                                                className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/20 h-14"
+                                                onClick={() => handleSelfGrade('easy')}
+                                            >
+                                                Easy
                                             </Button>
                                         </div>
                                     </Card>
