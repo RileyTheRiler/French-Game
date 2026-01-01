@@ -4,10 +4,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useVocabulary } from '../../context/VocabularyContext';
 import SoundManager from '../../utils/SoundManager';
 import { useNavigate } from 'react-router-dom';
+import { formatRelativeTime } from '../../utils/time';
 
 const StudySession = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
+    const { getPracticeQueue, updateWordProgress, markWordSeen } = useVocabulary();
     const {
         getDueWords,
         updateWordProgress,
@@ -61,6 +63,24 @@ const StudySession = () => {
     const containerRef = useRef(null);
 
     useEffect(() => {
+        const queue = getPracticeQueue('study', 12);
+        setDueWords(prev => {
+            const prevIds = prev.map(w => w.id).join(',');
+            const nextIds = queue.map(w => w.id).join(',');
+            if (prevIds === nextIds && prev.length === queue.length) {
+                return queue;
+            }
+            setCurrentIndex(0);
+            return queue;
+        });
+    }, [getPracticeQueue]);
+
+    useEffect(() => {
+        const current = dueWords[currentIndex];
+        if (current) {
+            markWordSeen(current.id);
+        }
+    }, [currentIndex, dueWords, markWordSeen]);
         const baseDue = getDueWords();
         const filtered = baseDue.filter(word => {
             const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
@@ -169,6 +189,7 @@ const StudySession = () => {
     }
 
     const currentWord = dueWords[currentIndex];
+    const metaTooltip = currentWord ? `Lvl ${currentWord.level} • Last seen ${formatRelativeTime(currentWord.lastSeen || currentWord.lastPracticed)}` : '';
 
     return (
         <main
@@ -188,6 +209,8 @@ const StudySession = () => {
             {/* Flashcard - 3D Container */}
             <div
                 onClick={handleCardClick}
+                className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer"
+                title={metaTooltip}
                 className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 rounded-2xl"
                 role="button"
                 tabIndex={0}
@@ -232,6 +255,11 @@ const StudySession = () => {
                         </p>
                     </div>
                 </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3 mt-4 text-sm text-slate-400 justify-center">
+                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Mastery Lvl {currentWord.level}</span>
+                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Last seen: {formatRelativeTime(currentWord.lastSeen || currentWord.lastPracticed)}</span>
             </div>
 
             {/* Controls */}

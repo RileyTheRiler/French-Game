@@ -1,3 +1,7 @@
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import { useProgress } from './ProgressContext';
+import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
+import { buildPracticeQueue } from '../utils/practiceQueue';
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { useProgress } from './ProgressContext';
 import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
@@ -45,8 +49,26 @@ const INITIAL_VOCABULARY = vocabularyList.map(word => hydrateWord({
     srs: getInitialState(),
     level: 1,
     nextReview: 0,
+    lastSeen: null,
+    lastPracticed: null,
+    pinned: false,
+    snoozeUntil: null,
+    lastLapsed: null,
+    lapseCount: 0
     updatedAt: Date.now()
 }));
+
+const normalizeWord = (word) => ({
+    ...word,
+    level: word.level || 1,
+    nextReview: word.nextReview || 0,
+    lastSeen: word.lastSeen || null,
+    lastPracticed: word.lastPracticed || null,
+    pinned: word.pinned || false,
+    snoozeUntil: word.snoozeUntil || null,
+    lastLapsed: word.lastLapsed || null,
+    lapseCount: word.lapseCount || 0
+});
 
 export const VocabularyProvider = ({ children }) => {
     const { addXP } = useProgress();
@@ -54,6 +76,7 @@ export const VocabularyProvider = ({ children }) => {
     const [vocabulary, setVocabulary] = useState(() => {
         const saved = localStorage.getItem('frenchApp_vocab');
         const parsed = saved ? JSON.parse(saved) : INITIAL_VOCABULARY;
+        return parsed.map(normalizeWord);
         return parsed.map(hydrateWord);
         if (!saved) return INITIAL_VOCABULARY;
 
@@ -68,9 +91,11 @@ export const VocabularyProvider = ({ children }) => {
             return INITIAL_VOCABULARY;
         }
     });
+    const vocabularyRef = useRef(vocabulary);
 
     useEffect(() => {
         localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+        vocabularyRef.current = vocabulary;
     }, [vocabulary]);
 
     const resetVocabulary = () => {
@@ -82,6 +107,9 @@ export const VocabularyProvider = ({ children }) => {
         localStorage.setItem('frenchApp_vocab', JSON.stringify(INITIAL_VOCABULARY));
     };
 
+    const updateWordProgress = useCallback((wordId, success) => {
+        setVocabulary(prev => prev.map(word => {
+            if (word.id !== wordId) return word;
     const computePriority = useCallback((word) => {
         const now = Date.now();
         const srs = ensureSrsState(word.srs);
@@ -114,8 +142,12 @@ export const VocabularyProvider = ({ children }) => {
             return {
                 ...word,
                 level: newLevel,
+                lastSeen: now,
                 lastPracticed: now,
                 nextReview: nextReviewTime,
+                snoozeUntil: success ? null : word.snoozeUntil,
+                lastLapsed: success ? word.lastLapsed : now,
+                lapseCount: success ? word.lapseCount : (word.lapseCount || 0) + 1
                 updatedAt: now
                 srs: nextSrs,
                 level: Math.max(1, nextSrs.repetition || 1),
@@ -175,8 +207,43 @@ export const VocabularyProvider = ({ children }) => {
         speak(word.french);
     };
 
-    const getDueWords = () => {
+    const markWordSeen = useCallback((wordId) => {
         const now = Date.now();
+        setVocabulary(prev => prev.map(word => word.id === wordId ? { ...word, lastSeen: now } : word));
+    }, []);
+
+    const togglePinWord = useCallback((wordId) => {
+        setVocabulary(prev => prev.map(word => word.id === wordId ? {
+            ...word,
+            pinned: !word.pinned,
+            snoozeUntil: !word.pinned ? null : word.snoozeUntil
+        } : word));
+    }, []);
+
+    const snoozeWord = useCallback((wordId, durationMs = 6 * 60 * 60 * 1000) => {
+        const until = Date.now() + durationMs;
+        setVocabulary(prev => prev.map(word => word.id === wordId ? {
+            ...word,
+            snoozeUntil: until,
+            pinned: false
+        } : word));
+    }, []);
+
+    const clearSnooze = useCallback((wordId) => {
+        setVocabulary(prev => prev.map(word => word.id === wordId ? {
+            ...word,
+            snoozeUntil: null
+        } : word));
+    }, []);
+
+    const getDueWords = useCallback(() => {
+        const now = Date.now();
+        return vocabularyRef.current.filter(word => (!word.snoozeUntil || word.snoozeUntil <= now) && word.nextReview <= now);
+    }, []);
+
+    const getPracticeQueue = useCallback((mode = 'default', limit) => {
+        return buildPracticeQueue(vocabularyRef.current, mode, limit);
+    }, []);
         return vocabulary
             .map(hydrateWord)
             .filter(word => ensureSrsState(word.srs).dueDate <= now)
@@ -219,7 +286,12 @@ export const VocabularyProvider = ({ children }) => {
         <VocabularyContext.Provider value={{
             vocabulary,
             updateWordProgress,
+            markWordSeen,
+            togglePinWord,
+            snoozeWord,
+            clearSnooze,
             getDueWords,
+            getPracticeQueue,
             resetVocabulary,
             CATEGORIES,
             getVocabularyByCategory,
