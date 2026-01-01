@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, RotateCcw } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
+import { calculateRewards } from '../utils/rewardSystem';
 import { GameLayout } from './layout/GameLayout';
 import { Card } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
@@ -48,12 +49,14 @@ const WordTile = ({ word, onClick, variant = "default" }) => (
 const SentenceBuilder = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { addXP } = useProgress();
+    const { addXP, addCoins, stats, consumeItem, updateDailyStat, incrementStat } = useProgress();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [availableWords, setAvailableWords] = useState([]);
     const [builtSentence, setBuiltSentence] = useState([]);
     const [status, setStatus] = useState('playing'); // 'playing', 'correct', 'wrong'
     const [feedback, setFeedback] = useState('');
+    const [mistakes, setMistakes] = useState(0);
+    const [sessionTotals, setSessionTotals] = useState({ xp: 0, coins: 0 });
 
     const targetSentenceData = SENTENCES[currentIndex];
 
@@ -65,6 +68,7 @@ const SentenceBuilder = () => {
         setBuiltSentence([]);
         setStatus('playing');
         setFeedback('');
+        setMistakes(0);
     }, [currentIndex]);
 
     const handleWordClick = (word) => {
@@ -81,6 +85,20 @@ const SentenceBuilder = () => {
         setBuiltSentence(prev => prev.filter(w => w.id !== word.id));
     };
 
+    const useHintToken = () => {
+        if (!stats.inventory?.['hint_token']) return;
+        const nextText = targetSentenceData.french[builtSentence.length];
+        const hintWord = availableWords.find(w => w.text === nextText);
+        if (!hintWord) return;
+        const consumed = consumeItem('hint_token');
+        if (!consumed) return;
+
+        SoundManager.playSuccess();
+        setBuiltSentence(prev => [...prev, hintWord]);
+        setAvailableWords(prev => prev.filter(w => w.id !== hintWord.id));
+        setFeedback('Hint used!');
+    };
+
     const checkAnswer = () => {
         const currentString = builtSentence.map(w => w.text).join(' ');
         const targetString = targetSentenceData.french.join(' ');
@@ -89,7 +107,19 @@ const SentenceBuilder = () => {
             setStatus('correct');
             setFeedback('Perfect! 🎉');
             SoundManager.playSuccess();
-            addXP(20);
+            const reward = calculateRewards('sentenceBuilder', {
+                words: targetSentenceData.french.length,
+                mistakes
+            });
+            addXP(reward.xp);
+            addCoins(reward.coins);
+            setSessionTotals(prev => ({
+                xp: prev.xp + reward.xp,
+                coins: prev.coins + reward.coins
+            }));
+            updateDailyStat('dailyReviews', targetSentenceData.french.length);
+            incrementStat('sentencesBuilt', 1);
+            setMistakes(0);
             setTimeout(() => {
                 if (currentIndex < SENTENCES.length - 1) {
                     setCurrentIndex(prev => prev + 1);
@@ -102,6 +132,7 @@ const SentenceBuilder = () => {
             setStatus('wrong');
             setFeedback('Not quite right.');
             SoundManager.playMiss();
+            setMistakes(prev => prev + 1);
             setTimeout(() => {
                 setStatus('playing');
                 setFeedback('');
@@ -115,8 +146,13 @@ const SentenceBuilder = () => {
             subtitle="Arrange the words to translate the sentence."
             onBack={onExit}
             headerRight={
-                <div className="text-white/50 text-sm font-bold bg-white/10 px-3 py-1 rounded-full">
-                    {currentIndex + 1} / {SENTENCES.length}
+                <div className="flex items-center gap-2">
+                    <div className="text-white/50 text-sm font-bold bg-white/10 px-3 py-1 rounded-full">
+                        {currentIndex + 1} / {SENTENCES.length}
+                    </div>
+                    <div className="text-xs font-bold bg-indigo-500/10 border border-indigo-500/30 text-indigo-200 px-3 py-1 rounded-full">
+                        +{sessionTotals.xp} XP / +{sessionTotals.coins}⛃
+                    </div>
                 </div>
             }
         >
@@ -211,6 +247,25 @@ const SentenceBuilder = () => {
                                 animate={{ y: 0, opacity: 1 }}
                                 exit={{ y: 20, opacity: 0 }}
                             >
+                                <div className="flex items-center gap-3">
+                                    <Button
+                                        onClick={checkAnswer}
+                                        disabled={builtSentence.length === 0}
+                                        size="lg"
+                                        className="px-12 rounded-full shadow-xl shadow-indigo-500/20"
+                                    >
+                                        Check Answer
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="lg"
+                                        disabled={!stats.inventory?.['hint_token'] || status !== 'playing'}
+                                        onClick={useHintToken}
+                                        className="rounded-full"
+                                    >
+                                        Hint ({stats.inventory?.['hint_token'] || 0})
+                                    </Button>
+                                </div>
                                 <Button
                                     onClick={checkAnswer}
                                     disabled={builtSentence.length === 0}

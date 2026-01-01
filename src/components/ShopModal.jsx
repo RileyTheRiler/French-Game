@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X, ShoppingBag, Zap, Shield, Sparkles } from 'lucide-react'; // Shield for Streak Freeze
+import { X, ShoppingBag, Zap, Shield, Sparkles, Lightbulb, Clock3 } from 'lucide-react'; // Shield for Streak Freeze
 import { useProgress } from '../context/ProgressContext';
 import { Button } from './ui/Button';
 import SoundManager from '../utils/SoundManager';
@@ -15,12 +15,29 @@ const ITEMS = [
         color: 'bg-blue-500/10 border-blue-500/30'
     },
     {
+        id: 'hint_token',
+        name: 'Hint Token',
+        description: 'Spend in Sentence Builder for an auto-placed word.',
+        price: 40,
+        icon: <Lightbulb className="text-emerald-400" size={32} />,
+        color: 'bg-emerald-500/10 border-emerald-500/30'
+    },
+    {
         id: 'double_xp',
         name: 'Double XP Potion',
         description: 'Earn 2x XP for the next 15 minutes.',
         price: 100,
         icon: <Zap className="text-yellow-400" size={32} />,
         color: 'bg-yellow-500/10 border-yellow-500/30',
+        disabled: false
+    },
+    {
+        id: 'xp_boost_30',
+        name: 'Extended XP Brew',
+        description: 'Boost XP gains for the next 30 minutes.',
+        price: 160,
+        icon: <Clock3 className="text-indigo-300" size={32} />,
+        color: 'bg-indigo-500/10 border-indigo-500/30',
         disabled: false
     },
     {
@@ -45,6 +62,8 @@ const ShopModal = ({ onClose }) => {
             // Activate Double XP immediately upon purchase
             if (item.id === 'double_xp') {
                 activateDoubleXP(15);
+            } else if (item.id === 'xp_boost_30') {
+                activateDoubleXP(30);
             }
             SoundManager.playSuccess();
         } else {

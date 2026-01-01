@@ -11,6 +11,7 @@ import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { GameLayout } from '../layout/GameLayout';
+import { calculateRewards } from '../../utils/rewardSystem';
 import DifficultySlider from '../ui/DifficultySlider';
 import { playWordAudio } from '../../utils/audio';
 import { scorePronunciation } from '../../utils/phonetics';
@@ -42,6 +43,7 @@ const FallingWordsGame = () => {
     const [difficulty, setDifficulty] = useState(difficultySetting);
     const difficultyRef = useRef(difficultySetting);
     const { getDueWords, updateWordProgress } = useVocabulary();
+    const { addXP, addCoins, updateDailyStat, incrementStat } = useProgress();
     const { offlineAudio } = useProgress();
     const { getPracticeQueue, updateWordProgress, markWordSeen } = useVocabulary();
     const { getDueWords, updateWordProgress, getWeightedPracticeWords, vocabulary } = useVocabulary();
@@ -63,6 +65,8 @@ const FallingWordsGame = () => {
     const [isShaking, setIsShaking] = useState(false);
     const [level, setLevel] = useState(1);
     const [showLevelUp, setShowLevelUp] = useState(false);
+    const [wordsCaught, setWordsCaught] = useState(0);
+    const [sessionReward, setSessionReward] = useState(null);
 
     // Game Logic State (Refs for loop availability)
     const activeWordsRef = useRef([]);
@@ -91,6 +95,7 @@ const FallingWordsGame = () => {
     // Dynamic difficulty refs
     const currentFallSpeedRef = useRef(INITIAL_FALL_SPEED);
     const currentSpawnIntervalRef = useRef(INITIAL_SPAWN_INTERVAL);
+    const rewardGrantedRef = useRef(false);
 
     // Sync Ref with State
     useEffect(() => {
@@ -262,6 +267,23 @@ const FallingWordsGame = () => {
         }, 1000);
     };
 
+    const grantSessionRewards = useCallback(() => {
+        if (rewardGrantedRef.current) return;
+        rewardGrantedRef.current = true;
+        const reward = calculateRewards('fallingWords', {
+            score,
+            maxCombo,
+            wordsCaught,
+            livesRemaining: lives,
+            zenMode: isZenModeRef.current
+        });
+        setSessionReward(reward);
+        addXP(reward.xp);
+        addCoins(reward.coins);
+        updateDailyStat('dailyStreak', maxCombo, 'max');
+        incrementStat('gamesPlayed', 1);
+    }, [addCoins, addXP, incrementStat, lives, maxCombo, score, updateDailyStat, wordsCaught]);
+
     const triggerShake = () => {
         setIsShaking(true);
         setTimeout(() => setIsShaking(false), 500);
@@ -374,6 +396,9 @@ const FallingWordsGame = () => {
 
             SoundManager.playMatch();
             spawnParticles(word.x + '%', word.y + '%');
+            updateWordProgress(word.wordId, true);
+            setWordsCaught(prev => prev + 1);
+            updateDailyStat('dailyWordsCaught', 1);
             updateWordProgress(word.wordId, 'good');
 
             const responseTime = performance.now() - word.spawnedAt;
@@ -393,6 +418,7 @@ const FallingWordsGame = () => {
             setCombo(c => {
                 const newCombo = c + 1;
                 if (newCombo > maxCombo) setMaxCombo(newCombo);
+                updateDailyStat('dailyStreak', newCombo, 'max');
                 return newCombo;
             });
 
@@ -422,6 +448,9 @@ const FallingWordsGame = () => {
         setCombo(0);
         setIsShaking(false);
         setParticles([]);
+        setWordsCaught(0);
+        setSessionReward(null);
+        rewardGrantedRef.current = false;
         spawnTimerRef.current = 0;
         currentSpawnIntervalRef.current = INITIAL_SPAWN_INTERVAL * (bandRef.current?.spawn || 1);
         currentFallSpeedRef.current = INITIAL_FALL_SPEED * (bandRef.current?.speed || 1);
@@ -437,6 +466,12 @@ const FallingWordsGame = () => {
         startTimeRef.current = now;
         requestRef.current = requestAnimationFrame(gameLoop);
     };
+
+    useEffect(() => {
+        if (gameOver) {
+            grantSessionRewards();
+        }
+    }, [gameOver, grantSessionRewards]);
 
     const inputRef = useRef(null);
     useEffect(() => {
@@ -667,6 +702,18 @@ const FallingWordsGame = () => {
                                         <p className="text-3xl font-bold text-yellow-400">{maxCombo}</p>
                                     </div>
                                 </div>
+                                {sessionReward && (
+                                    <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 mb-6 flex items-center justify-around text-left">
+                                        <div>
+                                            <p className="text-xs uppercase tracking-widest text-indigo-200">XP</p>
+                                            <p className="text-3xl font-black text-indigo-300">+{sessionReward.xp}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs uppercase tracking-widest text-amber-200">Coins</p>
+                                            <p className="text-3xl font-black text-amber-300">+{sessionReward.coins}</p>
+                                        </div>
+                                    </div>
+                                )}
                                 <div className="flex flex-col gap-3">
                                     <Button size="lg" onClick={restartGame}>
                                         Play Again

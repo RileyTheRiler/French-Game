@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import SoundManager from '../utils/SoundManager';
 import { npcSystem } from '../systems/NPCSystem';
 import { GameLayout } from './layout/GameLayout';
+import { calculateRewards } from '../utils/rewardSystem';
 
 const LibraryShelf = ({ onSelectStory, userLevel }) => (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 p-4">
@@ -68,16 +69,17 @@ const LibraryShelf = ({ onSelectStory, userLevel }) => (
     </div>
 );
 
-const StoryReader = ({ story, onBack, onComplete }) => {
+const StoryReader = ({ story, onBack, onComplete, reward }) => {
     const [selectedWordIndex, setSelectedWordIndex] = useState(null);
     const [hasCompleted, setHasCompleted] = useState(false);
     const [showQuiz, setShowQuiz] = useState(false);
     const [quizFeedback, setQuizFeedback] = useState(null);
     const [quizAnswered, setQuizAnswered] = useState(false);
+    const [quizAttempts, setQuizAttempts] = useState(0);
 
     const handleReadComplete = () => {
         if (!story.quiz) {
-            finishStory();
+            finishStory(true);
         } else {
             setShowQuiz(true);
             SoundManager.playPop();
@@ -88,6 +90,8 @@ const StoryReader = ({ story, onBack, onComplete }) => {
         if (quizAnswered) return;
 
         const isCorrect = option === story.quiz.correctAnswer;
+        const attempts = quizAttempts + 1;
+        setQuizAttempts(attempts);
         const feedback = npcSystem.reactToQuiz('librarian', isCorrect);
 
         setQuizFeedback(feedback);
@@ -96,7 +100,7 @@ const StoryReader = ({ story, onBack, onComplete }) => {
         if (isCorrect) {
             SoundManager.playMatch();
             setTimeout(() => {
-                finishStory();
+                finishStory(attempts === 1);
             }, 2000);
         } else {
             SoundManager.playMiss();
@@ -107,11 +111,11 @@ const StoryReader = ({ story, onBack, onComplete }) => {
         }
     };
 
-    const finishStory = () => {
+    const finishStory = (quizPerfect = false) => {
         setHasCompleted(true);
         setShowQuiz(false); // Hide quiz if showing
         SoundManager.playSuccess();
-        onComplete(story.xpReward);
+        onComplete({ xpReward: story.xpReward, quizPerfect });
     };
 
     return (
@@ -219,8 +223,13 @@ const StoryReader = ({ story, onBack, onComplete }) => {
                                 <Award size={64} className="text-yellow-400 mx-auto mb-6" />
                                 <h3 className="text-3xl font-black text-white mb-2">Excellent!</h3>
                                 <p className="text-slate-400 mb-6">You've completed this story.</p>
-                                <div className="bg-indigo-500/20 rounded-xl p-4 mb-8">
-                                    <p className="text-indigo-300 font-bold text-2xl">+{story.xpReward} XP</p>
+                                <div className="grid grid-cols-2 gap-3 bg-indigo-500/10 rounded-xl p-4 mb-8 border border-indigo-500/30">
+                                    <div className="text-center">
+                                        <p className="text-indigo-300 font-bold text-2xl">+{reward?.xp ?? story.xpReward} XP</p>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="text-amber-300 font-bold text-2xl">+{reward?.coins ?? 0} ⛃</p>
+                                    </div>
                                 </div>
                                 <Button size="lg" onClick={onBack} className="w-full">
                                     Back to Library
@@ -237,15 +246,31 @@ const StoryReader = ({ story, onBack, onComplete }) => {
 const StoryMode = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { level, addXP } = useProgress();
+    const { level, addXP, addCoins, updateDailyStat, incrementStat } = useProgress();
     const [currentStory, setCurrentStory] = useState(null);
+    const [completionReward, setCompletionReward] = useState(null);
 
     const handleSelectStory = (story) => {
         setCurrentStory(story);
+        setCompletionReward(null);
     };
 
-    const handleCompleteStory = (xp) => {
-        addXP(xp);
+    const handleCompleteStory = (meta) => {
+        if (!currentStory) return;
+        const reward = calculateRewards('story', {
+            baseXp: meta?.xpReward ?? currentStory.xpReward,
+            difficulty: currentStory.level >= 3 ? 'Advanced' : currentStory.level === 2 ? 'Intermediate' : 'Beginner',
+            length: currentStory.content.length,
+            quizPerfect: meta?.quizPerfect
+        });
+        setCompletionReward(reward);
+        addXP(reward.xp);
+        addCoins(reward.coins);
+        updateDailyStat('dailyStories', 1);
+        incrementStat('storiesCompleted', 1);
+        if (meta?.quizPerfect) {
+            incrementStat('perfectQuizzes', 1);
+        }
     };
 
     if (currentStory) {
@@ -254,6 +279,7 @@ const StoryMode = () => {
                 story={currentStory}
                 onBack={() => setCurrentStory(null)}
                 onComplete={handleCompleteStory}
+                reward={completionReward}
             />
         );
     }

@@ -11,11 +11,13 @@ import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
+import { calculateRewards } from '../utils/rewardSystem';
 
 const PronunciationCoach = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
     const { vocabulary } = useVocabulary();
+    const { addXP, addCoins, updateDailyStat, incrementStat } = useProgress();
     const { addXP, addCoins, offlineAudio } = useProgress();
 
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -26,6 +28,9 @@ const PronunciationCoach = () => {
     const [phonemeFeedback, setPhonemeFeedback] = useState([]);
     const [sessionComplete, setSessionComplete] = useState(false);
     const [totalXP, setTotalXP] = useState(0);
+    const [successCount, setSuccessCount] = useState(0);
+    const [attempts, setAttempts] = useState(0);
+    const [sessionReward, setSessionReward] = useState(null);
 
     const recognitionRef = useRef(null);
     const wordsToPractice = useMemo(() => {
@@ -78,6 +83,9 @@ const PronunciationCoach = () => {
 
     const checkPronunciation = (heard) => {
         setStatus('checking');
+        const target = currentWord.french.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
+        const spoken = heard.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
+        setAttempts(prev => prev + 1);
         const { accuracy: score, feedback } = scorePronunciation(currentWord.french, heard);
         setAccuracy(score);
         setPhonemeFeedback(feedback);
@@ -87,6 +95,11 @@ const PronunciationCoach = () => {
                 setStatus('success');
                 SoundManager.playSuccess();
                 setTotalXP(prev => prev + 20);
+                setSuccessCount(prev => {
+                    const next = prev + 1;
+                    updateDailyStat('dailyStreak', next, 'max');
+                    return next;
+                });
                 addXP(20);
                 addCoins(5);
             } else {
@@ -102,7 +115,14 @@ const PronunciationCoach = () => {
             setStatus('idle');
             setTranscript('');
         } else {
-            addXP(totalXP);
+            const reward = calculateRewards('pronunciation', {
+                successes: successCount,
+                total: wordsToPractice.length
+            });
+            setSessionReward(reward);
+            addXP(reward.xp);
+            addCoins(reward.coins);
+            incrementStat('pronunciationPractices', successCount);
             setSessionComplete(true);
             SoundManager.playLevelUp();
         }
@@ -125,10 +145,21 @@ const PronunciationCoach = () => {
                     </motion.div>
                     <h2 className="text-5xl font-black mb-4 title-gradient">Fluency Boosted!</h2>
                     <p className="text-slate-400 mb-8 max-w-md text-lg">Your pronunciation is getting sharper every day.</p>
-                    <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-12 w-full max-w-xs flex flex-col items-center shadow-2xl">
-                        <span className="text-slate-400 uppercase tracking-widest text-xs font-bold mb-2">XP Earned</span>
-                        <span className="text-5xl font-black text-indigo-400">+{totalXP}</span>
-                    </div>
+                    {sessionReward && (
+                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-12 w-full max-w-xs flex flex-col items-center shadow-2xl">
+                            <span className="text-slate-400 uppercase tracking-widest text-xs font-bold mb-2">Rewards</span>
+                            <div className="flex gap-6">
+                                <div className="text-center">
+                                    <span className="text-3xl font-black text-indigo-400">+{sessionReward.xp}</span>
+                                    <p className="text-xs text-indigo-200">XP</p>
+                                </div>
+                                <div className="text-center">
+                                    <span className="text-3xl font-black text-amber-400">+{sessionReward.coins}</span>
+                                    <p className="text-xs text-amber-200">Coins</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                     <Button size="lg" onClick={onExit} className="px-12 py-4">Return to Hub</Button>
                 </div>
             </GameLayout>

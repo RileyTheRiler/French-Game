@@ -10,6 +10,8 @@ import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
+import { useProgress } from '../context/ProgressContext';
+import { calculateRewards } from '../utils/rewardSystem';
 import DifficultySlider from './ui/DifficultySlider';
 import { formatRelativeTime } from '../utils/time';
 
@@ -19,6 +21,8 @@ import { useNavigate } from 'react-router-dom';
 const FlashcardMode = ({ mode = 'standard' }) => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
+    const { getDueWords, updateWordProgress, vocabulary } = useVocabulary();
+    const { addXP, addCoins, updateDailyStat } = useProgress();
     const { updateWordProgress, vocabulary, CATEGORIES } = useVocabulary();
     const { stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
     const difficultySetting = stats?.difficultySettings?.flashcards || 2;
@@ -75,6 +79,11 @@ const FlashcardMode = ({ mode = 'standard' }) => {
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [sessionComplete, setSessionComplete] = useState(false);
+    const [correctCount, setCorrectCount] = useState(0);
+    const [wrongCount, setWrongCount] = useState(0);
+    const [currentStreak, setCurrentStreak] = useState(0);
+    const [bestStreak, setBestStreak] = useState(0);
+    const [sessionReward, setSessionReward] = useState(null);
     const currentWord = queue[currentCardIndex];
 
     useEffect(() => {
@@ -93,6 +102,12 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         setQueue(getStudyQueue());
         setCurrentCardIndex(0);
         setSessionComplete(false);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setCurrentStreak(0);
+        setBestStreak(0);
+        setSessionReward(null);
+    }, [mode]);
         setSessionScore(0);
         cardStartRef.current = performance.now();
     }, [getStudyQueue]);
@@ -117,6 +132,14 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         return difficulty <= 2 || getCategoryAccuracy(currentWord.category) < 0.65;
     }, [currentWord, difficulty, getCategoryAccuracy]);
 
+    const finishSession = (metrics) => {
+        const reward = calculateRewards('flashcards', metrics);
+        setSessionReward(reward);
+        addXP(reward.xp);
+        addCoins(reward.coins);
+        setSessionComplete(true);
+    };
+
     const handleFlip = () => {
         setIsFlipped(!isFlipped);
     const handleFlip = useCallback(() => {
@@ -129,6 +152,21 @@ const FlashcardMode = ({ mode = 'standard' }) => {
     const handleGrading = (grade) => {
     const handleGrading = useCallback((success) => {
         if (!currentWord) return;
+
+        const nextCorrect = success ? correctCount + 1 : correctCount;
+        const nextWrong = success ? wrongCount : wrongCount + 1;
+        const nextStreak = success ? currentStreak + 1 : 0;
+        const nextBestStreak = success ? Math.max(bestStreak, nextStreak) : bestStreak;
+
+        setCorrectCount(nextCorrect);
+        setWrongCount(nextWrong);
+        setCurrentStreak(nextStreak);
+        setBestStreak(nextBestStreak);
+
+        if (success) {
+            updateDailyStat('dailyStreak', nextStreak, 'max');
+        }
+        updateDailyStat('dailyReviews', 1);
         const responseTime = performance.now() - cardStartRef.current;
         recordCategoryPerformance(currentWord.category, { success, responseTime, mode: 'flashcards' });
 
@@ -141,11 +179,16 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         updateWordProgress(currentWord.id, success);
         updateWordProgress(currentWord.id, grade);
         setIsFlipped(false);
+
         if (currentCardIndex < queue.length - 1) {
             setCurrentCardIndex(prev => prev + 1);
             cardStartRef.current = performance.now();
         } else {
-            setSessionComplete(true);
+            finishSession({
+                correct: nextCorrect,
+                total: queue.length,
+                bestStreak: nextBestStreak
+            });
         }
     }, [currentCardIndex, currentWord, queue.length, updateWordProgress]);
 
@@ -201,6 +244,18 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                     <p className="text-slate-400 mb-8 max-w-md">
                         You've completed your study session. Your spaced repetition stats have been updated.
                     </p>
+                    {sessionReward && (
+                        <div className="flex gap-6 mb-8">
+                            <div className="bg-indigo-500/10 border border-indigo-500/30 px-6 py-4 rounded-2xl text-center">
+                                <p className="text-xs uppercase text-indigo-200 tracking-wider">XP</p>
+                                <p className="text-3xl font-black text-indigo-300">+{sessionReward.xp}</p>
+                            </div>
+                            <div className="bg-amber-500/10 border border-amber-500/30 px-6 py-4 rounded-2xl text-center">
+                                <p className="text-xs uppercase text-amber-200 tracking-wider">Coins</p>
+                                <p className="text-3xl font-black text-amber-300">+{sessionReward.coins}</p>
+                            </div>
+                        </div>
+                    )}
                     <Badge variant="outline" className="mb-6">
                         Adaptive Score: {sessionScore}
                     </Badge>
@@ -209,6 +264,11 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                             setQueue(getPracticeQueue(mode === 'mix' ? 'dailyMix' : 'flashcards', 10));
                             setCurrentCardIndex(0);
                             setSessionComplete(false);
+                            setCorrectCount(0);
+                            setWrongCount(0);
+                            setCurrentStreak(0);
+                            setBestStreak(0);
+                            setSessionReward(null);
                             setSessionScore(0);
                             cardStartRef.current = performance.now();
                         }}>
