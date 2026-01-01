@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3 } from 'lucide-react';
+import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Target, Zap, Compass } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import LeaderboardModal from './LeaderboardModal';
@@ -19,9 +19,12 @@ import { Badge } from './ui/Badge';
 
 const MainMenu = () => {
     const navigate = useNavigate();
-    const { stats, level, progressToNextLevel } = useProgress();
-    const { getDueWords } = useVocabulary();
+    const { stats, level, progressToNextLevel, setTargetCefr, setWeeklyGoal } = useProgress();
+    const { getDueWords, CATEGORIES } = useVocabulary();
     const dueCount = getDueWords().length;
+    const [targetLevel, setTargetLevel] = useState(stats.targetCefr || 'B1');
+    const [weeklySessions, setWeeklySessions] = useState(stats.weeklyGoal?.sessions || 5);
+    const [weeklyMinutes, setWeeklyMinutes] = useState(stats.weeklyGoal?.minutes || 120);
 
     const [showLeaderboard, setShowLeaderboard] = useState(false);
     const [showDictionary, setShowDictionary] = useState(false);
@@ -30,6 +33,27 @@ const MainMenu = () => {
     const [showAchievements, setShowAchievements] = useState(false);
     const [showGrammar, setShowGrammar] = useState(false);
     const [showStats, setShowStats] = useState(false);
+
+    useEffect(() => {
+        setTargetCefr(targetLevel);
+    }, [targetLevel, setTargetCefr]);
+
+    useEffect(() => {
+        setWeeklyGoal({ sessions: weeklySessions, minutes: weeklyMinutes });
+    }, [setWeeklyGoal, weeklyMinutes, weeklySessions]);
+
+    const categoryPerformance = stats?.categoryPerformance || {};
+    const toughestCategory = useMemo(() => {
+        const entries = Object.entries(categoryPerformance);
+        if (!entries.length) return null;
+        return entries.reduce((lowest, [category, perf]) => {
+            const accuracy = perf.accuracy ?? (perf.correct / (perf.attempts || 1));
+            if (!lowest || accuracy < lowest.accuracy) {
+                return { category, accuracy, response: perf.averageResponseTime };
+            }
+            return lowest;
+        }, null);
+    }, [categoryPerformance]);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -139,6 +163,53 @@ const MainMenu = () => {
         }
     ];
 
+    const nextActions = useMemo(() => {
+        const actions = [];
+        if (dueCount > 0) {
+            actions.push({
+                title: 'Clear your review queue',
+                description: `${dueCount} cards are waiting in spaced repetition.`,
+                cta: 'Study Session',
+                onClick: () => navigate('/study-session'),
+                icon: Book
+            });
+        }
+
+        if (toughestCategory) {
+            const cat = CATEGORIES?.[toughestCategory.category];
+            actions.push({
+                title: `Strengthen ${cat?.name || toughestCategory.category}`,
+                description: `Accuracy ${Math.round((toughestCategory.accuracy || 0) * 100)}% · Avg ${Math.round(toughestCategory.response || 0)}ms`,
+                cta: 'Play Falling Words',
+                onClick: () => navigate('/game/falling-words'),
+                icon: Target
+            });
+        }
+
+        const cefrRank = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 };
+        const levelGap = (cefrRank[targetLevel] || 3) - (level || 1);
+        if (levelGap > 1) {
+            actions.push({
+                title: 'Bridge to your CEFR goal',
+                description: `Target ${targetLevel}. Complete a grammar drill and Daily Mix for faster progression.`,
+                cta: 'Open Grammar',
+                onClick: () => navigate('/game/grammar'),
+                icon: Compass
+            });
+        }
+
+        if (actions.length < 3) {
+            actions.push({
+                title: 'Chase a speed bonus',
+                description: 'Run an adaptive Falling Words sprint to unlock multipliers.',
+                cta: 'Start Falling Words',
+                onClick: () => navigate('/game/falling-words'),
+                icon: Zap
+            });
+        }
+        return actions.slice(0, 3);
+    }, [CATEGORIES, dueCount, level, navigate, targetLevel, toughestCategory]);
+
     return (
         <div className="min-h-screen relative p-4 md:p-8 flex flex-col items-center max-w-7xl mx-auto">
 
@@ -237,6 +308,93 @@ const MainMenu = () => {
             {/* Daily Challenges */}
             <DailyChallengeWidget />
 
+            {/* Goals */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-4xl mb-8"
+            >
+                <Card className="border border-indigo-500/20 bg-slate-900/60">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-white">Personal Targets</h3>
+                        <Badge variant="outline">Weekly Momentum</Badge>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <p className="text-xs uppercase text-slate-400 mb-1">Target CEFR</p>
+                            <select
+                                value={targetLevel}
+                                onChange={(e) => setTargetLevel(e.target.value)}
+                                className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-white"
+                            >
+                                {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(level => (
+                                    <option key={level} value={level}>{level}</option>
+                                ))}
+                            </select>
+                            <p className="text-xs text-slate-500 mt-2">We\'ll tune difficulty toward {targetLevel}.</p>
+                        </div>
+                        <div>
+                            <p className="text-xs uppercase text-slate-400 mb-1">Sessions / week</p>
+                            <input
+                                type="range"
+                                min="2"
+                                max="14"
+                                value={weeklySessions}
+                                onChange={(e) => setWeeklySessions(Number(e.target.value))}
+                                className="w-full accent-indigo-400"
+                            />
+                            <p className="text-sm text-white font-semibold">{weeklySessions} focused sessions</p>
+                        </div>
+                        <div>
+                            <p className="text-xs uppercase text-slate-400 mb-1">Minutes / week</p>
+                            <input
+                                type="range"
+                                min="60"
+                                max="300"
+                                step="15"
+                                value={weeklyMinutes}
+                                onChange={(e) => setWeeklyMinutes(Number(e.target.value))}
+                                className="w-full accent-indigo-400"
+                            />
+                            <p className="text-sm text-white font-semibold">{weeklyMinutes} min goal</p>
+                        </div>
+                    </div>
+                </Card>
+            </motion.div>
+
+            {/* Next Best Action */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="w-full max-w-5xl mb-10"
+            >
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                        <Zap size={18} className="text-amber-400" /> Next Best Actions
+                    </h3>
+                    <p className="text-xs text-slate-500">Guided by your goals and accuracy.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {nextActions.map((action, idx) => (
+                        <Card
+                            key={idx}
+                            hover
+                            onClick={action.onClick}
+                            className="border border-white/10 bg-white/5"
+                        >
+                            <div className="flex items-center gap-3 mb-3">
+                                <span className="p-2 rounded-xl bg-white/10">
+                                    <action.icon size={18} className="text-amber-300" />
+                                </span>
+                                <h4 className="font-bold text-white">{action.title}</h4>
+                            </div>
+                            <p className="text-sm text-slate-400 mb-4">{action.description}</p>
+                            <Badge variant="primary" className="mt-auto">{action.cta}</Badge>
+                        </Card>
+                    ))}
+                </div>
+            </motion.div>
+
             {/* Additional Navigation Buttons */}
             <div className="flex flex-col md:flex-row gap-4 mb-12 w-full max-w-md">
                 <button
@@ -308,7 +466,7 @@ const MainMenu = () => {
                 className="w-full max-w-2xl mb-8"
             >
                 <button
-                    onClick={() => onStartGame('neighborhood')}
+                    onClick={() => navigate('/neighborhood')}
                     className="w-full glass-panel p-6 bg-gradient-to-r from-indigo-900/50 to-purple-900/50 hover:from-indigo-800/50 hover:to-purple-800/50 border border-indigo-500/30 hover:border-indigo-400 text-white font-bold rounded-2xl shadow-lg hover:shadow-indigo-500/20 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-3 group"
                 >
                     <span className="text-3xl group-hover:animate-bounce">🗺️</span>

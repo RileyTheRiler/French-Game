@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, CheckCircle, XCircle, Lightbulb, Trophy, RotateCcw } from 'lucide-react';
@@ -10,10 +10,16 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
+import DifficultySlider from './ui/DifficultySlider';
 
 const GrammarDrill = () => {
     const navigate = useNavigate();
     const { addXP, addCoins, incrementStreak, updateDailyStat } = useProgress();
+    const { addXP, incrementStreak, stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+    const difficultySetting = stats?.difficultySettings?.grammar || 2;
+    const [difficulty, setDifficulty] = useState(difficultySetting);
+    const [sessionPoints, setSessionPoints] = useState(0);
+    const questionStartRef = useRef(performance.now());
 
     const [drills, setDrills] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -26,15 +32,44 @@ const GrammarDrill = () => {
     const [bestStreak, setBestStreak] = useState(0);
     const [sessionReward, setSessionReward] = useState(null);
 
+    const selectDrills = useCallback(() => {
+        const bands = {
+            1: ['beginner'],
+            2: ['beginner', 'intermediate'],
+            3: ['beginner', 'intermediate'],
+            4: ['intermediate'],
+            5: ['intermediate', 'advanced']
+        };
+        const allowedDifficulties = bands[difficulty] || bands[3];
+        let pool = GRAMMAR_DRILLS.filter(d => allowedDifficulties.includes(d.difficulty || 'beginner'));
+        if (pool.length < 6) {
+            pool = GRAMMAR_DRILLS;
+        }
+        return [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
+    }, [difficulty]);
+
     useEffect(() => {
-        // Shuffle drills for variety
-        const shuffled = [...GRAMMAR_DRILLS].sort(() => Math.random() - 0.5).slice(0, 10);
+        const shuffled = selectDrills();
         setDrills(shuffled);
-    }, []);
+        setCurrentIndex(0);
+        setSelectedAnswer(null);
+        setShowResult(false);
+        setScore({ correct: 0, total: 0 });
+        setSessionComplete(false);
+        setSessionPoints(0);
+        questionStartRef.current = performance.now();
+    }, [selectDrills]);
+
+    useEffect(() => {
+        setModeDifficulty('grammar', difficulty);
+    }, [difficulty, setModeDifficulty]);
 
     const currentDrill = drills[currentIndex];
     const relatedTip = currentDrill ? GRAMMAR_TIPS.find(t => t.id === currentDrill.tip) : null;
     const category = currentDrill ? DRILL_CATEGORIES[currentDrill.category] : null;
+    const categoryPerf = stats?.categoryPerformance?.[currentDrill?.category] || null;
+    const categoryAccuracy = categoryPerf?.accuracy ?? (categoryPerf ? categoryPerf.correct / (categoryPerf.attempts || 1) : 1);
+    const allowInstantTip = difficulty <= 2 || categoryAccuracy < 0.7;
 
     const handleAnswer = (answer) => {
         if (showResult) return;
@@ -43,6 +78,13 @@ const GrammarDrill = () => {
         setShowResult(true);
 
         const isCorrect = answer === currentDrill.answer;
+        const responseTime = performance.now() - questionStartRef.current;
+        recordCategoryPerformance(currentDrill.category, {
+            success: isCorrect,
+            responseTime,
+            mode: 'grammar'
+        });
+
         setScore(prev => ({
             correct: prev.correct + (isCorrect ? 1 : 0),
             total: prev.total + 1
@@ -58,6 +100,14 @@ const GrammarDrill = () => {
         } else {
             SoundManager.playFailure();
             setStreak(0);
+            const difficultyBoost = 1 + (difficulty - 2) * 0.12;
+            const speedBoost = responseTime < 5000 ? 1.05 : 0.9;
+            const adaptiveReward = Math.max(5, Math.round(currentDrill.xpReward * difficultyBoost * speedBoost));
+            setSessionPoints(prev => prev + adaptiveReward);
+            addXP(adaptiveReward);
+        } else {
+            SoundManager.playFailure();
+            setSessionPoints(prev => Math.max(0, prev - 5));
         }
     };
 
@@ -79,11 +129,12 @@ const GrammarDrill = () => {
             setSelectedAnswer(null);
             setShowResult(false);
             setShowTip(false);
+            questionStartRef.current = performance.now();
         }
     };
 
     const restartSession = () => {
-        const shuffled = [...GRAMMAR_DRILLS].sort(() => Math.random() - 0.5).slice(0, 10);
+        const shuffled = selectDrills();
         setDrills(shuffled);
         setCurrentIndex(0);
         setSelectedAnswer(null);
@@ -93,11 +144,21 @@ const GrammarDrill = () => {
         setStreak(0);
         setBestStreak(0);
         setSessionReward(null);
+        setSessionPoints(0);
+        questionStartRef.current = performance.now();
     };
 
     if (drills.length === 0) {
         return (
-            <GameLayout title="Grammar Drill" onBack={() => navigate('/')}>
+            <GameLayout
+                title="Grammar Drill"
+                onBack={() => navigate('/')}
+                headerRight={
+                    <Badge variant="outline">
+                        Session Points: {sessionPoints}
+                    </Badge>
+                }
+            >
                 <div className="flex items-center justify-center h-[60vh]">
                     <p className="text-slate-400">Loading drills...</p>
                 </div>
@@ -108,7 +169,18 @@ const GrammarDrill = () => {
     if (sessionComplete) {
         const percentage = Math.round((score.correct / score.total) * 100);
         return (
-            <GameLayout title="Grammar Drill" onBack={() => navigate('/')}>
+            <GameLayout
+                title="Grammar Drill"
+                onBack={() => navigate('/')}
+                headerRight={
+                    <div className="flex items-center gap-3">
+                        <div className="hidden md:block w-48">
+                            <DifficultySlider value={difficulty} onChange={setDifficulty} />
+                        </div>
+                        <Badge variant="outline">Session Points: {sessionPoints}</Badge>
+                    </div>
+                }
+            >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -124,6 +196,9 @@ const GrammarDrill = () => {
                             <Badge variant={percentage >= 80 ? 'success' : percentage >= 50 ? 'warning' : 'danger'}>
                                 {percentage >= 80 ? 'Excellent!' : percentage >= 50 ? 'Good Job!' : 'Keep Practicing!'}
                             </Badge>
+                            <div className="mt-3">
+                                <Badge variant="outline">Adaptive Points: {sessionPoints}</Badge>
+                            </div>
                         </div>
 
                         {sessionReward && (
@@ -189,6 +264,12 @@ const GrammarDrill = () => {
 
                     {/* Prompt */}
                     <h2 className="text-2xl font-bold text-white mb-8">{currentDrill.prompt}</h2>
+
+                    {relatedTip && allowInstantTip && !showTip && (
+                        <Button variant="ghost" onClick={() => setShowTip(true)} className="mb-4 gap-2">
+                            <Lightbulb size={18} /> Need a hint?
+                        </Button>
+                    )}
 
                     {/* Options */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
