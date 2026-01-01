@@ -2,20 +2,44 @@ import React, { useState, useEffect } from 'react';
 import { useVocabulary } from '../../context/VocabularyContext';
 import SoundManager from '../../utils/SoundManager';
 import { useNavigate } from 'react-router-dom';
+import { useProgress } from '../../context/ProgressContext';
+import { calculateRewards } from '../../utils/rewardSystem';
 
 const StudySession = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
     const { getDueWords, updateWordProgress } = useVocabulary();
+    const { addXP, addCoins, updateDailyStat } = useProgress();
 
     const [dueWords, setDueWords] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [sessionComplete, setSessionComplete] = useState(false);
+    const [correctCount, setCorrectCount] = useState(0);
+    const [wrongCount, setWrongCount] = useState(0);
+    const [currentStreak, setCurrentStreak] = useState(0);
+    const [bestStreak, setBestStreak] = useState(0);
+    const [sessionReward, setSessionReward] = useState(null);
 
     useEffect(() => {
         setDueWords(getDueWords());
-    }, []);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setSessionComplete(false);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setCurrentStreak(0);
+        setBestStreak(0);
+        setSessionReward(null);
+    }, [getDueWords]);
+
+    const finalizeSession = (metrics) => {
+        const reward = calculateRewards('studySession', metrics);
+        setSessionReward(reward);
+        addXP(reward.xp);
+        addCoins(reward.coins);
+        setSessionComplete(true);
+    };
 
     const handleCardClick = () => {
         if (!sessionComplete) {
@@ -31,12 +55,29 @@ const StudySession = () => {
         const currentWord = dueWords[currentIndex];
         updateWordProgress(currentWord.id, success);
 
+        const nextCorrect = success ? correctCount + 1 : correctCount;
+        const nextWrong = success ? wrongCount : wrongCount + 1;
+        const nextStreak = success ? currentStreak + 1 : 0;
+        const nextBestStreak = success ? Math.max(bestStreak, nextStreak) : bestStreak;
+
+        setCorrectCount(nextCorrect);
+        setWrongCount(nextWrong);
+        setCurrentStreak(nextStreak);
+        setBestStreak(nextBestStreak);
+
+        updateDailyStat('dailyReviews', 1);
+        if (success) updateDailyStat('dailyStreak', nextStreak, 'max');
+
         setIsFlipped(false);
 
         if (currentIndex < dueWords.length - 1) {
             setCurrentIndex(prev => prev + 1);
         } else {
-            setSessionComplete(true);
+            finalizeSession({
+                correct: nextCorrect,
+                total: dueWords.length,
+                bestStreak: nextBestStreak
+            });
         }
     };
 
@@ -64,6 +105,18 @@ const StudySession = () => {
             <div className="flex flex-col items-center justify-center min-h-screen text-white p-4">
                 <h2 className="text-3xl font-bold mb-4">Session Complete!</h2>
                 <p className="text-xl mb-8">You reviewed {dueWords.length} words.</p>
+                {sessionReward && (
+                    <div className="flex gap-4 mb-6">
+                        <div className="px-6 py-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl text-center">
+                            <p className="text-xs uppercase text-indigo-200 tracking-wider">XP</p>
+                            <p className="text-3xl font-black text-indigo-300">+{sessionReward.xp}</p>
+                        </div>
+                        <div className="px-6 py-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-center">
+                            <p className="text-xs uppercase text-amber-200 tracking-wider">Coins</p>
+                            <p className="text-3xl font-black text-amber-300">+{sessionReward.coins}</p>
+                        </div>
+                    </div>
+                )}
                 <button
                     onClick={handleExit}
                     className="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-500 transition-colors"

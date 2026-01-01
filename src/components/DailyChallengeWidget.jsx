@@ -2,13 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp, Gift, CheckCircle } from 'lucide-react';
 import { getTodaysChallenges } from '../data/dailyChallenges';
+import { getActiveTimedChallenge, clearTimedChallenge } from '../data/timeChallenges';
 import { useProgress } from '../context/ProgressContext';
 import { Badge } from './ui/Badge';
 
 const DailyChallengeWidget = () => {
-    const { stats, addXP, addCoins } = useProgress();
+    const { stats, addXP, addCoins, incrementStat } = useProgress();
     const [expanded, setExpanded] = useState(false);
     const [challenges, setChallenges] = useState([]);
+    const [timedChallenge, setTimedChallenge] = useState(null);
+    const [timedClaimed, setTimedClaimed] = useState(() => {
+        const saved = localStorage.getItem('frenchApp_timedClaimed');
+        if (!saved) return false;
+        const parsed = JSON.parse(saved);
+        return parsed.date === new Date().toDateString();
+    });
+    const [timeRemaining, setTimeRemaining] = useState(0);
     const [claimedToday, setClaimedToday] = useState(() => {
         const saved = localStorage.getItem('frenchApp_claimedChallenges');
         if (saved) {
@@ -22,7 +31,22 @@ const DailyChallengeWidget = () => {
 
     useEffect(() => {
         setChallenges(getTodaysChallenges());
+        const activeTimed = getActiveTimedChallenge();
+        setTimedChallenge(activeTimed);
+        setTimeRemaining(activeTimed.expiresAt - Date.now());
     }, []);
+
+    useEffect(() => {
+        if (!timedChallenge) return;
+        const timer = setInterval(() => {
+            const remaining = timedChallenge.expiresAt - Date.now();
+            setTimeRemaining(Math.max(0, remaining));
+            if (remaining <= 0) {
+                clearTimedChallenge();
+            }
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [timedChallenge]);
 
     const getDailyProgress = (statName) => {
         // Get today's stats from localStorage or stats object
@@ -51,6 +75,30 @@ const DailyChallengeWidget = () => {
             date: new Date().toDateString(),
             claimed: newClaimed
         }));
+    };
+
+    const formatTime = (ms) => {
+        if (!ms || ms <= 0) return 'Expired';
+        const minutes = Math.floor(ms / 60000);
+        const seconds = Math.floor((ms % 60000) / 1000);
+        return `${minutes}m ${seconds.toString().padStart(2, '0')}s`;
+    };
+
+    const timedProgress = timedChallenge ? getDailyProgress(timedChallenge.stat) : 0;
+    const timedComplete = timedChallenge && timedProgress >= timedChallenge.target;
+
+    const claimTimedReward = () => {
+        if (!timedChallenge || timedClaimed || !timedComplete || timeRemaining <= 0) return;
+
+        const speedBonus = timeRemaining > (timedChallenge.durationMinutes * 60 * 1000) / 2 ? 1.2 : 1;
+        const xpPayout = Math.round(timedChallenge.xpReward * speedBonus);
+        const coinPayout = Math.round(timedChallenge.coinReward * speedBonus);
+        addXP(xpPayout);
+        addCoins(coinPayout);
+        incrementStat('timedChallengesCompleted', 1);
+        setTimedClaimed(true);
+        clearTimedChallenge();
+        localStorage.setItem('frenchApp_timedClaimed', JSON.stringify({ date: new Date().toDateString() }));
     };
 
     const completedCount = challenges.filter(c => isComplete(c)).length;
@@ -160,6 +208,54 @@ const DailyChallengeWidget = () => {
                                     </div>
                                 );
                             })}
+
+                            {timedChallenge && (
+                                <div className="p-4 rounded-2xl border border-indigo-500/40 bg-indigo-900/40">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-2xl">⏳</span>
+                                            <div>
+                                                <p className="font-bold text-white">{timedChallenge.title}</p>
+                                                <p className="text-xs text-indigo-200/70">{timedChallenge.description}</p>
+                                            </div>
+                                        </div>
+                                        <Badge variant="primary" className="bg-indigo-600/40 border-indigo-400/60 text-xs">
+                                            {formatTime(timeRemaining)}
+                                        </Badge>
+                                    </div>
+                                    <p className="text-xs text-indigo-100/80 mb-2">{timedChallenge.bonus}</p>
+                                    <div className="h-1.5 bg-slate-800 rounded-full overflow-hidden mb-2">
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${Math.min((timedProgress / timedChallenge.target) * 100, 100)}%` }}
+                                            className="h-full bg-indigo-400"
+                                        />
+                                    </div>
+                                    <div className="flex justify-between items-center text-xs text-indigo-200/80 mb-3">
+                                        <span>{timedProgress}/{timedChallenge.target} progress</span>
+                                        <div className="flex gap-2">
+                                            <Badge variant="outline" className="text-xs bg-violet-500/20 border-violet-500/40 text-violet-100">
+                                                +{timedChallenge.xpReward} XP
+                                            </Badge>
+                                            <Badge variant="outline" className="text-xs bg-amber-500/20 border-amber-500/40 text-amber-100">
+                                                +{timedChallenge.coinReward} 💰
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={claimTimedReward}
+                                        disabled={!timedComplete || timedClaimed || timeRemaining <= 0}
+                                        className={`w-full px-4 py-2 rounded-xl font-bold transition-colors ${timedClaimed
+                                                ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40'
+                                                : timedComplete && timeRemaining > 0
+                                                    ? 'bg-indigo-500 text-white hover:bg-indigo-400'
+                                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                            }`}
+                                    >
+                                        {timedClaimed ? 'Claimed' : timedComplete ? 'Claim timed reward' : 'Keep going!'}
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </motion.div>
                 )}

@@ -9,6 +9,9 @@ export const ProgressProvider = ({ children }) => {
         const saved = localStorage.getItem('frenchApp_progress');
         return saved ? JSON.parse(saved) : {
             xp: 0,
+            seasonalXp: 0,
+            seasonEndsAt: null,
+            seasonId: null,
             streak: 0,
             coins: 50,
             inventory: {},
@@ -19,6 +22,7 @@ export const ProgressProvider = ({ children }) => {
             storiesCompleted: 0,
             conversationsCompleted: 0,
             perfectQuizzes: 0,
+            timedChallengesCompleted: 0,
             unlockedAchievements: []
         };
     });
@@ -28,12 +32,7 @@ export const ProgressProvider = ({ children }) => {
         localStorage.setItem('frenchApp_progress', JSON.stringify(stats));
     }, [stats]);
 
-    // Check streak on mount
-    useEffect(() => {
-        checkStreak();
-    }, []);
-
-    const checkStreak = () => {
+    const checkStreak = useCallback(() => {
         const today = new Date().toDateString();
         const lastLogin = stats.lastLoginDate;
 
@@ -62,16 +61,57 @@ export const ProgressProvider = ({ children }) => {
             // Update login date
             setStats(prev => ({ ...prev, lastLoginDate: today }));
         }
-    };
+    }, [stats.inventory, stats.lastLoginDate]);
+
+    // Check streak on mount
+    useEffect(() => {
+        checkStreak();
+    }, [checkStreak]);
+
+    const ensureSeasonWindow = useCallback(() => {
+        setStats(prev => {
+            const now = Date.now();
+            if (prev.seasonEndsAt && prev.seasonEndsAt > now) return prev;
+
+            const nextSeasonDate = new Date();
+            nextSeasonDate.setMonth(nextSeasonDate.getMonth() + 1, 1);
+            nextSeasonDate.setHours(0, 0, 0, 0);
+
+            return {
+                ...prev,
+                seasonEndsAt: nextSeasonDate.getTime(),
+                seasonId: `${nextSeasonDate.getFullYear()}-${nextSeasonDate.getMonth() + 1}`,
+                seasonalXp: 0
+            };
+        });
+    }, []);
+
+    useEffect(() => {
+        ensureSeasonWindow();
+    }, [ensureSeasonWindow]);
+
+    const updateDailyStat = useCallback((statName, amount = 1, mode = 'add') => {
+        const today = new Date().toDateString();
+        const stored = localStorage.getItem('frenchApp_dailyStats');
+        const parsed = stored ? JSON.parse(stored) : {};
+        const base = parsed.date === today ? parsed : { date: today };
+        const currentValue = base[statName] || 0;
+        const nextValue = mode === 'max' ? Math.max(currentValue, amount) : currentValue + amount;
+        const updated = { ...base, [statName]: nextValue };
+        localStorage.setItem('frenchApp_dailyStats', JSON.stringify(updated));
+    }, []);
 
     const addXP = (amount) => {
+        ensureSeasonWindow();
         const isDoubleXpActive = stats.doubleXpUntil && Date.now() < stats.doubleXpUntil;
         const finalAmount = isDoubleXpActive ? amount * 2 : amount;
 
         setStats(prev => ({
             ...prev,
-            xp: prev.xp + finalAmount
+            xp: prev.xp + finalAmount,
+            seasonalXp: (prev.seasonalXp || 0) + finalAmount
         }));
+        updateDailyStat('dailyXP', finalAmount);
     };
 
     const activateDoubleXP = (durationMinutes = 15) => {
@@ -124,13 +164,14 @@ export const ProgressProvider = ({ children }) => {
     // Run achievement check when stats change
     useEffect(() => {
         checkAchievements();
-    }, [stats.wordsLearned, stats.streak, stats.storiesCompleted, stats.conversationsCompleted, stats.coins]);
+    }, [stats]);
 
     const addCoins = (amount) => {
         setStats(prev => ({
             ...prev,
             coins: (prev.coins || 0) + amount
         }));
+        updateDailyStat('dailyCoins', amount);
     };
 
     const spendCoins = (amount) => {
@@ -157,6 +198,20 @@ export const ProgressProvider = ({ children }) => {
             return true;
         }
         return false;
+    };
+
+    const consumeItem = (itemId, amount = 1) => {
+        const owned = stats.inventory?.[itemId] || 0;
+        if (owned < amount) return false;
+
+        setStats(prev => ({
+            ...prev,
+            inventory: {
+                ...prev.inventory,
+                [itemId]: Math.max(0, (prev.inventory?.[itemId] || 0) - amount)
+            }
+        }));
+        return true;
     };
 
     const incrementStreak = () => {
@@ -190,6 +245,9 @@ export const ProgressProvider = ({ children }) => {
     const resetProgress = () => {
         const initialStats = {
             xp: 0,
+            seasonalXp: 0,
+            seasonEndsAt: null,
+            seasonId: null,
             streak: 0,
             lastLoginDate: null,
             highScore: 0
@@ -214,10 +272,12 @@ export const ProgressProvider = ({ children }) => {
             addCoins,
             spendCoins,
             buyItem,
+            consumeItem,
             incrementStat,
             checkAchievements,
             activateDoubleXP,
             isDoubleXpActive,
+            updateDailyStat,
             achievements: stats.unlockedAchievements || []
         }}>
             {children}

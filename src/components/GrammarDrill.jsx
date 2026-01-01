@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, CheckCircle, XCircle, Lightbulb, Trophy, RotateCcw } from 'lucide-react';
 import { GRAMMAR_DRILLS, GRAMMAR_TIPS, DRILL_CATEGORIES } from '../data/grammar';
 import { useProgress } from '../context/ProgressContext';
+import { calculateRewards } from '../utils/rewardSystem';
 import SoundManager from '../utils/SoundManager';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
@@ -12,7 +13,7 @@ import { GameLayout } from './layout/GameLayout';
 
 const GrammarDrill = () => {
     const navigate = useNavigate();
-    const { addXP, incrementStreak } = useProgress();
+    const { addXP, addCoins, incrementStreak, updateDailyStat } = useProgress();
 
     const [drills, setDrills] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -21,6 +22,9 @@ const GrammarDrill = () => {
     const [showTip, setShowTip] = useState(false);
     const [score, setScore] = useState({ correct: 0, total: 0 });
     const [sessionComplete, setSessionComplete] = useState(false);
+    const [streak, setStreak] = useState(0);
+    const [bestStreak, setBestStreak] = useState(0);
+    const [sessionReward, setSessionReward] = useState(null);
 
     useEffect(() => {
         // Shuffle drills for variety
@@ -46,17 +50,30 @@ const GrammarDrill = () => {
 
         if (isCorrect) {
             SoundManager.playSuccess();
-            addXP(currentDrill.xpReward);
+            const nextStreak = streak + 1;
+            setStreak(nextStreak);
+            setBestStreak(b => Math.max(b, nextStreak));
+            updateDailyStat('dailyGrammar', 1);
+            updateDailyStat('dailyStreak', nextStreak, 'max');
         } else {
             SoundManager.playFailure();
+            setStreak(0);
         }
     };
 
     const nextDrill = () => {
         if (currentIndex + 1 >= drills.length) {
-            setSessionComplete(true);
+            const reward = calculateRewards('grammar', {
+                correct: score.correct,
+                total: score.total,
+                bestStreak
+            });
+            setSessionReward(reward);
+            addXP(reward.xp);
+            addCoins(reward.coins);
             incrementStreak();
             SoundManager.playLevelUp();
+            setSessionComplete(true);
         } else {
             setCurrentIndex(prev => prev + 1);
             setSelectedAnswer(null);
@@ -73,6 +90,9 @@ const GrammarDrill = () => {
         setShowResult(false);
         setScore({ correct: 0, total: 0 });
         setSessionComplete(false);
+        setStreak(0);
+        setBestStreak(0);
+        setSessionReward(null);
     };
 
     if (drills.length === 0) {
@@ -105,6 +125,19 @@ const GrammarDrill = () => {
                                 {percentage >= 80 ? 'Excellent!' : percentage >= 50 ? 'Good Job!' : 'Keep Practicing!'}
                             </Badge>
                         </div>
+
+                        {sessionReward && (
+                            <div className="flex justify-center gap-6 mb-8">
+                                <div className="bg-indigo-500/10 border border-indigo-500/30 px-6 py-4 rounded-2xl text-center">
+                                    <p className="text-xs uppercase text-indigo-200 tracking-wider">XP</p>
+                                    <p className="text-3xl font-black text-indigo-300">+{sessionReward.xp}</p>
+                                </div>
+                                <div className="bg-amber-500/10 border border-amber-500/30 px-6 py-4 rounded-2xl text-center">
+                                    <p className="text-xs uppercase text-amber-200 tracking-wider">Coins</p>
+                                    <p className="text-3xl font-black text-amber-300">+{sessionReward.coins}</p>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="flex gap-4 justify-center">
                             <Button variant="ghost" onClick={() => navigate('/')}>

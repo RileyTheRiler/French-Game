@@ -89,6 +89,11 @@ const AchievementsModal = ({ isOpen, onClose }) => {
                                                     <h4 className={`font-bold truncate ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>
                                                         {achievement.title}
                                                     </h4>
+                                                    {achievement.tier && (
+                                                        <Badge variant={isUnlocked ? 'primary' : 'outline'} className="text-[10px] px-2 py-0.5 uppercase tracking-wider">
+                                                            {achievement.tier}
+                                                        </Badge>
+                                                    )}
                                                     {isUnlocked && (
                                                         <Badge variant="success" className="text-xs px-2 py-0.5 shrink-0">
                                                             +{achievement.xpReward} XP

@@ -1,15 +1,78 @@
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Volume2, Award, Check, X, Lightbulb } from 'lucide-react';
+import { GameLayout } from './layout/GameLayout';
+import { Button } from './ui/Button';
+import { Badge } from './ui/Badge';
+import { Card } from './ui/Card';
+import { useVocabulary } from '../context/VocabularyContext';
+import { useProgress } from '../context/ProgressContext';
+import { speak } from '../utils/audio';
 import SoundManager from '../utils/SoundManager';
+import { calculateRewards } from '../utils/rewardSystem';
 
-// ... (imports remain same)
+const CHALLENGE_TYPES = {
+    MULTIPLE_CHOICE: 'multiple_choice',
+    LISTENING: 'listening',
+    REVERSE_FLASHCARD: 'reverse_flashcard'
+};
+
+const buildOptions = (word, vocabulary) => {
+    const distractors = [...vocabulary]
+        .filter(w => w.id !== word.id)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 3)
+        .map(w => w.english);
+    const options = [word.english, ...distractors].sort(() => Math.random() - 0.5);
+    return options;
+};
+
+const buildSession = (vocabulary) => {
+    const pool = [...vocabulary].sort(() => Math.random() - 0.5).slice(0, 8);
+    return pool.map((word, idx) => {
+        const typeCycle = idx % 3;
+        const type = typeCycle === 0 ? CHALLENGE_TYPES.MULTIPLE_CHOICE : typeCycle === 1 ? CHALLENGE_TYPES.LISTENING : CHALLENGE_TYPES.REVERSE_FLASHCARD;
+        return {
+            id: `${word.id}-${idx}`,
+            word,
+            options: buildOptions(word, vocabulary),
+            type
+        };
+    });
+};
 
 const DailyMix = () => {
     const navigate = useNavigate();
+    const { vocabulary, updateWordProgress } = useVocabulary();
+    const { addXP, addCoins, updateDailyStat } = useProgress();
+
+    const [sessionQueue, setSessionQueue] = useState([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isAnswered, setIsAnswered] = useState(false);
+    const [isCorrect, setIsCorrect] = useState(false);
+    const [selectedOption, setSelectedOption] = useState(null);
+    const [sessionComplete, setSessionComplete] = useState(false);
+    const [correctCount, setCorrectCount] = useState(0);
+    const [sessionReward, setSessionReward] = useState(null);
+
+    const currentChallenge = sessionQueue[currentIndex];
+
+    useEffect(() => {
+        setSessionQueue(buildSession(vocabulary));
+        setCurrentIndex(0);
+        setIsAnswered(false);
+        setIsCorrect(false);
+        setSelectedOption(null);
+        setSessionComplete(false);
+        setCorrectCount(0);
+        setSessionReward(null);
+    }, [vocabulary]);
+
     const onExit = () => navigate('/');
-    // ...
 
     const handleAnswer = (answer) => {
-        if (isAnswered) return;
+        if (isAnswered || !currentChallenge) return;
 
         const correct = answer === currentChallenge.word.english;
         setIsCorrect(correct);
@@ -18,7 +81,7 @@ const DailyMix = () => {
 
         if (correct) {
             SoundManager.playMatch();
-            setTotalXP(prev => prev + 15);
+            setCorrectCount(prev => prev + 1);
             updateWordProgress(currentChallenge.word.id, true);
         } else {
             SoundManager.playMiss();
@@ -33,10 +96,16 @@ const DailyMix = () => {
             setIsCorrect(false);
             setSelectedOption(null);
         } else {
-            addXP(totalXP);
-            addCoins(20); // Bonus for completing daily mix
-            SoundManager.playLevelUp();
+            const reward = calculateRewards('dailyMix', {
+                correct: correctCount,
+                total: sessionQueue.length
+            });
+            setSessionReward(reward);
+            addXP(reward.xp);
+            addCoins(reward.coins);
+            updateDailyStat('dailyReviews', sessionQueue.length);
             setSessionComplete(true);
+            SoundManager.playLevelUp();
         }
     };
 
@@ -66,19 +135,21 @@ const DailyMix = () => {
                     <p className="text-slate-400 mb-8 max-w-md text-lg">
                         Fantastic job! You've practiced with interleaving to boost your memory retention.
                     </p>
-                    <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-12 w-full max-w-xs flex flex-col items-center shadow-2xl">
-                        <span className="text-slate-400 uppercase tracking-widest text-xs font-bold mb-2">Rewards</span>
-                        <div className="flex gap-8">
-                            <div className="text-center">
-                                <span className="text-3xl font-black text-indigo-400">+{totalXP}</span>
-                                <p className="text-xs text-indigo-300">XP</p>
-                            </div>
-                            <div className="text-center">
-                                <span className="text-3xl font-black text-amber-400">+20</span>
-                                <p className="text-xs text-amber-300">Coins</p>
+                    {sessionReward && (
+                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-12 w-full max-w-xs flex flex-col items-center shadow-2xl">
+                            <span className="text-slate-400 uppercase tracking-widest text-xs font-bold mb-2">Rewards</span>
+                            <div className="flex gap-8">
+                                <div className="text-center">
+                                    <span className="text-3xl font-black text-indigo-400">+{sessionReward.xp}</span>
+                                    <p className="text-xs text-indigo-300">XP</p>
+                                </div>
+                                <div className="text-center">
+                                    <span className="text-3xl font-black text-amber-400">+{sessionReward.coins}</span>
+                                    <p className="text-xs text-amber-300">Coins</p>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
                     <Button size="lg" onClick={onExit} className="px-12 py-4 text-xl">
                         Return to Hub
                     </Button>
@@ -169,7 +240,7 @@ const DailyMix = () => {
                                             </Button>
                                             <Button
                                                 className="flex-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 h-14"
-                                                onClick={() => { setIsCorrect(true); handleNext(); }}
+                                                onClick={() => { setIsCorrect(true); setCorrectCount(prev => prev + 1); handleNext(); }}
                                             >
                                                 <Check className="mr-2" /> Correct
                                             </Button>
