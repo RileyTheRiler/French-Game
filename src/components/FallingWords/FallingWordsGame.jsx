@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Mic, Volume2 } from 'lucide-react';
 import { useVocabulary } from '../../context/VocabularyContext';
 import { useProgress } from '../../context/ProgressContext';
 import WordItem from './WordItem';
@@ -10,6 +12,8 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { GameLayout } from '../layout/GameLayout';
 import DifficultySlider from '../ui/DifficultySlider';
+import { playWordAudio } from '../../utils/audio';
+import { scorePronunciation } from '../../utils/phonetics';
 
 const GAME_WIDTH_PERCENT = 90;
 const INITIAL_FALL_SPEED = 0.05;
@@ -37,6 +41,10 @@ const FallingWordsGame = () => {
     const difficultySetting = stats?.difficultySettings?.fallingWords || 3;
     const [difficulty, setDifficulty] = useState(difficultySetting);
     const difficultyRef = useRef(difficultySetting);
+    const { getDueWords, updateWordProgress } = useVocabulary();
+    const { offlineAudio } = useProgress();
+    const { getPracticeQueue, updateWordProgress, markWordSeen } = useVocabulary();
+    const { getDueWords, updateWordProgress, getWeightedPracticeWords, vocabulary } = useVocabulary();
 
     // Game State (Visual)
     const [score, setScore] = useState(0);
@@ -44,6 +52,9 @@ const FallingWordsGame = () => {
     const [gameOver, setGameOver] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [isZenMode, setIsZenMode] = useState(false);
+    const [listenMode, setListenMode] = useState(false);
+    const [shadowFeedback, setShadowFeedback] = useState(null);
+    const [isShadowing, setIsShadowing] = useState(false);
 
     // Juice State
     const [combo, setCombo] = useState(0);
@@ -73,6 +84,9 @@ const FallingWordsGame = () => {
         averageResponse: 2000,
         lowestCategory: null
     });
+    const listenModeRef = useRef(false);
+    const recognitionRef = useRef(null);
+    const lastHeardWordRef = useRef(null);
 
     // Dynamic difficulty refs
     const currentFallSpeedRef = useRef(INITIAL_FALL_SPEED);
@@ -84,19 +98,25 @@ const FallingWordsGame = () => {
         if (isZenMode) setLives(INITIAL_LIVES);
     }, [isZenMode]);
 
+    useEffect(() => {
+        listenModeRef.current = listenMode;
+    }, [listenMode]);
+
     // Initialize
     useEffect(() => {
         try {
-            const words = getDueWords();
+            const words = getPracticeQueue('fallingWords', 40);
+            const weighted = getWeightedPracticeWords ? getWeightedPracticeWords(40) : getDueWords();
+            const words = weighted && weighted.length ? weighted : getDueWords();
             if (!words || words.length === 0) {
                 console.warn("No words available!");
-                validWords.current = [];
+                validWords.current = vocabulary || [];
             } else {
                 validWords.current = words;
             }
         } catch (e) {
             console.error("Error fetching words:", e);
-            validWords.current = [];
+            validWords.current = vocabulary || [];
         }
 
         // Init Audio
@@ -112,6 +132,28 @@ const FallingWordsGame = () => {
             isPlayingRef.current = false;
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
+    }, [getPracticeQueue]);
+
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.lang = 'fr-FR';
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.maxAlternatives = 1;
+
+        recognitionRef.current.onresult = (event) => {
+            const heard = event.results[0][0].transcript;
+            const target = lastHeardWordRef.current;
+            if (target) {
+                const { accuracy } = scorePronunciation(target.french, heard);
+                setShadowFeedback({ heard, accuracy, target });
+            }
+            setIsShadowing(false);
+        };
+        recognitionRef.current.onerror = () => setIsShadowing(false);
+        recognitionRef.current.onend = () => setIsShadowing(false);
     }, []);
 
     useEffect(() => {
@@ -179,9 +221,18 @@ const FallingWordsGame = () => {
             spawnedAt: now,
             categoryAccuracy: getCategoryAccuracy(randomWord.category),
             categoryResponse: getCategoryResponse(randomWord.category)
+            target: randomWord
+            mastery: randomWord.level,
+            lastSeen: randomWord.lastSeen,
         };
 
+        markWordSeen(randomWord.id);
         activeWordsRef.current.push(newWord);
+        lastHeardWordRef.current = randomWord;
+
+        if (listenModeRef.current) {
+            playWordAudio(randomWord, { preferCache: true, offlineOnly: offlineAudio });
+        }
     };
 
     const spawnParticles = (x, y) => {
@@ -281,6 +332,7 @@ const FallingWordsGame = () => {
                     responseTime: time - word.spawnedAt,
                     mode: 'fallingWords'
                 });
+                updateWordProgress(word.wordId, 'again');
             } else {
                 word.y = newY;
                 nextWords.push(word);
@@ -322,7 +374,7 @@ const FallingWordsGame = () => {
 
             SoundManager.playMatch();
             spawnParticles(word.x + '%', word.y + '%');
-            updateWordProgress(word.wordId, true);
+            updateWordProgress(word.wordId, 'good');
 
             const responseTime = performance.now() - word.spawnedAt;
             recordCategoryPerformance(word.category, {
@@ -350,6 +402,18 @@ const FallingWordsGame = () => {
         }
     };
 
+    const startShadowing = () => {
+        if (!recognitionRef.current || isShadowing) return;
+        const targetWord = activeWordsRef.current[0]?.target || lastHeardWordRef.current;
+        if (!targetWord) return;
+
+        lastHeardWordRef.current = targetWord;
+        setShadowFeedback(null);
+        setIsShadowing(true);
+        recognitionRef.current.start();
+        playWordAudio(targetWord, { preferCache: true, offlineOnly: offlineAudio });
+    };
+
     const restartGame = () => {
         setScore(0);
         setLives(INITIAL_LIVES);
@@ -361,6 +425,8 @@ const FallingWordsGame = () => {
         spawnTimerRef.current = 0;
         currentSpawnIntervalRef.current = INITIAL_SPAWN_INTERVAL * (bandRef.current?.spawn || 1);
         currentFallSpeedRef.current = INITIAL_FALL_SPEED * (bandRef.current?.speed || 1);
+        setShadowFeedback(null);
+        setIsShadowing(false);
 
         activeWordsRef.current = [];
         setRenderedWords([]);
@@ -395,6 +461,21 @@ const FallingWordsGame = () => {
             name: CATEGORIES?.[strugglingCategory]?.name || strugglingCategory
         };
     }, [renderedWords, performanceSummary, difficulty, CATEGORIES]);
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                onExit();
+            }
+            if (gameOver && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                restartGame();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [gameOver, onExit]);
 
     if (activeWordsRef.current === null) return <div>Loading...</div>;
 
@@ -418,7 +499,7 @@ const FallingWordsGame = () => {
                     <Badge variant="primary" className="text-lg py-1 px-4">
                         Score: {score}
                     </Badge>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1" aria-label={`${lives} lives remaining`} role="status">
                         {Array(INITIAL_LIVES).fill(0).map((_, i) => (
                             <motion.span
                                 key={i}
@@ -431,10 +512,21 @@ const FallingWordsGame = () => {
                         ))}
                     </div>
                     <Button
+                        variant={listenMode ? "success" : "outline"}
+                        size="sm"
+                        onClick={() => setListenMode(!listenMode)}
+                        className="rounded-full flex items-center gap-2"
+                    >
+                        <Volume2 size={14} />
+                        Listen then Type
+                    </Button>
+                    <Button
                         variant={isZenMode ? "success" : "outline"}
                         size="sm"
                         onClick={() => setIsZenMode(!isZenMode)}
                         className="rounded-full"
+                        aria-pressed={isZenMode}
+                        aria-label={`Toggle ${isZenMode ? 'Zen' : 'Challenge'} mode`}
                     >
                         {isZenMode ? 'Zen Mode' : 'Challenge'}
                     </Button>
@@ -481,6 +573,8 @@ const FallingWordsGame = () => {
                             x={word.x}
                             y={word.y}
                             isMatched={false}
+                            mastery={word.mastery}
+                            lastSeen={word.lastSeen}
                         />
                     ))}
 
@@ -505,15 +599,16 @@ const FallingWordsGame = () => {
 
                 {/* Input Area */}
                 <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 w-full max-w-lg px-4">
-                    <Card className="p-2 bg-slate-950/80 border-white/20">
+                    <Card className="p-4 bg-slate-950/80 border-white/20 space-y-3">
                         <input
                             ref={inputRef}
                             type="text"
                             value={inputValue}
                             onChange={handleInputChange}
-                            placeholder="Type the French translation..."
+                            placeholder={listenMode ? "Type what you hear..." : "Type the French translation..."}
                             className="w-full p-4 bg-transparent text-white text-center text-2xl font-bold focus:outline-none placeholder:text-slate-600"
                             disabled={gameOver}
+                            aria-label="Type the matching French word"
                         />
                         {hintData && (
                             <div className="mt-2 text-center text-sm text-slate-300">
@@ -522,6 +617,29 @@ const FallingWordsGame = () => {
                                 <div className="mt-1 text-slate-200 font-semibold">
                                     {hintData.masked} · {hintData.translation}
                                 </div>
+                        <div className="flex items-center justify-center gap-3">
+                            <Button
+                                variant={isShadowing ? "success" : "outline"}
+                                size="sm"
+                                className="rounded-full flex items-center gap-2"
+                                onClick={startShadowing}
+                                disabled={gameOver}
+                            >
+                                <Mic size={16} />
+                                {isShadowing ? 'Listening...' : 'Shadow audio'}
+                            </Button>
+                            {listenMode && (
+                                <Badge variant="outline" className="text-xs bg-indigo-500/10 border-indigo-500/30 text-indigo-200">
+                                    Audio plays on spawn
+                                </Badge>
+                            )}
+                        </div>
+                        {shadowFeedback && (
+                            <div className="text-center text-sm text-slate-300">
+                                <p className={shadowFeedback.accuracy >= 70 ? 'text-emerald-300 font-semibold' : 'text-amber-300 font-semibold'}>
+                                    Shadow accuracy: {shadowFeedback.accuracy}%
+                                </p>
+                                <p className="text-xs text-slate-500">Heard: "{shadowFeedback.heard}"</p>
                             </div>
                         )}
                     </Card>
@@ -531,7 +649,7 @@ const FallingWordsGame = () => {
             {/* Game Over Modal */}
             <AnimatePresence>
                 {gameOver && (
-                    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50">
+                    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Game over">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
