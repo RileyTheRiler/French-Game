@@ -1,0 +1,109 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Premium Dark Theme Palette */
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+
+  /* Accents */
+  --accent-primary: #8b5cf6;
+  /* Violet */
+  --accent-secondary: #ec4899;
+  /* Pink */
+  --accent-success: #10b981;
+  --accent-error: #ef4444;
+  --accent-warning: #f59e0b;
+
+  /* Glassmorphism */
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: 12px;
+}
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  background-image:
+    radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 20%),
+    radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 20%);
+  background-attachment: fixed;
+  overflow-x: hidden;
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-slate-900/60 backdrop-blur-xl border border-white/10 rounded-2xl shadow-xl;
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 rounded-xl font-bold hover:from-violet-500 hover:to-indigo-500 transition-all transform hover:scale-105 shadow-lg hover:shadow-violet-500/25;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 bg-slate-700 rounded-xl font-bold hover:bg-slate-600 transition-colors;
+  }
+
+  .title-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-fuchsia-400 to-indigo-400;
+  }
+}
+
+/* Animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+  }
+
+  50% {
+    box-shadow: 0 0 25px rgba(139, 92, 246, 0.6);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s infinite;
+}
+
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+.transform-style-preserve-3d {
+  transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
