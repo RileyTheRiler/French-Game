@@ -1,3 +1,5 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { Volume2 } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useVocabulary } from '../../context/VocabularyContext';
 import SoundManager from '../../utils/SoundManager';
@@ -6,17 +8,74 @@ import { useNavigate } from 'react-router-dom';
 const StudySession = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { getDueWords, updateWordProgress } = useVocabulary();
+    const {
+        getDueWords,
+        updateWordProgress,
+        vocabulary,
+        playWordAudio,
+        preloadAudioForWords,
+        CATEGORIES
+    } = useVocabulary();
 
     const [dueWords, setDueWords] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [sessionComplete, setSessionComplete] = useState(false);
+    const [filterCEFR, setFilterCEFR] = useState('all');
+    const [filterCategory, setFilterCategory] = useState('all');
+
+    const cefrLevels = useMemo(() => {
+        return Array.from(new Set(vocabulary.map(word => word.cefr))).sort();
+    }, [vocabulary]);
+
+    const filterControls = (
+        <div className="w-full max-w-3xl mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+                <label className="text-sm text-slate-400 font-semibold">CEFR Level</label>
+                <select
+                    value={filterCEFR}
+                    onChange={(e) => setFilterCEFR(e.target.value)}
+                    className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-400"
+                >
+                    <option value="all">All levels</option>
+                    {cefrLevels.map(level => (
+                        <option key={level} value={level}>{level}</option>
+                    ))}
+                </select>
+            </div>
+            <div className="flex flex-col gap-2">
+                <label className="text-sm text-slate-400 font-semibold">Topic</label>
+                <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-400"
+                >
+                    <option value="all">All topics</option>
+                    {Object.entries(CATEGORIES).map(([key, value]) => (
+                        <option key={key} value={key}>{value.name}</option>
+                    ))}
+                </select>
+            </div>
+        </div>
+    );
     const containerRef = useRef(null);
 
     useEffect(() => {
-        setDueWords(getDueWords());
-    }, []);
+        const baseDue = getDueWords();
+        const filtered = baseDue.filter(word => {
+            const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
+            const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
+            return matchesCEFR && matchesCategory;
+        });
+
+        setDueWords(filtered);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setSessionComplete(filtered.length === 0);
+        preloadAudioForWords(filtered);
+        // We intentionally avoid depending on vocabulary to prevent resets during a session.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filterCEFR, filterCategory]);
 
     useEffect(() => {
         if (containerRef.current) {
@@ -82,6 +141,7 @@ const StudySession = () => {
             <main className="flex flex-col items-center justify-center min-h-screen text-white p-4" role="main">
                 <h2 className="text-3xl font-bold mb-4">🎉 All Caught Up!</h2>
                 <p className="text-xl mb-8">No words are due for review right now.</p>
+                {filterControls}
                 <button
                     onClick={handleExit}
                     className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
@@ -122,6 +182,8 @@ const StudySession = () => {
                 Word {currentIndex + 1} of {dueWords.length}
             </div>
 
+            {filterControls}
+
             {/* Flashcard - 3D Container */}
             <div
                 onClick={handleCardClick}
@@ -140,6 +202,12 @@ const StudySession = () => {
                         <h2 className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-b from-indigo-300 to-indigo-500 mb-2 drop-shadow-lg">
                             {currentWord.french}
                         </h2>
+                        <button
+                            className="mt-3 flex items-center gap-2 text-sm text-indigo-200 bg-indigo-500/10 border border-indigo-500/20 px-4 py-2 rounded-full hover:bg-indigo-500/20 transition-colors"
+                            onClick={(e) => { e.stopPropagation(); playWordAudio(currentWord); }}
+                        >
+                            <Volume2 size={18} /> Écouter
+                        </button>
                         <p className="text-xs text-indigo-400 uppercase tracking-[0.2em] mt-4 font-semibold">
                             French
                         </p>
@@ -153,6 +221,11 @@ const StudySession = () => {
                         <h2 className="text-5xl font-black text-white mb-2 drop-shadow-xl">
                             {currentWord.english}
                         </h2>
+                        <p className="text-sm text-indigo-200 italic mb-2">{currentWord.ipa}</p>
+                        <p className="text-center text-slate-200 px-6 text-base">
+                            {currentWord.example?.french}
+                            <span className="block text-slate-400 text-sm mt-1">{currentWord.example?.english}</span>
+                        </p>
                         <p className="text-xs text-pink-300 uppercase tracking-[0.2em] mt-4 font-semibold">
                             English
                         </p>
