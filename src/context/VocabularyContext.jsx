@@ -8,7 +8,8 @@ const VocabularyContext = createContext();
 const INITIAL_VOCABULARY = vocabularyList.map(word => ({
     ...word,
     level: 1,
-    nextReview: 0
+    nextReview: 0,
+    updatedAt: Date.now()
 }));
 
 export const VocabularyProvider = ({ children }) => {
@@ -23,8 +24,9 @@ export const VocabularyProvider = ({ children }) => {
     }, [vocabulary]);
 
     const resetVocabulary = () => {
-        setVocabulary(INITIAL_VOCABULARY);
-        localStorage.setItem('frenchApp_vocab', JSON.stringify(INITIAL_VOCABULARY));
+        const reset = INITIAL_VOCABULARY.map(word => ({ ...word, updatedAt: Date.now() }));
+        setVocabulary(reset);
+        localStorage.setItem('frenchApp_vocab', JSON.stringify(reset));
     };
 
     const updateWordProgress = (wordId, success) => {
@@ -54,7 +56,8 @@ export const VocabularyProvider = ({ children }) => {
                 ...word,
                 level: newLevel,
                 lastPracticed: now,
-                nextReview: nextReviewTime
+                nextReview: nextReviewTime,
+                updatedAt: now
             };
         }));
 
@@ -68,6 +71,11 @@ export const VocabularyProvider = ({ children }) => {
         return vocabulary.filter(word => word.nextReview <= now);
     };
 
+    const hydrateVocabulary = (incomingVocabulary) => {
+        if (!incomingVocabulary) return;
+        setVocabulary(incomingVocabulary);
+    };
+
     return (
         <VocabularyContext.Provider value={{
             vocabulary,
@@ -76,7 +84,8 @@ export const VocabularyProvider = ({ children }) => {
             resetVocabulary,
             CATEGORIES,
             getVocabularyByCategory,
-            getAllCategories
+            getAllCategories,
+            hydrateVocabulary
         }}>
             {children}
         </VocabularyContext.Provider>

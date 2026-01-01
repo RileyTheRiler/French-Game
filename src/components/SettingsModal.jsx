@@ -1,19 +1,51 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
+import { useAuth } from '../context/AuthContext';
+import { useSync } from '../context/SyncContext';
 
 const SettingsModal = ({ onClose }) => {
     const { audioEnabled, toggleAudio, resetProgress } = useProgress();
     const { resetVocabulary } = useVocabulary();
+    const { user, signIn, signUp, signOut, loading, error } = useAuth();
+    const { exportData, importData, status, lastSyncedAt, syncing } = useSync();
     const [confirmReset, setConfirmReset] = React.useState(false);
+    const [authMode, setAuthMode] = React.useState('signin');
+    const [form, setForm] = React.useState({ email: '', password: '' });
+    const [importError, setImportError] = React.useState('');
 
     const handleReset = () => {
         resetProgress();
         resetVocabulary();
         onClose();
         window.location.reload(); // Force reload to ensure clean state
+    };
+
+    const handleAuthSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            if (authMode === 'signin') {
+                await signIn({ email: form.email, password: form.password });
+            } else {
+                await signUp({ email: form.email, password: form.password });
+            }
+            setForm({ email: '', password: '' });
+        } catch (err) {
+            // error handled by context
+        }
+    };
+
+    const handleImport = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        setImportError('');
+        try {
+            await importData(file);
+        } catch (err) {
+            setImportError(err.message);
+        }
     };
 
     return (
@@ -42,6 +74,87 @@ const SettingsModal = ({ onClose }) => {
                 </div>
 
                 <div className="space-y-6">
+                    {/* Auth & Sync */}
+                    <div className="glass-panel p-4 border border-indigo-500/20 bg-indigo-500/5">
+                        <div className="flex items-start gap-3 mb-4">
+                            <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-300">
+                                <UserRound />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold">Account & Sync</h3>
+                                <p className="text-xs text-slate-400">
+                                    Sign in to sync progress, vocabulary, and achievements across devices with conflict-aware merges.
+                                </p>
+                            </div>
+                        </div>
+                        {user ? (
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between text-sm text-slate-300">
+                                    <span>{user.email}</span>
+                                    <span className="text-xs text-slate-400">
+                                        {syncing ? 'Syncing…' : status === 'up_to_date' ? 'Up to date' : status}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs text-slate-500">
+                                    <span>Last sync</span>
+                                    <span>{lastSyncedAt ? lastSyncedAt.toLocaleString() : 'Pending'}</span>
+                                </div>
+                                <button
+                                    onClick={signOut}
+                                    className="w-full py-2 rounded-xl border border-slate-700 text-slate-200 hover:bg-slate-800 transition"
+                                >
+                                    Sign out
+                                </button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleAuthSubmit} className="space-y-3">
+                                <div className="flex gap-2 text-xs">
+                                    <button
+                                        type="button"
+                                        onClick={() => setAuthMode('signin')}
+                                        className={`flex-1 py-2 rounded-xl ${authMode === 'signin' ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-300'}`}
+                                    >
+                                        Sign In
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setAuthMode('signup')}
+                                        className={`flex-1 py-2 rounded-xl ${authMode === 'signup' ? 'bg-indigo-500 text-white' : 'bg-slate-800 text-slate-300'}`}
+                                    >
+                                        Create Account
+                                    </button>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="email"
+                                        required
+                                        value={form.email}
+                                        onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))}
+                                        placeholder="Email"
+                                        className="flex-1 rounded-xl bg-slate-800 border border-white/10 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                    />
+                                    <input
+                                        type="password"
+                                        required
+                                        minLength={6}
+                                        value={form.password}
+                                        onChange={(e) => setForm(prev => ({ ...prev, password: e.target.value }))}
+                                        placeholder="Password"
+                                        className="flex-1 rounded-xl bg-slate-800 border border-white/10 px-3 py-2 text-sm outline-none focus:border-indigo-500"
+                                    />
+                                </div>
+                                {error && <p className="text-xs text-red-400">{error}</p>}
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-sm transition disabled:opacity-70"
+                                >
+                                    {loading ? 'Working…' : authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                                </button>
+                            </form>
+                        )}
+                    </div>
+
                     {/* Audio Toggle */}
                     <div className="glass-panel p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -62,6 +175,35 @@ const SettingsModal = ({ onClose }) => {
                                 className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
                             />
                         </button>
+                    </div>
+
+                    {/* Privacy & Portability */}
+                    <div className="glass-panel p-4 border border-emerald-500/20 bg-emerald-500/5 space-y-3">
+                        <div className="flex items-center gap-3">
+                            <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-300">
+                                <CloudUpload />
+                            </div>
+                            <div>
+                                <h3 className="font-bold">Data Portability</h3>
+                                <p className="text-xs text-slate-400">Export or import your data for privacy-first workflows.</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <button
+                                onClick={exportData}
+                                className="w-full py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm transition flex items-center justify-center gap-2"
+                            >
+                                <CloudDownload size={16} />
+                                Export data
+                            </button>
+                            <label className="w-full py-2 rounded-xl border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 font-bold text-sm transition flex items-center justify-center gap-2 cursor-pointer">
+                                <CloudUpload size={16} />
+                                Import from file
+                                <input type="file" className="hidden" accept="application/json" onChange={handleImport} />
+                            </label>
+                            {importError && <p className="text-xs text-red-400">{importError}</p>}
+                            {status === 'imported' && <p className="text-xs text-emerald-300 flex items-center gap-1"><Check size={14} /> Imported successfully</p>}
+                        </div>
                     </div>
 
                     {/* Reset Data */}
