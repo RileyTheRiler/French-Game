@@ -1,13 +1,24 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
 
 const SettingsModal = ({ onClose }) => {
-    const { audioEnabled, toggleAudio, resetProgress } = useProgress();
+    const {
+        audioEnabled,
+        toggleAudio,
+        reducedMotion,
+        toggleReducedMotion,
+        colorTheme,
+        switchColorTheme,
+        resetProgress
+    } = useProgress();
     const { resetVocabulary } = useVocabulary();
     const { user, signIn, signUp, signOut, loading, error } = useAuth();
     const { exportData, importData, status, lastSyncedAt, syncing } = useSync();
@@ -15,6 +26,26 @@ const SettingsModal = ({ onClose }) => {
     const [authMode, setAuthMode] = React.useState('signin');
     const [form, setForm] = React.useState({ email: '', password: '' });
     const [importError, setImportError] = React.useState('');
+    const dialogRef = useRef(null);
+    const closeButtonRef = useRef(null);
+
+    useEffect(() => {
+        if (closeButtonRef.current) {
+            closeButtonRef.current.focus();
+        }
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                onClose();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [onClose]);
 
     const handleReset = () => {
         resetProgress();
@@ -55,6 +86,7 @@ const SettingsModal = ({ onClose }) => {
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={onClose}
+            role="presentation"
         >
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
@@ -62,16 +94,27 @@ const SettingsModal = ({ onClose }) => {
                 exit={{ scale: 0.9, opacity: 0 }}
                 className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative"
                 onClick={e => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="settings-heading"
+                aria-describedby="settings-description"
+                ref={dialogRef}
             >
                 <div className="flex justify-between items-center mb-8">
-                    <h2 className="text-3xl font-bold title-gradient">Settings</h2>
+                    <h2 id="settings-heading" className="text-3xl font-bold title-gradient">Settings</h2>
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                        className="p-2 hover:bg-white/10 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        aria-label="Close settings"
+                        ref={closeButtonRef}
                     >
                         <X className="text-slate-400" />
                     </button>
                 </div>
+
+                <p id="settings-description" className="sr-only">
+                    Configure sound, accessibility, and appearance preferences for the app.
+                </p>
 
                 <div className="space-y-6">
                     {/* Auth & Sync */}
@@ -169,6 +212,9 @@ const SettingsModal = ({ onClose }) => {
                         <button
                             onClick={toggleAudio}
                             className={`w-14 h-8 rounded-full transition-colors relative ${audioEnabled ? 'bg-indigo-500' : 'bg-slate-700'}`}
+                            role="switch"
+                            aria-checked={audioEnabled}
+                            aria-label="Toggle sound effects"
                         >
                             <motion.div
                                 animate={{ x: audioEnabled ? 26 : 2 }}
@@ -203,6 +249,57 @@ const SettingsModal = ({ onClose }) => {
                             </label>
                             {importError && <p className="text-xs text-red-400">{importError}</p>}
                             {status === 'imported' && <p className="text-xs text-emerald-300 flex items-center gap-1"><Check size={14} /> Imported successfully</p>}
+                    {/* Reduced Motion */}
+                    <div className="glass-panel p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-3 rounded-xl ${reducedMotion ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                                <Check />
+                            </div>
+                            <div>
+                                <h3 className="font-bold">Reduced Motion</h3>
+                                <p className="text-xs text-slate-400">Minimize animations for comfort</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={toggleReducedMotion}
+                            className={`w-14 h-8 rounded-full transition-colors relative ${reducedMotion ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                            role="switch"
+                            aria-checked={reducedMotion}
+                            aria-label="Toggle reduced motion"
+                        >
+                            <motion.div
+                                animate={{ x: reducedMotion ? 26 : 2 }}
+                                className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
+                            />
+                        </button>
+                    </div>
+
+                    {/* Color Theme */}
+                    <div className="glass-panel p-4">
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="font-bold">Color Theme</h3>
+                                <p className="text-xs text-slate-400">Choose a palette that suits you</p>
+                            </div>
+                            <span className="text-xs text-slate-500 uppercase tracking-wide">{colorTheme}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-3" role="listbox" aria-label="Color theme options">
+                            {[
+                                { id: 'midnight', label: 'Midnight', swatch: 'from-indigo-500 to-purple-500' },
+                                { id: 'dawn', label: 'Dawn', swatch: 'from-amber-400 to-rose-500' },
+                                { id: 'forest', label: 'Forest', swatch: 'from-emerald-500 to-teal-400' }
+                            ].map(theme => (
+                                <button
+                                    key={theme.id}
+                                    onClick={() => switchColorTheme(theme.id)}
+                                    className={`p-3 rounded-2xl border transition-colors flex flex-col gap-2 items-start focus:outline-none focus:ring-2 focus:ring-indigo-400 ${colorTheme === theme.id ? 'border-indigo-400 bg-white/5' : 'border-white/10 bg-white/0'}`}
+                                    role="option"
+                                    aria-selected={colorTheme === theme.id}
+                                >
+                                    <span className={`w-full h-10 rounded-xl bg-gradient-to-r ${theme.swatch}`} aria-hidden="true" />
+                                    <span className="text-sm font-semibold">{theme.label}</span>
+                                </button>
+                            ))}
                         </div>
                     </div>
 

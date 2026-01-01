@@ -5,6 +5,25 @@ import { ACHIEVEMENTS } from '../data/achievements';
 const ProgressContext = createContext();
 
 export const ProgressProvider = ({ children }) => {
+    const defaultStats = {
+        xp: 0,
+        streak: 0,
+        coins: 50,
+        inventory: {},
+        doubleXpUntil: null,
+        lastLoginDate: null,
+        highScore: 0,
+        wordsLearned: 0,
+        storiesCompleted: 0,
+        conversationsCompleted: 0,
+        perfectQuizzes: 0,
+        unlockedAchievements: [],
+        onboardingComplete: false,
+        placementComplete: false,
+        placementResult: null,
+        onboardingRewarded: false
+    };
+
     const [stats, setStats] = useState(() => {
         const saved = localStorage.getItem('frenchApp_progress');
         const baseState = {
@@ -23,6 +42,15 @@ export const ProgressProvider = ({ children }) => {
             updatedAt: Date.now()
         };
         return saved ? { ...baseState, ...JSON.parse(saved) } : baseState;
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            return {
+                ...defaultStats,
+                ...parsed,
+                inventory: { ...defaultStats.inventory, ...(parsed.inventory || {}) }
+            };
+        }
+        return defaultStats;
     });
 
     // Save to local storage whenever stats change
@@ -192,11 +220,32 @@ export const ProgressProvider = ({ children }) => {
         return saved !== null ? JSON.parse(saved) : true;
     });
 
+    const [reducedMotion, setReducedMotion] = useState(() => {
+        const saved = localStorage.getItem('frenchApp_reducedMotion');
+        return saved !== null ? JSON.parse(saved) : false;
+    });
+
+    const [colorTheme, setColorTheme] = useState(() => {
+        return localStorage.getItem('frenchApp_colorTheme') || 'midnight';
+    });
+
     useEffect(() => {
         localStorage.setItem('frenchApp_audio', JSON.stringify(audioEnabled));
     }, [audioEnabled]);
 
+    useEffect(() => {
+        localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
+        document.body.classList.toggle('reduced-motion', reducedMotion);
+    }, [reducedMotion]);
+
+    useEffect(() => {
+        localStorage.setItem('frenchApp_colorTheme', colorTheme);
+        document.body.dataset.theme = colorTheme;
+    }, [colorTheme]);
+
     const toggleAudio = () => setAudioEnabled(prev => !prev);
+    const toggleReducedMotion = () => setReducedMotion(prev => !prev);
+    const switchColorTheme = (theme) => setColorTheme(theme);
 
     const resetProgress = () => {
         const initialStats = {
@@ -215,6 +264,8 @@ export const ProgressProvider = ({ children }) => {
         };
         setStats(initialStats);
         localStorage.setItem('frenchApp_progress', JSON.stringify(initialStats));
+        setStats({ ...defaultStats });
+        localStorage.setItem('frenchApp_progress', JSON.stringify(defaultStats));
     };
 
     const hydrateProgress = (incomingStats) => {
@@ -229,6 +280,38 @@ export const ProgressProvider = ({ children }) => {
     const level = calculateLevel(stats.xp);
     const progressToNextLevel = getLevelProgress(stats.xp);
 
+    const completeOnboarding = useCallback((reward = { xp: 150, coins: 150 }) => {
+        setStats(prev => {
+            if (prev.onboardingComplete) return prev;
+            return {
+                ...prev,
+                onboardingComplete: true,
+                onboardingRewarded: true,
+                xp: prev.xp + (reward?.xp || 0),
+                coins: (prev.coins || 0) + (reward?.coins || 0),
+                onboardingCompletedAt: Date.now()
+            };
+        });
+    }, []);
+
+    const applyPlacementResult = useCallback(({ xpAward = 0, accuracy = 0, totalQuestions = 0 }) => {
+        setStats(prev => {
+            const startingXp = Math.max(prev.xp, xpAward);
+            return {
+                ...prev,
+                xp: startingXp,
+                placementComplete: true,
+                placementResult: {
+                    accuracy,
+                    totalQuestions,
+                    xpAward,
+                    timestamp: Date.now(),
+                    startingLevel: calculateLevel(startingXp)
+                }
+            };
+        });
+    }, []);
+
     return (
         <ProgressContext.Provider value={{
             stats,
@@ -238,6 +321,10 @@ export const ProgressProvider = ({ children }) => {
             incrementStreak,
             audioEnabled,
             toggleAudio,
+            reducedMotion,
+            toggleReducedMotion,
+            colorTheme,
+            switchColorTheme,
             resetProgress,
             addCoins,
             spendCoins,
@@ -248,6 +335,8 @@ export const ProgressProvider = ({ children }) => {
             isDoubleXpActive,
             achievements: stats.unlockedAchievements || [],
             hydrateProgress
+            completeOnboarding,
+            applyPlacementResult
         }}>
             {children}
         </ProgressContext.Provider>
