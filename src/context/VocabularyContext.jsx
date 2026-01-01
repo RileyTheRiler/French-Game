@@ -1,38 +1,15 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useProgress } from './ProgressContext';
+import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
 
 const VocabularyContext = createContext();
 
-const INITIAL_VOCABULARY = [
-    { id: 'v1', french: 'le chat', english: 'the cat', level: 1, nextReview: 0 },
-    { id: 'v2', french: 'le chien', english: 'the dog', level: 1, nextReview: 0 },
-    { id: 'v3', french: 'la maison', english: 'the house', level: 1, nextReview: 0 },
-    { id: 'v4', french: 'la voiture', english: 'the car', level: 1, nextReview: 0 },
-    { id: 'v5', french: 'bonjour', english: 'hello', level: 1, nextReview: 0 },
-    { id: 'v6', french: 'merci', english: 'thank you', level: 1, nextReview: 0 },
-    { id: 'v7', french: 'au revoir', english: 'goodbye', level: 1, nextReview: 0 },
-    { id: 'v8', french: 's\'il vous plaît', english: 'please', level: 1, nextReview: 0 },
-    { id: 'v9', french: 'pomme', english: 'apple', level: 1, nextReview: 0 },
-    { id: 'v10', french: 'pain', english: 'bread', level: 1, nextReview: 0 },
-    // Colors
-    { id: 'c1', french: 'rouge', english: 'red', level: 1, nextReview: 0 },
-    { id: 'c2', french: 'bleu', english: 'blue', level: 1, nextReview: 0 },
-    { id: 'c3', french: 'vert', english: 'green', level: 1, nextReview: 0 },
-    { id: 'c4', french: 'jaune', english: 'yellow', level: 1, nextReview: 0 },
-    { id: 'c5', french: 'noir', english: 'black', level: 1, nextReview: 0 },
-    { id: 'c6', french: 'blanc', english: 'white', level: 1, nextReview: 0 },
-    // Numbers
-    { id: 'n1', french: 'un', english: 'one', level: 1, nextReview: 0 },
-    { id: 'n2', french: 'deux', english: 'two', level: 1, nextReview: 0 },
-    { id: 'n3', french: 'trois', english: 'three', level: 1, nextReview: 0 },
-    { id: 'n4', french: 'quatre', english: 'four', level: 1, nextReview: 0 },
-    { id: 'n5', french: 'cinq', english: 'five', level: 1, nextReview: 0 },
-    // Common Verbs
-    { id: 'vb1', french: 'manger', english: 'to eat', level: 1, nextReview: 0 },
-    { id: 'vb2', french: 'boire', english: 'to drink', level: 1, nextReview: 0 },
-    { id: 'vb3', french: 'aller', english: 'to go', level: 1, nextReview: 0 },
-    { id: 'vb4', french: 'parler', english: 'to speak', level: 1, nextReview: 0 },
-];
+// Map imported vocabulary to include SRS fields
+const INITIAL_VOCABULARY = vocabularyList.map(word => ({
+    ...word,
+    level: 1,
+    nextReview: 0
+}));
 
 export const VocabularyProvider = ({ children }) => {
     const { addXP } = useProgress();
@@ -92,7 +69,15 @@ export const VocabularyProvider = ({ children }) => {
     };
 
     return (
-        <VocabularyContext.Provider value={{ vocabulary, updateWordProgress, getDueWords, resetVocabulary }}>
+        <VocabularyContext.Provider value={{
+            vocabulary,
+            updateWordProgress,
+            getDueWords,
+            resetVocabulary,
+            CATEGORIES,
+            getVocabularyByCategory,
+            getAllCategories
+        }}>
             {children}
         </VocabularyContext.Provider>
     );

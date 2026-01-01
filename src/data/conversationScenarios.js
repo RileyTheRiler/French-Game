@@ -173,5 +173,147 @@ export const SCENARIOS = [
                 success: true
             }
         }
+    },
+    {
+        id: 'bakery',
+        title: 'At the Bakery',
+        npcId: 'shopkeeper',
+        difficulty: 'Beginner',
+        xpReward: 45,
+        description: 'Buy some bread and pastries.',
+        initialMessage: "Bonjour ! Qu'est-ce qui vous ferait plaisir ?",
+        initialSpeaker: 'Boulanger',
+        nodes: {
+            start: {
+                options: [
+                    {
+                        text: "Je voudrais une baguette, s'il vous plaît.",
+                        nextNode: 'anything_else',
+                        isCorrect: true
+                    },
+                    {
+                        text: "Donne-moi du pain.",
+                        nextNode: 'correction_polite',
+                        isCorrect: false,
+                        feedback: "The imperative is too direct! Try 'Je voudrais...' instead."
+                    }
+                ]
+            },
+            correction_polite: {
+                message: "Pardon ? On dit 'Je voudrais' en France.",
+                speaker: 'Boulanger',
+                options: [
+                    {
+                        text: "Pardon. Je voudrais une baguette.",
+                        nextNode: 'anything_else',
+                        isCorrect: true
+                    }
+                ]
+            },
+            anything_else: {
+                message: "Très bien ! Autre chose ?",
+                speaker: 'Boulanger',
+                options: [
+                    {
+                        text: "Oui, deux croissants aussi.",
+                        nextNode: 'price',
+                        isCorrect: true
+                    },
+                    {
+                        text: "Non, merci. C'est tout.",
+                        nextNode: 'price',
+                        isCorrect: true
+                    }
+                ]
+            },
+            price: {
+                message: "Ça fait 3 euros 50.",
+                speaker: 'Boulanger',
+                options: [
+                    {
+                        text: "Voilà. Merci beaucoup !",
+                        nextNode: 'end_success',
+                        isCorrect: true
+                    }
+                ]
+            },
+            end_success: {
+                message: "Merci ! Bonne journée !",
+                speaker: 'Boulanger',
+                end: true,
+                success: true
+            }
+        }
+    },
+    {
+        id: 'directions',
+        title: 'Asking for Directions',
+        npcId: 'stranger',
+        difficulty: 'Intermediate',
+        xpReward: 65,
+        description: 'Find your way to the museum.',
+        initialMessage: "Vous cherchez quelque chose ?",
+        initialSpeaker: 'Passant',
+        nodes: {
+            start: {
+                options: [
+                    {
+                        text: "Excusez-moi, où est le musée ?",
+                        nextNode: 'directions_given',
+                        isCorrect: true
+                    },
+                    {
+                        text: "Le musée, maintenant !",
+                        nextNode: 'confused',
+                        isCorrect: false,
+                        feedback: "That's very rude! Start with 'Excusez-moi' or 'Pardon'."
+                    }
+                ]
+            },
+            confused: {
+                message: "Euh... pardon ?",
+                speaker: 'Passant',
+                options: [
+                    {
+                        text: "Désolé. Excusez-moi, où est le musée ?",
+                        nextNode: 'directions_given',
+                        isCorrect: true
+                    }
+                ]
+            },
+            directions_given: {
+                message: "Allez tout droit, puis tournez à gauche.",
+                speaker: 'Passant',
+                options: [
+                    {
+                        text: "C'est loin d'ici ?",
+                        nextNode: 'distance',
+                        isCorrect: true
+                    },
+                    {
+                        text: "Merci beaucoup !",
+                        nextNode: 'end_success',
+                        isCorrect: true
+                    }
+                ]
+            },
+            distance: {
+                message: "Non, c'est à cinq minutes à pied.",
+                speaker: 'Passant',
+                options: [
+                    {
+                        text: "Parfait, merci !",
+                        nextNode: 'end_success',
+                        isCorrect: true
+                    }
+                ]
+            },
+            end_success: {
+                message: "De rien ! Bonne visite !",
+                speaker: 'Passant',
+                end: true,
+                success: true
+            }
+        }
     }
 ];

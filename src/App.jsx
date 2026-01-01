@@ -15,6 +15,7 @@ import SentenceBuilderGame from './components/SentenceBuilder'; // Fixed path
 import StudySession from './components/Study/StudySession';
 import DailyMix from './components/DailyMix';
 import PronunciationCoach from './components/PronunciationCoach';
+import GrammarDrill from './components/GrammarDrill';
 
 function App() {
   const location = useLocation();
@@ -80,6 +81,11 @@ function App() {
               <Route path="/pronunciation" element={
                 <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
                   <PronunciationCoach />
+                </motion.div>
+              } />
+              <Route path="/game/grammar" element={
+                <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                  <GrammarDrill />
                 </motion.div>
               } />
               <Route path="*" element={<Navigate to="/" replace />} />

@@ -19,8 +19,6 @@ const TICK_RATE_MS = 16;
 const FALL_SPEED_INCREMENT = 0.05;
 const INITIAL_LIVES = 3;
 
-const INITIAL_LIVES = 3;
-
 const FallingWordsGame = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');

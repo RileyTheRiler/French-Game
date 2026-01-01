@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { calculateLevel, getLevelProgress } from '../utils/gamificationUtils';
+import { ACHIEVEMENTS } from '../data/achievements';
 
 const ProgressContext = createContext();
 
@@ -9,10 +10,16 @@ export const ProgressProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : {
             xp: 0,
             streak: 0,
-            coins: 50, // Start with some coins
-            inventory: {}, // Item ownership { 'streak_freeze': 1 }
+            coins: 50,
+            inventory: {},
+            doubleXpUntil: null,
             lastLoginDate: null,
-            highScore: 0 // Global or aggregate high score could go here
+            highScore: 0,
+            wordsLearned: 0,
+            storiesCompleted: 0,
+            conversationsCompleted: 0,
+            perfectQuizzes: 0,
+            unlockedAchievements: []
         };
     });
 
@@ -58,11 +65,66 @@ export const ProgressProvider = ({ children }) => {
     };
 
     const addXP = (amount) => {
+        const isDoubleXpActive = stats.doubleXpUntil && Date.now() < stats.doubleXpUntil;
+        const finalAmount = isDoubleXpActive ? amount * 2 : amount;
+
         setStats(prev => ({
             ...prev,
-            xp: prev.xp + amount
+            xp: prev.xp + finalAmount
         }));
     };
+
+    const activateDoubleXP = (durationMinutes = 15) => {
+        const expiresAt = Date.now() + (durationMinutes * 60 * 1000);
+        setStats(prev => ({
+            ...prev,
+            doubleXpUntil: expiresAt
+        }));
+    };
+
+    const isDoubleXpActive = () => {
+        return stats.doubleXpUntil && Date.now() < stats.doubleXpUntil;
+    };
+
+    // Stat incrementers for achievement tracking
+    const incrementStat = (statName, amount = 1) => {
+        setStats(prev => ({
+            ...prev,
+            [statName]: (prev[statName] || 0) + amount
+        }));
+    };
+
+    // Check and unlock achievements
+    const checkAchievements = useCallback(() => {
+        const currentLevel = calculateLevel(stats.xp);
+        const newUnlocks = [];
+
+        ACHIEVEMENTS.forEach(achievement => {
+            if (!stats.unlockedAchievements?.includes(achievement.id)) {
+                if (achievement.condition(stats, currentLevel)) {
+                    newUnlocks.push(achievement.id);
+                }
+            }
+        });
+
+        if (newUnlocks.length > 0) {
+            setStats(prev => ({
+                ...prev,
+                unlockedAchievements: [...(prev.unlockedAchievements || []), ...newUnlocks],
+                xp: prev.xp + newUnlocks.reduce((sum, id) => {
+                    const ach = ACHIEVEMENTS.find(a => a.id === id);
+                    return sum + (ach?.xpReward || 0);
+                }, 0)
+            }));
+            return newUnlocks;
+        }
+        return [];
+    }, [stats]);
+
+    // Run achievement check when stats change
+    useEffect(() => {
+        checkAchievements();
+    }, [stats.wordsLearned, stats.streak, stats.storiesCompleted, stats.conversationsCompleted, stats.coins]);
 
     const addCoins = (amount) => {
         setStats(prev => ({
@@ -151,7 +213,12 @@ export const ProgressProvider = ({ children }) => {
             resetProgress,
             addCoins,
             spendCoins,
-            buyItem
+            buyItem,
+            incrementStat,
+            checkAchievements,
+            activateDoubleXP,
+            isDoubleXpActive,
+            achievements: stats.unlockedAchievements || []
         }}>
             {children}
         </ProgressContext.Provider>

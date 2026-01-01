@@ -56,5 +56,68 @@ export const STORIES = [
             options: ["Rouge", "Bleu", "Jaune"],
             correctAnswer: "Bleu"
         }
+    },
+    {
+        id: 'story4',
+        title: "Le Voyage en Train",
+        description: "A journey through the French countryside.",
+        level: 2,
+        xpReward: 60,
+        coverColor: "from-sky-400 to-cyan-500",
+        content: [
+            { word: "Je", translation: "I" }, { word: "suis", translation: "am" }, { word: "à", translation: "at" }, { word: "la", translation: "the" }, { word: "gare", translation: "train station" }, { word: ".", translation: "" },
+            { word: "Le", translation: "The" }, { word: "train", translation: "train" }, { word: "arrive", translation: "arrives" }, { word: "bientôt", translation: "soon" }, { word: ".", translation: "" },
+            { word: "J'ai", translation: "I have" }, { word: "mon", translation: "my" }, { word: "billet", translation: "ticket" }, { word: "et", translation: "and" }, { word: "ma", translation: "my" }, { word: "valise", translation: "suitcase" }, { word: ".", translation: "" },
+            { word: "Le", translation: "The" }, { word: "voyage", translation: "journey" }, { word: "dure", translation: "lasts" }, { word: "deux", translation: "two" }, { word: "heures", translation: "hours" }, { word: ".", translation: "" },
+            { word: "Je", translation: "I" }, { word: "regarde", translation: "watch" }, { word: "par", translation: "through" }, { word: "la", translation: "the" }, { word: "fenêtre", translation: "window" }, { word: ".", translation: "" },
+            { word: "Les", translation: "The" }, { word: "champs", translation: "fields" }, { word: "sont", translation: "are" }, { word: "verts", translation: "green" }, { word: "et", translation: "and" }, { word: "beaux", translation: "beautiful" }, { word: ".", translation: "" }
+        ],
+        quiz: {
+            question: "Combien de temps dure le voyage ?",
+            options: ["Une heure", "Deux heures", "Trois heures"],
+            correctAnswer: "Deux heures"
+        }
+    },
+    {
+        id: 'story5',
+        title: "Au Marché",
+        description: "Shopping for fresh produce at the market.",
+        level: 1,
+        xpReward: 35,
+        coverColor: "from-amber-400 to-orange-500",
+        content: [
+            { word: "Aujourd'hui", translation: "Today" }, { word: ",", translation: "" }, { word: "c'est", translation: "it is" }, { word: "samedi", translation: "Saturday" }, { word: ".", translation: "" },
+            { word: "Je", translation: "I" }, { word: "vais", translation: "go" }, { word: "au", translation: "to the" }, { word: "marché", translation: "market" }, { word: ".", translation: "" },
+            { word: "J'achète", translation: "I buy" }, { word: "des", translation: "some" }, { word: "pommes", translation: "apples" }, { word: "rouges", translation: "red" }, { word: ".", translation: "" },
+            { word: "J'achète", translation: "I buy" }, { word: "aussi", translation: "also" }, { word: "du", translation: "some" }, { word: "fromage", translation: "cheese" }, { word: ".", translation: "" },
+            { word: "Le", translation: "The" }, { word: "fromage", translation: "cheese" }, { word: "coûte", translation: "costs" }, { word: "cinq", translation: "five" }, { word: "euros", translation: "euros" }, { word: ".", translation: "" },
+            { word: "Merci", translation: "Thank you" }, { word: ",", translation: "" }, { word: "au revoir", translation: "goodbye" }, { word: "!", translation: "" }
+        ],
+        quiz: {
+            question: "Combien coûte le fromage ?",
+            options: ["Trois euros", "Cinq euros", "Dix euros"],
+            correctAnswer: "Cinq euros"
+        }
+    },
+    {
+        id: 'story6',
+        title: "La Lettre",
+        description: "A heartfelt letter between friends.",
+        level: 3,
+        xpReward: 90,
+        coverColor: "from-rose-400 to-pink-500",
+        content: [
+            { word: "Chère", translation: "Dear" }, { word: "Marie", translation: "Marie" }, { word: ",", translation: "" },
+            { word: "Je", translation: "I" }, { word: "suis", translation: "am" }, { word: "triste", translation: "sad" }, { word: "parce que", translation: "because" }, { word: "tu", translation: "you" }, { word: "me", translation: "me" }, { word: "manques", translation: "miss" }, { word: ".", translation: "" },
+            { word: "Mais", translation: "But" }, { word: "je", translation: "I" }, { word: "suis", translation: "am" }, { word: "aussi", translation: "also" }, { word: "heureux", translation: "happy" }, { word: ".", translation: "" },
+            { word: "Parce que", translation: "Because" }, { word: "nous", translation: "we" }, { word: "sommes", translation: "are" }, { word: "amis", translation: "friends" }, { word: "pour", translation: "for" }, { word: "toujours", translation: "always" }, { word: ".", translation: "" },
+            { word: "J'espère", translation: "I hope" }, { word: "te", translation: "you" }, { word: "voir", translation: "to see" }, { word: "bientôt", translation: "soon" }, { word: ".", translation: "" },
+            { word: "Ton", translation: "Your" }, { word: "ami", translation: "friend" }, { word: ",", translation: "" }, { word: "Pierre", translation: "Pierre" }
+        ],
+        quiz: {
+            question: "Comment se sent Pierre ?",
+            options: ["En colère", "Fatigué", "Triste mais heureux"],
+            correctAnswer: "Triste mais heureux"
+        }
     }
 ];

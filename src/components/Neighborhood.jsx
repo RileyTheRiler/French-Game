@@ -97,12 +97,28 @@ const Neighborhood = ({ onNavigate }) => {
                     </button>
                 ))}
 
-                {/* Coming Soon Placeholder */}
-                <div className="glass-panel p-6 flex flex-col items-center justify-center opacity-50 border-dashed border-2 border-white/10">
-                    <span className="text-4xl mb-4 grayscale">🏗️</span>
-                    <h3 className="text-xl font-bold text-[var(--text-secondary)]">Under Construction</h3>
-                    <p className="text-sm text-[var(--text-muted)] mt-2">More locations soon...</p>
-                </div>
+                {/* Pronunciation Studio */}
+                <button
+                    onClick={() => onNavigate('pronunciation')}
+                    className="relative overflow-hidden group glass-panel p-6 text-left transition-all duration-300 transform hover:scale-105 hover:-translate-y-2 border-l-4 border-rose-400"
+                >
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-500 to-pink-500 opacity-10 rounded-full blur-3xl group-hover:opacity-20 transition-opacity" />
+                    <div className="relative z-10 flex flex-col h-full">
+                        <div className="text-4xl mb-4 bg-white/10 w-16 h-16 flex items-center justify-center rounded-2xl shadow-inner group-hover:scale-110 transition-transform">
+                            🎤
+                        </div>
+                        <h3 className="text-2xl font-bold mb-2 group-hover:text-white transition-colors">
+                            Pronunciation Studio
+                        </h3>
+                        <p className="text-[var(--text-secondary)] text-sm mb-4 flex-grow">
+                            Perfect your accent with AI feedback.
+                        </p>
+                        <div className="flex items-center text-xs font-bold uppercase tracking-wider opacity-60 group-hover:opacity-100 transition-opacity">
+                            <span className="mr-2 w-2 h-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-500"></span>
+                            Open Now
+                        </div>
+                    </div>
+                </button>
             </div>
 
             <div className="mt-12 text-center">

@@ -17,11 +17,11 @@ const ITEMS = [
     {
         id: 'double_xp',
         name: 'Double XP Potion',
-        description: 'Earn 2x XP for the next 15 minutes. (Coming Soon)',
+        description: 'Earn 2x XP for the next 15 minutes.',
         price: 100,
         icon: <Zap className="text-yellow-400" size={32} />,
         color: 'bg-yellow-500/10 border-yellow-500/30',
-        disabled: true
+        disabled: false
     },
     {
         id: 'theme_neon',
@@ -35,14 +35,18 @@ const ITEMS = [
 ];
 
 const ShopModal = ({ onClose }) => {
-    const { stats, buyItem } = useProgress();
+    const { stats, buyItem, activateDoubleXP, isDoubleXpActive } = useProgress();
 
     const handleBuy = (item) => {
         if (item.disabled) return;
 
         const success = buyItem(item.id, item.price);
         if (success) {
-            SoundManager.playSuccess(); // We might want a specific 'kaching' sound later
+            // Activate Double XP immediately upon purchase
+            if (item.id === 'double_xp') {
+                activateDoubleXP(15);
+            }
+            SoundManager.playSuccess();
         } else {
             SoundManager.playFailure();
         }

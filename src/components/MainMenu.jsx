@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag } from 'lucide-react';
+import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3 } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import LeaderboardModal from './LeaderboardModal';
 import DictionaryModal from './DictionaryModal';
 import SettingsModal from './SettingsModal';
 import ShopModal from './ShopModal';
+import AchievementsModal from './AchievementsModal';
+import GrammarModal from './GrammarModal';
+import StatsModal from './StatsModal';
+import DailyChallengeWidget from './DailyChallengeWidget';
+import { getTipOfTheDay } from '../data/dailyTips';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
@@ -21,6 +26,10 @@ const MainMenu = () => {
     const [showLeaderboard, setShowLeaderboard] = useState(false);
     const [showDictionary, setShowDictionary] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
+    const [showShop, setShowShop] = useState(false);
+    const [showAchievements, setShowAchievements] = useState(false);
+    const [showGrammar, setShowGrammar] = useState(false);
+    const [showStats, setShowStats] = useState(false);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -117,6 +126,16 @@ const MainMenu = () => {
             borderColor: 'border-l-rose-500',
             minLevel: 3,
             path: '/pronunciation'
+        },
+        {
+            id: 'grammar',
+            title: 'Grammar Drills',
+            description: 'Practice verb conjugation and grammar rules.',
+            icon: PenTool,
+            color: 'text-cyan-400',
+            borderColor: 'border-l-cyan-500',
+            minLevel: 1,
+            path: '/game/grammar'
         }
     ];
 
@@ -142,7 +161,35 @@ const MainMenu = () => {
                         </span>
                     )}
                 </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowAchievements(true)} className="rounded-full h-12 w-12 p-0">
+                    <Award size={20} className="text-orange-400" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowGrammar(true)} className="rounded-full h-12 w-12 p-0">
+                    <BookOpen size={20} className="text-emerald-400" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowStats(true)} className="rounded-full h-12 w-12 p-0">
+                    <BarChart3 size={20} className="text-indigo-400" />
+                </Button>
             </div>
+
+            {/* Streak Display */}
+            <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="absolute top-4 left-4 z-10"
+            >
+                <div className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2">
+                    <Flame size={20} className={stats.streak > 0 ? "text-orange-500 animate-pulse" : "text-slate-600"} />
+                    <span className={`font-bold ${stats.streak > 0 ? 'text-orange-400' : 'text-slate-500'}`}>
+                        {stats.streak || 0} day{stats.streak !== 1 ? 's' : ''}
+                    </span>
+                    {stats.inventory?.['streak_freeze'] > 0 && (
+                        <Badge variant="outline" className="text-xs bg-blue-500/20 border-blue-500/50 text-blue-300 ml-1">
+                            ❄️ {stats.inventory['streak_freeze']}
+                        </Badge>
+                    )}
+                </div>
+            </motion.div>
 
             {/* Header */}
             <motion.header
@@ -157,6 +204,38 @@ const MainMenu = () => {
                     Elevate your French, one word at a time.
                 </p>
             </motion.header>
+
+            {/* Daily Tip Card */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="w-full max-w-md mb-8"
+            >
+                {(() => {
+                    const tip = getTipOfTheDay();
+                    return (
+                        <Card className="bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border-indigo-500/30">
+                            <div className="flex items-start gap-4">
+                                <span className="text-3xl">{tip.icon}</span>
+                                <div className="flex-1">
+                                    <Badge variant="outline" className="mb-2 text-xs border-indigo-400/50 text-indigo-300">
+                                        Tip of the Day
+                                    </Badge>
+                                    <h3 className="font-bold text-white mb-1">{tip.title}</h3>
+                                    <p className="text-sm text-slate-300 leading-relaxed">{tip.content}</p>
+                                    {tip.funFact && (
+                                        <p className="text-xs text-indigo-300 mt-2 italic">💡 {tip.funFact}</p>
+                                    )}
+                                </div>
+                            </div>
+                        </Card>
+                    );
+                })()}
+            </motion.div>
+
+            {/* Daily Challenges */}
+            <DailyChallengeWidget />
 
             {/* Additional Navigation Buttons */}
             <div className="flex flex-col md:flex-row gap-4 mb-12 w-full max-w-md">
@@ -313,6 +392,24 @@ const MainMenu = () => {
                 {showShop && (
                     <ShopModal
                         onClose={() => setShowShop(false)}
+                    />
+                )}
+                {showAchievements && (
+                    <AchievementsModal
+                        isOpen={showAchievements}
+                        onClose={() => setShowAchievements(false)}
+                    />
+                )}
+                {showGrammar && (
+                    <GrammarModal
+                        isOpen={showGrammar}
+                        onClose={() => setShowGrammar(false)}
+                    />
+                )}
+                {showStats && (
+                    <StatsModal
+                        isOpen={showStats}
+                        onClose={() => setShowStats(false)}
                     />
                 )}
             </AnimatePresence>

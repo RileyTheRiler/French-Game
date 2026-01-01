@@ -119,12 +119,13 @@ const Neighborhood = () => {
     };
 
     const LOCATIONS = [
-        { id: 'school', label: "L'École", icon: School, color: { bg: 'bg-indigo-500/20', text: 'text-indigo-400' }, target: 'sentenceBuilder', level: 1 },
-        { id: 'cafe', label: "Le Café", icon: Coffee, color: { bg: 'bg-amber-600/20', text: 'text-amber-400' }, target: 'conversation', level: 2, npc: PERSONAS['barista'] },
-        { id: 'library', label: "Bibliothèque", icon: Book, color: { bg: 'bg-emerald-500/20', text: 'text-emerald-400' }, target: 'storyMode', level: 3, npc: PERSONAS['librarian'] },
-        { id: 'studio', label: "Le Studio", icon: Mic, color: { bg: 'bg-rose-500/20', text: 'text-rose-400' }, target: 'pronunciation', level: 3 },
-        { id: 'bakery', label: "Boulangerie", icon: School, color: { bg: 'bg-pink-500/20', text: 'text-pink-400' }, target: null, level: 1, npc: PERSONAS['baker'] },
-        { id: 'arcade', label: "Salle de Jeux", icon: Gamepad2, color: { bg: 'bg-violet-500/20', text: 'text-violet-400' }, target: 'fallingWords', level: 1 }
+        { id: 'school', label: "L'École", icon: School, color: { bg: 'bg-indigo-500/20', text: 'text-indigo-400' }, target: 'sentenceBuilder', level: 1, category: 'basics' },
+        { id: 'cafe', label: "Le Café", icon: Coffee, color: { bg: 'bg-amber-600/20', text: 'text-amber-400' }, target: 'conversation', level: 2, npc: PERSONAS['barista'], category: 'food' },
+        { id: 'library', label: "Bibliothèque", icon: Book, color: { bg: 'bg-emerald-500/20', text: 'text-emerald-400' }, target: 'storyMode', level: 3, npc: PERSONAS['librarian'], category: 'emotions' },
+        { id: 'studio', label: "Le Studio", icon: Mic, color: { bg: 'bg-rose-500/20', text: 'text-rose-400' }, target: 'pronunciation', level: 3, category: 'basics' },
+        { id: 'bakery', label: "Boulangerie", icon: School, color: { bg: 'bg-pink-500/20', text: 'text-pink-400' }, target: null, level: 1, npc: PERSONAS['baker'], category: 'food' },
+        { id: 'arcade', label: "Salle de Jeux", icon: Gamepad2, color: { bg: 'bg-violet-500/20', text: 'text-violet-400' }, target: 'fallingWords', level: 1, category: 'colors' },
+        { id: 'station', label: "La Gare", icon: MapPin, color: { bg: 'bg-sky-500/20', text: 'text-sky-400' }, target: 'dailyMix', level: 2, category: 'travel' },
     ];
 
     return (

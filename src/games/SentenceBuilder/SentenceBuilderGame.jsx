@@ -10,6 +10,7 @@ const SentenceBuilderGame = ({ onExit }) => {
     const [availableWords, setAvailableWords] = useState([]);
     const [feedback, setFeedback] = useState(null);
     const [monitorMessage, setMonitorMessage] = useState(null);
+    const [monitorTipId, setMonitorTipId] = useState(null);
     const [streak, setStreak] = useState(0);
 
     const scenario = SCENARIOS[currentScenarioIndex];
@@ -21,6 +22,7 @@ const SentenceBuilderGame = ({ onExit }) => {
             setSelectedWords([]);
             setFeedback(null);
             setMonitorMessage(null);
+            setMonitorTipId(null);
         }
     }, [currentScenarioIndex, scenario]);
 
@@ -40,6 +42,7 @@ const SentenceBuilderGame = ({ onExit }) => {
         if (formedSentence === scenario.targetSentence) {
             setFeedback('success');
             setMonitorMessage(null);
+            setMonitorTipId(null);
             soundManager.playMatch();
             setStreak(s => s + 1);
             setTimeout(() => {
@@ -48,7 +51,8 @@ const SentenceBuilderGame = ({ onExit }) => {
         } else {
             setFeedback('error');
             const analysis = monitorSystem.analyze(scenario.targetSentence, formedSentence);
-            setMonitorMessage(analysis);
+            setMonitorMessage(analysis?.message || null);
+            setMonitorTipId(analysis?.tipId || null);
             soundManager.playMiss();
             setStreak(0);
         }
@@ -131,6 +135,7 @@ const SentenceBuilderGame = ({ onExit }) => {
                         ? `Parfait ! "${scenario.translation}"`
                         : "Something isn't quite right. Check the word order.")
                 }
+                tipId={monitorTipId}
             />
         </div>
     );
