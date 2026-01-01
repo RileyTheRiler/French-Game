@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Mic, Volume2 } from 'lucide-react';
 import { useVocabulary } from '../../context/VocabularyContext';
+import { useProgress } from '../../context/ProgressContext';
 import WordItem from './WordItem';
 import SoundManager from '../../utils/SoundManager';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { GameLayout } from '../layout/GameLayout';
+import { playWordAudio } from '../../utils/audio';
+import { scorePronunciation } from '../../utils/phonetics';
 
 const GAME_WIDTH_PERCENT = 90;
 const INITIAL_FALL_SPEED = 0.05;
@@ -23,6 +27,8 @@ const FallingWordsGame = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
 
+    const { getDueWords, updateWordProgress } = useVocabulary();
+    const { offlineAudio } = useProgress();
     const { getPracticeQueue, updateWordProgress, markWordSeen } = useVocabulary();
     const { getDueWords, updateWordProgress, getWeightedPracticeWords, vocabulary } = useVocabulary();
 
@@ -32,6 +38,9 @@ const FallingWordsGame = () => {
     const [gameOver, setGameOver] = useState(false);
     const [inputValue, setInputValue] = useState('');
     const [isZenMode, setIsZenMode] = useState(false);
+    const [listenMode, setListenMode] = useState(false);
+    const [shadowFeedback, setShadowFeedback] = useState(null);
+    const [isShadowing, setIsShadowing] = useState(false);
 
     // Juice State
     const [combo, setCombo] = useState(0);
@@ -54,6 +63,9 @@ const FallingWordsGame = () => {
     const validWords = useRef([]);
     const isPlayingRef = useRef(false);
     const isZenModeRef = useRef(false);
+    const listenModeRef = useRef(false);
+    const recognitionRef = useRef(null);
+    const lastHeardWordRef = useRef(null);
 
     // Dynamic difficulty refs
     const currentFallSpeedRef = useRef(INITIAL_FALL_SPEED);
@@ -64,6 +76,10 @@ const FallingWordsGame = () => {
         isZenModeRef.current = isZenMode;
         if (isZenMode) setLives(INITIAL_LIVES);
     }, [isZenMode]);
+
+    useEffect(() => {
+        listenModeRef.current = listenMode;
+    }, [listenMode]);
 
     // Initialize
     useEffect(() => {
@@ -97,6 +113,28 @@ const FallingWordsGame = () => {
         };
     }, [getPracticeQueue]);
 
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.lang = 'fr-FR';
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.maxAlternatives = 1;
+
+        recognitionRef.current.onresult = (event) => {
+            const heard = event.results[0][0].transcript;
+            const target = lastHeardWordRef.current;
+            if (target) {
+                const { accuracy } = scorePronunciation(target.french, heard);
+                setShadowFeedback({ heard, accuracy, target });
+            }
+            setIsShadowing(false);
+        };
+        recognitionRef.current.onerror = () => setIsShadowing(false);
+        recognitionRef.current.onend = () => setIsShadowing(false);
+    }, []);
+
     const spawnWord = () => {
         if (validWords.current.length === 0) return;
 
@@ -112,12 +150,18 @@ const FallingWordsGame = () => {
             x: randomX,
             y: -10,
             isMatched: false,
+            target: randomWord
             mastery: randomWord.level,
             lastSeen: randomWord.lastSeen,
         };
 
         markWordSeen(randomWord.id);
         activeWordsRef.current.push(newWord);
+        lastHeardWordRef.current = randomWord;
+
+        if (listenModeRef.current) {
+            playWordAudio(randomWord, { preferCache: true, offlineOnly: offlineAudio });
+        }
     };
 
     const spawnParticles = (x, y) => {
@@ -253,6 +297,18 @@ const FallingWordsGame = () => {
         }
     };
 
+    const startShadowing = () => {
+        if (!recognitionRef.current || isShadowing) return;
+        const targetWord = activeWordsRef.current[0]?.target || lastHeardWordRef.current;
+        if (!targetWord) return;
+
+        lastHeardWordRef.current = targetWord;
+        setShadowFeedback(null);
+        setIsShadowing(true);
+        recognitionRef.current.start();
+        playWordAudio(targetWord, { preferCache: true, offlineOnly: offlineAudio });
+    };
+
     const restartGame = () => {
         setScore(0);
         setLives(INITIAL_LIVES);
@@ -261,6 +317,8 @@ const FallingWordsGame = () => {
         setCombo(0);
         setIsShaking(false);
         setParticles([]);
+        setShadowFeedback(null);
+        setIsShadowing(false);
 
         activeWordsRef.current = [];
         setRenderedWords([]);
@@ -317,6 +375,15 @@ const FallingWordsGame = () => {
                             </motion.span>
                         ))}
                     </div>
+                    <Button
+                        variant={listenMode ? "success" : "outline"}
+                        size="sm"
+                        onClick={() => setListenMode(!listenMode)}
+                        className="rounded-full flex items-center gap-2"
+                    >
+                        <Volume2 size={14} />
+                        Listen then Type
+                    </Button>
                     <Button
                         variant={isZenMode ? "success" : "outline"}
                         size="sm"
@@ -396,17 +463,42 @@ const FallingWordsGame = () => {
 
                 {/* Input Area */}
                 <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 w-full max-w-lg px-4">
-                    <Card className="p-2 bg-slate-950/80 border-white/20">
+                    <Card className="p-4 bg-slate-950/80 border-white/20 space-y-3">
                         <input
                             ref={inputRef}
                             type="text"
                             value={inputValue}
                             onChange={handleInputChange}
-                            placeholder="Type the French translation..."
+                            placeholder={listenMode ? "Type what you hear..." : "Type the French translation..."}
                             className="w-full p-4 bg-transparent text-white text-center text-2xl font-bold focus:outline-none placeholder:text-slate-600"
                             disabled={gameOver}
                             aria-label="Type the matching French word"
                         />
+                        <div className="flex items-center justify-center gap-3">
+                            <Button
+                                variant={isShadowing ? "success" : "outline"}
+                                size="sm"
+                                className="rounded-full flex items-center gap-2"
+                                onClick={startShadowing}
+                                disabled={gameOver}
+                            >
+                                <Mic size={16} />
+                                {isShadowing ? 'Listening...' : 'Shadow audio'}
+                            </Button>
+                            {listenMode && (
+                                <Badge variant="outline" className="text-xs bg-indigo-500/10 border-indigo-500/30 text-indigo-200">
+                                    Audio plays on spawn
+                                </Badge>
+                            )}
+                        </div>
+                        {shadowFeedback && (
+                            <div className="text-center text-sm text-slate-300">
+                                <p className={shadowFeedback.accuracy >= 70 ? 'text-emerald-300 font-semibold' : 'text-amber-300 font-semibold'}>
+                                    Shadow accuracy: {shadowFeedback.accuracy}%
+                                </p>
+                                <p className="text-xs text-slate-500">Heard: "{shadowFeedback.heard}"</p>
+                            </div>
+                        )}
                     </Card>
                 </div>
             </div>

@@ -231,6 +231,11 @@ export const ProgressProvider = ({ children }) => {
         return saved !== null ? JSON.parse(saved) : true;
     });
 
+    const [offlineAudio, setOfflineAudio] = useState(() => {
+        const saved = localStorage.getItem('frenchApp_offlineAudio');
+        return saved !== null ? JSON.parse(saved) : false;
+    });
+
     const [reducedMotion, setReducedMotion] = useState(() => {
         const saved = localStorage.getItem('frenchApp_reducedMotion');
         return saved !== null ? JSON.parse(saved) : false;
@@ -245,6 +250,11 @@ export const ProgressProvider = ({ children }) => {
     }, [audioEnabled]);
 
     useEffect(() => {
+        localStorage.setItem('frenchApp_offlineAudio', JSON.stringify(offlineAudio));
+    }, [offlineAudio]);
+
+    const toggleAudio = () => setAudioEnabled(prev => !prev);
+    const toggleOfflineAudio = () => setOfflineAudio(prev => !prev);
         localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
         document.body.classList.toggle('reduced-motion', reducedMotion);
     }, [reducedMotion]);
@@ -366,6 +376,8 @@ export const ProgressProvider = ({ children }) => {
             incrementStreak,
             audioEnabled,
             toggleAudio,
+            offlineAudio,
+            toggleOfflineAudio,
             reducedMotion,
             toggleReducedMotion,
             colorTheme,

@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useProgress } from './ProgressContext';
 import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
+import { cacheVocabularyAudio } from '../utils/audio';
+
+const enhanceWord = (word) => ({
+    ...word,
+    audio: word.audio || { type: 'tts', text: word.french },
+    phonemes: word.phonemes || [],
+    level: word.level || 1,
+    nextReview: word.nextReview || 0
+});
 import { buildPracticeQueue } from '../utils/practiceQueue';
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { useProgress } from './ProgressContext';
@@ -44,6 +53,7 @@ const hydrateWord = (word) => {
 };
 
 // Map imported vocabulary to include SRS fields
+const INITIAL_VOCABULARY = vocabularyList.map(enhanceWord);
 const INITIAL_VOCABULARY = vocabularyList.map(word => hydrateWord({
     ...word,
     srs: getInitialState(),
@@ -75,6 +85,8 @@ export const VocabularyProvider = ({ children }) => {
     const audioCacheRef = useRef({});
     const [vocabulary, setVocabulary] = useState(() => {
         const saved = localStorage.getItem('frenchApp_vocab');
+        const base = saved ? JSON.parse(saved) : INITIAL_VOCABULARY;
+        return base.map(enhanceWord);
         const parsed = saved ? JSON.parse(saved) : INITIAL_VOCABULARY;
         return parsed.map(normalizeWord);
         return parsed.map(hydrateWord);
@@ -281,6 +293,10 @@ export const VocabularyProvider = ({ children }) => {
         setVocabulary(incomingVocabulary);
     };
 
+    const downloadAudioOnce = async () => {
+        await cacheVocabularyAudio(vocabulary);
+    };
+
     return (
         <VocabularyContext.Provider value={contextValue}>
         <VocabularyContext.Provider value={{
@@ -296,6 +312,7 @@ export const VocabularyProvider = ({ children }) => {
             CATEGORIES,
             getVocabularyByCategory,
             getAllCategories,
+            downloadAudioOnce
             hydrateVocabulary
             preloadAudioForWords,
             playWordAudio
