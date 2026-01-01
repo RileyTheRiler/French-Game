@@ -4,6 +4,7 @@
  */
 
 export const INITIAL_EF = 2.5;
+const clampGrade = (grade) => Math.max(0, Math.min(5, grade));
 
 /**
  * Calculates the next review schedule for a card.
@@ -19,6 +20,7 @@ export const INITIAL_EF = 2.5;
  * @returns {object} The new state { interval, repetition, ef, dueDate }.
  */
 export const calculateNextReview = (previousState, grade) => {
+    grade = clampGrade(grade);
     let { interval, repetition, ef } = previousState || { interval: 0, repetition: 0, ef: INITIAL_EF };
 
     if (grade >= 3) {
@@ -57,3 +59,31 @@ export const getInitialState = () => ({
     ef: INITIAL_EF,
     dueDate: 0 // Ready immediately
 });
+
+/**
+ * Normalize a user-facing response (boolean/string/number) into a SM-2 grade.
+ * Allows callers to pass semantic labels instead of raw integers.
+ */
+export const normalizeGrade = (grade) => {
+    if (typeof grade === 'number') return clampGrade(grade);
+    if (typeof grade === 'boolean') return grade ? 4 : 1;
+    if (typeof grade === 'string') {
+        switch (grade.toLowerCase()) {
+            case 'easy':
+                return 5;
+            case 'good':
+                return 4;
+            case 'hard':
+                return 3;
+            case 'again':
+            case 'fail':
+            case 'forgot':
+                return 1;
+            default:
+                return 0;
+        }
+    }
+    return 0;
+};
+
+export const isPassingGrade = (grade) => normalizeGrade(grade) >= 3;

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, Check, X, RotateCcw, Pin, Clock3, BellOff } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
@@ -9,12 +10,27 @@ import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
 import { formatRelativeTime } from '../utils/time';
 
+import { useProgress } from '../context/ProgressContext';
 import { useNavigate } from 'react-router-dom';
 
 const FlashcardMode = ({ mode = 'standard' }) => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
     const { updateWordProgress, getPracticeQueue, markWordSeen, togglePinWord, snoozeWord, clearSnooze } = useVocabulary();
+    const { updateWordProgress, vocabulary, getWeightedPracticeWords } = useVocabulary();
+    const { getDueWords, updateWordProgress, vocabulary } = useVocabulary();
+    const { reducedMotion } = useProgress();
+    const containerRef = useRef(null);
+
+    const getStudyQueue = useCallback(() => {
+        let pool = getWeightedPracticeWords ? getWeightedPracticeWords(20) : vocabulary;
+        if (mode === 'mix') {
+            pool = [...pool].sort(() => Math.random() - 0.5);
+        } else {
+            pool = [...pool].sort((a, b) => (a.srs?.dueDate || 0) - (b.srs?.dueDate || 0));
+        }
+        return pool.slice(0, 10); // Smaller sets for better focus
+    }, [getWeightedPracticeWords, vocabulary, mode]);
 
     const [queue, setQueue] = useState([]);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -35,6 +51,8 @@ const FlashcardMode = ({ mode = 'standard' }) => {
             return queueForMode;
         });
     }, [mode, getPracticeQueue]);
+        setQueue(getStudyQueue());
+    }, [getStudyQueue]);
 
     useEffect(() => {
         if (currentWord) {
@@ -42,23 +60,61 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         }
     }, [currentWord?.id, markWordSeen]);
 
-    const handleFlip = () => {
-        setIsFlipped(!isFlipped);
+    const handleFlip = useCallback(() => {
+        setIsFlipped(prev => !prev);
         if (!isFlipped && currentWord) {
             speak(currentWord.french);
         }
-    };
+    }, [currentWord, isFlipped]);
 
-    const handleGrading = (success) => {
+    const handleGrading = (grade) => {
+    const handleGrading = useCallback((success) => {
         if (!currentWord) return;
-        updateWordProgress(currentWord.id, success);
+        updateWordProgress(currentWord.id, grade);
         setIsFlipped(false);
         if (currentCardIndex < queue.length - 1) {
             setCurrentCardIndex(prev => prev + 1);
         } else {
             setSessionComplete(true);
         }
-    };
+    }, [currentCardIndex, currentWord, queue.length, updateWordProgress]);
+
+    useEffect(() => {
+        if (containerRef.current) {
+            containerRef.current.focus();
+        }
+    }, [currentCardIndex, sessionComplete]);
+
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                onExit();
+                return;
+            }
+
+            if (sessionComplete) return;
+
+            if (event.key === ' ' || event.key === 'Enter') {
+                event.preventDefault();
+                handleFlip();
+            }
+
+            if (isFlipped) {
+                if (event.key === 'ArrowLeft') {
+                    event.preventDefault();
+                    handleGrading(false);
+                }
+                if (event.key === 'ArrowRight') {
+                    event.preventDefault();
+                    handleGrading(true);
+                }
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isFlipped, sessionComplete, onExit, handleGrading, handleFlip]);
 
     if (!currentWord || sessionComplete) {
         return (
@@ -107,19 +163,29 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                 </Badge>
             }
         >
-            <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)]">
+            <div
+                className="flex flex-col items-center justify-center h-[calc(100vh-200px)]"
+                ref={containerRef}
+                tabIndex={-1}
+                aria-label="Flashcard session"
+                role="main"
+            >
 
                 {/* 3D Card Container */}
                 <div
                     className="relative w-full max-w-lg aspect-[4/3] cursor-pointer"
                     style={{ perspective: "2000px" }}
                     onClick={handleFlip}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isFlipped}
+                    aria-label={isFlipped ? 'Hide translation' : 'Reveal translation'}
                 >
                     <motion.div
                         className="w-full h-full relative"
                         initial={false}
                         animate={{ rotateY: isFlipped ? 180 : 0 }}
-                        transition={{ duration: 0.8, type: "spring", stiffness: 100, damping: 15 }}
+                        transition={reducedMotion ? { duration: 0.1 } : { duration: 0.8, type: "spring", stiffness: 100, damping: 15 }}
                         style={{ transformStyle: "preserve-3d" }}
                     >
                         {/* Front */}
@@ -148,6 +214,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                                 variant="secondary"
                                 className="rounded-2xl p-6 h-20 w-20 bg-white/5 border-white/10 hover:bg-white/10 group overflow-hidden"
                                 onClick={(e) => { e.stopPropagation(); speak(currentWord.french); }}
+                                aria-label={`Hear pronunciation for ${currentWord.french}`}
                             >
                                 <Volume2 size={36} className="text-indigo-400 group-hover:scale-110 transition-transform" />
                             </Button>
@@ -182,6 +249,46 @@ const FlashcardMode = ({ mode = 'standard' }) => {
 
                 {/* Grading Controls */}
                 <AnimatePresence>
+                            {isFlipped && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="flex flex-wrap gap-4 mt-12 justify-center"
+                                >
+                                    <Button
+                                        variant="danger"
+                                        size="lg"
+                                        className="px-10 py-6 rounded-2xl"
+                                        onClick={() => handleGrading('again')}
+                                    >
+                                        <X className="mr-2" /> Again
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="lg"
+                                        className="px-10 py-6 rounded-2xl"
+                                        onClick={() => handleGrading('hard')}
+                                    >
+                                        Hard
+                                    </Button>
+                                    <Button
+                                        variant="default"
+                                        size="lg"
+                                        className="px-10 py-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500"
+                                        onClick={() => handleGrading('good')}
+                                    >
+                                        Good
+                                    </Button>
+                                    <Button
+                                        variant="default"
+                                        size="lg"
+                                        className="px-10 py-6 rounded-2xl bg-blue-600 hover:bg-blue-500"
+                                        onClick={() => handleGrading('easy')}
+                                    >
+                                        Easy
+                                    </Button>
+                                </motion.div>
+                            )}
                     {isFlipped && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -193,6 +300,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                                 size="lg"
                                 className="px-12 py-6 rounded-2xl"
                                 onClick={() => handleGrading(false)}
+                                aria-label="Mark card as hard. Shortcut Left Arrow"
                             >
                                 <X className="mr-2" /> Hard
                             </Button>
@@ -201,6 +309,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                                 size="lg"
                                 className="px-12 py-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500"
                                 onClick={() => handleGrading(true)}
+                                aria-label="Mark card as easy. Shortcut Right Arrow"
                             >
                                 <Check className="mr-2" /> Easy
                             </Button>

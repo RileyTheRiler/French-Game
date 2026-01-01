@@ -24,6 +24,7 @@ const FallingWordsGame = () => {
     const onExit = () => navigate('/');
 
     const { getPracticeQueue, updateWordProgress, markWordSeen } = useVocabulary();
+    const { getDueWords, updateWordProgress, getWeightedPracticeWords, vocabulary } = useVocabulary();
 
     // Game State (Visual)
     const [score, setScore] = useState(0);
@@ -68,15 +69,17 @@ const FallingWordsGame = () => {
     useEffect(() => {
         try {
             const words = getPracticeQueue('fallingWords', 40);
+            const weighted = getWeightedPracticeWords ? getWeightedPracticeWords(40) : getDueWords();
+            const words = weighted && weighted.length ? weighted : getDueWords();
             if (!words || words.length === 0) {
                 console.warn("No words available!");
-                validWords.current = [];
+                validWords.current = vocabulary || [];
             } else {
                 validWords.current = words;
             }
         } catch (e) {
             console.error("Error fetching words:", e);
-            validWords.current = [];
+            validWords.current = vocabulary || [];
         }
 
         // Init Audio
@@ -192,7 +195,7 @@ const FallingWordsGame = () => {
 
             if (newY > 100) {
                 if (!isZenModeRef.current) livesLost++;
-                updateWordProgress(word.wordId, false);
+                updateWordProgress(word.wordId, 'again');
             } else {
                 word.y = newY;
                 nextWords.push(word);
@@ -234,7 +237,7 @@ const FallingWordsGame = () => {
 
             SoundManager.playMatch();
             spawnParticles(word.x + '%', word.y + '%');
-            updateWordProgress(word.wordId, true);
+            updateWordProgress(word.wordId, 'good');
 
             const comboMultiplier = 1 + (combo * 0.1);
             setScore(s => Math.floor(s + (10 * comboMultiplier)));
@@ -274,6 +277,22 @@ const FallingWordsGame = () => {
         if (inputRef.current) inputRef.current.focus();
     });
 
+    useEffect(() => {
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                onExit();
+            }
+            if (gameOver && (event.key === 'Enter' || event.key === ' ')) {
+                event.preventDefault();
+                restartGame();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [gameOver, onExit]);
+
     if (activeWordsRef.current === null) return <div>Loading...</div>;
 
     return (
@@ -286,7 +305,7 @@ const FallingWordsGame = () => {
                     <Badge variant="primary" className="text-lg py-1 px-4">
                         Score: {score}
                     </Badge>
-                    <div className="flex gap-1">
+                    <div className="flex gap-1" aria-label={`${lives} lives remaining`} role="status">
                         {Array(INITIAL_LIVES).fill(0).map((_, i) => (
                             <motion.span
                                 key={i}
@@ -303,6 +322,8 @@ const FallingWordsGame = () => {
                         size="sm"
                         onClick={() => setIsZenMode(!isZenMode)}
                         className="rounded-full"
+                        aria-pressed={isZenMode}
+                        aria-label={`Toggle ${isZenMode ? 'Zen' : 'Challenge'} mode`}
                     >
                         {isZenMode ? 'Zen Mode' : 'Challenge'}
                     </Button>
@@ -384,6 +405,7 @@ const FallingWordsGame = () => {
                             placeholder="Type the French translation..."
                             className="w-full p-4 bg-transparent text-white text-center text-2xl font-bold focus:outline-none placeholder:text-slate-600"
                             disabled={gameOver}
+                            aria-label="Type the matching French word"
                         />
                     </Card>
                 </div>
@@ -392,7 +414,7 @@ const FallingWordsGame = () => {
             {/* Game Over Modal */}
             <AnimatePresence>
                 {gameOver && (
-                    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50">
+                    <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Game over">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}

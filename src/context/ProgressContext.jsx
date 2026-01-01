@@ -5,9 +5,28 @@ import { ACHIEVEMENTS } from '../data/achievements';
 const ProgressContext = createContext();
 
 export const ProgressProvider = ({ children }) => {
+    const defaultStats = {
+        xp: 0,
+        streak: 0,
+        coins: 50,
+        inventory: {},
+        doubleXpUntil: null,
+        lastLoginDate: null,
+        highScore: 0,
+        wordsLearned: 0,
+        storiesCompleted: 0,
+        conversationsCompleted: 0,
+        perfectQuizzes: 0,
+        unlockedAchievements: [],
+        onboardingComplete: false,
+        placementComplete: false,
+        placementResult: null,
+        onboardingRewarded: false
+    };
+
     const [stats, setStats] = useState(() => {
         const saved = localStorage.getItem('frenchApp_progress');
-        return saved ? JSON.parse(saved) : {
+        const baseState = {
             xp: 0,
             streak: 0,
             coins: 50,
@@ -19,8 +38,19 @@ export const ProgressProvider = ({ children }) => {
             storiesCompleted: 0,
             conversationsCompleted: 0,
             perfectQuizzes: 0,
-            unlockedAchievements: []
+            unlockedAchievements: [],
+            updatedAt: Date.now()
         };
+        return saved ? { ...baseState, ...JSON.parse(saved) } : baseState;
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            return {
+                ...defaultStats,
+                ...parsed,
+                inventory: { ...defaultStats.inventory, ...(parsed.inventory || {}) }
+            };
+        }
+        return defaultStats;
     });
 
     // Save to local storage whenever stats change
@@ -53,14 +83,15 @@ export const ProgressProvider = ({ children }) => {
                             ...prev.inventory,
                             'streak_freeze': prev.inventory['streak_freeze'] - 1
                         },
-                        frozenUsed: true // Optional flag to show user they were saved
+                        frozenUsed: true, // Optional flag to show user they were saved
+                        updatedAt: Date.now()
                     }));
                 } else {
-                    setStats(prev => ({ ...prev, streak: 0 }));
+                    setStats(prev => ({ ...prev, streak: 0, updatedAt: Date.now() }));
                 }
             }
             // Update login date
-            setStats(prev => ({ ...prev, lastLoginDate: today }));
+            setStats(prev => ({ ...prev, lastLoginDate: today, updatedAt: Date.now() }));
         }
     };
 
@@ -70,7 +101,8 @@ export const ProgressProvider = ({ children }) => {
 
         setStats(prev => ({
             ...prev,
-            xp: prev.xp + finalAmount
+            xp: prev.xp + finalAmount,
+            updatedAt: Date.now()
         }));
     };
 
@@ -78,7 +110,8 @@ export const ProgressProvider = ({ children }) => {
         const expiresAt = Date.now() + (durationMinutes * 60 * 1000);
         setStats(prev => ({
             ...prev,
-            doubleXpUntil: expiresAt
+            doubleXpUntil: expiresAt,
+            updatedAt: Date.now()
         }));
     };
 
@@ -90,7 +123,8 @@ export const ProgressProvider = ({ children }) => {
     const incrementStat = (statName, amount = 1) => {
         setStats(prev => ({
             ...prev,
-            [statName]: (prev[statName] || 0) + amount
+            [statName]: (prev[statName] || 0) + amount,
+            updatedAt: Date.now()
         }));
     };
 
@@ -114,7 +148,8 @@ export const ProgressProvider = ({ children }) => {
                 xp: prev.xp + newUnlocks.reduce((sum, id) => {
                     const ach = ACHIEVEMENTS.find(a => a.id === id);
                     return sum + (ach?.xpReward || 0);
-                }, 0)
+                }, 0),
+                updatedAt: Date.now()
             }));
             return newUnlocks;
         }
@@ -129,7 +164,8 @@ export const ProgressProvider = ({ children }) => {
     const addCoins = (amount) => {
         setStats(prev => ({
             ...prev,
-            coins: (prev.coins || 0) + amount
+            coins: (prev.coins || 0) + amount,
+            updatedAt: Date.now()
         }));
     };
 
@@ -137,7 +173,8 @@ export const ProgressProvider = ({ children }) => {
         if (stats.coins >= amount) {
             setStats(prev => ({
                 ...prev,
-                coins: prev.coins - amount
+                coins: prev.coins - amount,
+                updatedAt: Date.now()
             }));
             return true;
         }
@@ -152,7 +189,8 @@ export const ProgressProvider = ({ children }) => {
                 inventory: {
                     ...prev.inventory,
                     [itemId]: (prev.inventory?.[itemId] || 0) + 1
-                }
+                },
+                updatedAt: Date.now()
             }));
             return true;
         }
@@ -171,7 +209,8 @@ export const ProgressProvider = ({ children }) => {
             return {
                 ...prev,
                 streak: prev.streak + 1,
-                lastStreakDate: today
+                lastStreakDate: today,
+                updatedAt: Date.now()
             };
         });
     };
@@ -181,25 +220,97 @@ export const ProgressProvider = ({ children }) => {
         return saved !== null ? JSON.parse(saved) : true;
     });
 
+    const [reducedMotion, setReducedMotion] = useState(() => {
+        const saved = localStorage.getItem('frenchApp_reducedMotion');
+        return saved !== null ? JSON.parse(saved) : false;
+    });
+
+    const [colorTheme, setColorTheme] = useState(() => {
+        return localStorage.getItem('frenchApp_colorTheme') || 'midnight';
+    });
+
     useEffect(() => {
         localStorage.setItem('frenchApp_audio', JSON.stringify(audioEnabled));
     }, [audioEnabled]);
 
+    useEffect(() => {
+        localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
+        document.body.classList.toggle('reduced-motion', reducedMotion);
+    }, [reducedMotion]);
+
+    useEffect(() => {
+        localStorage.setItem('frenchApp_colorTheme', colorTheme);
+        document.body.dataset.theme = colorTheme;
+    }, [colorTheme]);
+
     const toggleAudio = () => setAudioEnabled(prev => !prev);
+    const toggleReducedMotion = () => setReducedMotion(prev => !prev);
+    const switchColorTheme = (theme) => setColorTheme(theme);
 
     const resetProgress = () => {
         const initialStats = {
             xp: 0,
             streak: 0,
             lastLoginDate: null,
-            highScore: 0
+            highScore: 0,
+            coins: 50,
+            inventory: {},
+            unlockedAchievements: [],
+            wordsLearned: 0,
+            storiesCompleted: 0,
+            conversationsCompleted: 0,
+            perfectQuizzes: 0,
+            updatedAt: Date.now()
         };
         setStats(initialStats);
         localStorage.setItem('frenchApp_progress', JSON.stringify(initialStats));
+        setStats({ ...defaultStats });
+        localStorage.setItem('frenchApp_progress', JSON.stringify(defaultStats));
+    };
+
+    const hydrateProgress = (incomingStats) => {
+        if (!incomingStats) return;
+        setStats(prev => ({
+            ...prev,
+            ...incomingStats,
+            updatedAt: incomingStats.updatedAt || Date.now()
+        }));
     };
 
     const level = calculateLevel(stats.xp);
     const progressToNextLevel = getLevelProgress(stats.xp);
+
+    const completeOnboarding = useCallback((reward = { xp: 150, coins: 150 }) => {
+        setStats(prev => {
+            if (prev.onboardingComplete) return prev;
+            return {
+                ...prev,
+                onboardingComplete: true,
+                onboardingRewarded: true,
+                xp: prev.xp + (reward?.xp || 0),
+                coins: (prev.coins || 0) + (reward?.coins || 0),
+                onboardingCompletedAt: Date.now()
+            };
+        });
+    }, []);
+
+    const applyPlacementResult = useCallback(({ xpAward = 0, accuracy = 0, totalQuestions = 0 }) => {
+        setStats(prev => {
+            const startingXp = Math.max(prev.xp, xpAward);
+            return {
+                ...prev,
+                xp: startingXp,
+                placementComplete: true,
+                placementResult: {
+                    accuracy,
+                    totalQuestions,
+                    xpAward,
+                    timestamp: Date.now(),
+                    startingLevel: calculateLevel(startingXp)
+                }
+            };
+        });
+    }, []);
 
     return (
         <ProgressContext.Provider value={{
@@ -210,6 +321,10 @@ export const ProgressProvider = ({ children }) => {
             incrementStreak,
             audioEnabled,
             toggleAudio,
+            reducedMotion,
+            toggleReducedMotion,
+            colorTheme,
+            switchColorTheme,
             resetProgress,
             addCoins,
             spendCoins,
@@ -218,7 +333,10 @@ export const ProgressProvider = ({ children }) => {
             checkAchievements,
             activateDoubleXP,
             isDoubleXpActive,
-            achievements: stats.unlockedAchievements || []
+            achievements: stats.unlockedAchievements || [],
+            hydrateProgress
+            completeOnboarding,
+            applyPlacementResult
         }}>
             {children}
         </ProgressContext.Provider>
