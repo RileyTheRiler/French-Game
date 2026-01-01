@@ -26,6 +26,22 @@ export const ProgressProvider = ({ children }) => {
 
     const [stats, setStats] = useState(() => {
         const saved = localStorage.getItem('frenchApp_progress');
+        const baseState = {
+            xp: 0,
+            streak: 0,
+            coins: 50,
+            inventory: {},
+            doubleXpUntil: null,
+            lastLoginDate: null,
+            highScore: 0,
+            wordsLearned: 0,
+            storiesCompleted: 0,
+            conversationsCompleted: 0,
+            perfectQuizzes: 0,
+            unlockedAchievements: [],
+            updatedAt: Date.now()
+        };
+        return saved ? { ...baseState, ...JSON.parse(saved) } : baseState;
         if (saved) {
             const parsed = JSON.parse(saved);
             return {
@@ -67,14 +83,15 @@ export const ProgressProvider = ({ children }) => {
                             ...prev.inventory,
                             'streak_freeze': prev.inventory['streak_freeze'] - 1
                         },
-                        frozenUsed: true // Optional flag to show user they were saved
+                        frozenUsed: true, // Optional flag to show user they were saved
+                        updatedAt: Date.now()
                     }));
                 } else {
-                    setStats(prev => ({ ...prev, streak: 0 }));
+                    setStats(prev => ({ ...prev, streak: 0, updatedAt: Date.now() }));
                 }
             }
             // Update login date
-            setStats(prev => ({ ...prev, lastLoginDate: today }));
+            setStats(prev => ({ ...prev, lastLoginDate: today, updatedAt: Date.now() }));
         }
     };
 
@@ -84,7 +101,8 @@ export const ProgressProvider = ({ children }) => {
 
         setStats(prev => ({
             ...prev,
-            xp: prev.xp + finalAmount
+            xp: prev.xp + finalAmount,
+            updatedAt: Date.now()
         }));
     };
 
@@ -92,7 +110,8 @@ export const ProgressProvider = ({ children }) => {
         const expiresAt = Date.now() + (durationMinutes * 60 * 1000);
         setStats(prev => ({
             ...prev,
-            doubleXpUntil: expiresAt
+            doubleXpUntil: expiresAt,
+            updatedAt: Date.now()
         }));
     };
 
@@ -104,7 +123,8 @@ export const ProgressProvider = ({ children }) => {
     const incrementStat = (statName, amount = 1) => {
         setStats(prev => ({
             ...prev,
-            [statName]: (prev[statName] || 0) + amount
+            [statName]: (prev[statName] || 0) + amount,
+            updatedAt: Date.now()
         }));
     };
 
@@ -128,7 +148,8 @@ export const ProgressProvider = ({ children }) => {
                 xp: prev.xp + newUnlocks.reduce((sum, id) => {
                     const ach = ACHIEVEMENTS.find(a => a.id === id);
                     return sum + (ach?.xpReward || 0);
-                }, 0)
+                }, 0),
+                updatedAt: Date.now()
             }));
             return newUnlocks;
         }
@@ -143,7 +164,8 @@ export const ProgressProvider = ({ children }) => {
     const addCoins = (amount) => {
         setStats(prev => ({
             ...prev,
-            coins: (prev.coins || 0) + amount
+            coins: (prev.coins || 0) + amount,
+            updatedAt: Date.now()
         }));
     };
 
@@ -151,7 +173,8 @@ export const ProgressProvider = ({ children }) => {
         if (stats.coins >= amount) {
             setStats(prev => ({
                 ...prev,
-                coins: prev.coins - amount
+                coins: prev.coins - amount,
+                updatedAt: Date.now()
             }));
             return true;
         }
@@ -166,7 +189,8 @@ export const ProgressProvider = ({ children }) => {
                 inventory: {
                     ...prev.inventory,
                     [itemId]: (prev.inventory?.[itemId] || 0) + 1
-                }
+                },
+                updatedAt: Date.now()
             }));
             return true;
         }
@@ -185,7 +209,8 @@ export const ProgressProvider = ({ children }) => {
             return {
                 ...prev,
                 streak: prev.streak + 1,
-                lastStreakDate: today
+                lastStreakDate: today,
+                updatedAt: Date.now()
             };
         });
     };
@@ -223,8 +248,33 @@ export const ProgressProvider = ({ children }) => {
     const switchColorTheme = (theme) => setColorTheme(theme);
 
     const resetProgress = () => {
+        const initialStats = {
+            xp: 0,
+            streak: 0,
+            lastLoginDate: null,
+            highScore: 0,
+            coins: 50,
+            inventory: {},
+            unlockedAchievements: [],
+            wordsLearned: 0,
+            storiesCompleted: 0,
+            conversationsCompleted: 0,
+            perfectQuizzes: 0,
+            updatedAt: Date.now()
+        };
+        setStats(initialStats);
+        localStorage.setItem('frenchApp_progress', JSON.stringify(initialStats));
         setStats({ ...defaultStats });
         localStorage.setItem('frenchApp_progress', JSON.stringify(defaultStats));
+    };
+
+    const hydrateProgress = (incomingStats) => {
+        if (!incomingStats) return;
+        setStats(prev => ({
+            ...prev,
+            ...incomingStats,
+            updatedAt: incomingStats.updatedAt || Date.now()
+        }));
     };
 
     const level = calculateLevel(stats.xp);
@@ -284,6 +334,7 @@ export const ProgressProvider = ({ children }) => {
             activateDoubleXP,
             isDoubleXpActive,
             achievements: stats.unlockedAchievements || [],
+            hydrateProgress
             completeOnboarding,
             applyPlacementResult
         }}>

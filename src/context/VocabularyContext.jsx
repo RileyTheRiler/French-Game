@@ -44,7 +44,8 @@ const INITIAL_VOCABULARY = vocabularyList.map(word => hydrateWord({
     ...word,
     srs: getInitialState(),
     level: 1,
-    nextReview: 0
+    nextReview: 0,
+    updatedAt: Date.now()
 }));
 
 export const VocabularyProvider = ({ children }) => {
@@ -73,6 +74,9 @@ export const VocabularyProvider = ({ children }) => {
     }, [vocabulary]);
 
     const resetVocabulary = () => {
+        const reset = INITIAL_VOCABULARY.map(word => ({ ...word, updatedAt: Date.now() }));
+        setVocabulary(reset);
+        localStorage.setItem('frenchApp_vocab', JSON.stringify(reset));
         audioCacheRef.current = {};
         setVocabulary(INITIAL_VOCABULARY);
         localStorage.setItem('frenchApp_vocab', JSON.stringify(INITIAL_VOCABULARY));
@@ -109,6 +113,10 @@ export const VocabularyProvider = ({ children }) => {
 
             return {
                 ...word,
+                level: newLevel,
+                lastPracticed: now,
+                nextReview: nextReviewTime,
+                updatedAt: now
                 srs: nextSrs,
                 level: Math.max(1, nextSrs.repetition || 1),
                 lastPracticed: reviewedAt,
@@ -201,6 +209,11 @@ export const VocabularyProvider = ({ children }) => {
         preloadAudioForWords(getDueWords());
     }, []);
 
+    const hydrateVocabulary = (incomingVocabulary) => {
+        if (!incomingVocabulary) return;
+        setVocabulary(incomingVocabulary);
+    };
+
     return (
         <VocabularyContext.Provider value={contextValue}>
         <VocabularyContext.Provider value={{
@@ -211,6 +224,7 @@ export const VocabularyProvider = ({ children }) => {
             CATEGORIES,
             getVocabularyByCategory,
             getAllCategories,
+            hydrateVocabulary
             preloadAudioForWords,
             playWordAudio
         }}>
