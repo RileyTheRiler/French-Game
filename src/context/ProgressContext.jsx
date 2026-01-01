@@ -181,11 +181,21 @@ export const ProgressProvider = ({ children }) => {
         return saved !== null ? JSON.parse(saved) : true;
     });
 
+    const [offlineAudio, setOfflineAudio] = useState(() => {
+        const saved = localStorage.getItem('frenchApp_offlineAudio');
+        return saved !== null ? JSON.parse(saved) : false;
+    });
+
     useEffect(() => {
         localStorage.setItem('frenchApp_audio', JSON.stringify(audioEnabled));
     }, [audioEnabled]);
 
+    useEffect(() => {
+        localStorage.setItem('frenchApp_offlineAudio', JSON.stringify(offlineAudio));
+    }, [offlineAudio]);
+
     const toggleAudio = () => setAudioEnabled(prev => !prev);
+    const toggleOfflineAudio = () => setOfflineAudio(prev => !prev);
 
     const resetProgress = () => {
         const initialStats = {
@@ -210,6 +220,8 @@ export const ProgressProvider = ({ children }) => {
             incrementStreak,
             audioEnabled,
             toggleAudio,
+            offlineAudio,
+            toggleOfflineAudio,
             resetProgress,
             addCoins,
             spendCoins,

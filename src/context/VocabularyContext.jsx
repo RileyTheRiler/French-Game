@@ -1,21 +1,27 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useProgress } from './ProgressContext';
 import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
+import { cacheVocabularyAudio } from '../utils/audio';
+
+const enhanceWord = (word) => ({
+    ...word,
+    audio: word.audio || { type: 'tts', text: word.french },
+    phonemes: word.phonemes || [],
+    level: word.level || 1,
+    nextReview: word.nextReview || 0
+});
 
 const VocabularyContext = createContext();
 
 // Map imported vocabulary to include SRS fields
-const INITIAL_VOCABULARY = vocabularyList.map(word => ({
-    ...word,
-    level: 1,
-    nextReview: 0
-}));
+const INITIAL_VOCABULARY = vocabularyList.map(enhanceWord);
 
 export const VocabularyProvider = ({ children }) => {
     const { addXP } = useProgress();
     const [vocabulary, setVocabulary] = useState(() => {
         const saved = localStorage.getItem('frenchApp_vocab');
-        return saved ? JSON.parse(saved) : INITIAL_VOCABULARY;
+        const base = saved ? JSON.parse(saved) : INITIAL_VOCABULARY;
+        return base.map(enhanceWord);
     });
 
     useEffect(() => {
@@ -68,6 +74,10 @@ export const VocabularyProvider = ({ children }) => {
         return vocabulary.filter(word => word.nextReview <= now);
     };
 
+    const downloadAudioOnce = async () => {
+        await cacheVocabularyAudio(vocabulary);
+    };
+
     return (
         <VocabularyContext.Provider value={{
             vocabulary,
@@ -76,7 +86,8 @@ export const VocabularyProvider = ({ children }) => {
             resetVocabulary,
             CATEGORIES,
             getVocabularyByCategory,
-            getAllCategories
+            getAllCategories,
+            downloadAudioOnce
         }}>
             {children}
         </VocabularyContext.Provider>

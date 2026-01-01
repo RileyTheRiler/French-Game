@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
+import { Volume2 } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
+import { useProgress } from '../context/ProgressContext';
+import { playWordAudio } from '../utils/audio';
 import { GRAMMAR_TIPS } from '../data/grammar';
 
 const DictionaryModal = ({ onClose }) => {
     const { vocabulary } = useVocabulary();
+    const { offlineAudio } = useProgress();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('vocab'); // 'vocab' or 'grammar'
 
@@ -64,7 +68,13 @@ const DictionaryModal = ({ onClose }) => {
                                         <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
                                         <p className="text-[var(--text-secondary)]">{word.english}</p>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right flex items-center gap-2">
+                                        <button
+                                            onClick={() => playWordAudio(word, { preferCache: true, offlineOnly: offlineAudio })}
+                                            className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors"
+                                        >
+                                            <Volume2 size={16} />
+                                        </button>
                                         <span className={`text-xs font-bold px-2 py-1 rounded ${word.level >= 5 ? 'bg-green-500/20 text-green-400' :
                                                 word.level >= 3 ? 'bg-yellow-500/20 text-yellow-400' :
                                                     'bg-white/10 text-white/40'
