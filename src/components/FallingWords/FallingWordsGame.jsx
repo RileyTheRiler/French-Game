@@ -23,7 +23,7 @@ const FallingWordsGame = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
 
-    const { getDueWords, updateWordProgress } = useVocabulary();
+    const { getDueWords, updateWordProgress, getWeightedPracticeWords, vocabulary } = useVocabulary();
 
     // Game State (Visual)
     const [score, setScore] = useState(0);
@@ -67,16 +67,17 @@ const FallingWordsGame = () => {
     // Initialize
     useEffect(() => {
         try {
-            const words = getDueWords();
+            const weighted = getWeightedPracticeWords ? getWeightedPracticeWords(40) : getDueWords();
+            const words = weighted && weighted.length ? weighted : getDueWords();
             if (!words || words.length === 0) {
                 console.warn("No words available!");
-                validWords.current = [];
+                validWords.current = vocabulary || [];
             } else {
                 validWords.current = words;
             }
         } catch (e) {
             console.error("Error fetching words:", e);
-            validWords.current = [];
+            validWords.current = vocabulary || [];
         }
 
         // Init Audio
@@ -189,7 +190,7 @@ const FallingWordsGame = () => {
 
             if (newY > 100) {
                 if (!isZenModeRef.current) livesLost++;
-                updateWordProgress(word.wordId, false);
+                updateWordProgress(word.wordId, 'again');
             } else {
                 word.y = newY;
                 nextWords.push(word);
@@ -231,7 +232,7 @@ const FallingWordsGame = () => {
 
             SoundManager.playMatch();
             spawnParticles(word.x + '%', word.y + '%');
-            updateWordProgress(word.wordId, true);
+            updateWordProgress(word.wordId, 'good');
 
             const comboMultiplier = 1 + (combo * 0.1);
             setScore(s => Math.floor(s + (10 * comboMultiplier)));
