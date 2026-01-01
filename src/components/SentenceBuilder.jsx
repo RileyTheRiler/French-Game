@@ -25,6 +25,12 @@ const WordTile = ({ word, onClick, variant = "default" }) => (
         whileHover={{ scale: 1.05, y: -2 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => onClick(word)}
+        onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onClick(word);
+            }
+        }}
         className={`
             font-bold px-5 py-3 rounded-xl shadow-lg transition-colors border-b-4 active:border-b-0 active:translate-y-1
             ${variant === 'selected'
@@ -32,6 +38,8 @@ const WordTile = ({ word, onClick, variant = "default" }) => (
                 : 'bg-white text-slate-800 border-slate-300 hover:bg-slate-50'
             }
         `}
+        aria-pressed={variant === 'selected'}
+        aria-label={`${variant === 'selected' ? 'Remove' : 'Add'} word ${word.text}`}
     >
         {word.text}
     </motion.button>
@@ -114,7 +122,7 @@ const SentenceBuilder = () => {
         >
             <div className="max-w-2xl mx-auto flex flex-col h-[calc(100vh-200px)]">
                 {/* Target Sentence */}
-                <Card className="mb-8 text-center p-8 bg-slate-800/50 border-white/5">
+                <Card className="mb-8 text-center p-8 bg-slate-800/50 border-white/5" role="region" aria-label="Sentence prompt">
                     <p className="text-slate-400 text-sm uppercase tracking-widest font-bold mb-4">Translate this</p>
                     <h2 className="text-3xl md:text-4xl font-black text-white">
                         "{targetSentenceData?.english}"
@@ -135,6 +143,7 @@ const SentenceBuilder = () => {
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     className="text-white/20 font-medium absolute pointer-events-none"
+                                    aria-hidden="true"
                                 >
                                     Tap words to build your sentence...
                                 </motion.p>
@@ -176,6 +185,7 @@ const SentenceBuilder = () => {
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.5, opacity: 0 }}
                                 className="flex items-center gap-2 text-green-400 font-black text-2xl bg-green-400/10 px-6 py-3 rounded-full"
+                                role="status"
                             >
                                 <Check size={28} strokeWidth={3} /> {feedback}
                             </motion.div>
@@ -188,6 +198,7 @@ const SentenceBuilder = () => {
                                 animate={{ x: 0, opacity: 1 }}
                                 exit={{ x: 20, opacity: 0 }}
                                 className="flex items-center gap-2 text-red-400 font-bold text-xl bg-red-400/10 px-6 py-3 rounded-full"
+                                role="status"
                             >
                                 <X size={24} /> {feedback}
                             </motion.div>
@@ -205,6 +216,7 @@ const SentenceBuilder = () => {
                                     disabled={builtSentence.length === 0}
                                     size="lg"
                                     className="px-12 rounded-full shadow-xl shadow-indigo-500/20"
+                                    aria-label="Check answer. Press Enter to submit."
                                 >
                                     Check Answer
                                 </Button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useVocabulary } from '../../context/VocabularyContext';
 import SoundManager from '../../utils/SoundManager';
 import { useNavigate } from 'react-router-dom';
@@ -12,10 +12,17 @@ const StudySession = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [sessionComplete, setSessionComplete] = useState(false);
+    const containerRef = useRef(null);
 
     useEffect(() => {
         setDueWords(getDueWords());
     }, []);
+
+    useEffect(() => {
+        if (containerRef.current) {
+            containerRef.current.focus();
+        }
+    }, [currentIndex, sessionComplete]);
 
     const handleCardClick = () => {
         if (!sessionComplete) {
@@ -44,9 +51,35 @@ const StudySession = () => {
         if (onExit) onExit();
     };
 
+    const handleKeyDown = (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            handleExit();
+            return;
+        }
+
+        if (sessionComplete || dueWords.length === 0) return;
+
+        if (event.key === ' ' || event.key === 'Enter') {
+            event.preventDefault();
+            handleCardClick();
+        }
+
+        if (isFlipped) {
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                handleResult(false);
+            }
+            if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                handleResult(true);
+            }
+        }
+    };
+
     if (dueWords.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen text-white p-4">
+            <main className="flex flex-col items-center justify-center min-h-screen text-white p-4" role="main">
                 <h2 className="text-3xl font-bold mb-4">🎉 All Caught Up!</h2>
                 <p className="text-xl mb-8">No words are due for review right now.</p>
                 <button
@@ -55,13 +88,13 @@ const StudySession = () => {
                 >
                     Return to Menu
                 </button>
-            </div>
+            </main>
         );
     }
 
     if (sessionComplete) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen text-white p-4">
+            <main className="flex flex-col items-center justify-center min-h-screen text-white p-4" role="main">
                 <h2 className="text-3xl font-bold mb-4">Session Complete!</h2>
                 <p className="text-xl mb-8">You reviewed {dueWords.length} words.</p>
                 <button
@@ -70,22 +103,33 @@ const StudySession = () => {
                 >
                     Return to Menu
                 </button>
-            </div>
+            </main>
         );
     }
 
     const currentWord = dueWords[currentIndex];
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen text-white p-4">
-            <div className="mb-4 text-gray-400">
+        <main
+            className="flex flex-col items-center justify-center min-h-screen text-white p-4"
+            onKeyDown={handleKeyDown}
+            tabIndex={-1}
+            ref={containerRef}
+            role="main"
+            aria-label="Study session flashcards"
+        >
+            <div className="mb-4 text-gray-400" aria-live="polite">
                 Word {currentIndex + 1} of {dueWords.length}
             </div>
 
             {/* Flashcard - 3D Container */}
             <div
                 onClick={handleCardClick}
-                className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer"
+                className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 rounded-2xl"
+                role="button"
+                tabIndex={0}
+                aria-pressed={isFlipped}
+                aria-label={isFlipped ? 'Hide translation' : 'Reveal translation'}
             >
                 <div className={`
                     w-full h-full relative transform-style-preserve-3d transition-transform duration-700
@@ -121,13 +165,15 @@ const StudySession = () => {
                 <div className="flex gap-4 mt-8 animate-fade-in">
                     <button
                         onClick={(e) => { e.stopPropagation(); handleResult(false); }}
-                        className="px-8 py-4 bg-red-600 rounded-xl font-bold hover:bg-red-500 transition-colors shadow-lg"
+                        className="px-8 py-4 bg-red-600 rounded-xl font-bold hover:bg-red-500 transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                        aria-label="Mark again. Shortcut Left Arrow"
                     >
                         Again
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); handleResult(true); }}
-                        className="px-8 py-4 bg-green-600 rounded-xl font-bold hover:bg-green-500 transition-colors shadow-lg"
+                        className="px-8 py-4 bg-green-600 rounded-xl font-bold hover:bg-green-500 transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                        aria-label="Mark good. Shortcut Right Arrow"
                     >
                         Good
                     </button>
@@ -136,11 +182,12 @@ const StudySession = () => {
 
             <button
                 onClick={handleExit}
-                className="mt-12 text-gray-500 hover:text-white underline"
+                className="mt-12 text-gray-500 hover:text-white underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded"
+                aria-label="Exit study mode"
             >
                 Exit Study Mode
             </button>
-        </div>
+        </main>
     );
 };
 
