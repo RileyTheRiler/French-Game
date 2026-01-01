@@ -2,6 +2,8 @@ import React from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { VocabularyProvider } from './context/VocabularyContext';
+import { ProgressProvider } from './context/ProgressContext';
+import { SyncProvider } from './context/SyncContext';
 import { ProgressProvider, useProgress } from './context/ProgressContext';
 
 // Components
@@ -32,6 +34,70 @@ const AppRoutes = () => {
   return (
     <ProgressProvider>
       <VocabularyProvider>
+        <SyncProvider>
+          <div className="min-h-screen bg-slate-950 text-slate-50 overflow-hidden">
+            <AnimatePresence mode="wait">
+              <Routes location={location} key={location.pathname}>
+                <Route path="/" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <MainMenu />
+                  </motion.div>
+                } />
+                <Route path="/game/falling-words" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <FallingWordsGame />
+                  </motion.div>
+                } />
+                <Route path="/game/flashcards" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <FlashcardMode />
+                  </motion.div>
+                } />
+                <Route path="/game/daily-mix" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <DailyMix />
+                  </motion.div>
+                } />
+                <Route path="/game/conversation" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <ConversationSimulator />
+                  </motion.div>
+                } />
+                <Route path="/game/story" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <StoryMode />
+                  </motion.div>
+                } />
+                <Route path="/neighborhood" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <Neighborhood />
+                  </motion.div>
+                } />
+                <Route path="/game/sentence-builder" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <SentenceBuilderGame />
+                  </motion.div>
+                } />
+                <Route path="/study-session" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <StudySession />
+                  </motion.div>
+                } />
+                <Route path="/pronunciation" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <PronunciationCoach />
+                  </motion.div>
+                } />
+                <Route path="/game/grammar" element={
+                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
+                    <GrammarDrill />
+                  </motion.div>
+                } />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </AnimatePresence>
+          </div>
+        </SyncProvider>
         <div
           className="min-h-screen text-slate-50 overflow-hidden"
           style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
