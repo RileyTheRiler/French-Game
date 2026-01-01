@@ -30,7 +30,10 @@ function App() {
   return (
     <ProgressProvider>
       <VocabularyProvider>
-        <div className="min-h-screen bg-slate-950 text-slate-50 overflow-hidden">
+        <div
+          className="min-h-screen text-slate-50 overflow-hidden"
+          style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}
+        >
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
               <Route path="/" element={

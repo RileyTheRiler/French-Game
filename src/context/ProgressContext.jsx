@@ -181,11 +181,32 @@ export const ProgressProvider = ({ children }) => {
         return saved !== null ? JSON.parse(saved) : true;
     });
 
+    const [reducedMotion, setReducedMotion] = useState(() => {
+        const saved = localStorage.getItem('frenchApp_reducedMotion');
+        return saved !== null ? JSON.parse(saved) : false;
+    });
+
+    const [colorTheme, setColorTheme] = useState(() => {
+        return localStorage.getItem('frenchApp_colorTheme') || 'midnight';
+    });
+
     useEffect(() => {
         localStorage.setItem('frenchApp_audio', JSON.stringify(audioEnabled));
     }, [audioEnabled]);
 
+    useEffect(() => {
+        localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
+        document.body.classList.toggle('reduced-motion', reducedMotion);
+    }, [reducedMotion]);
+
+    useEffect(() => {
+        localStorage.setItem('frenchApp_colorTheme', colorTheme);
+        document.body.dataset.theme = colorTheme;
+    }, [colorTheme]);
+
     const toggleAudio = () => setAudioEnabled(prev => !prev);
+    const toggleReducedMotion = () => setReducedMotion(prev => !prev);
+    const switchColorTheme = (theme) => setColorTheme(theme);
 
     const resetProgress = () => {
         const initialStats = {
@@ -210,6 +231,10 @@ export const ProgressProvider = ({ children }) => {
             incrementStreak,
             audioEnabled,
             toggleAudio,
+            reducedMotion,
+            toggleReducedMotion,
+            colorTheme,
+            switchColorTheme,
             resetProgress,
             addCoins,
             spendCoins,
