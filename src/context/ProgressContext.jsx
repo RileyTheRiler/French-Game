@@ -21,7 +21,18 @@ export const ProgressProvider = ({ children }) => {
         onboardingComplete: false,
         placementComplete: false,
         placementResult: null,
-        onboardingRewarded: false
+        onboardingRewarded: false,
+        targetCefr: 'B1',
+        weeklyGoal: {
+            sessions: 5,
+            minutes: 120
+        },
+        categoryPerformance: {},
+        difficultySettings: {
+            fallingWords: 3,
+            flashcards: 2,
+            grammar: 2
+        }
     };
 
     const [stats, setStats] = useState(() => {
@@ -31,7 +42,10 @@ export const ProgressProvider = ({ children }) => {
             return {
                 ...defaultStats,
                 ...parsed,
-                inventory: { ...defaultStats.inventory, ...(parsed.inventory || {}) }
+                inventory: { ...defaultStats.inventory, ...(parsed.inventory || {}) },
+                weeklyGoal: { ...defaultStats.weeklyGoal, ...(parsed.weeklyGoal || {}) },
+                categoryPerformance: parsed.categoryPerformance || defaultStats.categoryPerformance,
+                difficultySettings: { ...defaultStats.difficultySettings, ...(parsed.difficultySettings || {}) }
             };
         }
         return defaultStats;
@@ -42,12 +56,7 @@ export const ProgressProvider = ({ children }) => {
         localStorage.setItem('frenchApp_progress', JSON.stringify(stats));
     }, [stats]);
 
-    // Check streak on mount
-    useEffect(() => {
-        checkStreak();
-    }, []);
-
-    const checkStreak = () => {
+    const checkStreak = useCallback(() => {
         const today = new Date().toDateString();
         const lastLogin = stats.lastLoginDate;
 
@@ -76,7 +85,12 @@ export const ProgressProvider = ({ children }) => {
             // Update login date
             setStats(prev => ({ ...prev, lastLoginDate: today }));
         }
-    };
+    }, [stats]);
+
+    // Check streak on mount
+    useEffect(() => {
+        checkStreak();
+    }, [checkStreak]);
 
     const addXP = (amount) => {
         const isDoubleXpActive = stats.doubleXpUntil && Date.now() < stats.doubleXpUntil;
@@ -138,7 +152,7 @@ export const ProgressProvider = ({ children }) => {
     // Run achievement check when stats change
     useEffect(() => {
         checkAchievements();
-    }, [stats.wordsLearned, stats.streak, stats.storiesCompleted, stats.conversationsCompleted, stats.coins]);
+    }, [checkAchievements]);
 
     const addCoins = (amount) => {
         setStats(prev => ({
@@ -206,6 +220,64 @@ export const ProgressProvider = ({ children }) => {
         localStorage.setItem('frenchApp_progress', JSON.stringify(defaultStats));
     };
 
+    const setTargetCefr = (level = 'B1') => {
+        setStats(prev => ({ ...prev, targetCefr: level }));
+    };
+
+    const setWeeklyGoal = (goal = {}) => {
+        setStats(prev => ({
+            ...prev,
+            weeklyGoal: {
+                ...prev.weeklyGoal,
+                ...goal
+            }
+        }));
+    };
+
+    const setModeDifficulty = (mode, value) => {
+        setStats(prev => ({
+            ...prev,
+            difficultySettings: {
+                ...prev.difficultySettings,
+                [mode]: value
+            }
+        }));
+    };
+
+    const recordCategoryPerformance = (category, { success = false, responseTime = 0, mode = 'general' } = {}) => {
+        if (!category) return;
+        setStats(prev => {
+            const existing = prev.categoryPerformance?.[category] || {
+                attempts: 0,
+                correct: 0,
+                totalResponseTime: 0,
+                lastResponseTime: 0,
+                lastMode: mode
+            };
+
+            const attempts = existing.attempts + 1;
+            const correct = existing.correct + (success ? 1 : 0);
+            const totalResponseTime = existing.totalResponseTime + (responseTime || 0);
+
+            return {
+                ...prev,
+                categoryPerformance: {
+                    ...(prev.categoryPerformance || {}),
+                    [category]: {
+                        ...existing,
+                        attempts,
+                        correct,
+                        totalResponseTime,
+                        averageResponseTime: totalResponseTime / attempts,
+                        lastResponseTime: responseTime || existing.lastResponseTime,
+                        lastMode: mode,
+                        accuracy: attempts > 0 ? correct / attempts : 0
+                    }
+                }
+            };
+        });
+    };
+
     const level = calculateLevel(stats.xp);
     const progressToNextLevel = getLevelProgress(stats.xp);
 
@@ -260,7 +332,11 @@ export const ProgressProvider = ({ children }) => {
             isDoubleXpActive,
             achievements: stats.unlockedAchievements || [],
             completeOnboarding,
-            applyPlacementResult
+            applyPlacementResult,
+            setTargetCefr,
+            setWeeklyGoal,
+            setModeDifficulty,
+            recordCategoryPerformance
         }}>
             {children}
         </ProgressContext.Provider>

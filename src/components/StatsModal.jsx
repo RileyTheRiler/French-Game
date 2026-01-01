@@ -22,13 +22,15 @@ const StatCard = ({ icon: Icon, label, value, color, subValue }) => (
 
 const StatsModal = ({ isOpen, onClose }) => {
     const { stats, level, progressToNextLevel, achievements } = useProgress();
-    const { vocabulary } = useVocabulary();
+    const { vocabulary, getAllCategories, CATEGORIES } = useVocabulary();
 
     if (!isOpen) return null;
 
     const totalWords = vocabulary?.length || 0;
     const masteredWords = vocabulary?.filter(w => w.level >= 5)?.length || 0;
     const learningWords = vocabulary?.filter(w => w.level >= 1 && w.level < 5)?.length || 0;
+    const categories = getAllCategories ? getAllCategories() : [];
+    const categoryPerformance = stats?.categoryPerformance || {};
 
     return (
         <AnimatePresence>
@@ -186,6 +188,35 @@ const StatsModal = ({ isOpen, onClose }) => {
                                             </span>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+
+                            {/* Category Performance */}
+                            <div className="p-6 rounded-2xl bg-slate-900/60 border border-white/5 mb-6">
+                                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                    <BarChart3 size={20} className="text-indigo-400" />
+                                    Category Performance
+                                </h3>
+                                <div className="space-y-3">
+                                    {categories.map(cat => {
+                                        const perf = categoryPerformance[cat] || {};
+                                        const accuracy = (perf.accuracy ?? (perf.correct / (perf.attempts || 1))) || 0;
+                                        const avgResponse = perf.averageResponseTime ? Math.round(perf.averageResponseTime) : null;
+                                        return (
+                                            <div key={cat} className="flex items-center justify-between text-sm">
+                                                <div className="flex items-center gap-2">
+                                                    <span>{CATEGORIES?.[cat]?.icon}</span>
+                                                    <span className="text-slate-300">{CATEGORIES?.[cat]?.name || cat}</span>
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <Badge variant="outline" className={accuracy < 0.7 ? 'border-amber-500/50 text-amber-300' : ''}>
+                                                        {Math.round(accuracy * 100)}%
+                                                    </Badge>
+                                                    <span className="text-xs text-slate-400">{avgResponse ? `${avgResponse} ms` : 'n/a'}</span>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
 

@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVocabulary } from '../../context/VocabularyContext';
+import { useProgress } from '../../context/ProgressContext';
 import WordItem from './WordItem';
 import SoundManager from '../../utils/SoundManager';
 import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { GameLayout } from '../layout/GameLayout';
+import DifficultySlider from '../ui/DifficultySlider';
 
 const GAME_WIDTH_PERCENT = 90;
 const INITIAL_FALL_SPEED = 0.05;
@@ -18,12 +20,23 @@ const MIN_SPAWN_INTERVAL = 800;
 const TICK_RATE_MS = 16;
 const FALL_SPEED_INCREMENT = 0.05;
 const INITIAL_LIVES = 3;
+const DIFFICULTY_BANDS = {
+    1: { speed: 0.8, spawn: 1.2, score: 0.8, hintBias: 1.2 },
+    2: { speed: 0.95, spawn: 1.05, score: 0.95, hintBias: 1.1 },
+    3: { speed: 1, spawn: 1, score: 1, hintBias: 1 },
+    4: { speed: 1.15, spawn: 0.9, score: 1.15, hintBias: 0.85 },
+    5: { speed: 1.35, spawn: 0.8, score: 1.3, hintBias: 0.7 }
+};
 
 const FallingWordsGame = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
 
-    const { getDueWords, updateWordProgress } = useVocabulary();
+    const { getDueWords, updateWordProgress, CATEGORIES } = useVocabulary();
+    const { stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+    const difficultySetting = stats?.difficultySettings?.fallingWords || 3;
+    const [difficulty, setDifficulty] = useState(difficultySetting);
+    const difficultyRef = useRef(difficultySetting);
 
     // Game State (Visual)
     const [score, setScore] = useState(0);
@@ -53,6 +66,13 @@ const FallingWordsGame = () => {
     const validWords = useRef([]);
     const isPlayingRef = useRef(false);
     const isZenModeRef = useRef(false);
+    const bandRef = useRef(DIFFICULTY_BANDS[difficultySetting] || DIFFICULTY_BANDS[3]);
+    const categoryPerformance = useMemo(() => stats?.categoryPerformance || {}, [stats?.categoryPerformance]);
+    const performanceSummaryRef = useRef({
+        averageAccuracy: 1,
+        averageResponse: 2000,
+        lowestCategory: null
+    });
 
     // Dynamic difficulty refs
     const currentFallSpeedRef = useRef(INITIAL_FALL_SPEED);
@@ -94,21 +114,71 @@ const FallingWordsGame = () => {
         };
     }, []);
 
+    useEffect(() => {
+        difficultyRef.current = difficulty;
+        bandRef.current = DIFFICULTY_BANDS[difficulty] || DIFFICULTY_BANDS[3];
+        setModeDifficulty('fallingWords', difficulty);
+    }, [difficulty, setModeDifficulty]);
+
+    const performanceSummary = useMemo(() => {
+        const entries = Object.entries(categoryPerformance);
+        if (!entries.length) return { averageAccuracy: 1, averageResponse: 2000, lowestCategory: null };
+
+        let totalAccuracy = 0;
+        let totalResponse = 0;
+        let lowestCategory = null;
+        entries.forEach(([category, perf]) => {
+            const accuracy = perf.accuracy ?? (perf.correct / (perf.attempts || 1));
+            totalAccuracy += accuracy;
+            totalResponse += perf.averageResponseTime || 0;
+
+            if (!lowestCategory || accuracy < lowestCategory.accuracy) {
+                lowestCategory = { category, accuracy, response: perf.averageResponseTime };
+            }
+        });
+
+        return {
+            averageAccuracy: totalAccuracy / entries.length,
+            averageResponse: totalResponse / entries.length,
+            lowestCategory
+        };
+    }, [categoryPerformance]);
+
+    useEffect(() => {
+        performanceSummaryRef.current = performanceSummary;
+    }, [performanceSummary]);
+
+    const getCategoryAccuracy = (category) => {
+        if (!categoryPerformance[category]) return 0.85;
+        const perf = categoryPerformance[category];
+        return perf.accuracy ?? (perf.correct / (perf.attempts || 1));
+    };
+
+    const getCategoryResponse = (category) => {
+        const perf = categoryPerformance[category];
+        return perf?.averageResponseTime || performanceSummary.averageResponse || 2000;
+    };
+
     const spawnWord = () => {
         if (validWords.current.length === 0) return;
 
         const candidates = validWords.current;
         const randomWord = candidates[Math.floor(Math.random() * candidates.length)];
         const randomX = 10 + Math.random() * (GAME_WIDTH_PERCENT - 20);
+        const now = performance.now();
 
         const newWord = {
             id: wordIdCounter.current++,
             wordId: randomWord.id,
             text: randomWord.french,
             translation: randomWord.english,
+            category: randomWord.category,
             x: randomX,
             y: -10,
             isMatched: false,
+            spawnedAt: now,
+            categoryAccuracy: getCategoryAccuracy(randomWord.category),
+            categoryResponse: getCategoryResponse(randomWord.category)
         };
 
         activeWordsRef.current.push(newWord);
@@ -149,6 +219,7 @@ const FallingWordsGame = () => {
     const gameLoop = (time) => {
         if (!isPlayingRef.current) return;
 
+        const perf = performanceSummaryRef.current;
         const deltaTime = time - lastTimeRef.current;
         lastTimeRef.current = time;
 
@@ -168,10 +239,22 @@ const FallingWordsGame = () => {
         }
 
         const flowMultiplier = 1 + (combo * 0.05);
-        const effectiveSpeed = currentFallSpeedRef.current * flowMultiplier;
+        const band = bandRef.current;
+        const performanceSpeedMod = perf.averageAccuracy < 0.8 ? 0.92 : 1.05;
+        const responseSpeedMod = perf.averageResponse > 3500 ? 0.9 : 1.05;
 
-        currentFallSpeedRef.current = Math.min(effectiveSpeed, MAX_FALL_SPEED * 1.5);
-        currentSpawnIntervalRef.current = (INITIAL_SPAWN_INTERVAL - (INITIAL_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * difficultyProgress) / (1 + (combo * 0.1));
+        const baseSpeed = INITIAL_FALL_SPEED * (band?.speed || 1);
+        const dynamicScale = 1 + difficultyProgress * (band?.speed || 1);
+        currentFallSpeedRef.current = Math.min(
+            baseSpeed * dynamicScale * flowMultiplier * performanceSpeedMod * responseSpeedMod,
+            MAX_FALL_SPEED * 1.5
+        );
+
+        const spawnTension = perf.averageAccuracy < 0.75 ? 1.15 : 0.95;
+        currentSpawnIntervalRef.current = Math.max(
+            (INITIAL_SPAWN_INTERVAL - (INITIAL_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * difficultyProgress) * (band?.spawn || 1) * spawnTension / (1 + (combo * 0.1)),
+            MIN_SPAWN_INTERVAL * 0.75
+        );
 
         spawnTimerRef.current += deltaTime;
         if (spawnTimerRef.current > currentSpawnIntervalRef.current) {
@@ -185,11 +268,19 @@ const FallingWordsGame = () => {
         activeWordsRef.current.forEach(word => {
             if (word.isMatched) return;
 
-            const newY = word.y + (currentFallSpeedRef.current * (deltaTime / TICK_RATE_MS));
+            const categoryPressure = 1 + ((1 - word.categoryAccuracy) * 0.3);
+            const responseRelief = word.categoryResponse > 3500 ? 0.85 : 1;
+            const wordSpeed = currentFallSpeedRef.current * categoryPressure * responseRelief;
+            const newY = word.y + (wordSpeed * (deltaTime / TICK_RATE_MS));
 
             if (newY > 100) {
                 if (!isZenModeRef.current) livesLost++;
                 updateWordProgress(word.wordId, false);
+                recordCategoryPerformance(word.category, {
+                    success: false,
+                    responseTime: time - word.spawnedAt,
+                    mode: 'fallingWords'
+                });
             } else {
                 word.y = newY;
                 nextWords.push(word);
@@ -233,8 +324,20 @@ const FallingWordsGame = () => {
             spawnParticles(word.x + '%', word.y + '%');
             updateWordProgress(word.wordId, true);
 
+            const responseTime = performance.now() - word.spawnedAt;
+            recordCategoryPerformance(word.category, {
+                success: true,
+                responseTime,
+                mode: 'fallingWords'
+            });
+
+            const categoryAccuracy = word.categoryAccuracy || getCategoryAccuracy(word.category);
+            const accuracyBoost = categoryAccuracy < 0.75 ? 1.2 : 1;
+            const speedBoost = responseTime < 2200 ? 1.1 : 0.95;
             const comboMultiplier = 1 + (combo * 0.1);
-            setScore(s => Math.floor(s + (10 * comboMultiplier)));
+            const bandScore = bandRef.current?.score || 1;
+            const totalMultiplier = comboMultiplier * bandScore * accuracyBoost * speedBoost;
+            setScore(s => Math.floor(s + (12 * totalMultiplier)));
             setCombo(c => {
                 const newCombo = c + 1;
                 if (newCombo > maxCombo) setMaxCombo(newCombo);
@@ -255,6 +358,9 @@ const FallingWordsGame = () => {
         setCombo(0);
         setIsShaking(false);
         setParticles([]);
+        spawnTimerRef.current = 0;
+        currentSpawnIntervalRef.current = INITIAL_SPAWN_INTERVAL * (bandRef.current?.spawn || 1);
+        currentFallSpeedRef.current = INITIAL_FALL_SPEED * (bandRef.current?.speed || 1);
 
         activeWordsRef.current = [];
         setRenderedWords([]);
@@ -271,6 +377,25 @@ const FallingWordsGame = () => {
         if (inputRef.current) inputRef.current.focus();
     });
 
+    const hintData = useMemo(() => {
+        const strugglingCategory = performanceSummary.lowestCategory?.category;
+        if (!strugglingCategory) return null;
+
+        const word = renderedWords.find(w => w.category === strugglingCategory);
+        if (!word) return null;
+
+        const allowHint = (performanceSummary.lowestCategory?.accuracy || 1) < 0.78 || difficulty <= 2 || (bandRef.current?.hintBias || 1) > 1;
+        if (!allowHint) return null;
+
+        const masked = `${word.text[0]}${'•'.repeat(Math.max(0, word.text.length - 1))}`;
+        return {
+            masked,
+            translation: word.translation,
+            category: strugglingCategory,
+            name: CATEGORIES?.[strugglingCategory]?.name || strugglingCategory
+        };
+    }, [renderedWords, performanceSummary, difficulty, CATEGORIES]);
+
     if (activeWordsRef.current === null) return <div>Loading...</div>;
 
     return (
@@ -280,6 +405,16 @@ const FallingWordsGame = () => {
             onBack={onExit}
             headerRight={
                 <div className="flex items-center gap-4">
+                    <div className="hidden md:block w-52">
+                        <DifficultySlider
+                            value={difficulty}
+                            onChange={setDifficulty}
+                            label="Game Pace"
+                        />
+                    </div>
+                    <Badge variant="outline" className="text-xs py-1 px-3">
+                        Avg Acc: {Math.round((performanceSummary.averageAccuracy || 1) * 100)}%
+                    </Badge>
                     <Badge variant="primary" className="text-lg py-1 px-4">
                         Score: {score}
                     </Badge>
@@ -380,6 +515,15 @@ const FallingWordsGame = () => {
                             className="w-full p-4 bg-transparent text-white text-center text-2xl font-bold focus:outline-none placeholder:text-slate-600"
                             disabled={gameOver}
                         />
+                        {hintData && (
+                            <div className="mt-2 text-center text-sm text-slate-300">
+                                <Badge variant="outline" className="mr-2">Hint</Badge>
+                                <span className="text-xs text-slate-400">{hintData.name}</span>
+                                <div className="mt-1 text-slate-200 font-semibold">
+                                    {hintData.masked} · {hintData.translation}
+                                </div>
+                            </div>
+                        )}
                     </Card>
                 </div>
             </div>
