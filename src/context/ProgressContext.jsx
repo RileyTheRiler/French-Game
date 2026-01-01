@@ -21,7 +21,18 @@ export const ProgressProvider = ({ children }) => {
         onboardingComplete: false,
         placementComplete: false,
         placementResult: null,
-        onboardingRewarded: false
+        onboardingRewarded: false,
+        categoryStats: {}, // { "Family": { attempts: 10, correct: 8, totalResponseTime: 5000 } }
+        userGoals: {
+            targetCEFR: "A1",
+            weeklyXP: 1000,
+            weeklyWords: 20
+        },
+        difficultySettings: {
+            globalMultiplier: 1.0,
+            penaltyScale: 1.0,
+            showHints: true
+        }
     };
 
     const [stats, setStats] = useState(() => {
@@ -285,7 +296,14 @@ export const ProgressProvider = ({ children }) => {
             isDoubleXpActive,
             achievements: stats.unlockedAchievements || [],
             completeOnboarding,
-            applyPlacementResult
+            completeOnboarding,
+            applyPlacementResult,
+            logWordAttempt,
+            updateUserGoals,
+            userGoals: stats.userGoals,
+            updateDifficultySettings,
+            difficultySettings: stats.difficultySettings,
+            categoryStats: stats.categoryStats
         }}>
             {children}
         </ProgressContext.Provider>
