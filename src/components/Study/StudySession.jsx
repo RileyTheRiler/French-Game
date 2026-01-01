@@ -1,9 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Volume2 } from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Volume2, Ghost } from 'lucide-react';
+import { LoadingState } from '../ui/LoadingState';
+import { EmptyState } from '../ui/EmptyState';
+import { SuccessState } from '../ui/SuccessState';
+import { triggerShake, triggerConfetti } from '../../utils/InteractionEffects';
 import { useVocabulary } from '../../context/VocabularyContext';
 import SoundManager from '../../utils/SoundManager';
 import { useNavigate } from 'react-router-dom';
+import { downloadCategoryAssets, isCategoryDownloaded, deleteCategoryAssets } from '../../services/downloadManager';
+import { Download, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 
 const StudySession = () => {
     const navigate = useNavigate();
@@ -28,6 +34,42 @@ const StudySession = () => {
         return Array.from(new Set(vocabulary.map(word => word.cefr))).sort();
     }, [vocabulary]);
 
+    const [downloadStatus, setDownloadStatus] = useState('idle'); // idle, checking, downloading, downloaded
+    const { showToast } = useToast();
+
+    useEffect(() => {
+        if (filterCategory === 'all') {
+            setDownloadStatus('disabled');
+            return;
+        }
+        setDownloadStatus('checking');
+        isCategoryDownloaded(filterCategory).then(isDown => {
+            setDownloadStatus(isDown ? 'downloaded' : 'idle');
+        });
+    }, [filterCategory]);
+
+    const handleDownload = async () => {
+        if (filterCategory === 'all') return;
+        setDownloadStatus('downloading');
+        try {
+            await downloadCategoryAssets(filterCategory);
+            setDownloadStatus('downloaded');
+            showToast('Lesson assets downloaded!', 'success');
+        } catch (e) {
+            console.error(e);
+            setDownloadStatus('idle');
+            showToast('Download failed.', 'error');
+        }
+    };
+
+    const handleDeleteDownload = async () => {
+        if (filterCategory === 'all') return;
+        setDownloadStatus('checking');
+        await deleteCategoryAssets(filterCategory);
+        setDownloadStatus('idle');
+        showToast('Local assets removed.', 'info');
+    };
+
     const filterControls = (
         <div className="w-full max-w-3xl mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
@@ -45,16 +87,41 @@ const StudySession = () => {
             </div>
             <div className="flex flex-col gap-2">
                 <label className="text-sm text-slate-400 font-semibold">Topic</label>
-                <select
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                    className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-400"
-                >
-                    <option value="all">All topics</option>
-                    {Object.entries(CATEGORIES).map(([key, value]) => (
-                        <option key={key} value={key}>{value.name}</option>
-                    ))}
-                </select>
+                <div className="flex gap-2">
+                    <select
+                        value={filterCategory}
+                        onChange={(e) => setFilterCategory(e.target.value)}
+                        className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-400 flex-1"
+                    >
+                        <option value="all">All topics</option>
+                        {Object.entries(CATEGORIES).map(([key, value]) => (
+                            <option key={key} value={key}>{value.name}</option>
+                        ))}
+                    </select>
+
+                    {filterCategory !== 'all' && (
+                        <button
+                            onClick={downloadStatus === 'downloaded' ? handleDeleteDownload : handleDownload}
+                            disabled={downloadStatus === 'checking' || downloadStatus === 'downloading'}
+                            className={`p-2 rounded-xl border transition-colors ${downloadStatus === 'downloaded'
+                                ? 'bg-emerald-900/30 border-emerald-500/30 text-emerald-400 hover:bg-emerald-900/50 hover:text-red-400 hover:border-red-500/30 group'
+                                : 'bg-slate-800 border-white/10 text-slate-400 hover:bg-slate-700 hover:text-white'
+                                }`}
+                            title={downloadStatus === 'downloaded' ? "Remove offline pack" : "Download for offline use"}
+                        >
+                            {downloadStatus === 'downloading' ? (
+                                <Loader2 size={20} className="animate-spin text-indigo-400" />
+                            ) : downloadStatus === 'downloaded' ? (
+                                <>
+                                    <CheckCircle2 size={20} className="group-hover:hidden" />
+                                    <Trash2 size={20} className="hidden group-hover:block" />
+                                </>
+                            ) : (
+                                <Download size={20} />
+                            )}
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -92,8 +159,12 @@ const StudySession = () => {
 
     const handleResult = (grade) => {
         const passing = grade !== 'again';
-        if (passing) SoundManager.playSuccess();
-        else SoundManager.playFailure();
+        if (passing) {
+            SoundManager.playSuccess();
+        } else {
+            SoundManager.playFailure();
+            triggerShake('flashcard-container');
+        }
 
         const currentWord = dueWords[currentIndex];
         updateWordProgress(currentWord.id, grade);
@@ -104,6 +175,7 @@ const StudySession = () => {
             setCurrentIndex(prev => prev + 1);
         } else {
             setSessionComplete(true);
+            triggerConfetti();
         }
     };
 
@@ -139,31 +211,29 @@ const StudySession = () => {
 
     if (dueWords.length === 0) {
         return (
-            <main className="flex flex-col items-center justify-center min-h-screen text-white p-4" role="main">
-                <h2 className="text-3xl font-bold mb-4">🎉 All Caught Up!</h2>
-                <p className="text-xl mb-8">No words are due for review right now.</p>
-                {filterControls}
-                <button
-                    onClick={handleExit}
-                    className="px-6 py-3 bg-blue-600 rounded-lg hover:bg-blue-500 transition-colors"
+            <main className="min-h-screen p-4 flex flex-col items-center justify-center">
+                <EmptyState
+                    title="All Caught Up!"
+                    description="No words are due for review right now. Nice work!"
+                    icon={Ghost}
+                    actionLabel="Return to Menu"
+                    onAction={handleExit}
                 >
-                    Return to Menu
-                </button>
+                    {filterControls}
+                </EmptyState>
             </main>
         );
     }
 
     if (sessionComplete) {
         return (
-            <main className="flex flex-col items-center justify-center min-h-screen text-white p-4" role="main">
-                <h2 className="text-3xl font-bold mb-4">Session Complete!</h2>
-                <p className="text-xl mb-8">You reviewed {dueWords.length} words.</p>
-                <button
-                    onClick={handleExit}
-                    className="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-500 transition-colors"
-                >
-                    Return to Menu
-                </button>
+            <main className="min-h-screen p-4 flex flex-col items-center justify-center">
+                <SuccessState
+                    title="Session Complete!"
+                    description={`You reviewed ${dueWords.length} words.`}
+                    actionLabel="Return to Menu"
+                    onAction={handleExit}
+                />
             </main>
         );
     }
@@ -187,6 +257,7 @@ const StudySession = () => {
 
             {/* Flashcard - 3D Container */}
             <div
+                id="flashcard-container"
                 onClick={handleCardClick}
                 className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 rounded-2xl"
                 role="button"
@@ -239,8 +310,6 @@ const StudySession = () => {
                 <div className="flex flex-wrap gap-4 mt-8 animate-fade-in justify-center">
                     <button
                         onClick={(e) => { e.stopPropagation(); handleResult('again'); }}
-                        className="px-6 py-4 bg-red-600 rounded-xl font-bold hover:bg-red-500 transition-colors shadow-lg min-w-[120px]"
-                        onClick={(e) => { e.stopPropagation(); handleResult(false); }}
                         className="px-8 py-4 bg-red-600 rounded-xl font-bold hover:bg-red-500 transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                         aria-label="Mark again. Shortcut Left Arrow"
                     >
@@ -254,8 +323,6 @@ const StudySession = () => {
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); handleResult('good'); }}
-                        className="px-6 py-4 bg-green-600 rounded-xl font-bold hover:bg-green-500 transition-colors shadow-lg min-w-[120px]"
-                        onClick={(e) => { e.stopPropagation(); handleResult(true); }}
                         className="px-8 py-4 bg-green-600 rounded-xl font-bold hover:bg-green-500 transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                         aria-label="Mark good. Shortcut Right Arrow"
                     >

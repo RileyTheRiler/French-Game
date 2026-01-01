@@ -1,7 +1,31 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
-const WordItem = memo(({ text, x, y, isMatched }) => {
+const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }) => {
+    // Only show hint after hintDelay seconds have passed since spawn
+    const [showHint, setShowHint] = useState(false);
+
+    useEffect(() => {
+        if (!hint || hintDelay === 0) {
+            setShowHint(!!hint && hintDelay === 0);
+            return;
+        }
+
+        const elapsed = Date.now() - spawnTime;
+        const remainingDelay = Math.max(0, (hintDelay * 1000) - elapsed);
+
+        if (remainingDelay === 0) {
+            setShowHint(true);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setShowHint(true);
+        }, remainingDelay);
+
+        return () => clearTimeout(timer);
+    }, [hint, spawnTime, hintDelay]);
+
     return (
         <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -17,9 +41,19 @@ const WordItem = memo(({ text, x, y, isMatched }) => {
             }}
         >
             <span className="relative z-10">{text}</span>
+            {showHint && hint && (
+                <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="absolute -top-3 -right-3 bg-yellow-400 text-slate-900 text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-slate-900"
+                >
+                    {hint}
+                </motion.div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl pointer-events-none" />
         </motion.div>
     );
 });
 
 export default WordItem;
+

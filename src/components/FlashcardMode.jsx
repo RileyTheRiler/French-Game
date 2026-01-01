@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, Check, X, RotateCcw } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
@@ -15,8 +15,13 @@ const FlashcardMode = ({ mode = 'standard' }) => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
     const { updateWordProgress, vocabulary, getWeightedPracticeWords } = useVocabulary();
-    const { getDueWords, updateWordProgress, vocabulary } = useVocabulary();
-    const { reducedMotion } = useProgress();
+
+    // useVocabulary doesn't have logWordAttempt, it's in useProgress. 
+    // Wait, the imports in the file were messy in previous turn view. 
+    // Let me check imports first.
+    // The previous view showed duplicate imports. I should clean that up too.
+
+    const { reducedMotion, logWordAttempt } = useProgress();
     const containerRef = useRef(null);
 
     const getStudyQueue = useCallback(() => {
@@ -47,9 +52,14 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         }
     }, [currentWord, isFlipped]);
 
-    const handleGrading = (grade) => {
-    const handleGrading = useCallback((success) => {
+    const handleGrading = useCallback((grade) => {
         if (!currentWord) return;
+
+        // Log the attempt for analytics
+        // Determine correctness based on grade
+        const isCorrect = grade === 'good' || grade === 'easy' || grade === true; // true from boolean shortcuts
+        logWordAttempt(currentWord.category || 'General', isCorrect, 0, currentWord.id);
+
         updateWordProgress(currentWord.id, grade);
         setIsFlipped(false);
         if (currentCardIndex < queue.length - 1) {
@@ -57,7 +67,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         } else {
             setSessionComplete(true);
         }
-    }, [currentCardIndex, currentWord, queue.length, updateWordProgress]);
+    }, [currentCardIndex, currentWord, queue.length, updateWordProgress, logWordAttempt]);
 
     useEffect(() => {
         if (containerRef.current) {
@@ -199,69 +209,43 @@ const FlashcardMode = ({ mode = 'standard' }) => {
 
                 {/* Grading Controls */}
                 <AnimatePresence>
-                            {isFlipped && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="flex flex-wrap gap-4 mt-12 justify-center"
-                                >
-                                    <Button
-                                        variant="danger"
-                                        size="lg"
-                                        className="px-10 py-6 rounded-2xl"
-                                        onClick={() => handleGrading('again')}
-                                    >
-                                        <X className="mr-2" /> Again
-                                    </Button>
-                                    <Button
-                                        variant="secondary"
-                                        size="lg"
-                                        className="px-10 py-6 rounded-2xl"
-                                        onClick={() => handleGrading('hard')}
-                                    >
-                                        Hard
-                                    </Button>
-                                    <Button
-                                        variant="default"
-                                        size="lg"
-                                        className="px-10 py-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500"
-                                        onClick={() => handleGrading('good')}
-                                    >
-                                        Good
-                                    </Button>
-                                    <Button
-                                        variant="default"
-                                        size="lg"
-                                        className="px-10 py-6 rounded-2xl bg-blue-600 hover:bg-blue-500"
-                                        onClick={() => handleGrading('easy')}
-                                    >
-                                        Easy
-                                    </Button>
-                                </motion.div>
-                            )}
                     {isFlipped && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="flex gap-6 mt-12"
+                            className="flex flex-wrap gap-4 mt-12 justify-center"
                         >
                             <Button
                                 variant="danger"
                                 size="lg"
-                                className="px-12 py-6 rounded-2xl"
-                                onClick={() => handleGrading(false)}
-                                aria-label="Mark card as hard. Shortcut Left Arrow"
+                                className="px-10 py-6 rounded-2xl"
+                                onClick={() => handleGrading('again')}
                             >
-                                <X className="mr-2" /> Hard
+                                <X className="mr-2" /> Again
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                size="lg"
+                                className="px-10 py-6 rounded-2xl"
+                                onClick={() => handleGrading('hard')}
+                            >
+                                Hard
                             </Button>
                             <Button
                                 variant="default"
                                 size="lg"
-                                className="px-12 py-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500"
-                                onClick={() => handleGrading(true)}
-                                aria-label="Mark card as easy. Shortcut Right Arrow"
+                                className="px-10 py-6 rounded-2xl bg-emerald-600 hover:bg-emerald-500"
+                                onClick={() => handleGrading('good')}
                             >
-                                <Check className="mr-2" /> Easy
+                                Good
+                            </Button>
+                            <Button
+                                variant="default"
+                                size="lg"
+                                className="px-10 py-6 rounded-2xl bg-blue-600 hover:bg-blue-500"
+                                onClick={() => handleGrading('easy')}
+                            >
+                                Easy
                             </Button>
                         </motion.div>
                     )}

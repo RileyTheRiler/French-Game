@@ -1,0 +1,113 @@
+{
+    "common": {
+        "play": "Jouer",
+        "back": "Retour",
+        "settings": "Paramètres",
+        "loading": "Chargement...",
+        "error": "Erreur"
+    },
+    "menu": {
+        "title": "LingoLift",
+        "subtitle": "Améliorez votre français, un mot à la fois.",
+        "games": "Jeux",
+        "study": "Études",
+        "community": "Communauté",
+        "tip_of_day": "Astuce du Jour",
+        "recommended": "Recommandé",
+        "current_level": "Niveau Actuel",
+        "total_xp": "XP Total",
+        "to_level": "vers Niveau",
+        "visit_quartier": "Visiter Le Quartier (Nouveau !)",
+        "visit_quartier_desc": "Explorez la carte interactive du quartier",
+        "actions": {
+            "start_review": "Commencer",
+            "polish_now": "Perfectionner",
+            "play_now": "Jouer"
+        },
+        "items": {
+            "quartier": {
+                "title": "Le Quartier",
+                "desc": "Explorez le centre et parlez aux locaux !"
+            },
+            "falling_words": {
+                "title": "Mots Tombants",
+                "desc": "Tapez vite avant que les mots ne touchent le sol."
+            },
+            "study_session": {
+                "title": "Séance d'Étude",
+                "desc": "Révisez vos mots avec des cartes mémoire."
+            },
+            "daily_mix": {
+                "title": "Mix Quotidien",
+                "desc": "Pratique entrelacée pour la rétention."
+            },
+            "roleplay": {
+                "title": "Jeu de Rôle",
+                "desc": "Scénarios réels avec IA."
+            },
+            "story_mode": {
+                "title": "Mode Histoire",
+                "desc": "Lisez des histoires immersives en français."
+            },
+            "sentence_builder": {
+                "title": "Constructeur de Phrases",
+                "desc": "Construisez des phrases bloc par bloc."
+            },
+            "pronunciation": {
+                "title": "Prononciation",
+                "desc": "Maîtrisez votre accent avec l'IA."
+            },
+            "grammar": {
+                "title": "Bibliothèque Grammaire",
+                "desc": "Apprenez la conjugaison et les règles."
+            },
+            "cloze": {
+                "title": "Texte à Trous",
+                "desc": "Complétez la phrase avec le bon mot."
+            },
+            "error_spotting": {
+                "title": "Chasse aux Erreurs",
+                "desc": "Trouvez les fautes dans les phrases."
+            }
+        }
+    },
+    "settings": {
+        "language": "Langue",
+        "theme": "Thème",
+        "sound": "Son"
+    },
+    "shop": {
+        "title": "Boutique",
+        "refresh": "Actualisé chaque jour",
+        "featured": "En Vedette",
+        "supplies": "Fournitures",
+        "cosmetics_rotation": "Rotation Cosmétique",
+        "no_cosmetics": "Aucun cosmétique disponible aujourd'hui.",
+        "daily_deal": "OFFRE DU JOUR",
+        "owned": "POSSÉDÉ",
+        "buy": "Acheter",
+        "in_inventory": "Dans l'Inventaire"
+    },
+    "stats": {
+        "title": "Vos Statistiques",
+        "subtitle": "Suivez votre parcours d'apprentissage",
+        "tabs": {
+            "overview": "Aperçu",
+            "insights": "Tendances"
+        },
+        "streak": "Série",
+        "learned": "Appris",
+        "achievements": "Succès",
+        "stories": "Histoires",
+        "roleplay": "Jeu de Rôle",
+        "perfect_runs": "Parfaits",
+        "vocab_status": "État du Vocabulaire",
+        "mastered": "Maîtrisé (Niv 5+)",
+        "learning": "En cours",
+        "last_7_days": "Derniers 7 Jours (XP)",
+        "category_accuracy": "Précision par Catégorie",
+        "no_category_data": "Jouez pour voir les stats !",
+        "needs_review": "À Revoir",
+        "misses": "Erreurs"
+    }
+}

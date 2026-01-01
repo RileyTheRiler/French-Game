@@ -1,0 +1,113 @@
+{
+    "common": {
+        "play": "Play",
+        "back": "Back",
+        "settings": "Settings",
+        "loading": "Loading...",
+        "error": "Error"
+    },
+    "menu": {
+        "title": "LingoLift",
+        "subtitle": "Elevate your French, one word at a time.",
+        "games": "Games",
+        "study": "Study",
+        "community": "Community",
+        "tip_of_day": "Tip of the Day",
+        "recommended": "Recommended",
+        "current_level": "Current Level",
+        "total_xp": "Total XP",
+        "to_level": "to Level",
+        "visit_quartier": "Visit Le Quartier (New!)",
+        "visit_quartier_desc": "Explore the interactive neighborhood map",
+        "actions": {
+            "start_review": "Start Review",
+            "polish_now": "Polish Now",
+            "play_now": "Play Now"
+        },
+        "items": {
+            "quartier": {
+                "title": "Le Quartier",
+                "desc": "Explore the hub and talk to locals!"
+            },
+            "falling_words": {
+                "title": "Falling Words",
+                "desc": "Type fast before words hit the ground."
+            },
+            "study_session": {
+                "title": "Study Session",
+                "desc": "Review due words with flashcards."
+            },
+            "daily_mix": {
+                "title": "Daily Mix",
+                "desc": "Interleaved practice for retention."
+            },
+            "roleplay": {
+                "title": "Roleplay",
+                "desc": "Real-world scenarios with AI."
+            },
+            "story_mode": {
+                "title": "Story Mode",
+                "desc": "Read immersive French stories."
+            },
+            "sentence_builder": {
+                "title": "Sentence Builder",
+                "desc": "Construct sentences block by block."
+            },
+            "pronunciation": {
+                "title": "Prononciation",
+                "desc": "Master your French accent with AI feedback."
+            },
+            "grammar": {
+                "title": "Grammar Library",
+                "desc": "Learn verb conjugation and grammar rules."
+            },
+            "cloze": {
+                "title": "Fill in the Blank",
+                "desc": "Complete the sentence with the right word."
+            },
+            "error_spotting": {
+                "title": "Error Spotting",
+                "desc": "Find mistakes in French sentences."
+            }
+        }
+    },
+    "settings": {
+        "language": "Language",
+        "theme": "Theme",
+        "sound": "Sound"
+    },
+    "shop": {
+        "title": "Item Shop",
+        "refresh": "Refreshes daily",
+        "featured": "Featured",
+        "supplies": "Supplies",
+        "cosmetics_rotation": "Cosmetics Rotation",
+        "no_cosmetics": "No cosmetics available today.",
+        "daily_deal": "DAILY DEAL",
+        "owned": "OWNED",
+        "buy": "Buy",
+        "in_inventory": "In Inventory"
+    },
+    "stats": {
+        "title": "Your Statistics",
+        "subtitle": "Track your learning journey",
+        "tabs": {
+            "overview": "Overview",
+            "insights": "Insights"
+        },
+        "streak": "Streak",
+        "learned": "Learned",
+        "achievements": "Achievements",
+        "stories": "Stories",
+        "roleplay": "Roleplay",
+        "perfect_runs": "Perfect Runs",
+        "vocab_status": "Vocabulary Status",
+        "mastered": "Mastered (Lvl 5+)",
+        "learning": "Learning",
+        "last_7_days": "Last 7 Days (XP)",
+        "category_accuracy": "Category Accuracy",
+        "no_category_data": "Play games to see category stats!",
+        "needs_review": "Needs Review",
+        "misses": "Misses"
+    }
+}

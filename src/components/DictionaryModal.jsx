@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { useVocabulary } from '../context/VocabularyContext';
 import { GRAMMAR_TIPS } from '../data/grammar';
 
-const DictionaryModal = ({ onClose }) => {
+const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
     const { vocabulary } = useVocabulary();
-    const [searchTerm, setSearchTerm] = useState('');
+    const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
     const [activeTab, setActiveTab] = useState('vocab'); // 'vocab' or 'grammar'
 
     const filteredVocab = vocabulary.filter(word =>
@@ -66,8 +66,8 @@ const DictionaryModal = ({ onClose }) => {
                                     </div>
                                     <div className="text-right">
                                         <span className={`text-xs font-bold px-2 py-1 rounded ${word.level >= 5 ? 'bg-green-500/20 text-green-400' :
-                                                word.level >= 3 ? 'bg-yellow-500/20 text-yellow-400' :
-                                                    'bg-white/10 text-white/40'
+                                            word.level >= 3 ? 'bg-yellow-500/20 text-yellow-400' :
+                                                'bg-white/10 text-white/40'
                                             }`}>
                                             Lvl {word.level}
                                         </span>

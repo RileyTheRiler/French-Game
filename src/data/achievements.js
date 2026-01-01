@@ -134,5 +134,54 @@ export const ACHIEVEMENTS = [
         icon: '🎤',
         xpReward: 50,
         condition: (stats) => stats.pronunciationPractices >= 5
+    },
+    // Community & Messaging Achievements
+    {
+        id: 'first_writing',
+        title: 'First Draft',
+        description: 'Submit your first writing for correction.',
+        icon: '✏️',
+        xpReward: 30,
+        condition: (stats) => stats.communityStats?.writingsSubmitted >= 1
+    },
+    {
+        id: 'first_correction',
+        title: 'Helpful Hand',
+        description: 'Give your first correction to another learner.',
+        icon: '✅',
+        xpReward: 50,
+        condition: (stats) => stats.communityStats?.correctionsGiven >= 1
+    },
+    {
+        id: 'corrections_10',
+        title: 'Grammar Guardian',
+        description: 'Give 10 corrections to help others.',
+        icon: '🛡️',
+        xpReward: 150,
+        condition: (stats) => stats.communityStats?.correctionsGiven >= 10
+    },
+    {
+        id: 'first_penpal',
+        title: 'First Pen Pal',
+        description: 'Connect with your first language partner.',
+        icon: '🤝',
+        xpReward: 25,
+        condition: (stats) => stats.messagingStats?.partnersConnected >= 1
+    },
+    {
+        id: 'native_connection',
+        title: 'Native Connection',
+        description: 'Exchange 50 messages with language partners.',
+        icon: '💬',
+        xpReward: 100,
+        condition: (stats) => stats.messagingStats?.totalMessages >= 50
+    },
+    {
+        id: 'writing_star',
+        title: 'Writing Star',
+        description: 'Submit 5 writings for correction.',
+        icon: '⭐',
+        xpReward: 75,
+        condition: (stats) => stats.communityStats?.writingsSubmitted >= 5
     }
 ];

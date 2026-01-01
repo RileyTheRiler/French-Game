@@ -25,12 +25,9 @@ const DailyChallengeWidget = () => {
     }, []);
 
     const getDailyProgress = (statName) => {
-        // Get today's stats from localStorage or stats object
-        const todayStats = JSON.parse(localStorage.getItem('frenchApp_dailyStats') || '{}');
-        if (todayStats.date !== new Date().toDateString()) {
-            return 0;
-        }
-        return todayStats[statName] || 0;
+        const today = new Date().toDateString();
+        const daily = stats.dailyStats?.[today] || {};
+        return daily[statName] || 0;
     };
 
     const isComplete = (challenge) => {
@@ -103,10 +100,10 @@ const DailyChallengeWidget = () => {
                                     <div
                                         key={challenge.id}
                                         className={`p-3 rounded-xl border transition-all ${claimed
-                                                ? 'bg-emerald-500/10 border-emerald-500/30'
-                                                : complete
-                                                    ? 'bg-amber-500/10 border-amber-500/30'
-                                                    : 'bg-slate-800/50 border-white/5'
+                                            ? 'bg-emerald-500/10 border-emerald-500/30'
+                                            : complete
+                                                ? 'bg-amber-500/10 border-amber-500/30'
+                                                : 'bg-slate-800/50 border-white/5'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between mb-2">

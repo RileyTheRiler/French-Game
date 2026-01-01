@@ -24,6 +24,13 @@ export const SyncProvider = ({ children }) => {
 
     const performSync = useCallback(async () => {
         if (!user) return;
+
+        // Skip sync if offline
+        if (!navigator.onLine) {
+            setStatus('offline');
+            return;
+        }
+
         if (syncing) {
             pendingRef.current = true;
             return;
@@ -39,6 +46,7 @@ export const SyncProvider = ({ children }) => {
             setLastSyncedAt(new Date());
             setStatus('up_to_date');
         } catch (err) {
+            console.error(err);
             setStatus(`error: ${err.message}`);
         } finally {
             setSyncing(false);
@@ -55,9 +63,25 @@ export const SyncProvider = ({ children }) => {
         }
     }, [user, performSync]);
 
+    // Handle Online/Offline events
     useEffect(() => {
-        if (user) {
-            const debounce = setTimeout(() => performSync(), 500);
+        const handleOnline = () => {
+            console.log('Back online, syncing...');
+            performSync();
+        };
+        const handleOffline = () => setStatus('offline');
+
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, [performSync]);
+
+    useEffect(() => {
+        if (user && navigator.onLine) {
+            const debounce = setTimeout(() => performSync(), 2000); // Increased debounce to avoid spam
             return () => clearTimeout(debounce);
         }
         return undefined;

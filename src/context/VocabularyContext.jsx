@@ -1,10 +1,7 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useProgress } from './ProgressContext';
 import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
 import { calculateNextReview, getInitialState, isPassingGrade, normalizeGrade } from '../utils/srs';
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { useProgress } from './ProgressContext';
-import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
 import { speak } from '../utils/audio';
 
 const VocabularyContext = createContext();
@@ -55,18 +52,6 @@ export const VocabularyProvider = ({ children }) => {
         const saved = localStorage.getItem('frenchApp_vocab');
         const parsed = saved ? JSON.parse(saved) : INITIAL_VOCABULARY;
         return parsed.map(hydrateWord);
-        if (!saved) return INITIAL_VOCABULARY;
-
-        try {
-            const parsed = JSON.parse(saved);
-            const savedMap = Object.fromEntries(parsed.map(word => [word.id, word]));
-            return INITIAL_VOCABULARY.map(word => ({
-                ...word,
-                ...(savedMap[word.id] || {})
-            }));
-        } catch {
-            return INITIAL_VOCABULARY;
-        }
     });
 
     useEffect(() => {
@@ -78,8 +63,6 @@ export const VocabularyProvider = ({ children }) => {
         setVocabulary(reset);
         localStorage.setItem('frenchApp_vocab', JSON.stringify(reset));
         audioCacheRef.current = {};
-        setVocabulary(INITIAL_VOCABULARY);
-        localStorage.setItem('frenchApp_vocab', JSON.stringify(INITIAL_VOCABULARY));
     };
 
     const computePriority = useCallback((word) => {
@@ -113,10 +96,6 @@ export const VocabularyProvider = ({ children }) => {
 
             return {
                 ...word,
-                level: newLevel,
-                lastPracticed: now,
-                nextReview: nextReviewTime,
-                updatedAt: now
                 srs: nextSrs,
                 level: Math.max(1, nextSrs.repetition || 1),
                 lastPracticed: reviewedAt,
@@ -132,7 +111,6 @@ export const VocabularyProvider = ({ children }) => {
         }
     }, [addXP]);
 
-    const getDueWords = useCallback(() => {
     const isAudioEnabled = () => {
         const saved = localStorage.getItem('frenchApp_audio');
         return saved === null ? true : JSON.parse(saved);
@@ -175,7 +153,7 @@ export const VocabularyProvider = ({ children }) => {
         speak(word.french);
     };
 
-    const getDueWords = () => {
+    const getDueWords = useCallback(() => {
         const now = Date.now();
         return vocabulary
             .map(hydrateWord)
@@ -194,17 +172,6 @@ export const VocabularyProvider = ({ children }) => {
             .map(hydrateWord);
     }, [vocabulary, computePriority]);
 
-    const contextValue = useMemo(() => ({
-        vocabulary,
-        updateWordProgress,
-        getDueWords,
-        getWeightedPracticeWords,
-        resetVocabulary,
-        CATEGORIES,
-        getVocabularyByCategory,
-        getAllCategories
-    }), [vocabulary, getDueWords, getWeightedPracticeWords, updateWordProgress]);
-
     useEffect(() => {
         preloadAudioForWords(getDueWords());
     }, []);
@@ -214,20 +181,22 @@ export const VocabularyProvider = ({ children }) => {
         setVocabulary(incomingVocabulary);
     };
 
+    const contextValue = useMemo(() => ({
+        vocabulary,
+        updateWordProgress,
+        getDueWords,
+        getWeightedPracticeWords,
+        resetVocabulary,
+        CATEGORIES,
+        getVocabularyByCategory,
+        getAllCategories,
+        hydrateVocabulary,
+        preloadAudioForWords,
+        playWordAudio
+    }), [vocabulary, getDueWords, getWeightedPracticeWords, updateWordProgress]);
+
     return (
         <VocabularyContext.Provider value={contextValue}>
-        <VocabularyContext.Provider value={{
-            vocabulary,
-            updateWordProgress,
-            getDueWords,
-            resetVocabulary,
-            CATEGORIES,
-            getVocabularyByCategory,
-            getAllCategories,
-            hydrateVocabulary
-            preloadAudioForWords,
-            playWordAudio
-        }}>
             {children}
         </VocabularyContext.Provider>
     );

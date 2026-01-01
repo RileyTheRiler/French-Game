@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trophy, Medal, Crown, Flame, Globe } from 'lucide-react';
+import { X, Trophy, Medal, Crown, Flame, Globe, TrendingUp } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
+import { useSocial } from '../context/SocialContext';
+import { getLeagueByXP, getLeagueProgress, getNextLeague, getXPToNextLeague } from '../data/leagues';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
@@ -37,9 +39,35 @@ const getRankIcon = (rank) => {
 
 const LeaderboardModal = ({ onClose }) => {
     const { stats, level } = useProgress();
+    const { friends } = useSocial();
     const [tab, setTab] = useState('weekly');
+    const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-    const baseData = tab === 'weekly' ? MOCK_WEEKLY : MOCK_ALLTIME;
+    React.useEffect(() => {
+        const handleOnline = () => setIsOffline(false);
+        const handleOffline = () => setIsOffline(true);
+        window.addEventListener('online', handleOnline);
+        window.addEventListener('offline', handleOffline);
+        return () => {
+            window.removeEventListener('online', handleOnline);
+            window.removeEventListener('offline', handleOffline);
+        };
+    }, []);
+
+    // Determine data based on tab
+    let baseData = [];
+    if (tab === 'weekly') baseData = MOCK_WEEKLY;
+    else if (tab === 'alltime') baseData = MOCK_ALLTIME;
+    else if (tab === 'friends') {
+        // Map friends to leaderboard format
+        baseData = friends.map(f => ({
+            name: f.name,
+            xp: f.weeklyXp || f.xp, // Simulating weekly vs total for now
+            level: f.level,
+            streak: 0, // Mock streak for friends if missing
+            country: f.country
+        }));
+    }
 
     // Insert user into leaderboard
     const userEntry = {
@@ -54,6 +82,14 @@ const LeaderboardModal = ({ onClose }) => {
     const leaderboard = [...baseData, userEntry]
         .sort((a, b) => b.xp - a.xp)
         .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
+
+    // Calculate user's league info
+    const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
+    const userWeeklyXP = weeklyData.reduce((sum, day) => sum + (day.xp || 0), 0);
+    const userLeague = getLeagueByXP(userWeeklyXP);
+    const nextLeague = getNextLeague(userLeague.id);
+    const leagueProgress = getLeagueProgress(userWeeklyXP);
+    const xpToNext = getXPToNextLeague(userWeeklyXP);
 
     return (
         <motion.div
@@ -87,49 +123,95 @@ const LeaderboardModal = ({ onClose }) => {
                         </Button>
                     </div>
 
+                    {/* User League Status */}
+                    <div className="px-4 py-3 bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-b border-white/10">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl">{userLeague.icon}</span>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-white">{userLeague.name} League</span>
+                                        <Badge variant="outline" className="text-[10px] bg-violet-500/10 border-violet-500/30 text-violet-300">
+                                            This Week
+                                        </Badge>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                                        <span>{userWeeklyXP.toLocaleString()} XP</span>
+                                        {nextLeague && (
+                                            <>
+                                                <TrendingUp size={12} className="text-emerald-400" />
+                                                <span className="text-emerald-400">{xpToNext} to {nextLeague.name}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            {nextLeague && (
+                                <div className="text-right">
+                                    <span className="text-2xl">{nextLeague.icon}</span>
+                                </div>
+                            )}
+                        </div>
+                        {nextLeague && (
+                            <div className="mt-2">
+                                <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${leagueProgress}%` }}
+                                        className={`h-full bg-gradient-to-r ${userLeague.gradient}`}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Tabs */}
                     <div className="flex border-b border-white/10">
-                        <button
-                            onClick={() => setTab('weekly')}
-                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'weekly'
+                        {['weekly', 'alltime', 'friends'].map((t) => (
+                            <button
+                                key={t}
+                                onClick={() => setTab(t)}
+                                className={`flex-1 py-3 text-sm font-bold transition-all capitalize ${tab === t
                                     ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
                                     : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            This Week
-                        </button>
-                        <button
-                            onClick={() => setTab('alltime')}
-                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'alltime'
-                                    ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
-                                    : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            All Time
-                        </button>
+                                    }`}
+                            >
+                                {t === 'alltime' ? 'All Time' : t}
+                            </button>
+                        ))}
                     </div>
 
                     {/* Leaderboard List */}
                     <div className="p-4 max-h-[50vh] overflow-y-auto custom-scrollbar">
-                        <AnimatePresence mode="wait">
-                            <motion.div
-                                key={tab}
-                                initial={{ opacity: 0, x: tab === 'weekly' ? -20 : 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: tab === 'weekly' ? 20 : -20 }}
-                                className="space-y-2"
-                            >
-                                {leaderboard.map((player, idx) => (
+                        <motion.div
+                            key={tab}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, x: 20 }}
+                            className="space-y-2"
+                        >
+                            {isOffline ? (
+                                <div className="text-center py-12 text-slate-500">
+                                    <Globe size={48} className="mx-auto mb-4 opacity-50 text-slate-600" />
+                                    <p className="font-bold text-slate-300 mb-1">You are offline</p>
+                                    <p className="text-sm">Leaderboards are not available without an internet connection.</p>
+                                </div>
+                            ) : leaderboard.length === 0 ? (
+                                <div className="text-center py-8 text-slate-500">
+                                    No friends yet! Add some in the Social Hub.
+                                </div>
+                            ) : (
+                                leaderboard.map((player, idx) => (
                                     <motion.div
                                         key={player.name}
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
                                         transition={{ delay: idx * 0.05 }}
                                         className={`flex items-center justify-between p-3 rounded-xl transition-all ${player.isUser
-                                                ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 ring-2 ring-indigo-500/20'
-                                                : player.rank <= 3
-                                                    ? 'bg-amber-500/10 border border-amber-500/20'
-                                                    : 'bg-slate-800/50 border border-white/5'
+                                            ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 ring-2 ring-indigo-500/20'
+                                            : player.rank <= 3
+                                                ? 'bg-amber-500/10 border border-amber-500/20'
+                                                : 'bg-slate-800/50 border border-white/5'
                                             }`}
                                     >
                                         <div className="flex items-center gap-4">
@@ -165,9 +247,9 @@ const LeaderboardModal = ({ onClose }) => {
                                             <p className="text-xs text-slate-500">XP</p>
                                         </div>
                                     </motion.div>
-                                ))}
-                            </motion.div>
-                        </AnimatePresence>
+                                ))
+                            )}
+                        </motion.div>
                     </div>
 
                     {/* Footer */}
@@ -178,7 +260,7 @@ const LeaderboardModal = ({ onClose }) => {
                     </div>
                 </Card>
             </motion.div>
-        </motion.div>
+        </motion.div >
     );
 };
 

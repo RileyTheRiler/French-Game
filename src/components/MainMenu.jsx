@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3 } from 'lucide-react';
+import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Users, Target } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import LeaderboardModal from './LeaderboardModal';
@@ -11,17 +12,29 @@ import ShopModal from './ShopModal';
 import AchievementsModal from './AchievementsModal';
 import GrammarModal from './GrammarModal';
 import StatsModal from './StatsModal';
+import GoalSettingsModal from './GoalSettingsModal';
+import SocialModal from './SocialModal';
+import WeeklyRecapModal from './WeeklyRecapModal';
 import DailyChallengeWidget from './DailyChallengeWidget';
+import DailyGoalRing from './DailyGoalRing';
+import StreakCard from './StreakCard';
+import LeagueProgressWidget from './LeagueProgressWidget';
+import QuickSessionCard from './QuickSessionCard';
 import { getTipOfTheDay } from '../data/dailyTips';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
+import LanguageSwitcher from './LanguageSwitcher';
 
 const MainMenu = () => {
     const navigate = useNavigate();
-    const { stats, level, progressToNextLevel } = useProgress();
+    const { t, i18n } = useTranslation();
+    const { stats, level, progressToNextLevel, getWeeklySummary } = useProgress();
     const { getDueWords } = useVocabulary();
     const dueCount = getDueWords().length;
+
+    // Calculate weak words count
+    const weakWordsCount = Object.values(stats.weakWords || {}).filter(w => w.strength < 70).length;
 
     const [showLeaderboard, setShowLeaderboard] = useState(false);
     const [showDictionary, setShowDictionary] = useState(false);
@@ -29,7 +42,80 @@ const MainMenu = () => {
     const [showShop, setShowShop] = useState(false);
     const [showAchievements, setShowAchievements] = useState(false);
     const [showGrammar, setShowGrammar] = useState(false);
+    const [showSocial, setShowSocial] = useState(false);
+
     const [showStats, setShowStats] = useState(false);
+    const [showGoals, setShowGoals] = useState(false);
+    const [showWeeklyRecap, setShowWeeklyRecap] = useState(false);
+
+    // Check for Weekly Recap
+    React.useEffect(() => {
+        if (!getWeeklySummary) return;
+        const weeklyData = getWeeklySummary();
+        const hasActivity = weeklyData.some(d => d.xp > 0);
+
+        // Simple Logic: Show if we have activity this week AND haven't seen it today (or whatever logic we want)
+        // Better Logic from plan: Show if it's a new week? 
+        // For MVP/Demo: Let's show it if: 
+        // 1. We have activity in the last 7 days.
+        // 2. We haven't seen it in the last 6 days (i.e., essentially once a week).
+
+        if (hasActivity) {
+            const lastSeen = stats.lastWeeklyRecap ? new Date(stats.lastWeeklyRecap) : new Date(0);
+            const now = new Date();
+            const diffDays = (now - lastSeen) / (1000 * 60 * 60 * 24);
+
+            // If it's been more than 6 days since last recap
+            if (diffDays > 6) {
+                setShowWeeklyRecap(true);
+            }
+        }
+    }, [getWeeklySummary, stats.lastWeeklyRecap]);
+
+    const getNextBestAction = () => {
+        const { userGoals } = stats;
+
+        // Priority 1: Weekly XP
+        // Simplified check: assume 'weeklyXP' reset logic exists, or just check total for now as a proxy or mock it.
+        // For MVP, letting user set goal is enough, we will mock the "current" weekly progress for the suggestion
+        // In reality we would need to track "xpEarnedThisWeek" in stats.
+
+        // Priority 2: Due Words
+        if (dueCount > 5) {
+            return {
+                title: "Memory Refresh",
+                description: `You have ${dueCount} words ready for review.`,
+                icon: <BookOpen className="text-pink-400" size={24} />,
+                action: () => navigate('/study-session'),
+                btnText: t('menu.actions.start_review'),
+                color: "pink"
+            };
+        }
+
+        // Priority 2: Weak Words (Words to Polish)
+        if (weakWordsCount > 2) {
+            return {
+                title: "Polissage de Prononciation",
+                description: `You have ${weakWordsCount} words that need pronunciation polish.`,
+                icon: <Mic className="text-rose-400" size={24} />,
+                action: () => navigate('/pronunciation'),
+                btnText: t('menu.actions.polish_now'),
+                color: "rose"
+            };
+        }
+
+        // Default
+        return {
+            title: "Keep the Streak",
+            description: "Play a quick round of Falling Words.",
+            icon: <Play className="text-violet-400" size={24} />,
+            action: () => navigate('/game/falling-words'),
+            btnText: t('menu.actions.play_now'),
+            color: "violet"
+        };
+    };
+
+    const nextAction = getNextBestAction();
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -49,8 +135,8 @@ const MainMenu = () => {
     const menuItems = [
         {
             id: 'neighborhood',
-            title: 'Le Quartier',
-            description: 'Explore the hub and talk to locals!',
+            title: t('menu.items.quartier.title'),
+            description: t('menu.items.quartier.desc'),
             icon: Map,
             color: 'text-indigo-400',
             borderColor: 'border-l-indigo-500',
@@ -59,8 +145,8 @@ const MainMenu = () => {
         },
         {
             id: 'fallingWords',
-            title: 'Falling Words',
-            description: 'Type fast before words hit the ground.',
+            title: t('menu.items.falling_words.title'),
+            description: t('menu.items.falling_words.desc'),
             icon: Star, // Replace with appropriate game icon
             color: 'text-violet-400',
             borderColor: 'border-l-violet-500',
@@ -69,8 +155,8 @@ const MainMenu = () => {
         },
         {
             id: 'studySession',
-            title: 'Study Session',
-            description: 'Review due words with flashcards.',
+            title: t('menu.items.study_session.title'),
+            description: t('menu.items.study_session.desc'),
             icon: Book,
             color: 'text-pink-400',
             borderColor: 'border-l-pink-500',
@@ -79,8 +165,8 @@ const MainMenu = () => {
         },
         {
             id: 'dailyMix',
-            title: 'Daily Mix',
-            description: 'Interleaved practice for retention.',
+            title: t('menu.items.daily_mix.title'),
+            description: t('menu.items.daily_mix.desc'),
             icon: Play,
             color: 'text-amber-400',
             borderColor: 'border-l-amber-500',
@@ -89,8 +175,8 @@ const MainMenu = () => {
         },
         {
             id: 'conversation',
-            title: 'Roleplay',
-            description: 'Real-world scenarios with AI.',
+            title: t('menu.items.roleplay.title'),
+            description: t('menu.items.roleplay.desc'),
             icon: MessageCircle,
             color: 'text-purple-400',
             borderColor: 'border-l-purple-500',
@@ -98,9 +184,19 @@ const MainMenu = () => {
             path: '/game/conversation'
         },
         {
+            id: 'freeChat',
+            title: 'Free Conversation',
+            description: 'Practice real conversations with AI partners',
+            icon: MessageCircle,
+            color: 'text-fuchsia-400',
+            borderColor: 'border-l-fuchsia-500',
+            minLevel: 1,
+            path: '/game/free-chat'
+        },
+        {
             id: 'storyMode',
-            title: 'Story Mode',
-            description: 'Read immersive French stories.',
+            title: t('menu.items.story_mode.title'),
+            description: t('menu.items.story_mode.desc'),
             icon: Book,
             color: 'text-emerald-400',
             borderColor: 'border-l-emerald-500',
@@ -109,8 +205,8 @@ const MainMenu = () => {
         },
         {
             id: 'sentenceBuilder',
-            title: 'Sentence Builder',
-            description: 'Construct sentences block by block.',
+            title: t('menu.items.sentence_builder.title'),
+            description: t('menu.items.sentence_builder.desc'),
             icon: PenTool,
             color: 'text-blue-400',
             borderColor: 'border-l-blue-500',
@@ -119,8 +215,8 @@ const MainMenu = () => {
         },
         {
             id: 'pronunciation',
-            title: 'Pronunciation',
-            description: 'Master your French accent with AI feedback.',
+            title: t('menu.items.pronunciation.title'),
+            description: t('menu.items.pronunciation.desc'),
             icon: Mic,
             color: 'text-rose-400',
             borderColor: 'border-l-rose-500',
@@ -129,23 +225,71 @@ const MainMenu = () => {
         },
         {
             id: 'grammar',
-            title: 'Grammar Drills',
-            description: 'Practice verb conjugation and grammar rules.',
-            icon: PenTool,
+            title: t('menu.items.grammar.title'),
+            description: t('menu.items.grammar.desc'),
+            icon: BookOpen,
             color: 'text-cyan-400',
             borderColor: 'border-l-cyan-500',
             minLevel: 1,
-            path: '/game/grammar'
+            path: '/learn/grammar'
+        },
+        {
+            id: 'grammarDeepDive',
+            title: 'Grammar Deep Dive',
+            description: 'In-depth explanations for serious learners',
+            icon: Book,
+            color: 'text-teal-400',
+            borderColor: 'border-l-teal-500',
+            minLevel: 1,
+            path: '/grammar-deep-dive'
+        },
+        {
+            id: 'cloze',
+            title: t('menu.items.cloze.title'),
+            description: t('menu.items.cloze.desc'),
+            icon: PenTool,
+            color: 'text-teal-400',
+            borderColor: 'border-l-teal-500',
+            minLevel: 1,
+            path: '/game/cloze'
+        },
+        {
+            id: 'errorSpotting',
+            title: t('menu.items.error_spotting.title'),
+            description: t('menu.items.error_spotting.desc'),
+            icon: Target,
+            color: 'text-red-400',
+            borderColor: 'border-l-red-500',
+            minLevel: 1,
+            path: '/game/error-spotting'
+        },
+        {
+            id: 'videoImmersion',
+            title: 'Video Immersion',
+            description: 'Watch authentic content with dual subtitles',
+            icon: Play,
+            color: 'text-rose-400',
+            borderColor: 'border-l-rose-500',
+            minLevel: 1,
+            path: '/video-immersion'
         }
     ];
+
+    const formatNumber = (num) => {
+        return new Intl.NumberFormat(i18n.language).format(num);
+    };
 
     return (
         <div className="min-h-screen relative p-4 md:p-8 flex flex-col items-center max-w-7xl mx-auto">
 
             {/* Top Bar Actions */}
             <div className="absolute top-4 right-4 flex gap-2 z-10">
+                <LanguageSwitcher />
                 <Button variant="ghost" size="sm" onClick={() => setShowLeaderboard(true)} className="rounded-full h-12 w-12 p-0">
                     <Trophy size={20} className="text-yellow-400" />
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowSocial(true)} className="rounded-full h-12 w-12 p-0">
+                    <Users size={20} className="text-violet-400" />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setShowDictionary(true)} className="rounded-full h-12 w-12 p-0">
                     <Book size={20} className="text-blue-400" />
@@ -157,7 +301,7 @@ const MainMenu = () => {
                     <ShoppingBag size={20} className="text-amber-400" />
                     {stats.coins > 0 && (
                         <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
-                            {stats.coins || 0}
+                            {formatNumber(stats.coins)}
                         </span>
                     )}
                 </Button>
@@ -170,26 +314,13 @@ const MainMenu = () => {
                 <Button variant="ghost" size="sm" onClick={() => setShowStats(true)} className="rounded-full h-12 w-12 p-0">
                     <BarChart3 size={20} className="text-indigo-400" />
                 </Button>
+                <Button variant="ghost" size="sm" onClick={() => setShowGoals(true)} className="rounded-full h-12 w-12 p-0">
+                    <Target size={20} className="text-red-400" />
+                </Button>
             </div>
 
-            {/* Streak Display */}
-            <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="absolute top-4 left-4 z-10"
-            >
-                <div className="flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2">
-                    <Flame size={20} className={stats.streak > 0 ? "text-orange-500 animate-pulse" : "text-slate-600"} />
-                    <span className={`font-bold ${stats.streak > 0 ? 'text-orange-400' : 'text-slate-500'}`}>
-                        {stats.streak || 0} day{stats.streak !== 1 ? 's' : ''}
-                    </span>
-                    {stats.inventory?.['streak_freeze'] > 0 && (
-                        <Badge variant="outline" className="text-xs bg-blue-500/20 border-blue-500/50 text-blue-300 ml-1">
-                            ❄️ {stats.inventory['streak_freeze']}
-                        </Badge>
-                    )}
-                </div>
-            </motion.div>
+            {/* Streak Card (Enhanced) */}
+            <StreakCard />
 
             {/* Header */}
             <motion.header
@@ -198,10 +329,10 @@ const MainMenu = () => {
                 className="mt-12 mb-12 text-center"
             >
                 <h1 className="text-5xl md:text-7xl font-black mb-4 title-gradient drop-shadow-2xl tracking-tight">
-                    LingoLift
+                    {t('menu.title')}
                 </h1>
                 <p className="text-xl text-slate-400 font-light tracking-wide">
-                    Elevate your French, one word at a time.
+                    {t('menu.subtitle')}
                 </p>
             </motion.header>
 
@@ -220,7 +351,7 @@ const MainMenu = () => {
                                 <span className="text-3xl">{tip.icon}</span>
                                 <div className="flex-1">
                                     <Badge variant="outline" className="mb-2 text-xs border-indigo-400/50 text-indigo-300">
-                                        Tip of the Day
+                                        {t('menu.tip_of_day')}
                                     </Badge>
                                     <h3 className="font-bold text-white mb-1">{tip.title}</h3>
                                     <p className="text-sm text-slate-300 leading-relaxed">{tip.content}</p>
@@ -234,8 +365,52 @@ const MainMenu = () => {
                 })()}
             </motion.div>
 
+            {/* Daily Goal Ring */}
+            <DailyGoalRing />
+
+            {/* Quick Session for Beginners */}
+            <QuickSessionCard />
+
+            {/* Next Best Action Card */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.25 }}
+                className="w-full max-w-md mb-8"
+            >
+                <Card className={`border-${nextAction.color}-500/30 bg-gradient-to-r from-${nextAction.color}-900/20 to-slate-900/50`}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-full bg-${nextAction.color}-500/20`}>
+                                {nextAction.icon}
+                            </div>
+                            <div>
+                                <Badge variant="outline" className={`mb-1 text-[10px] border-${nextAction.color}-400/50 text-${nextAction.color}-300`}>
+                                    {t('menu.recommended')}
+                                </Badge>
+                                <h3 className="font-bold text-white">{nextAction.title}</h3>
+                                <p className="text-xs text-slate-400">{nextAction.description}</p>
+                            </div>
+                        </div>
+                        <Button size="sm" onClick={nextAction.action} className={`bg-${nextAction.color}-600 hover:bg-${nextAction.color}-500`}>
+                            {nextAction.btnText}
+                        </Button>
+                    </div>
+                </Card>
+            </motion.div>
+
             {/* Daily Challenges */}
             <DailyChallengeWidget />
+
+            {/* League Progress Widget */}
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="w-full max-w-md mb-6"
+            >
+                <LeagueProgressWidget onClick={() => setShowLeaderboard(true)} />
+            </motion.div>
 
             {/* Additional Navigation Buttons */}
             <div className="flex flex-col md:flex-row gap-4 mb-12 w-full max-w-md">
@@ -244,10 +419,10 @@ const MainMenu = () => {
                     className="glass-panel p-6 hover:bg-[rgba(255,255,255,0.05)] transition-all transform hover:scale-105 group cursor-pointer border-l-4 border-l-indigo-500 text-left flex-1"
                 >
                     <h3 className="text-2xl font-bold mb-2 group-hover:text-indigo-500 transition-colors">
-                        Le Quartier (Hub)
+                        {t('menu.items.quartier.title')} (Hub)
                     </h3>
                     <p className="text-[var(--text-secondary)] text-sm">
-                        Explore the neighborhood and talk to locals!
+                        {t('menu.items.quartier.desc')}
                     </p>
                 </button>
                 <button
@@ -255,10 +430,10 @@ const MainMenu = () => {
                     className="glass-panel p-6 hover:bg-[rgba(255,255,255,0.05)] transition-all transform hover:scale-105 group cursor-pointer border-l-4 border-l-pink-500 text-left flex-1"
                 >
                     <h3 className="text-2xl font-bold mb-2 group-hover:text-pink-500 transition-colors">
-                        Constructeur (Builder)
+                        {t('menu.items.sentence_builder.title')} (Builder)
                     </h3>
                     <p className="text-[var(--text-secondary)] text-sm">
-                        Practice sentence structure with feedback.
+                        {t('menu.items.sentence_builder.desc')}
                     </p>
                 </button>
             </div>
@@ -273,15 +448,15 @@ const MainMenu = () => {
                 <Card hover onClick={() => setShowLeaderboard(true)} className="border-t border-white/10 bg-gradient-to-b from-white/5 to-transparent">
                     <div className="flex justify-between items-end mb-4">
                         <div>
-                            <p className="text-xs uppercase tracking-widest text-slate-400 mb-1">Current Level</p>
+                            <p className="text-xs uppercase tracking-widest text-slate-400 mb-1">{t('menu.current_level')}</p>
                             <div className="flex items-baseline gap-2">
                                 <span className="text-4xl font-bold text-white">{level}</span>
                                 <Badge variant="primary">Cadet</Badge>
                             </div>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs uppercase tracking-widest text-slate-400 mb-1">Total XP</p>
-                            <span className="text-2xl font-bold text-indigo-300">{stats.xp}</span>
+                            <p className="text-xs uppercase tracking-widest text-slate-400 mb-1">{t('menu.total_xp')}</p>
+                            <span className="text-2xl font-bold text-indigo-300">{formatNumber(stats.xp)}</span>
                         </div>
                     </div>
 
@@ -295,7 +470,7 @@ const MainMenu = () => {
                         />
                     </div>
                     <div className="flex justify-between mt-2 text-xs text-slate-500">
-                        <span>{Math.floor(progressToNextLevel)}% to Level {level + 1}</span>
+                        <span>{formatNumber(Math.floor(progressToNextLevel))}% {t('menu.to_level')} {level + 1}</span>
                     </div>
                 </Card>
             </motion.div>
@@ -308,13 +483,13 @@ const MainMenu = () => {
                 className="w-full max-w-2xl mb-8"
             >
                 <button
-                    onClick={() => onStartGame('neighborhood')}
+                    onClick={() => navigate('/neighborhood')}
                     className="w-full glass-panel p-6 bg-gradient-to-r from-indigo-900/50 to-purple-900/50 hover:from-indigo-800/50 hover:to-purple-800/50 border border-indigo-500/30 hover:border-indigo-400 text-white font-bold rounded-2xl shadow-lg hover:shadow-indigo-500/20 transition-all transform hover:scale-[1.02] flex items-center justify-center gap-3 group"
                 >
                     <span className="text-3xl group-hover:animate-bounce">🗺️</span>
                     <div className="text-left">
-                        <div className="text-xl font-bold text-indigo-100">Visit Le Quartier (New!)</div>
-                        <div className="text-sm text-indigo-300">Explore the interactive neighborhood map</div>
+                        <div className="text-xl font-bold text-indigo-100">{t('menu.visit_quartier')}</div>
+                        <div className="text-sm text-indigo-300">{t('menu.visit_quartier_desc')}</div>
                     </div>
                 </button>
             </motion.div>
@@ -412,8 +587,24 @@ const MainMenu = () => {
                         onClose={() => setShowStats(false)}
                     />
                 )}
+                {showGoals && (
+                    <GoalSettingsModal
+                        isOpen={showGoals}
+                        onClose={() => setShowGoals(false)}
+                    />
+                )}
+                {showSocial && (
+                    <SocialModal
+                        onClose={() => setShowSocial(false)}
+                    />
+                )}
+                {showWeeklyRecap && (
+                    <WeeklyRecapModal
+                        onClose={() => setShowWeeklyRecap(false)}
+                    />
+                )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 };
 

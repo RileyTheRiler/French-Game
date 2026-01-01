@@ -91,3 +91,38 @@ export const exportPayload = (progress, vocabulary) => ({
     progress,
     vocabulary
 });
+
+// --- Generic Action Queue for Offline Events ---
+const QUEUE_KEY = 'frenchApp_actionQueue';
+
+export const getActionQueue = () => {
+    try {
+        return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]');
+    } catch {
+        return [];
+    }
+};
+
+export const queueAction = (action) => {
+    const queue = getActionQueue();
+    queue.push({ ...action, queuedAt: Date.now() });
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+};
+
+export const clearActionQueue = () => {
+    localStorage.removeItem(QUEUE_KEY);
+};
+
+export const processActionQueue = async (handler) => {
+    if (!navigator.onLine) return;
+    const queue = getActionQueue();
+    if (queue.length === 0) return;
+
+    // Process sequentially or batch, depending on handler
+    // Here we pass the whole queue to the handler
+    const result = await handler(queue);
+
+    if (result) {
+        clearActionQueue();
+    }
+};

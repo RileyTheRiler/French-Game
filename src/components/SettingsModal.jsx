@@ -1,9 +1,6 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound } from 'lucide-react';
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check } from 'lucide-react';
+import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { useAuth } from '../context/AuthContext';
@@ -17,7 +14,9 @@ const SettingsModal = ({ onClose }) => {
         toggleReducedMotion,
         colorTheme,
         switchColorTheme,
-        resetProgress
+        resetProgress,
+        difficultySettings,
+        updateDifficultySettings
     } = useProgress();
     const { resetVocabulary } = useVocabulary();
     const { user, signIn, signUp, signOut, loading, error } = useAuth();
@@ -117,6 +116,63 @@ const SettingsModal = ({ onClose }) => {
                 </p>
 
                 <div className="space-y-6">
+                    {/* Learner Focus - New Section */}
+                    <div className="glass-panel p-4 border border-indigo-500/20 bg-indigo-500/5 mb-6">
+                        <div className="flex items-start gap-3 mb-4">
+                            <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-300">
+                                <Brain />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold">Learner Focus</h3>
+                                <p className="text-xs text-slate-400">
+                                    Tailor the experience to your goals.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                onClick={() => updateDifficultySettings({ learnerType: 'casual', challengeMode: false })}
+                                className={`p-3 rounded-xl border transition-all text-left relative overflow-hidden ${difficultySettings?.learnerType === 'casual'
+                                    ? 'border-indigo-500 bg-indigo-500/20'
+                                    : 'border-white/10 bg-slate-800/50 hover:bg-slate-800'
+                                    }`}
+                            >
+                                <div className="relative z-10">
+                                    <span className="block font-bold text-sm mb-1 text-indigo-200">Casual Explorer</span>
+                                    <span className="block text-xs text-slate-400 leading-snug">
+                                        Fun, forgiving, and gamified. Focus on engagement.
+                                    </span>
+                                </div>
+                                {difficultySettings?.learnerType === 'casual' && (
+                                    <div className="absolute top-2 right-2 text-indigo-500">
+                                        <Check size={16} />
+                                    </div>
+                                )}
+                            </button>
+
+                            <button
+                                onClick={() => updateDifficultySettings({ learnerType: 'scholar', challengeMode: true })}
+                                className={`p-3 rounded-xl border transition-all text-left relative overflow-hidden ${difficultySettings?.learnerType === 'scholar'
+                                    ? 'border-indigo-500 bg-indigo-500/20'
+                                    : 'border-white/10 bg-slate-800/50 hover:bg-slate-800'
+                                    }`}
+                            >
+                                <div className="relative z-10">
+                                    <span className="block font-bold text-sm mb-1 text-indigo-200">Serious Scholar</span>
+                                    <span className="block text-xs text-slate-400 leading-snug">
+                                        Strict feedback, detailed grammar, less fluff.
+                                    </span>
+                                </div>
+                                {difficultySettings?.learnerType === 'scholar' && (
+                                    <div className="absolute top-2 right-2 text-indigo-500">
+                                        <Check size={16} />
+                                    </div>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+
                     {/* Auth & Sync */}
                     <div className="glass-panel p-4 border border-indigo-500/20 bg-indigo-500/5">
                         <div className="flex items-start gap-3 mb-4">
@@ -249,6 +305,9 @@ const SettingsModal = ({ onClose }) => {
                             </label>
                             {importError && <p className="text-xs text-red-400">{importError}</p>}
                             {status === 'imported' && <p className="text-xs text-emerald-300 flex items-center gap-1"><Check size={14} /> Imported successfully</p>}
+                        </div>
+                    </div>
+
                     {/* Reduced Motion */}
                     <div className="glass-panel p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
@@ -274,76 +333,166 @@ const SettingsModal = ({ onClose }) => {
                         </button>
                     </div>
 
-                    {/* Color Theme */}
-                    <div className="glass-panel p-4">
-                        <div className="flex items-center justify-between mb-4">
-                            <div>
-                                <h3 className="font-bold">Color Theme</h3>
-                                <p className="text-xs text-slate-400">Choose a palette that suits you</p>
+                    {/* Learning Style */}
+                    <div className="glass-panel p-4 border border-amber-500/20 bg-amber-500/5 space-y-4">
+                        <div className="flex items-start gap-3">
+                            <div className="p-3 rounded-xl bg-amber-500/20 text-amber-300">
+                                <Brain />
                             </div>
-                            <span className="text-xs text-slate-500 uppercase tracking-wide">{colorTheme}</span>
+                            <div className="flex-1">
+                                <h3 className="font-bold">Learning Style</h3>
+                                <p className="text-xs text-slate-400">
+                                    Customize how exercises present hints and answers.
+                                </p>
+                            </div>
                         </div>
-                        <div className="grid grid-cols-3 gap-3" role="listbox" aria-label="Color theme options">
-                            {[
-                                { id: 'midnight', label: 'Midnight', swatch: 'from-indigo-500 to-purple-500' },
-                                { id: 'dawn', label: 'Dawn', swatch: 'from-amber-400 to-rose-500' },
-                                { id: 'forest', label: 'Forest', swatch: 'from-emerald-500 to-teal-400' }
-                            ].map(theme => (
+
+                        {/* Challenge Mode (dependant on Learner Type) */}
+                        <div className={`p-3 rounded-xl border transition-all ${difficultySettings?.learnerType === 'scholar' ? 'opacity-70 border-dashed border-amber-500/30' : 'border-transparent'}`}>
+                            {difficultySettings?.learnerType === 'scholar' && (
+                                <p className="text-xs text-amber-400 mb-2 font-bold flex items-center gap-1">
+                                    <Zap size={12} /> Auto-enabled in Scholar Mode
+                                </p>
+                            )}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Zap size={16} className={difficultySettings?.challengeMode ? 'text-amber-400' : 'text-slate-500'} />
+                                    <div>
+                                        <span className="text-sm font-medium">Challenge Mode</span>
+                                        <p className="text-xs text-slate-500">No hints, no safety net</p>
+                                    </div>
+                                </div>
                                 <button
-                                    key={theme.id}
-                                    onClick={() => switchColorTheme(theme.id)}
-                                    className={`p-3 rounded-2xl border transition-colors flex flex-col gap-2 items-start focus:outline-none focus:ring-2 focus:ring-indigo-400 ${colorTheme === theme.id ? 'border-indigo-400 bg-white/5' : 'border-white/10 bg-white/0'}`}
-                                    role="option"
-                                    aria-selected={colorTheme === theme.id}
+                                    onClick={() => {
+                                        if (difficultySettings?.learnerType !== 'scholar') {
+                                            updateDifficultySettings({ challengeMode: !difficultySettings?.challengeMode });
+                                        }
+                                    }}
+                                    disabled={difficultySettings?.learnerType === 'scholar'}
+                                    className={`w-14 h-8 rounded-full transition-colors relative ${difficultySettings?.challengeMode ? 'bg-amber-500' : 'bg-slate-700'} ${difficultySettings?.learnerType === 'scholar' ? 'cursor-not-allowed' : ''}`}
+                                    role="switch"
+                                    aria-checked={difficultySettings?.challengeMode || false}
+                                    aria-label="Toggle challenge mode"
                                 >
-                                    <span className={`w-full h-10 rounded-xl bg-gradient-to-r ${theme.swatch}`} aria-hidden="true" />
-                                    <span className="text-sm font-semibold">{theme.label}</span>
+                                    <motion.div
+                                        animate={{ x: difficultySettings?.challengeMode ? 26 : 2 }}
+                                        className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
+                                    />
                                 </button>
-                            ))}
+                            </div>
+
+                            {/* Hint Delay Slider */}
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium">Hint Delay</span>
+                                    <span className="text-xs text-amber-400 font-mono">{difficultySettings?.hintDelay || 3}s</span>
+                                </div>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="10"
+                                    value={difficultySettings?.hintDelay || 3}
+                                    onChange={(e) => updateDifficultySettings({ hintDelay: parseInt(e.target.value) })}
+                                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                                    aria-label="Hint delay in seconds"
+                                />
+                                <div className="flex justify-between text-xs text-slate-500">
+                                    <span>Instant</span>
+                                    <span>10 seconds</span>
+                                </div>
+                            </div>
+
+                            {/* Free-form Input */}
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <span className="text-sm font-medium">Free-form Input</span>
+                                    <p className="text-xs text-slate-500">Type answers instead of multiple choice</p>
+                                </div>
+                                <button
+                                    onClick={() => updateDifficultySettings({ freeFormInput: !difficultySettings?.freeFormInput })}
+                                    className={`w-14 h-8 rounded-full transition-colors relative ${difficultySettings?.freeFormInput ? 'bg-amber-500' : 'bg-slate-700'}`}
+                                    role="switch"
+                                    aria-checked={difficultySettings?.freeFormInput || false}
+                                    aria-label="Toggle free-form input"
+                                >
+                                    <motion.div
+                                        animate={{ x: difficultySettings?.freeFormInput ? 26 : 2 }}
+                                        className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
+                                    />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Color Theme */}
+                        <div className="glass-panel p-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 className="font-bold">Color Theme</h3>
+                                    <p className="text-xs text-slate-400">Choose a palette that suits you</p>
+                                </div>
+                                <span className="text-xs text-slate-500 uppercase tracking-wide">{colorTheme}</span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3" role="listbox" aria-label="Color theme options">
+                                {[
+                                    { id: 'midnight', label: 'Midnight', swatch: 'from-indigo-500 to-purple-500' },
+                                    { id: 'dawn', label: 'Dawn', swatch: 'from-amber-400 to-rose-500' },
+                                    { id: 'forest', label: 'Forest', swatch: 'from-emerald-500 to-teal-400' }
+                                ].map(theme => (
+                                    <button
+                                        key={theme.id}
+                                        onClick={() => switchColorTheme(theme.id)}
+                                        className={`p-3 rounded-2xl border transition-colors flex flex-col gap-2 items-start focus:outline-none focus:ring-2 focus:ring-indigo-400 ${colorTheme === theme.id ? 'border-indigo-400 bg-white/5' : 'border-white/10 bg-white/0'}`}
+                                        role="option"
+                                        aria-selected={colorTheme === theme.id}
+                                    >
+                                        <span className={`w-full h-10 rounded-xl bg-gradient-to-r ${theme.swatch}`} aria-hidden="true" />
+                                        <span className="text-sm font-semibold">{theme.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Reset Data */}
+                        <div className="glass-panel p-4 border border-red-500/20 bg-red-500/5">
+                            <h3 className="font-bold text-red-400 flex items-center gap-2 mb-2">
+                                <AlertTriangle size={18} />
+                                Danger Zone
+                            </h3>
+                            <p className="text-xs text-red-300/70 mb-4">
+                                This will delete all your progress, XP, and vocabulary data properly. This action cannot be undone.
+                            </p>
+
+                            {!confirmReset ? (
+                                <button
+                                    onClick={() => setConfirmReset(true)}
+                                    className="w-full py-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <RotateCcw size={16} />
+                                    Reset All Progress
+                                </button>
+                            ) : (
+                                <div className="flex gap-3 animate-fade-in">
+                                    <button
+                                        onClick={() => setConfirmReset(false)}
+                                        className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleReset}
+                                        className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <AlertTriangle size={16} />
+                                        Confirm Reset
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
-                    {/* Reset Data */}
-                    <div className="glass-panel p-4 border border-red-500/20 bg-red-500/5">
-                        <h3 className="font-bold text-red-400 flex items-center gap-2 mb-2">
-                            <AlertTriangle size={18} />
-                            Danger Zone
-                        </h3>
-                        <p className="text-xs text-red-300/70 mb-4">
-                            This will delete all your progress, XP, and vocabulary data properly. This action cannot be undone.
-                        </p>
-
-                        {!confirmReset ? (
-                            <button
-                                onClick={() => setConfirmReset(true)}
-                                className="w-full py-3 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 font-bold text-sm transition-colors flex items-center justify-center gap-2"
-                            >
-                                <RotateCcw size={16} />
-                                Reset All Progress
-                            </button>
-                        ) : (
-                            <div className="flex gap-3 animate-fade-in">
-                                <button
-                                    onClick={() => setConfirmReset(false)}
-                                    className="flex-1 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleReset}
-                                    className="flex-1 py-3 rounded-xl bg-red-500 hover:bg-red-600 text-white font-bold text-sm transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <AlertTriangle size={16} />
-                                    Confirm Reset
-                                </button>
-                            </div>
-                        )}
+                    <div className="mt-8 text-center">
+                        <p className="text-xs text-slate-600">LingoLift v1.0.0</p>
                     </div>
-                </div>
-
-                <div className="mt-8 text-center">
-                    <p className="text-xs text-slate-600">LingoLift v1.0.0</p>
-                </div>
             </motion.div>
         </motion.div>
     );

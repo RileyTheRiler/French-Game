@@ -9,6 +9,7 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
+import GrammarInsightCard from './ui/GrammarInsightCard';
 
 const GrammarDrill = () => {
     const navigate = useNavigate();
@@ -210,23 +211,14 @@ const GrammarDrill = () => {
                                     </div>
                                 )}
 
-                                {/* Show Tip Button */}
-                                {relatedTip && !showTip && (
-                                    <Button variant="ghost" onClick={() => setShowTip(true)} className="gap-2">
-                                        <Lightbulb size={18} /> Show Grammar Tip
-                                    </Button>
-                                )}
-
-                                {/* Grammar Tip */}
-                                {showTip && relatedTip && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl"
-                                    >
-                                        <h4 className="text-amber-300 font-bold mb-1">{relatedTip.title}</h4>
-                                        <p className="text-amber-200/80 text-sm">{relatedTip.content}</p>
-                                    </motion.div>
+                                {/* Grammar Insight - Always shown after answering */}
+                                {relatedTip && (
+                                    <GrammarInsightCard
+                                        tip={relatedTip}
+                                        isCorrect={selectedAnswer === currentDrill.answer}
+                                        showDeepDiveLink={true}
+                                        onDeepDiveClick={() => navigate('/grammar-deep-dive')}
+                                    />
                                 )}
 
                                 {/* Next Button */}

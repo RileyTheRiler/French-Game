@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '../ui/Button';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 export const GameLayout = ({
     title,
@@ -32,11 +33,11 @@ export const GameLayout = ({
                     </div>
                 </div>
 
-                {headerRight && (
-                    <div className="flex items-center gap-4">
-                        {headerRight}
-                    </div>
-                )}
+                <div className="flex items-center gap-4">
+                    {/* Always show Language Switcher */}
+                    <LanguageSwitcher />
+                    {headerRight}
+                </div>
             </motion.header>
 
             {/* Main Content Area */}
