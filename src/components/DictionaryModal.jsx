@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { Volume2 } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
 import { useVocabulary } from '../context/VocabularyContext';
 import { useProgress } from '../context/ProgressContext';
 import { playWordAudio } from '../utils/audio';
 import { GRAMMAR_TIPS } from '../data/grammar';
+import { Pin, Clock3, BellOff } from 'lucide-react';
+import { formatRelativeTime, formatDateTime } from '../utils/time';
+import { Button } from './ui/Button';
 
 const DictionaryModal = ({ onClose }) => {
     const { vocabulary } = useVocabulary();
     const { offlineAudio } = useProgress();
+    const { vocabulary, togglePinWord, snoozeWord, clearSnooze } = useVocabulary();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('vocab'); // 'vocab' or 'grammar'
 
@@ -20,6 +25,7 @@ const DictionaryModal = ({ onClose }) => {
         tip.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tip.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    const now = useMemo(() => Date.now(), [vocabulary]);
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
@@ -62,11 +68,45 @@ const DictionaryModal = ({ onClose }) => {
                 <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                     {activeTab === 'vocab' ? (
                         filteredVocab.length > 0 ? (
-                            filteredVocab.map(word => (
-                                <div key={word.id} className="p-4 bg-white/5 rounded-xl border border-white/5 flex justify-between items-center group hover:bg-white/10 transition-colors">
-                                    <div>
-                                        <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
-                                        <p className="text-[var(--text-secondary)]">{word.english}</p>
+                            filteredVocab.map(word => {
+                                const snoozed = word.snoozeUntil && word.snoozeUntil > now;
+                                return (
+                                    <div key={word.id} className="p-4 bg-white/5 rounded-xl border border-white/5 flex flex-col gap-3 group hover:bg-white/10 transition-colors">
+                                        <div className="flex justify-between items-start gap-3">
+                                            <div>
+                                                <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
+                                                <p className="text-[var(--text-secondary)]">{word.english}</p>
+                                                <p className="text-xs text-slate-400 mt-2 flex items-center gap-2">
+                                                    <Clock3 size={14} /> Last seen: {formatRelativeTime(word.lastSeen || word.lastPracticed)}
+                                                </p>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className={`text-xs font-bold px-2 py-1 rounded ${word.level >= 5 ? 'bg-green-500/20 text-green-400' :
+                                                    word.level >= 3 ? 'bg-yellow-500/20 text-yellow-400' :
+                                                        'bg-white/10 text-white/40'
+                                                }`}>
+                                                    Lvl {word.level}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className={`rounded-full px-3 py-1 ${word.pinned ? 'text-emerald-300' : ''}`}
+                                                onClick={() => togglePinWord(word.id)}
+                                            >
+                                                <Pin size={14} /> {word.pinned ? 'Unpin' : 'Pin'}
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="rounded-full px-3 py-1"
+                                                onClick={() => snoozed ? clearSnooze(word.id) : snoozeWord(word.id)}
+                                            >
+                                                <BellOff size={14} /> {snoozed ? `Unsnooze (${formatDateTime(word.snoozeUntil)})` : 'Snooze 6h'}
+                                            </Button>
+                                        </div>
                                     </div>
                                     <div className="text-right flex items-center gap-2">
                                         <button
@@ -84,6 +124,8 @@ const DictionaryModal = ({ onClose }) => {
                                     </div>
                                 </div>
                             ))
+                                );
+                            })
                         ) : (
                             <div className="text-center text-white/30 mt-10">
                                 No words found.
