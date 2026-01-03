@@ -17,8 +17,7 @@ const PronunciationCoach = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
     const { vocabulary } = useVocabulary();
-    const { addXP, addCoins, updateDailyStat, incrementStat } = useProgress();
-    const { addXP, addCoins, offlineAudio } = useProgress();
+    const { addXP, addCoins, updateDailyStat, incrementStat, offlineAudio } = useProgress();
 
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [isListening, setIsListening] = useState(false);
@@ -114,6 +113,8 @@ const PronunciationCoach = () => {
             setCurrentWordIndex(prev => prev + 1);
             setStatus('idle');
             setTranscript('');
+            setPhonemeFeedback([]);
+            setAccuracy(null);
         } else {
             const reward = calculateRewards('pronunciation', {
                 successes: successCount,

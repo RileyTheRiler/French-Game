@@ -14,8 +14,17 @@ import DifficultySlider from './ui/DifficultySlider';
 
 const GrammarDrill = () => {
     const navigate = useNavigate();
-    const { addXP, addCoins, incrementStreak, updateDailyStat } = useProgress();
-    const { addXP, incrementStreak, stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+    // Consolidate useProgress calls
+    const {
+        addXP,
+        addCoins,
+        incrementStreak,
+        updateDailyStat,
+        stats,
+        recordCategoryPerformance,
+        setModeDifficulty
+    } = useProgress();
+
     const difficultySetting = stats?.difficultySettings?.grammar || 2;
     const [difficulty, setDifficulty] = useState(difficultySetting);
     const [sessionPoints, setSessionPoints] = useState(0);
@@ -100,14 +109,21 @@ const GrammarDrill = () => {
         } else {
             SoundManager.playFailure();
             setStreak(0);
+
+            // Logic for failure penalization
+            // Originally had duplicated block which caused syntax error
+            setSessionPoints(prev => Math.max(0, prev - 5));
+
+            // Optionally could have adaptive reward logic here too if needed, but original code had confusing else/else block
+        }
+
+        // Award points if correct
+        if (isCorrect) {
             const difficultyBoost = 1 + (difficulty - 2) * 0.12;
             const speedBoost = responseTime < 5000 ? 1.05 : 0.9;
             const adaptiveReward = Math.max(5, Math.round(currentDrill.xpReward * difficultyBoost * speedBoost));
             setSessionPoints(prev => prev + adaptiveReward);
             addXP(adaptiveReward);
-        } else {
-            SoundManager.playFailure();
-            setSessionPoints(prev => Math.max(0, prev - 5));
         }
     };
 

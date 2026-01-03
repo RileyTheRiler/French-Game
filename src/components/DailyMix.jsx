@@ -1,59 +1,21 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, Award, Check, X, Lightbulb } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Award, Check, Lightbulb, Volume2, X, Mic, Keyboard, Repeat } from 'lucide-react';
+import { useVocabulary } from '../context/VocabularyContext';
+import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from './layout/GameLayout';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Card } from './ui/Card';
-import { useVocabulary } from '../context/VocabularyContext';
-import { useProgress } from '../context/ProgressContext';
-import { speak } from '../utils/audio';
 import SoundManager from '../utils/SoundManager';
-import { calculateRewards } from '../utils/rewardSystem';
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb, Volume2, Award, Check, X, Mic, Keyboard, Repeat } from 'lucide-react';
-import SoundManager from '../utils/SoundManager';
-import { useVocabulary } from '../context/VocabularyContext';
-import { useProgress } from '../context/ProgressContext';
 import { playWordAudio } from '../utils/audio';
+import { calculateRewards } from '../utils/rewardSystem';
 import { scorePronunciation } from '../utils/phonetics';
-import { Badge } from './ui/Badge';
-import { Button } from './ui/Button';
-import { Card } from './ui/Card';
-import { GameLayout } from './layout/GameLayout';
 
 const CHALLENGE_TYPES = {
     MULTIPLE_CHOICE: 'multiple_choice',
     LISTENING: 'listening',
-    REVERSE_FLASHCARD: 'reverse_flashcard'
-};
-
-const buildOptions = (word, vocabulary) => {
-    const distractors = [...vocabulary]
-        .filter(w => w.id !== word.id)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3)
-        .map(w => w.english);
-    const options = [word.english, ...distractors].sort(() => Math.random() - 0.5);
-    return options;
-};
-
-const buildSession = (vocabulary) => {
-    const pool = [...vocabulary].sort(() => Math.random() - 0.5).slice(0, 8);
-    return pool.map((word, idx) => {
-        const typeCycle = idx % 3;
-        const type = typeCycle === 0 ? CHALLENGE_TYPES.MULTIPLE_CHOICE : typeCycle === 1 ? CHALLENGE_TYPES.LISTENING : CHALLENGE_TYPES.REVERSE_FLASHCARD;
-        return {
-            id: `${word.id}-${idx}`,
-            word,
-            options: buildOptions(word, vocabulary),
-            type
-        };
-    });
-};
     REVERSE_FLASHCARD: 'reverse_flashcard',
     LISTEN_AND_TYPE: 'listen_type',
     SHADOW: 'shadow_audio'
@@ -67,6 +29,9 @@ const buildOptions = (word, vocabulary) => {
 
 const buildQueue = (vocabulary) => {
     const sequence = [CHALLENGE_TYPES.MULTIPLE_CHOICE, CHALLENGE_TYPES.LISTENING, CHALLENGE_TYPES.LISTEN_AND_TYPE, CHALLENGE_TYPES.SHADOW, CHALLENGE_TYPES.REVERSE_FLASHCARD];
+    // Ensure we have vocabulary before slicing
+    if (!vocabulary || vocabulary.length === 0) return [];
+
     const seed = [...vocabulary].sort(() => Math.random() - 0.5).slice(0, 8);
 
     return seed.map((word, idx) => {
@@ -74,107 +39,33 @@ const buildQueue = (vocabulary) => {
         return {
             word,
             type,
-            options: buildOptions(word, vocabulary)
+            options: type === CHALLENGE_TYPES.MULTIPLE_CHOICE || type === CHALLENGE_TYPES.LISTENING
+                ? buildOptions(word, vocabulary)
+                : []
         };
     });
 };
 
 const normalize = (text) => text.toLowerCase().trim().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '');
-import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Award, Check, Lightbulb, Volume2, X } from 'lucide-react';
-import { useVocabulary } from '../context/VocabularyContext';
-import { useProgress } from '../context/ProgressContext';
-import { GameLayout } from './layout/GameLayout';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
-import { Card } from './ui/Card';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, Lightbulb, Award, Check, X } from 'lucide-react';
-import { Button } from './ui/Button';
-import { Card } from './ui/Card';
-import { Badge } from './ui/Badge';
-import { GameLayout } from './layout/GameLayout';
-import { useVocabulary } from '../context/VocabularyContext';
-import { useProgress } from '../context/ProgressContext';
-import SoundManager from '../utils/SoundManager';
-import { speak } from '../utils/audio';
-
-const CHALLENGE_TYPES = {
-    MULTIPLE_CHOICE: 'multiple-choice',
-    LISTENING: 'listening',
-    REVERSE_FLASHCARD: 'reverse-flashcard'
-};
-
-const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
-
-const buildOptions = (word, vocabulary) => {
-    const distractors = shuffle(vocabulary.filter(w => w.id !== word.id)).slice(0, 3);
-    return shuffle([word.english, ...distractors.map(w => w.english)]);
-};
-
-const createChallenge = (word, vocabulary, availableTypes) => {
-    const type = availableTypes[Math.floor(Math.random() * availableTypes.length)];
-    const base = { word, type };
-
-    if ([CHALLENGE_TYPES.MULTIPLE_CHOICE, CHALLENGE_TYPES.LISTENING].includes(type)) {
-        return { ...base, options: buildOptions(word, vocabulary) };
-    }
-
-    return base;
-};
-
-const buildSessionQueue = (words, vocabulary) => {
-    const types = vocabulary.length >= 4
-        ? Object.values(CHALLENGE_TYPES)
-        : [CHALLENGE_TYPES.MULTIPLE_CHOICE];
-
-    return words.map(word => createChallenge(word, vocabulary, types));
-};
-    REVERSE_FLASHCARD: 'reverse'
-};
-
-const SESSION_SIZE = 6;
 
 const DailyMix = () => {
     const navigate = useNavigate();
-    const { vocabulary, updateWordProgress } = useVocabulary();
-    const { addXP, addCoins, updateDailyStat } = useProgress();
-
-    const [sessionQueue, setSessionQueue] = useState([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isAnswered, setIsAnswered] = useState(false);
-    const [isCorrect, setIsCorrect] = useState(false);
-    const [selectedOption, setSelectedOption] = useState(null);
-    const [sessionComplete, setSessionComplete] = useState(false);
-    const [correctCount, setCorrectCount] = useState(0);
-    const [sessionReward, setSessionReward] = useState(null);
-
-    const currentChallenge = sessionQueue[currentIndex];
-
-    useEffect(() => {
-        setSessionQueue(buildSession(vocabulary));
-        setCurrentIndex(0);
-        setIsAnswered(false);
-        setIsCorrect(false);
-        setSelectedOption(null);
-        setSessionComplete(false);
-        setCorrectCount(0);
-        setSessionReward(null);
-    }, [vocabulary]);
-
     const onExit = () => navigate('/');
-    const { vocabulary, updateWordProgress, downloadAudioOnce } = useVocabulary();
-    const { addXP, addCoins, offlineAudio } = useProgress();
 
-    const [sessionQueue, setSessionQueue] = useState(() => buildQueue(vocabulary));
+    const {
+        vocabulary,
+        updateWordProgress,
+        downloadAudioOnce,
+        CATEGORIES,
+        getWeightedPracticeWords
+    } = useVocabulary();
 
-    const { vocabulary, getWeightedPracticeWords, updateWordProgress } = useVocabulary();
-    const { addXP, addCoins } = useProgress();
-
-    const { vocabulary, updateWordProgress, preloadAudioForWords, playWordAudio, CATEGORIES } = useVocabulary();
-    const { addXP, addCoins } = useProgress();
+    const {
+        addXP,
+        addCoins,
+        offlineAudio,
+        updateDailyStat
+    } = useProgress();
 
     const [filterCEFR, setFilterCEFR] = useState('all');
     const [filterCategory, setFilterCategory] = useState('all');
@@ -188,31 +79,61 @@ const DailyMix = () => {
     const [totalXP, setTotalXP] = useState(0);
     const [shadowResult, setShadowResult] = useState(null);
     const [isShadowing, setIsShadowing] = useState(false);
+    const [isRevealed, setIsRevealed] = useState(false);
+    const [correctCount, setCorrectCount] = useState(0);
+    const [sessionReward, setSessionReward] = useState(null);
 
     const recognitionRef = useRef(null);
     const hasPrefetchedAudio = useRef(false);
 
-    const currentChallenge = useMemo(() => sessionQueue[currentIndex], [sessionQueue, currentIndex]);
+    const cefrLevels = useMemo(() => {
+        if (!vocabulary) return [];
+        return Array.from(new Set(vocabulary.map(word => word.cefr))).sort();
+    }, [vocabulary]);
+
+    // Construct the pool based on filters or weighted practice words
+    const availablePool = useMemo(() => {
+        let pool = getWeightedPracticeWords ? getWeightedPracticeWords(20) : [...vocabulary];
+
+        // Apply filters if needed
+        if (filterCEFR !== 'all' || filterCategory !== 'all') {
+             pool = vocabulary.filter(word => {
+                const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
+                const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
+                return matchesCEFR && matchesCategory;
+            });
+        }
+
+        return pool;
+    }, [vocabulary, filterCEFR, filterCategory, getWeightedPracticeWords]);
 
     useEffect(() => {
-        setSessionQueue(buildQueue(vocabulary));
+        // Rebuild queue when pool changes
+        const queue = buildQueue(availablePool);
+        setSessionQueue(queue);
         setCurrentIndex(0);
         setIsAnswered(false);
         setIsCorrect(false);
         setInputValue('');
         setShadowResult(null);
         setTotalXP(0);
-    }, [vocabulary]);
+        setSessionComplete(false);
+        setCorrectCount(0);
+        setSessionReward(null);
+        setIsRevealed(false);
+    }, [availablePool]);
 
     useEffect(() => {
-        if (offlineAudio && !hasPrefetchedAudio.current) {
+        if (offlineAudio && !hasPrefetchedAudio.current && availablePool.length > 0) {
             hasPrefetchedAudio.current = true;
             downloadAudioOnce();
         }
-    }, [offlineAudio, downloadAudioOnce]);
+    }, [offlineAudio, downloadAudioOnce, availablePool]);
+
+    const currentChallenge = useMemo(() => sessionQueue[currentIndex], [sessionQueue, currentIndex]);
 
     useEffect(() => {
-        if (!currentChallenge) return;
+        if (!currentChallenge || currentChallenge.type !== CHALLENGE_TYPES.SHADOW) return;
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return;
@@ -235,6 +156,7 @@ const DailyMix = () => {
             if (success) {
                 SoundManager.playSuccess();
                 setTotalXP(prev => prev + 15);
+                setCorrectCount(prev => prev + 1);
                 updateWordProgress(currentChallenge.word.id, true);
             } else {
                 SoundManager.playMiss();
@@ -245,86 +167,7 @@ const DailyMix = () => {
         recognitionRef.current.onend = () => setIsShadowing(false);
         recognitionRef.current.onerror = () => setIsShadowing(false);
     }, [currentChallenge, updateWordProgress]);
-    const [sessionComplete, setSessionComplete] = useState(false);
-    const [totalXP, setTotalXP] = useState(0);
-    const [isRevealed, setIsRevealed] = useState(false);
 
-    const currentChallenge = sessionQueue[currentIndex];
-
-    const readyQueue = useMemo(() => {
-        const pool = getWeightedPracticeWords ? getWeightedPracticeWords(12) : vocabulary;
-        if (!pool || pool.length === 0) return [];
-        return buildSessionQueue(pool.slice(0, 10), vocabulary);
-    }, [getWeightedPracticeWords, vocabulary]);
-
-    useEffect(() => {
-        setSessionQueue(readyQueue);
-        setCurrentIndex(0);
-        setSessionComplete(false);
-        setIsAnswered(false);
-        setIsRevealed(false);
-    }, [readyQueue]);
-
-    const handleAnswer = (answer) => {
-        if (isAnswered || !currentChallenge) return;
-
-    const cefrLevels = useMemo(() => Array.from(new Set(vocabulary.map(word => word.cefr))).sort(), [vocabulary]);
-
-    const filteredVocabulary = useMemo(() => {
-        return vocabulary.filter(word => {
-            const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
-            const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
-            return matchesCEFR && matchesCategory;
-        });
-    }, [filterCEFR, filterCategory, vocabulary]);
-
-    const availablePool = filteredVocabulary.length > 0 ? filteredVocabulary : vocabulary;
-
-    const getOptions = (word, pool) => {
-        const distractors = pool.filter(item => item.id !== word.id);
-        const shuffled = distractors.sort(() => Math.random() - 0.5);
-        const sliceSize = Math.min(3, Math.max(1, shuffled.length));
-        const options = [...shuffled.slice(0, sliceSize).map(item => item.english), word.english];
-        return options.sort(() => Math.random() - 0.5);
-    };
-
-    const buildChallenge = (word, pool) => {
-        const challengeTypes = [CHALLENGE_TYPES.MULTIPLE_CHOICE, CHALLENGE_TYPES.LISTENING, CHALLENGE_TYPES.REVERSE_FLASHCARD];
-        const type = challengeTypes[Math.floor(Math.random() * challengeTypes.length)];
-
-        return {
-            word,
-            type,
-            options: type === CHALLENGE_TYPES.MULTIPLE_CHOICE || type === CHALLENGE_TYPES.LISTENING
-                ? getOptions(word, pool)
-                : []
-        };
-    };
-
-    useEffect(() => {
-        const shuffled = [...availablePool].sort(() => Math.random() - 0.5);
-        const selected = shuffled.slice(0, Math.min(SESSION_SIZE, shuffled.length));
-        const queue = selected.map(word => buildChallenge(word, availablePool));
-
-        setSessionQueue(queue);
-        setCurrentIndex(0);
-        setIsAnswered(false);
-        setIsCorrect(false);
-        setSelectedOption(null);
-        setSessionComplete(queue.length === 0);
-        setTotalXP(0);
-        preloadAudioForWords(selected);
-        // Avoid re-seeding mid-session when SRS data changes.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterCEFR, filterCategory, filteredVocabulary.length, vocabulary.length]);
-
-    const currentChallenge = sessionQueue[currentIndex];
-
-    useEffect(() => {
-        setIsAnswered(false);
-        setIsCorrect(false);
-        setSelectedOption(null);
-    }, [currentIndex]);
 
     const handleAnswer = (answer) => {
         if (isAnswered || !currentChallenge) return;
@@ -339,6 +182,7 @@ const DailyMix = () => {
         if (correct) {
             SoundManager.playMatch();
             setTotalXP(prev => prev + 15);
+            setCorrectCount(prev => prev + 1);
         } else {
             SoundManager.playMiss();
         }
@@ -355,6 +199,7 @@ const DailyMix = () => {
         if (correct) {
             SoundManager.playMatch();
             setCorrectCount(prev => prev + 1);
+            setTotalXP(prev => prev + 15);
             updateWordProgress(currentChallenge.word.id, true);
         } else {
             SoundManager.playMiss();
@@ -368,16 +213,25 @@ const DailyMix = () => {
         setIsShadowing(true);
         recognitionRef.current.start();
         playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio });
+    };
+
     const handleSelfGrade = (grade) => {
         const correct = grade !== 'again';
         updateWordProgress(currentChallenge.word.id, grade);
         if (correct) {
             SoundManager.playMatch();
             setTotalXP(prev => prev + 15);
+            setCorrectCount(prev => prev + 1);
         } else {
             SoundManager.playMiss();
         }
         handleNext();
+    };
+
+    const handleListen = () => {
+        if (currentChallenge?.word) {
+            playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio });
+        }
     };
 
     const handleNext = () => {
@@ -395,25 +249,11 @@ const DailyMix = () => {
                 total: sessionQueue.length
             });
             setSessionReward(reward);
-            addXP(reward.xp);
+            addXP(reward.xp + totalXP); // Add accumulated XP as well
             addCoins(reward.coins);
             updateDailyStat('dailyReviews', sessionQueue.length);
-            addXP(totalXP);
-            addCoins(20);
             SoundManager.playLevelUp();
             setSessionComplete(true);
-            SoundManager.playLevelUp();
-        }
-    };
-
-    if (!sessionQueue.length) {
-        return (
-            <GameLayout title="Daily Mix" onBack={onExit}>
-                <div className="h-[60vh] flex flex-col items-center justify-center text-center p-8">
-                    <p className="text-xl text-slate-400">You need at least one word ready to study before starting Daily Mix.</p>
-    const handleListen = () => {
-        if (currentChallenge?.word) {
-            playWordAudio(currentChallenge.word);
         }
     };
 
@@ -460,7 +300,16 @@ const DailyMix = () => {
         );
     }
 
-    if (!currentChallenge) return null;
+    // If we have a pool but no queue yet, likely still initializing.
+    if (!currentChallenge && !sessionComplete) {
+         return (
+            <GameLayout title="Daily Mix" onBack={onExit}>
+                <div className="h-[60vh] flex flex-col items-center justify-center text-center p-8">
+                    <p className="text-xl text-slate-400">Loading your mix...</p>
+                </div>
+            </GameLayout>
+        );
+    }
 
     if (sessionComplete) {
         return (
@@ -507,17 +356,6 @@ const DailyMix = () => {
         [CHALLENGE_TYPES.LISTEN_AND_TYPE]: 'Listen, then type the word',
         [CHALLENGE_TYPES.SHADOW]: 'Shadow the audio in French'
     }[currentChallenge.type];
-    if (!currentChallenge) {
-        return (
-            <GameLayout title="Daily Mix" onBack={onExit}>
-                <div className="h-[60vh] flex flex-col items-center justify-center text-center p-8">
-                    {filterControls}
-                    <p className="text-xl text-slate-400">No words match your filters yet.</p>
-                    <Button className="mt-8" onClick={() => { setFilterCEFR('all'); setFilterCategory('all'); }}>Reset Filters</Button>
-                </div>
-            </GameLayout>
-        );
-    }
 
     return (
         <GameLayout
@@ -555,7 +393,6 @@ const DailyMix = () => {
                                 variant="default"
                                 size="lg"
                                 className="rounded-full w-24 h-24 bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-500/20 group"
-                                onClick={() => playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio })}
                                 onClick={handleListen}
                             >
                                 <Volume2 size={40} className="group-hover:scale-110 transition-transform" />
@@ -575,7 +412,6 @@ const DailyMix = () => {
                             <Button
                                 variant="ghost"
                                 className="rounded-full p-2 h-10 w-10"
-                                onClick={() => playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio })}
                                 onClick={handleListen}
                             >
                                 <Volume2 size={24} className="text-slate-500" />
@@ -606,7 +442,6 @@ const DailyMix = () => {
                                 ) : (
                                     <Card className="h-64 flex flex-col items-center justify-center bg-indigo-950/20 border-indigo-500/30">
                                         <h3 className="text-4xl font-black text-indigo-300">{currentChallenge.word.french}</h3>
-                                        <div className="mt-12 flex gap-3 w-full px-6 flex-wrap">
                                         <p className="text-indigo-200 mt-2">{currentChallenge.word.ipa}</p>
                                         <p className="text-center text-slate-300 mt-3 px-6 text-base">
                                             {currentChallenge.word.example?.french}
@@ -627,7 +462,6 @@ const DailyMix = () => {
                                             </Button>
                                             <Button
                                                 className="flex-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 h-14"
-                                                onClick={() => { setIsCorrect(true); setCorrectCount(prev => prev + 1); handleNext(); }}
                                                 onClick={() => handleSelfGrade('good')}
                                             >
                                                 Good
@@ -660,7 +494,7 @@ const DailyMix = () => {
                                             variant="secondary"
                                             size="sm"
                                             className="rounded-full"
-                                            onClick={() => playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio })}
+                                            onClick={handleListen}
                                         >
                                             <Volume2 size={18} className="mr-2" /> Play Audio
                                         </Button>
