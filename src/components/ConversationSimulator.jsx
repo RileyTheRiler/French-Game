@@ -9,13 +9,17 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import SoundManager from '../utils/SoundManager';
 import { npcSystem } from '../systems/NPCSystem';
+import { getDifficultyConfig } from './ui/DifficultyDial';
 
 import { SCENARIOS } from '../data/conversationScenarios';
+import { findBestMatch, isFuzzyMatch } from '../utils/textMatching';
 
 const ConversationSimulator = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { addXP, difficultySettings } = useProgress();
+    const { addXP, globalDifficulty, difficultySettings } = useProgress();
+
+    const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
     const messagesEndRef = useRef(null);
 
     // Scenario State
@@ -24,6 +28,10 @@ const ConversationSimulator = () => {
     const [history, setHistory] = useState([]);
     const [gameOver, setGameOver] = useState(false);
 
+    // Hybrid Input State
+    const [userInputValue, setUserInputValue] = useState("");
+    const [showLegacyOptions, setShowLegacyOptions] = useState(false);
+
     // Feedback State for Scholar Mode
     const [feedbackModal, setFeedbackModal] = useState(null); // { text: string, onDismiss: func }
 
@@ -31,10 +39,11 @@ const ConversationSimulator = () => {
     const [showOptions, setShowOptions] = useState(false);
     const optionsTimerRef = useRef(null);
 
-    // Get hint delay from settings (default 8 seconds)
-    const hintDelay = difficultySettings?.hintDelay ?? 8;
-    // Challenge Mode is forced true for Scholar, otherwise user setting
-    const challengeMode = difficultySettings?.learnerType === 'scholar' || (difficultySettings?.challengeMode ?? false);
+    // Get hint delay from difficulty config
+    const hintDelay = difficultyConfig.hintDelay;
+
+    // Challenge Mode is forced true for Scholar, otherwise global difficulty can influence it
+    const challengeMode = difficultySettings?.learnerType === 'scholar' || (globalDifficulty > 80);
     const learnerType = difficultySettings?.learnerType || 'casual';
 
     // Scroll to bottom when history changes
@@ -42,9 +51,13 @@ const ConversationSimulator = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [history]);
 
-    // Reset options visibility when node changes
+    // Reset options visibility and input when node changes
     useEffect(() => {
         if (!activeScenario || gameOver || feedbackModal) return;
+
+        // Reset input state
+        setUserInputValue("");
+        setShowLegacyOptions(false);
 
         // Clear any existing timer
         if (optionsTimerRef.current) {
@@ -111,6 +124,84 @@ const ConversationSimulator = () => {
                     setCurrentNodeId(nextNodeId);
                 }
             }, 800);
+        }
+    };
+
+    /**
+     * Handle user typing a response
+     */
+    const handleTypedSubmit = () => {
+        if (!userInputValue.trim()) return;
+
+        const currentNode = activeScenario.nodes[currentNodeId];
+        const matchResult = findBestMatch(userInputValue, currentNode.options);
+
+        const handleProgression = (option, wasFuzzyMatch = false) => {
+            // Add user response to history (use actual typed input if fuzzy match)
+            setHistory(prev => [...prev, { text: wasFuzzyMatch ? userInputValue : option.text, isUser: true }]);
+
+            // Allow NPC to react to what was actually typed if possible, otherwise option text
+            if (activeScenario.npcId) {
+                npcSystem.interact(activeScenario.npcId, wasFuzzyMatch ? userInputValue : option.text).then(response => {
+                    console.log("NPC Thought:", response.text);
+                });
+            }
+            proceedToNode(option.nextNode, activeScenario);
+        };
+
+        if (matchResult && matchResult.score > 0.4) {
+            // Good match found
+            SoundManager.playPop();
+            const { option } = matchResult;
+
+            if (option.feedback && (learnerType === 'scholar' || !option.isCorrect)) {
+                setFeedbackModal({
+                    text: option.feedback,
+                    isCorrect: option.isCorrect,
+                    onDismiss: () => {
+                        setFeedbackModal(null);
+                        handleProgression(option, true);
+                    }
+                });
+            } else {
+                handleProgression(option, true);
+            }
+        } else {
+            // No clear match found - use NPCSystem for open-ended handling
+            const offScriptResponse = npcSystem.handleOffScript(
+                userInputValue,
+                activeScenario,
+                currentNode.options
+            );
+
+            // Add user message to history
+            setHistory(prev => [...prev, { text: userInputValue, isUser: true }]);
+
+            // Add NPC response
+            setTimeout(() => {
+                setHistory(prev => [...prev, {
+                    text: offScriptResponse.text,
+                    speaker: activeScenario.initialSpeaker,
+                    isUser: false,
+                    isRepair: true
+                }]);
+
+                // Show correction/learning moment if grammar error detected
+                if (offScriptResponse.correction) {
+                    SoundManager.playPop();
+                    setFeedbackModal({
+                        text: offScriptResponse.correction,
+                        isCorrect: false,
+                        miniLesson: offScriptResponse.miniLesson,
+                        onDismiss: () => setFeedbackModal(null)
+                    });
+                } else if (!offScriptResponse.understood) {
+                    SoundManager.playMiss();
+                }
+
+                // Show options as hint
+                setShowLegacyOptions(true);
+            }, 600);
         }
     };
 
@@ -285,34 +376,117 @@ const ConversationSimulator = () => {
                                         </span>
                                     </motion.div>
                                 ) : showOptions ? (
-                                    /* Response options - shown after hint delay */
-                                    <motion.div
-                                        key="options"
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0 }}
-                                        className="grid gap-3"
-                                    >
-                                        {currentNode && currentNode.options.map((opt, idx) => (
-                                            <motion.button
-                                                key={idx}
-                                                initial={{ opacity: 0, x: -20 }}
-                                                animate={{ opacity: 1, x: 0 }}
-                                                transition={{ delay: idx * 0.1 }}
-                                                onClick={() => handleOptionClick(opt)}
-                                                className="w-full text-left p-4 bg-slate-800/80 hover:bg-slate-700 hover:translate-x-1 border border-white/10 hover:border-indigo-500/50 rounded-xl transition-all flex items-center justify-between group"
+                                    /* Hybrid Input Mode */
+                                    <div className="space-y-4">
+                                        {/* Typed Input Field */}
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            className="flex gap-2"
+                                        >
+                                            <input
+                                                type="text"
+                                                value={userInputValue}
+                                                onChange={(e) => setUserInputValue(e.target.value)}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter' && userInputValue.trim()) {
+                                                        handleTypedSubmit();
+                                                    }
+                                                }}
+                                                placeholder="Type your response..."
+                                                className="flex-1 bg-slate-800 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                                                autoFocus
+                                            />
+                                            <Button
+                                                onClick={handleTypedSubmit}
+                                                disabled={!userInputValue.trim()}
+                                                className="px-6"
                                             >
-                                                <span className="text-slate-200 group-hover:text-white font-medium">{opt.text}</span>
-                                                <Send size={16} className="text-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            </motion.button>
-                                        ))}
-                                    </motion.div>
+                                                <Send size={18} />
+                                            </Button>
+                                        </motion.div>
+
+                                        {/* Fallback Options (can be toggled or shown after failed attempts) */}
+                                        <div className="flex justify-center">
+                                            <button
+                                                onClick={() => setShowLegacyOptions(!showLegacyOptions)}
+                                                className="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1"
+                                            >
+                                                {showLegacyOptions ? "Hide Options" : "Show Options (I'm stuck)"}
+                                            </button>
+                                        </div>
+
+                                        {showLegacyOptions && (
+                                            <motion.div
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: 'auto' }}
+                                                className="grid gap-3"
+                                            >
+                                                {currentNode && currentNode.options.map((opt, idx) => (
+                                                    <motion.button
+                                                        key={idx}
+                                                        initial={{ opacity: 0, x: -20 }}
+                                                        animate={{ opacity: 1, x: 0 }}
+                                                        transition={{ delay: idx * 0.1 }}
+                                                        onClick={() => handleOptionClick(opt)}
+                                                        className="w-full text-left p-4 bg-slate-800/80 hover:bg-slate-700 hover:translate-x-1 border border-white/10 hover:border-indigo-500/50 rounded-xl transition-all flex items-center justify-between group"
+                                                    >
+                                                        <span className="text-slate-200 group-hover:text-white font-medium">{opt.text}</span>
+                                                    </motion.button>
+                                                ))}
+                                            </motion.div>
+                                        )}
+                                    </div>
                                 ) : null}
                             </AnimatePresence>
                         </div>
                     )}
                 </div>
             </div>
+            {/* Feedback Modal for Scholar Mode */}
+            <AnimatePresence>
+                {feedbackModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        onClick={feedbackModal.onDismiss}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-slate-900 border border-indigo-500/30 p-6 rounded-2xl max-w-md w-full shadow-2xl relative overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500" />
+
+                            <div className="flex flex-col items-center text-center space-y-4">
+                                <div className={`p-4 rounded-full ${feedbackModal.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
+                                    <Lightbulb size={32} />
+                                </div>
+
+                                <div>
+                                    <h3 className="text-xl font-bold text-white mb-2">
+                                        {feedbackModal.isCorrect ? 'Correct, but...' : 'Learning Moment'}
+                                    </h3>
+                                    <p className="text-slate-300 leading-relaxed">
+                                        {feedbackModal.text}
+                                    </p>
+                                </div>
+
+                                <Button
+                                    onClick={feedbackModal.onDismiss}
+                                    className="w-full mt-2"
+                                >
+                                    Got it
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </GameLayout>
     );
 };

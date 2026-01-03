@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, Check, X, RotateCcw } from 'lucide-react';
@@ -9,30 +10,36 @@ import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
 import { useProgress } from '../context/ProgressContext';
-import { useNavigate } from 'react-router-dom';
+import { getDifficultyConfig } from './ui/DifficultyDial';
+import GrammarInsightCard from './ui/GrammarInsightCard';
 
 const FlashcardMode = ({ mode = 'standard' }) => {
+    const { deckId } = useParams();
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { updateWordProgress, vocabulary, getWeightedPracticeWords } = useVocabulary();
+    const { updateWordProgress, vocabulary, getWeightedPracticeWords, getDeckWords, customDecks } = useVocabulary();
+    const { reducedMotion, logWordAttempt, globalDifficulty } = useProgress();
 
-    // useVocabulary doesn't have logWordAttempt, it's in useProgress. 
-    // Wait, the imports in the file were messy in previous turn view. 
-    // Let me check imports first.
-    // The previous view showed duplicate imports. I should clean that up too.
-
-    const { reducedMotion, logWordAttempt } = useProgress();
+    const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
     const containerRef = useRef(null);
 
     const getStudyQueue = useCallback(() => {
+        if (deckId) {
+            const deckWords = getDeckWords(deckId);
+            return deckWords.slice(0, 20); // Focus on deck words
+        }
+
         let pool = getWeightedPracticeWords ? getWeightedPracticeWords(20) : vocabulary;
         if (mode === 'mix') {
             pool = [...pool].sort(() => Math.random() - 0.5);
         } else {
             pool = [...pool].sort((a, b) => (a.srs?.dueDate || 0) - (b.srs?.dueDate || 0));
         }
-        return pool.slice(0, 10); // Smaller sets for better focus
-    }, [getWeightedPracticeWords, vocabulary, mode]);
+
+        // Session size adjusted by difficulty
+        const sessionSize = globalDifficulty > 70 ? 15 : 10;
+        return pool.slice(0, sessionSize);
+    }, [getWeightedPracticeWords, vocabulary, mode, deckId, getDeckWords, globalDifficulty]);
 
     const [queue, setQueue] = useState([]);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -44,6 +51,31 @@ const FlashcardMode = ({ mode = 'standard' }) => {
     }, [getStudyQueue]);
 
     const currentWord = queue[currentCardIndex];
+
+    const getGrammarTip = (word) => {
+        if (!word) return null;
+
+        if (word.pos === 'noun' && word.gender) {
+            const isMasc = word.gender === 'm';
+            const genderTerm = isMasc ? 'Masculine' : 'Feminine';
+            const article = isMasc ? 'le / un' : 'la / une';
+
+            let trick = '';
+            if (word.french.endsWith('tion') && !isMasc) trick = 'Nouns ending in -tion are typically feminine.';
+            else if (word.french.endsWith('ment') && isMasc) trick = 'Nouns ending in -ment are typically masculine.';
+            else if (word.french.endsWith('e') && isMasc) trick = 'Careful: Ends in -e but is masculine!';
+            else if (!word.french.endsWith('e') && !isMasc) trick = 'Careful: No -e ending but is feminine!';
+
+            return {
+                id: `tip_${word.id}`,
+                title: `${genderTerm} Noun`,
+                content: `Use "${article}" with "${word.french}".`,
+                whyItMatters: `Gender determines the article and adjective agreement (e.g., "un beau ${word.french}" vs "une belle ${word.french}").`,
+                memoryTrick: trick
+            };
+        }
+        return null;
+    };
 
     const handleFlip = useCallback(() => {
         setIsFlipped(prev => !prev);
@@ -140,8 +172,8 @@ const FlashcardMode = ({ mode = 'standard' }) => {
 
     return (
         <GameLayout
-            title={mode === 'mix' ? "Daily Mix" : "Flashcards"}
-            subtitle="Practice your vocabulary with spaced repetition."
+            title={deckId ? (customDecks.find(d => d.id === deckId)?.name || 'Custom Deck') : (mode === 'mix' ? "Daily Mix" : "Flashcards")}
+            subtitle={deckId ? "Reviewing your custom word collection." : "Practice your vocabulary with spaced repetition."}
             onBack={onExit}
             headerRight={
                 <Badge variant="primary" className="text-lg py-1 px-4">
@@ -190,11 +222,27 @@ const FlashcardMode = ({ mode = 'standard' }) => {
 
                         {/* Back */}
                         <Card
-                            className="absolute inset-0 backface-hidden flex flex-col items-center justify-center bg-indigo-950 border-white/20 shadow-2xl rounded-[40px] overflow-hidden"
+                            className="absolute inset-0 backface-hidden flex flex-col items-center justify-center bg-indigo-950 border-white/20 shadow-2xl rounded-[40px] overflow-hidden p-6"
                             style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
                         >
                             <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent" />
-                            <h2 className="text-6xl font-black text-white px-12 text-center mb-8 drop-shadow-xl">{currentWord.english}</h2>
+                            <h2 className="text-5xl font-black text-white px-8 text-center mb-6 drop-shadow-xl">{currentWord.english}</h2>
+
+                            {/* Grammar Insight */}
+                            <div className="w-full max-w-xs mb-6 relative z-10">
+                                {(() => {
+                                    const tip = getGrammarTip(currentWord);
+                                    return tip && (
+                                        <GrammarInsightCard
+                                            tip={tip}
+                                            compact={true}
+                                            showDeepDiveLink={false}
+                                            isCorrect={true} // Style as informative
+                                        />
+                                    );
+                                })()}
+                            </div>
+
                             <Button
                                 variant="secondary"
                                 className="rounded-2xl p-6 h-20 w-20 bg-white/5 border-white/10 hover:bg-white/10 group overflow-hidden"

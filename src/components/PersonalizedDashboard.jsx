@@ -10,7 +10,9 @@ import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { useLearningPath } from '../context/LearningPathContext';
 import { useProgress } from '../context/ProgressContext';
+import { useVocabulary } from '../context/VocabularyContext';
 import { CATEGORIES } from '../data/vocabulary';
+import ErrorHeatmap from './PersonalizedDashboard/ErrorHeatmap';
 
 /**
  * PersonalizedDashboard - AI-powered learning insights and recommendations
@@ -154,8 +156,8 @@ const PersonalizedDashboard = () => {
                                         </div>
                                         <div className="flex items-end gap-1">
                                             <span className={`text-xl font-bold ${item.value >= 80 ? 'text-emerald-400' :
-                                                    item.value >= 50 ? 'text-amber-400' :
-                                                        item.value > 0 ? 'text-red-400' : 'text-slate-600'
+                                                item.value >= 50 ? 'text-amber-400' :
+                                                    item.value > 0 ? 'text-red-400' : 'text-slate-600'
                                                 }`}>
                                                 {item.value > 0 ? item.value : '—'}
                                             </span>
@@ -168,8 +170,8 @@ const PersonalizedDashboard = () => {
                                                 animate={{ width: `${item.value}%` }}
                                                 transition={{ delay: index * 0.05 + 0.2, duration: 0.5 }}
                                                 className={`h-full rounded-full ${item.value >= 80 ? 'bg-emerald-500' :
-                                                        item.value >= 50 ? 'bg-amber-500' :
-                                                            'bg-red-500'
+                                                    item.value >= 50 ? 'bg-amber-500' :
+                                                        'bg-red-500'
                                                     }`}
                                             />
                                         </div>
@@ -195,9 +197,9 @@ const PersonalizedDashboard = () => {
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: index * 0.1 }}
                                         className={`p-3 rounded-lg border ${insight.type === 'positive' ? 'bg-emerald-500/10 border-emerald-500/20' :
-                                                insight.type === 'focus' ? 'bg-amber-500/10 border-amber-500/20' :
-                                                    insight.type === 'suggestion' ? 'bg-blue-500/10 border-blue-500/20' :
-                                                        'bg-slate-800/50 border-white/5'
+                                            insight.type === 'focus' ? 'bg-amber-500/10 border-amber-500/20' :
+                                                insight.type === 'suggestion' ? 'bg-blue-500/10 border-blue-500/20' :
+                                                    'bg-slate-800/50 border-white/5'
                                             }`}
                                     >
                                         <div className="flex items-start gap-2">
@@ -284,6 +286,15 @@ const PersonalizedDashboard = () => {
                         )}
                     </Card>
 
+                    {/* Words to Polish */}
+                    <Card className="p-6 bg-slate-900/50 border-white/10">
+                        <div className="flex items-center gap-2 mb-4">
+                            <Mic className="text-rose-400" size={20} />
+                            <h2 className="text-xl font-bold text-white">Words to Polish</h2>
+                        </div>
+                        <WordsToPolishWidget />
+                    </Card>
+
                     {/* Learning Path Milestones */}
                     <Card className="p-6 bg-slate-900/50 border-white/10">
                         <div className="flex items-center gap-2 mb-4">
@@ -300,10 +311,10 @@ const PersonalizedDashboard = () => {
                                     <div
                                         key={milestone.id}
                                         className={`p-3 rounded-lg border transition-all ${milestone.complete
-                                                ? 'bg-emerald-500/10 border-emerald-500/20'
-                                                : isCurrent
-                                                    ? 'bg-indigo-500/10 border-indigo-500/30'
-                                                    : 'bg-slate-800/30 border-white/5 opacity-60'
+                                            ? 'bg-emerald-500/10 border-emerald-500/20'
+                                            : isCurrent
+                                                ? 'bg-indigo-500/10 border-indigo-500/30'
+                                                : 'bg-slate-800/30 border-white/5 opacity-60'
                                             }`}
                                     >
                                         <div className="flex items-center justify-between mb-2">
@@ -342,6 +353,13 @@ const PersonalizedDashboard = () => {
                     </Card>
                 </div>
 
+                {/* Error Analysis Section (Phase 10) */}
+                <div className="mb-8">
+                    <ErrorHeatmap />
+                </div>
+
+                {/* Quick Actions */}
+
                 {/* Quick Actions */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {quickActions.map((action, index) => (
@@ -353,14 +371,14 @@ const PersonalizedDashboard = () => {
                         >
                             <Card
                                 className={`p-5 cursor-pointer bg-gradient-to-br hover:scale-[1.02] transition-transform ${action.color === 'indigo' ? 'from-indigo-900/30 to-indigo-800/10 border-indigo-500/20 hover:border-indigo-500/40' :
-                                        action.color === 'emerald' ? 'from-emerald-900/30 to-emerald-800/10 border-emerald-500/20 hover:border-emerald-500/40' :
-                                            'from-amber-900/30 to-amber-800/10 border-amber-500/20 hover:border-amber-500/40'
+                                    action.color === 'emerald' ? 'from-emerald-900/30 to-emerald-800/10 border-emerald-500/20 hover:border-emerald-500/40' :
+                                        'from-amber-900/30 to-amber-800/10 border-amber-500/20 hover:border-amber-500/40'
                                     }`}
                                 onClick={() => navigate(action.path)}
                             >
                                 <action.icon className={`mb-3 ${action.color === 'indigo' ? 'text-indigo-400' :
-                                        action.color === 'emerald' ? 'text-emerald-400' :
-                                            'text-amber-400'
+                                    action.color === 'emerald' ? 'text-emerald-400' :
+                                        'text-amber-400'
                                     }`} size={28} />
                                 <h3 className="text-lg font-bold text-white mb-1">{action.title}</h3>
                                 <p className="text-sm text-slate-400">{action.description}</p>
@@ -369,6 +387,54 @@ const PersonalizedDashboard = () => {
                     ))}
                 </div>
             </div>
+        </div>
+    );
+};
+
+const WordsToPolishWidget = () => {
+    const { stats } = useProgress();
+    const { vocabulary } = useVocabulary();
+    const navigate = useNavigate();
+
+    const weakWords = useMemo(() => {
+        if (!stats.weakWords) return [];
+        return Object.entries(stats.weakWords)
+            .filter(([_, data]) => data.strength < 80)
+            .sort((a, b) => a[1].strength - b[1].strength)
+            .slice(0, 3)
+            .map(([id, data]) => {
+                const word = vocabulary.find(w => w.id === id);
+                return { ...word, strength: data.strength };
+            })
+            .filter(w => w && w.french); // Ensure word exists
+    }, [stats.weakWords, vocabulary]);
+
+    if (weakWords.length === 0) {
+        return (
+            <div className="text-slate-400 text-sm italic">
+                No weak words identified yet. Keep practicing to find areas for improvement!
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-3">
+            {weakWords.map(word => (
+                <div key={word.id} className="flex items-center justify-between p-3 bg-slate-800/50 rounded-lg border border-white/5">
+                    <div>
+                        <div className="font-bold text-white">{word.french}</div>
+                        <div className="text-xs text-slate-400">{word.english}</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <Badge variant="outline" className="text-rose-400 border-rose-500/30 text-xs">
+                            Strength: {word.strength}%
+                        </Badge>
+                        <Button size="xs" onClick={() => navigate('/pronunciation')}>
+                            Practice
+                        </Button>
+                    </div>
+                </div>
+            ))}
         </div>
     );
 };

@@ -23,6 +23,7 @@ export const Button = ({
     className,
     onClick,
     disabled,
+    'aria-label': ariaLabel,
     ...props
 }) => {
     return (
@@ -37,6 +38,8 @@ export const Button = ({
             )}
             onClick={onClick}
             disabled={disabled}
+            aria-disabled={disabled}
+            aria-label={ariaLabel}
             {...props}
         >
             {children}

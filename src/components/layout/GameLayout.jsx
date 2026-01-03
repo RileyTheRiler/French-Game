@@ -18,11 +18,18 @@ export const GameLayout = ({
                 initial={{ y: -50, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 className="flex items-center justify-between mb-8"
+                role="banner"
             >
                 <div className="flex items-center gap-4">
                     {onBack && (
-                        <Button variant="ghost" size="sm" onClick={onBack} className="rounded-full p-2 h-10 w-10">
-                            <ArrowLeft size={20} />
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onBack}
+                            className="rounded-full p-2 h-10 w-10"
+                            aria-label="Go back to previous page"
+                        >
+                            <ArrowLeft size={20} aria-hidden="true" />
                         </Button>
                     )}
                     <div>
@@ -33,15 +40,15 @@ export const GameLayout = ({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <nav className="flex items-center gap-4" aria-label="Page actions">
                     {/* Always show Language Switcher */}
                     <LanguageSwitcher />
                     {headerRight}
-                </div>
+                </nav>
             </motion.header>
 
             {/* Main Content Area */}
-            <main className="flex-1 relative">
+            <main id="main-content" className="flex-1 relative" role="main" tabIndex={-1}>
                 {children}
             </main>
         </div>

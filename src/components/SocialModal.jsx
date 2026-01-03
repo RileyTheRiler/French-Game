@@ -16,7 +16,7 @@ import ChatInterface from './Messaging/ChatInterface';
 
 const SocialModal = ({ onClose }) => {
     const navigate = useNavigate();
-    const { friends, addFriend, removeFriend, coopGroup, createCoopGroup, leaveCoopGroup, activeChallenge } = useSocial();
+    const { friends, addFriend, removeFriend, coopGroup, createCoopGroup, leaveCoopGroup, activeChallenge, claimCoopReward } = useSocial();
     const { stats } = useProgress();
     const { communityStats, pendingWritings } = useCommunity();
     const { getUnreadCount, connectedPartners } = useMessaging();
@@ -338,9 +338,15 @@ const SocialModal = ({ onClose }) => {
                                                 <div className="relative z-10">
                                                     <div className="flex justify-between items-start mb-4">
                                                         <div>
-                                                            <Badge variant="warning" className="mb-2">Weekly Challenge</Badge>
+                                                            <Badge variant={activeChallenge.isCompleted ? "success" : "warning"} className="mb-2">
+                                                                {activeChallenge.isCompleted ? "Challenge Complete!" : "Weekly Challenge"}
+                                                            </Badge>
                                                             <h3 className="text-2xl font-black text-white">{activeChallenge.title}</h3>
-                                                            <p className="text-violet-200">Earn {activeChallenge.target.toLocaleString()} XP together</p>
+                                                            {activeChallenge.isCompleted ? (
+                                                                <p className="text-green-300">Goal reached! Claim your reward.</p>
+                                                            ) : (
+                                                                <p className="text-violet-200">Earn {activeChallenge.target.toLocaleString()} XP together</p>
+                                                            )}
                                                         </div>
                                                         <div className="text-right">
                                                             <div className="text-3xl font-mono font-bold text-white">
@@ -349,18 +355,37 @@ const SocialModal = ({ onClose }) => {
                                                             <div className="text-xs text-violet-300">Completed</div>
                                                         </div>
                                                     </div>
-                                                    <div className="h-4 bg-slate-900/50 rounded-full overflow-hidden mb-2">
+                                                    <div className="h-4 bg-slate-900/50 rounded-full overflow-hidden mb-4">
                                                         <motion.div
-                                                            className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                                                            className={`h-full bg-gradient-to-r ${activeChallenge.isCompleted ? 'from-green-400 to-emerald-500' : 'from-violet-500 to-fuchsia-500'}`}
                                                             initial={{ width: 0 }}
                                                             animate={{ width: `${Math.min(100, (activeChallenge.current / activeChallenge.target) * 100)}%` }}
                                                             transition={{ duration: 1, ease: "easeOut" }}
                                                         />
                                                     </div>
-                                                    <div className="flex justify-between text-xs text-violet-300 font-mono">
-                                                        <span>{activeChallenge.current.toLocaleString()} XP</span>
-                                                        <span>{activeChallenge.target.toLocaleString()} XP</span>
-                                                    </div>
+
+                                                    {activeChallenge.isCompleted ? (
+                                                        <motion.div
+                                                            initial={{ scale: 0.9, opacity: 0 }}
+                                                            animate={{ scale: 1, opacity: 1 }}
+                                                        >
+                                                            <Button
+                                                                onClick={() => {
+                                                                    const reward = claimCoopReward();
+                                                                    setSuccessMsg(`Claimed ${reward} XP Bonus!`);
+                                                                    setTimeout(() => setSuccessMsg(null), 3000);
+                                                                }}
+                                                                className="w-full bg-green-500 hover:bg-green-600 border-green-400 text-white font-bold py-3 shadow-lg shadow-green-900/20"
+                                                            >
+                                                                <Trophy className="mr-2 inline" /> Claim Team Reward
+                                                            </Button>
+                                                        </motion.div>
+                                                    ) : (
+                                                        <div className="flex justify-between text-xs text-violet-300 font-mono">
+                                                            <span>{activeChallenge.current.toLocaleString()} XP</span>
+                                                            <span>{activeChallenge.target.toLocaleString()} XP</span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 

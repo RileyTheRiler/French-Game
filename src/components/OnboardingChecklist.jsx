@@ -67,7 +67,7 @@ const OnboardingChecklist = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-6">
+        <div id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-6">
             <AnimatePresence>
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}

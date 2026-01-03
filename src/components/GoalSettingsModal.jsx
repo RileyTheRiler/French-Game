@@ -10,7 +10,14 @@ import { Badge } from './ui/Badge';
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 
 const GoalSettingsModal = ({ isOpen, onClose }) => {
-    const { userGoals, updateUserGoals, difficultySettings, updateDifficultySettings, updateDailyXPGoal, dailyXPGoal } = useProgress();
+    const {
+        userGoals, updateUserGoals,
+        difficultySettings, updateDifficultySettings,
+        updateDailyXPGoal, dailyXPGoal,
+        weeklyGoal, updateWeeklyGoal
+    } = useProgress();
+
+    const [localWeeklyGoal, setLocalWeeklyGoal] = useState(weeklyGoal?.sessionsPerWeek || 3);
 
     const [localGoals, setLocalGoals] = useState(userGoals);
     const [localDifficulty, setLocalDifficulty] = useState(difficultySettings);
@@ -22,6 +29,7 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
         updateUserGoals(localGoals);
         updateDifficultySettings(localDifficulty);
         updateDailyXPGoal(localDailyGoal);
+        updateWeeklyGoal({ sessionsPerWeek: localWeeklyGoal });
         onClose();
     };
 
@@ -86,8 +94,8 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                                                     key={preset.id}
                                                     onClick={() => applyPreset(preset)}
                                                     className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPreset === preset.id
-                                                            ? 'border-emerald-500 bg-emerald-500/20 shadow-lg shadow-emerald-500/20'
-                                                            : 'border-white/10 bg-white/5 hover:border-white/30'}
+                                                        ? 'border-emerald-500 bg-emerald-500/20 shadow-lg shadow-emerald-500/20'
+                                                        : 'border-white/10 bg-white/5 hover:border-white/30'}
                                                     `}
                                                 >
                                                     <div className="flex items-center gap-2 mb-2">
@@ -131,6 +139,30 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                                             <span>Easy (10)</span>
                                             <span>Champion (300)</span>
                                         </div>
+                                    </div>
+
+                                    {/* Weekly Sessions Goal */}
+                                    <div className="space-y-4">
+                                        <div className="flex justify-between mb-2">
+                                            <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">Weekly Commitment</label>
+                                            <span className="text-blue-400 font-bold">{localWeeklyGoal} days / week</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max="7"
+                                            step="1"
+                                            value={localWeeklyGoal}
+                                            onChange={(e) => setLocalWeeklyGoal(Number(e.target.value))}
+                                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                        />
+                                        <div className="flex justify-between text-xs text-slate-500">
+                                            <span>Casual (1)</span>
+                                            <span>Dedicated (7)</span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 mt-2 italic">
+                                            Streak flexibility: Your weekly goal replaces daily streaks for a lower-pressure experience.
+                                        </p>
                                     </div>
 
                                     <div className="space-y-4">

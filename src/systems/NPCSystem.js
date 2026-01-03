@@ -1,4 +1,86 @@
 import { PERSONAS } from './PersonaDefinitions';
+import { checkGrammar } from '../data/grammarTips';
+
+/**
+ * Intent patterns for classifying user messages
+ */
+const INTENT_PATTERNS = {
+    greeting: {
+        patterns: [/\bbonjour\b/i, /\bsalut\b/i, /\bbonsoir\b/i, /\bcoucou\b/i, /\ballo\b/i],
+        responses: ["Bonjour !", "Salut !", "Coucou !", "Bonsoir !"]
+    },
+    farewell: {
+        patterns: [/\bau revoir\b/i, /\bà bientôt\b/i, /\bà plus\b/i, /\bbonne journée\b/i, /\bbye\b/i, /\badieu\b/i],
+        responses: ["Au revoir !", "À bientôt !", "Bonne journée !", "À la prochaine !"]
+    },
+    thanks: {
+        patterns: [/\bmerci\b/i, /\bje vous remercie\b/i],
+        responses: ["De rien !", "Je vous en prie !", "Il n'y a pas de quoi !", "Avec plaisir !"]
+    },
+    apology: {
+        patterns: [/\bpardon\b/i, /\bdésolé\b/i, /\bexcusez\b/i, /\bexcuse\b/i],
+        responses: ["Ce n'est pas grave.", "Pas de problème !", "Ne vous inquiétez pas."]
+    },
+    agreement: {
+        patterns: [/\bd'accord\b/i, /\boui\b/i, /\bbien sûr\b/i, /\bexactement\b/i, /\bc'est vrai\b/i],
+        responses: ["Très bien !", "Parfait !", "Super !"]
+    },
+    disagreement: {
+        patterns: [/\bnon\b/i, /\bje ne pense pas\b/i, /\bpas vraiment\b/i],
+        responses: ["Ah bon ? Pourquoi pas ?", "Je comprends.", "D'accord, c'est votre opinion."]
+    },
+    question_how: {
+        patterns: [/\bcomment\b.*\?/i, /\bcomment\s+(ça va|allez)/i],
+        responses: ["Comment quoi exactement ?", "Ça va bien, et vous ?"]
+    },
+    question_what: {
+        patterns: [/\bqu'est-ce que\b/i, /\bc'est quoi\b/i, /\bquoi\b.*\?/i],
+        responses: ["C'est une bonne question !", "Qu'est-ce que vous voulez savoir ?"]
+    },
+    question_where: {
+        patterns: [/\boù\b/i, /\boù est\b/i, /\boù se trouve\b/i],
+        responses: ["C'est difficile à dire...", "Je ne suis pas sûr de l'endroit."]
+    },
+    question_when: {
+        patterns: [/\bquand\b/i, /\bà quelle heure\b/i],
+        responses: ["Ça dépend...", "Je ne sais pas exactement."]
+    },
+    introduction: {
+        patterns: [/\bje m'appelle\b/i, /\bje suis\b/i, /\bmon nom est\b/i],
+        responses: ["Enchanté !", "Ravi de vous connaître !", "Bienvenue !"]
+    },
+    order: {
+        patterns: [/\bje voudrais\b/i, /\bje veux\b/i, /\bje prends\b/i, /\bpour moi\b/i, /\bdonner\b/i],
+        responses: ["Bien sûr !", "Tout de suite !", "Excellent choix !"]
+    },
+    price: {
+        patterns: [/\bcombien\b/i, /\bcoûte\b/i, /\bprix\b/i, /\beuros?\b/i],
+        responses: ["Ça fait... voyons...", "Le prix est..."]
+    },
+    weather: {
+        patterns: [/\btemps\b/i, /\bpleut\b/i, /\bsoleil\b/i, /\bchaud\b/i, /\bfroid\b/i, /\bneige\b/i],
+        responses: ["Oui, le temps est intéressant aujourd'hui !", "Quel temps fait-il chez vous ?"]
+    },
+    food: {
+        patterns: [/\bmanger\b/i, /\bboire\b/i, /\bcafé\b/i, /\brestaurant\b/i, /\bfaim\b/i, /\bsoif\b/i],
+        responses: ["Mmm, la cuisine française...", "Vous avez faim ?"]
+    },
+    hobby: {
+        patterns: [/\baime\b/i, /\badore\b/i, /\bpréfère\b/i, /\bhobby\b/i, /\btemps libre\b/i],
+        responses: ["C'est intéressant !", "Et moi aussi, j'aime ça !"]
+    }
+};
+
+/**
+ * Conversation repair responses when NPC doesn't understand
+ */
+const REPAIR_RESPONSES = [
+    { text: "Pardon, je n'ai pas bien compris. Pouvez-vous répéter ?", type: "clarification" },
+    { text: "Hmm, je ne suis pas sûr de comprendre. Vous pouvez reformuler ?", type: "reformulation" },
+    { text: "Intéressant... Pouvez-vous m'en dire plus ?", type: "elaboration" },
+    { text: "Je vois... Et ensuite ?", type: "continuation" },
+    { text: "D'accord. Qu'est-ce que vous voulez dire exactement ?", type: "probe" }
+];
 
 export class NPCSystem {
     constructor() {
@@ -350,6 +432,215 @@ export class NPCSystem {
 
         return responseTemplates[promptId] || responseTemplates['default'];
     }
+
+    // =========================================================================
+    // OPEN-ENDED CONVERSATION METHODS
+    // =========================================================================
+
+    /**
+     * Classify the intent of a user message
+     * @param {string} userMessage - The user's French input
+     * @returns {{ intent: string, confidence: number, matchedPattern: string }|null}
+     */
+    classifyIntent(userMessage) {
+        const userLower = userMessage.toLowerCase().trim();
+
+        for (const [intentName, intentData] of Object.entries(INTENT_PATTERNS)) {
+            for (const pattern of intentData.patterns) {
+                if (pattern.test(userLower)) {
+                    return {
+                        intent: intentName,
+                        confidence: 0.8,
+                        matchedPattern: pattern.toString(),
+                        responses: intentData.responses
+                    };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Generate a response for open-ended conversation (no script)
+     * @param {string} userMessage - The user's French input  
+     * @param {Object} context - Conversation context
+     * @returns {Object} Response with text, correction, etc.
+     */
+    generateOpenEndedResponse(userMessage, context = {}) {
+        const { npcName = 'NPC', scenario = 'default', previousMessages = [] } = context;
+
+        // Check for grammar errors first
+        const grammarErrors = checkGrammar(userMessage, { scenario });
+        let correction = null;
+
+        if (grammarErrors.length > 0) {
+            const error = grammarErrors[0];
+            correction = error.explanation;
+        }
+
+        // Classify intent
+        const intentResult = this.classifyIntent(userMessage);
+
+        let responseText = "";
+        let endConversation = false;
+
+        if (intentResult) {
+            // Pick a random response for detected intent
+            const responses = intentResult.responses;
+            responseText = responses[Math.floor(Math.random() * responses.length)];
+
+            // Handle farewell intent
+            if (intentResult.intent === 'farewell') {
+                endConversation = true;
+            }
+
+            // Add context-aware follow-up
+            if (!endConversation && previousMessages.length >= 2) {
+                const followUps = [
+                    " Et vous ?",
+                    " Qu'en pensez-vous ?",
+                    " C'est intéressant, non ?"
+                ];
+                if (Math.random() > 0.5 && !responseText.includes('?')) {
+                    responseText += followUps[Math.floor(Math.random() * followUps.length)];
+                }
+            }
+        } else {
+            // No clear intent detected - use conversation repair
+            const repair = this._selectRepairResponse(previousMessages);
+            responseText = repair.text;
+        }
+
+        return {
+            text: responseText,
+            correction,
+            endConversation,
+            intent: intentResult?.intent || 'unknown',
+            sentiment: correction ? 'teaching' : 'friendly'
+        };
+    }
+
+    /**
+     * Handle off-script input in ConversationSimulator
+     * Tries to steer conversation back while acknowledging user input
+     * @param {string} userMessage - The user's French input
+     * @param {Object} scenario - The current scenario
+     * @param {Object} options - Current node options
+     * @returns {Object} Response object
+     */
+    handleOffScript(userMessage, scenario, options = []) {
+        // Check for grammar errors
+        const grammarErrors = checkGrammar(userMessage, { scenario: scenario?.id });
+        let correction = null;
+        let miniLesson = null;
+
+        if (grammarErrors.length > 0) {
+            const error = grammarErrors[0];
+            correction = error.explanation;
+            miniLesson = error.miniLesson;
+        }
+
+        // See if we can match to any intent
+        const intentResult = this.classifyIntent(userMessage);
+
+        // Try to find a relevant option based on detected intent
+        let suggestedOption = null;
+        if (intentResult && options.length > 0) {
+            // Simple heuristic: find option with similar keywords
+            const intentKeywords = this._getIntentKeywords(intentResult.intent);
+            for (const opt of options) {
+                const optLower = opt.text.toLowerCase();
+                if (intentKeywords.some(kw => optLower.includes(kw))) {
+                    suggestedOption = opt;
+                    break;
+                }
+            }
+        }
+
+        // Generate a graceful response
+        let responseText = "";
+
+        if (intentResult?.intent === 'farewell') {
+            responseText = "Au revoir ! Merci pour cette conversation.";
+            return {
+                text: responseText,
+                correction,
+                miniLesson,
+                endConversation: true,
+                understood: true
+            };
+        }
+
+        if (intentResult?.intent === 'greeting') {
+            responseText = "Bonjour ! Alors, pour continuer notre conversation...";
+        } else if (intentResult?.intent === 'thanks') {
+            responseText = "De rien ! Mais revenons à notre sujet...";
+        } else if (intentResult) {
+            // Acknowledged but steering back
+            const acknowledgements = [
+                "Je vois ce que vous voulez dire.",
+                "Intéressant !",
+                "D'accord.",
+                "Je comprends."
+            ];
+            responseText = acknowledgements[Math.floor(Math.random() * acknowledgements.length)];
+        } else {
+            // Completely off-script - gentle repair
+            responseText = "Hmm, c'est intéressant, mais restons sur notre sujet.";
+        }
+
+        // Add a hint about what to say if we have a suggested option
+        if (suggestedOption && !correction) {
+            responseText += ` Peut-être : "${suggestedOption.text}" ?`;
+        }
+
+        return {
+            text: responseText,
+            correction,
+            miniLesson,
+            suggestedOption,
+            endConversation: false,
+            understood: !!intentResult
+        };
+    }
+
+    /**
+     * Select appropriate repair response based on conversation history
+     */
+    _selectRepairResponse(previousMessages = []) {
+        const repairCount = previousMessages.filter(m => m.isRepair).length;
+
+        // Vary repair type based on how many repairs we've already done
+        if (repairCount >= 2) {
+            // Be more encouraging after multiple repairs
+            return {
+                text: "C'est bien d'essayer ! Continuez comme ça.",
+                type: "encouragement"
+            };
+        }
+
+        return REPAIR_RESPONSES[Math.floor(Math.random() * REPAIR_RESPONSES.length)];
+    }
+
+    /**
+     * Get keywords associated with an intent for matching
+     */
+    _getIntentKeywords(intent) {
+        const keywordMap = {
+            greeting: ['bonjour', 'salut', 'bonsoir'],
+            farewell: ['au revoir', 'bientôt', 'adieu'],
+            thanks: ['merci', 'remercie'],
+            order: ['voudrais', 'prends', 'commander'],
+            price: ['combien', 'coûte', 'prix'],
+            question_where: ['où', 'trouver', 'direction'],
+            food: ['manger', 'boire', 'café', 'restaurant'],
+            weather: ['temps', 'météo', 'soleil', 'pluie']
+        };
+
+        return keywordMap[intent] || [];
+    }
 }
 
 export const npcSystem = new NPCSystem();
+

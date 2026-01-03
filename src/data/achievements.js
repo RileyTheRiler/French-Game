@@ -183,5 +183,46 @@ export const ACHIEVEMENTS = [
         icon: '⭐',
         xpReward: 75,
         condition: (stats) => stats.communityStats?.writingsSubmitted >= 5
+    },
+    // Immersive Content Library Achievements
+    {
+        id: 'story_brancher',
+        title: 'Pathfinder',
+        description: 'Find a secret ending in Story Mode 2.0.',
+        icon: '🗺️',
+        xpReward: 50,
+        condition: (stats) => Object.values(stats.branchingStoriesProgress || {}).some(p => p.endings?.length > 1)
+    },
+    {
+        id: 'reader_1',
+        title: 'Bookworm',
+        description: 'Complete your first graded reader.',
+        icon: '📖',
+        xpReward: 40,
+        condition: (stats) => Object.keys(stats.readingRoomProgress || {}).length >= 1
+    },
+    {
+        id: 'shadow_master',
+        title: 'Echo Expert',
+        description: 'Get a 95%+ score in the Shadowing Lab.',
+        icon: '🗣️',
+        xpReward: 60,
+        condition: (stats) => Object.values(stats.shadowingProgress || {}).some(p => p.bestScore >= 95)
+    },
+    {
+        id: 'culture_fan',
+        title: 'Francophile',
+        description: 'Read 3 Cultural Deep Dive articles.',
+        icon: '🇫🇷',
+        xpReward: 100,
+        condition: (stats) => (stats.cultureArticlesRead || []).length >= 3
+    },
+    {
+        id: 'creator_1',
+        title: 'Budding Author',
+        description: 'Create your first custom lesson.',
+        icon: '🎨',
+        xpReward: 50,
+        condition: (stats) => (stats.userLessonsCreated || 0) >= 1
     }
 ];

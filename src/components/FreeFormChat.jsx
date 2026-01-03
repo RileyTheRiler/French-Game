@@ -52,8 +52,8 @@ const PromptSelector = ({ onSelectPrompt, userLevel }) => {
                         key={diff}
                         onClick={() => setSelectedDifficulty(diff)}
                         className={`px-4 py-2 rounded-lg font-medium transition-all ${selectedDifficulty === diff
-                                ? 'bg-indigo-500 text-white'
-                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                            ? 'bg-indigo-500 text-white'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                             }`}
                     >
                         {diff}
@@ -196,15 +196,15 @@ const ChatMessage = ({ message, isNew }) => {
         >
             <div className={`flex max-w-[85%] gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-1 ${isUser
-                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
-                        : 'bg-gradient-to-br from-slate-600 to-slate-700 text-slate-300'
+                    ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white'
+                    : 'bg-gradient-to-br from-slate-600 to-slate-700 text-slate-300'
                     }`}>
                     {isUser ? <User size={16} /> : <Bot size={16} />}
                 </div>
 
                 <div className={`p-4 rounded-2xl shadow-lg ${isUser
-                        ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-sm'
-                        : 'bg-slate-800 text-slate-50 rounded-tl-sm border border-white/5'
+                    ? 'bg-gradient-to-br from-indigo-600 to-indigo-700 text-white rounded-tr-sm'
+                    : 'bg-slate-800 text-slate-50 rounded-tl-sm border border-white/5'
                     }`}>
                     {!isUser && message.speaker && (
                         <p className="text-xs text-indigo-300 mb-1 font-bold">{message.speaker}</p>
@@ -228,7 +228,7 @@ const ChatMessage = ({ message, isNew }) => {
  */
 const FreeFormChat = () => {
     const navigate = useNavigate();
-    const { addXP, stats } = useProgress();
+    const { addXP, stats, trackConversationSession } = useProgress();
     const { showToast } = useToast();
 
     const [activePrompt, setActivePrompt] = useState(null);
@@ -392,9 +392,19 @@ const FreeFormChat = () => {
     };
 
     // Handle completion from summary
-    const handleComplete = (earnedXP) => {
-        addXP(earnedXP);
-        showToast(`+${earnedXP} XP earned!`, 'success');
+    const handleComplete = (analysis) => {
+        addXP(analysis.earnedXP);
+        showToast(`+${analysis.earnedXP} XP earned!`, 'success');
+
+        // Track session stats
+        if (activePrompt) {
+            trackConversationSession({
+                promptId: activePrompt.id,
+                title: activePrompt.title,
+                metrics: analysis
+            });
+        }
+
         setActivePrompt(null);
         setMessages([]);
         setConversationComplete(false);
@@ -487,8 +497,8 @@ const FreeFormChat = () => {
                                 <button
                                     onClick={() => setShowFrenchKeyboard(!showFrenchKeyboard)}
                                     className={`text-xs px-3 py-1 rounded-full transition-colors ${showFrenchKeyboard
-                                            ? 'bg-indigo-500 text-white'
-                                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                        ? 'bg-indigo-500 text-white'
+                                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                         }`}
                                 >
                                     àéç French Accents

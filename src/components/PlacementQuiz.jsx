@@ -131,7 +131,7 @@ const PlacementQuiz = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-6">
+        <div id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 flex items-center justify-center p-6">
             <div className="w-full max-w-5xl">
                 <div className="flex items-center justify-between mb-6">
                     <div>

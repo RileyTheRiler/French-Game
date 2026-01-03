@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
+import { Star, Bookmark } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
 import { GRAMMAR_TIPS } from '../data/grammar';
 
 const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
-    const { vocabulary } = useVocabulary();
+    const { vocabulary, toggleSaveWord } = useVocabulary();
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
-    const [activeTab, setActiveTab] = useState('vocab'); // 'vocab' or 'grammar'
+    const [activeTab, setActiveTab] = useState('vocab'); // 'vocab', 'grammar', 'saved'
 
     const filteredVocab = vocabulary.filter(word =>
-        word.french.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        word.english.toLowerCase().includes(searchTerm.toLowerCase())
+        (activeTab === 'saved' ? word.isSaved : true) &&
+        (word.french.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            word.english.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     const filteredGrammar = GRAMMAR_TIPS.filter(tip =>
@@ -40,6 +42,12 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                         Dictionary
                     </button>
                     <button
+                        onClick={() => setActiveTab('saved')}
+                        className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'saved' ? 'bg-amber-500 text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
+                    >
+                        Saved
+                    </button>
+                    <button
                         onClick={() => setActiveTab('grammar')}
                         className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'grammar' ? 'bg-[var(--accent-secondary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
                     >
@@ -56,15 +64,21 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                 />
 
                 <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
-                    {activeTab === 'vocab' ? (
+                    {activeTab === 'vocab' || activeTab === 'saved' ? (
                         filteredVocab.length > 0 ? (
                             filteredVocab.map(word => (
                                 <div key={word.id} className="p-4 bg-white/5 rounded-xl border border-white/5 flex justify-between items-center group hover:bg-white/10 transition-colors">
-                                    <div>
+                                    <div className="flex-1">
                                         <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
                                         <p className="text-[var(--text-secondary)]">{word.english}</p>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right flex items-center gap-3">
+                                        <button
+                                            onClick={() => toggleSaveWord(word.id)}
+                                            className={`transition-all hover:scale-110 ${word.isSaved ? 'text-amber-400' : 'text-white/20 hover:text-amber-200'}`}
+                                        >
+                                            <Star size={20} fill={word.isSaved ? "currentColor" : "none"} />
+                                        </button>
                                         <span className={`text-xs font-bold px-2 py-1 rounded ${word.level >= 5 ? 'bg-green-500/20 text-green-400' :
                                             word.level >= 3 ? 'bg-yellow-500/20 text-yellow-400' :
                                                 'bg-white/10 text-white/40'
@@ -76,7 +90,7 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                             ))
                         ) : (
                             <div className="text-center text-white/30 mt-10">
-                                No words found.
+                                {activeTab === 'saved' ? "No saved words yet." : "No words found."}
                             </div>
                         )
                     ) : (
@@ -96,7 +110,7 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                 </div>
 
                 <div className="mt-4 pt-4 border-t border-white/10 text-center text-xs text-white/30">
-                    {activeTab === 'vocab' ? `${vocabulary.length} words` : `${GRAMMAR_TIPS.length} grammar tips`}
+                    {activeTab === 'grammar' ? `${GRAMMAR_TIPS.length} grammar tips` : `${filteredVocab.length} words`}
                 </div>
             </div>
         </div>

@@ -54,14 +54,26 @@ export const VocabularyProvider = ({ children }) => {
         return parsed.map(hydrateWord);
     });
 
+    // Custom Study Decks
+    const [customDecks, setCustomDecks] = useState(() => {
+        const saved = localStorage.getItem('frenchApp_decks');
+        return saved ? JSON.parse(saved) : [];
+    });
+
     useEffect(() => {
         localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
     }, [vocabulary]);
+
+    useEffect(() => {
+        localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+    }, [customDecks]);
 
     const resetVocabulary = () => {
         const reset = INITIAL_VOCABULARY.map(word => ({ ...word, updatedAt: Date.now() }));
         setVocabulary(reset);
         localStorage.setItem('frenchApp_vocab', JSON.stringify(reset));
+        setCustomDecks([]);
+        localStorage.setItem('frenchApp_decks', JSON.stringify([]));
         audioCacheRef.current = {};
     };
 
@@ -110,6 +122,13 @@ export const VocabularyProvider = ({ children }) => {
             addXP(10);
         }
     }, [addXP]);
+
+    const toggleSaveWord = useCallback((wordId) => {
+        setVocabulary(prev => prev.map(word => {
+            if (word.id !== wordId) return word;
+            return { ...word, isSaved: !word.isSaved };
+        }));
+    }, []);
 
     const isAudioEnabled = () => {
         const saved = localStorage.getItem('frenchApp_audio');
@@ -181,6 +200,169 @@ export const VocabularyProvider = ({ children }) => {
         setVocabulary(incomingVocabulary);
     };
 
+    const addCustomWord = useCallback((newWord) => {
+        const wordWithDefaults = {
+            ...newWord,
+            id: newWord.id || `custom_${Date.now()}`,
+            category: newWord.category || 'imported',
+            addedAt: Date.now(),
+            srs: getInitialState(),
+            level: 1,
+            nextReview: 0,
+            isCustom: true
+        };
+
+        const hydrated = hydrateWord(wordWithDefaults);
+
+        setVocabulary(prev => {
+            // Check for duplicates based on french text
+            const exists = prev.some(w => w.french.toLowerCase() === hydrated.french.toLowerCase());
+            if (exists) return prev;
+            return [...prev, hydrated];
+        });
+
+        return hydrated;
+    }, []);
+
+    // === CUSTOM DECK MANAGEMENT ===
+
+    const createDeck = useCallback((name, description = '', wordIds = [], color = 'indigo') => {
+        const newDeck = {
+            id: `deck_${Date.now()}`,
+            name,
+            description,
+            wordIds,
+            color,
+            createdAt: Date.now(),
+            updatedAt: Date.now()
+        };
+        setCustomDecks(prev => [...prev, newDeck]);
+        return newDeck;
+    }, []);
+
+    const updateDeck = useCallback((deckId, updates) => {
+        setCustomDecks(prev => prev.map(deck =>
+            deck.id === deckId
+                ? { ...deck, ...updates, updatedAt: Date.now() }
+                : deck
+        ));
+    }, []);
+
+    const deleteDeck = useCallback((deckId) => {
+        setCustomDecks(prev => prev.filter(deck => deck.id !== deckId));
+    }, []);
+
+    const getDeckWords = useCallback((deckId) => {
+        const deck = customDecks.find(d => d.id === deckId);
+        if (!deck) return [];
+        return vocabulary.filter(word => deck.wordIds.includes(word.id));
+    }, [customDecks, vocabulary]);
+
+    const addWordToDeck = useCallback((deckId, wordId) => {
+        setCustomDecks(prev => prev.map(deck => {
+            if (deck.id !== deckId) return deck;
+            if (deck.wordIds.includes(wordId)) return deck;
+            return {
+                ...deck,
+                wordIds: [...deck.wordIds, wordId],
+                updatedAt: Date.now()
+            };
+        }));
+    }, []);
+
+    const removeWordFromDeck = useCallback((deckId, wordId) => {
+        setCustomDecks(prev => prev.map(deck => {
+            if (deck.id !== deckId) return deck;
+            return {
+                ...deck,
+                wordIds: deck.wordIds.filter(id => id !== wordId),
+                updatedAt: Date.now()
+            };
+        }));
+    }, []);
+
+    // Export deck as JSON
+    const exportDeck = useCallback((deckId) => {
+        const deck = customDecks.find(d => d.id === deckId);
+        if (!deck) return null;
+
+        const words = vocabulary.filter(w => deck.wordIds.includes(w.id));
+        const exportData = {
+            version: 1,
+            type: 'french-game-deck',
+            exportedAt: new Date().toISOString(),
+            deck: {
+                name: deck.name,
+                description: deck.description,
+                color: deck.color,
+                words: words.map(w => ({
+                    french: w.french,
+                    english: w.english,
+                    phonetic: w.phonetic,
+                    category: w.category,
+                    gender: w.gender,
+                    example: w.example
+                }))
+            }
+        };
+
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${deck.name.replace(/\s+/g, '_').toLowerCase()}_deck.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        return exportData;
+    }, [customDecks, vocabulary]);
+
+    // Import deck from JSON
+    const importDeck = useCallback(async (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    if (data.type !== 'french-game-deck' || !data.deck) {
+                        throw new Error('Invalid deck file format');
+                    }
+
+                    const importedWordsIds = [];
+
+                    // Add any new words to vocabulary
+                    data.deck.words.forEach(wordData => {
+                        const existingWord = vocabulary.find(
+                            w => w.french.toLowerCase() === wordData.french.toLowerCase()
+                        );
+
+                        if (existingWord) {
+                            importedWordsIds.push(existingWord.id);
+                        } else {
+                            const newWord = addCustomWord(wordData);
+                            if (newWord) importedWordsIds.push(newWord.id);
+                        }
+                    });
+
+                    // Create the deck
+                    const newDeck = createDeck(
+                        data.deck.name,
+                        data.deck.description,
+                        importedWordsIds,
+                        data.deck.color || 'indigo'
+                    );
+
+                    resolve(newDeck);
+                } catch (err) {
+                    reject(new Error('Failed to parse deck file: ' + err.message));
+                }
+            };
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsText(file);
+        });
+    }, [vocabulary, addCustomWord, createDeck]);
+
     const contextValue = useMemo(() => ({
         vocabulary,
         updateWordProgress,
@@ -192,8 +374,20 @@ export const VocabularyProvider = ({ children }) => {
         getAllCategories,
         hydrateVocabulary,
         preloadAudioForWords,
-        playWordAudio
-    }), [vocabulary, getDueWords, getWeightedPracticeWords, updateWordProgress]);
+        playWordAudio,
+        toggleSaveWord,
+        addCustomWord,
+        // Custom Deck functions
+        customDecks,
+        createDeck,
+        updateDeck,
+        deleteDeck,
+        getDeckWords,
+        addWordToDeck,
+        removeWordFromDeck,
+        exportDeck,
+        importDeck
+    }), [vocabulary, getDueWords, getWeightedPracticeWords, updateWordProgress, toggleSaveWord, addCustomWord, customDecks, createDeck, updateDeck, deleteDeck, getDeckWords, addWordToDeck, removeWordFromDeck, exportDeck, importDeck]);
 
     return (
         <VocabularyContext.Provider value={contextValue}>

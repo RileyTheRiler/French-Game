@@ -105,8 +105,8 @@ const HighlightItem = ({ highlight }) => {
 
     return (
         <div className={`p-3 rounded-lg border ${isPositive
-                ? 'bg-emerald-500/10 border-emerald-500/30'
-                : 'bg-amber-500/10 border-amber-500/30'
+            ? 'bg-emerald-500/10 border-emerald-500/30'
+            : 'bg-amber-500/10 border-amber-500/30'
             }`}>
             <div className="flex items-start gap-2">
                 {isPositive
@@ -139,7 +139,7 @@ const ConversationSummary = ({ messages, prompt, onComplete, onRetry }) => {
     }, [messages, prompt]);
 
     const handleFinish = () => {
-        onComplete(analysis.earnedXP);
+        onComplete(analysis);
     };
 
     const getGrade = (score) => {

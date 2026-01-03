@@ -14,6 +14,7 @@ import AudioVisualizer from './Pronunciation/AudioVisualizer';
 import MouthShapeVisualizer from './Pronunciation/MouthShapeVisualizer';
 import MinimalPairDrill from './Pronunciation/MinimalPairDrill';
 import RhythmTrainer from './Pronunciation/RhythmTrainer';
+import ShadowingDrill from './Pronunciation/ShadowingDrill';
 import { analyzePronunciation, getPhonemeHints } from '../services/PronunciationAnalyzer';
 
 const PronunciationCoach = () => {
@@ -44,9 +45,28 @@ const PronunciationCoach = () => {
     const recognitionRef = useRef(null);
 
     // Practice items
+    const { stats } = useProgress();
+
+    // Practice items: Prioritize weak words
     const wordsToPractice = useMemo(() => {
-        return [...vocabulary].sort(() => Math.random() - 0.5).slice(0, 5);
-    }, [vocabulary]);
+        const weakWordIds = Object.keys(stats.weakWords || {}).filter(id => stats.weakWords[id].strength < 80);
+
+        // Get full word objects for weak words
+        const weakWordsList = vocabulary.filter(w => weakWordIds.includes(w.id));
+
+        // Sort weak words by strength (weakest first)
+        weakWordsList.sort((a, b) => (stats.weakWords[a.id]?.strength || 0) - (stats.weakWords[b.id]?.strength || 0));
+
+        // Take up to 3 weak words
+        const selectedWeak = weakWordsList.slice(0, 3);
+
+        // Fill the rest with random words
+        const remainingCount = 5 - selectedWeak.length;
+        const otherWords = vocabulary.filter(w => !selectedWeak.includes(w));
+        const randomFill = otherWords.sort(() => Math.random() - 0.5).slice(0, remainingCount);
+
+        return [...selectedWeak, ...randomFill];
+    }, [vocabulary, stats.weakWords]);
 
     const currentWord = wordsToPractice[currentWordIndex];
 
@@ -221,6 +241,23 @@ const PronunciationCoach = () => {
         );
     }
 
+    if (mode === 'shadowing') {
+        return (
+            <GameLayout
+                title="Shadowing Practice"
+                subtitle="Mimic native speakers"
+                onBack={() => setMode('practice')}
+            >
+                <ShadowingDrill
+                    onComplete={(xp) => {
+                        addXP(xp);
+                    }}
+                    onExit={() => setMode('practice')}
+                />
+            </GameLayout>
+        );
+    }
+
     if (sessionComplete) {
         return (
             <GameLayout title="Training Complete" onBack={onExit}>
@@ -254,6 +291,9 @@ const PronunciationCoach = () => {
                     </Button>
                     <Button variant="ghost" size="sm" onClick={() => setMode('rhythm')} className="text-slate-300">
                         <Music size={16} className="mr-2" /> Rhythm
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setMode('shadowing')} className="text-slate-300">
+                        <Repeat size={16} className="mr-2" /> Shadow
                     </Button>
                     <Badge variant="primary" className="text-lg py-1 px-4">{currentWordIndex + 1} / {wordsToPractice.length}</Badge>
                 </div>
@@ -365,8 +405,8 @@ const PronunciationCoach = () => {
                                                         <span
                                                             key={i}
                                                             className={`px-2 py-1 rounded font-mono text-sm ${p.accuracy === 'correct' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                                    p.accuracy === 'partial' ? 'bg-amber-500/20 text-amber-400' :
-                                                                        'bg-red-500/20 text-red-400'
+                                                                p.accuracy === 'partial' ? 'bg-amber-500/20 text-amber-400' :
+                                                                    'bg-red-500/20 text-red-400'
                                                                 }`}
                                                         >
                                                             {p.phoneme}

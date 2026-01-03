@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, RotateCcw } from 'lucide-react';
+import { Check, X, RotateCcw, Timer, Zap, Lightbulb, BookOpen } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from './layout/GameLayout';
 import { Card } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
 import SoundManager from '../utils/SoundManager';
 import { Button } from './ui/Button';
+import { checkGrammar } from '../data/grammarTips';
+import { getDifficultyConfig } from './ui/DifficultyDial';
 
 const SENTENCES = [
     { english: "I would like a coffee.", french: ["Je", "voudrais", "un", "café", "."] },
@@ -51,22 +53,63 @@ import { AlertTriangle, Info } from 'lucide-react';
 const SentenceBuilder = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { addXP, difficultySettings } = useProgress();
+    const { addXP, globalDifficulty, logConceptAttempt } = useProgress();
 
-    // Hint delay configuration
-    const hintDelay = difficultySettings?.hintDelay ?? 8;
+    const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
+
+    // Difficulty Settings
+    const hintDelay = difficultyConfig.hintDelay;
+    const isFreeFormEnabled = difficultyConfig.strictSpelling; // Using strictSpelling as a proxy for free-form or just add it to config
     const warningTimerRef = useRef(null);
 
     // Game State
     const [puzzle, setPuzzle] = useState(null);
     const [availableWords, setAvailableWords] = useState([]);
     const [builtSentence, setBuiltSentence] = useState([]);
+    const [typedAnswer, setTypedAnswer] = useState(''); // Free-form input
+    const [failureCount, setFailureCount] = useState(0); // Track failures for adaptive help
+    const [showFallbackTiles, setShowFallbackTiles] = useState(false); // Show tiles if struggling
     const [status, setStatus] = useState('loading'); // 'loading', 'playing', 'correct', 'wrong'
     const [feedback, setFeedback] = useState('');
     const [grammarWarnings, setGrammarWarnings] = useState([]);
     const [visibleGrammarWarnings, setVisibleGrammarWarnings] = useState([]); // Delayed display
     const [questionCount, setQuestionCount] = useState(0);
+    const [learningMoment, setLearningMoment] = useState(null); // { miniLesson, onDismiss }
     const MAX_QUESTIONS = 5;
+
+    // Speed Run State
+    const [isSpeedRun, setIsSpeedRun] = useState(false);
+    const [timeLeft, setTimeLeft] = useState(60);
+    const [score, setScore] = useState(0);
+    const [speedRunActive, setSpeedRunActive] = useState(false);
+
+    // Timer Logic
+    useEffect(() => {
+        if (speedRunActive && timeLeft > 0) {
+            const timer = setInterval(() => {
+                setTimeLeft(prev => prev - 1);
+            }, 1000);
+            return () => clearInterval(timer);
+        } else if (speedRunActive && timeLeft === 0) {
+            endSpeedRun();
+        }
+    }, [speedRunActive, timeLeft]);
+
+    const startSpeedRun = () => {
+        setIsSpeedRun(true);
+        setSpeedRunActive(true);
+        setTimeLeft(60);
+        setScore(0);
+        setQuestionCount(0);
+        loadNextPuzzle();
+    };
+
+    const endSpeedRun = () => {
+        setSpeedRunActive(false);
+        setStatus('finished');
+        SoundManager.playLevelUp();
+        addXP(score * 5); // 5 XP per correct
+    };
 
     // Load initial puzzle
     useEffect(() => {
@@ -133,6 +176,9 @@ const SentenceBuilder = () => {
             setPuzzle(newPuzzle);
             setAvailableWords(newPuzzle.scrambled);
             setBuiltSentence([]);
+            setTypedAnswer(''); // Reset input
+            setFailureCount(0);
+            setShowFallbackTiles(false);
             setStatus('playing');
             setFeedback('');
             setGrammarWarnings([]);
@@ -157,16 +203,90 @@ const SentenceBuilder = () => {
     };
 
     const checkAnswer = () => {
-        const currentString = builtSentence.map(w => w.text).join(' ');
-        // Compare loosely (ignore punctuation for user sanity if needed, but builder usually exact)
-        // Our generator provides exact "targetFrench".
+        // Determine user answer based on active mode
+        // If Free-Form is enabled and we haven't fallen back to tiles yet, use typedAnswer
+        const isUsingFreeForm = isFreeFormEnabled && !showFallbackTiles;
 
-        if (currentString === puzzle.targetFrench) {
+        let isCorrect = false;
+
+        if (isUsingFreeForm) {
+            // Normalization: remove punctuation, case-insensitive, trim
+            const normalize = (str) => str.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "").trim();
+            const normalizedTyped = normalize(typedAnswer);
+            const normalizedTarget = normalize(puzzle.targetFrench);
+            isCorrect = normalizedTyped === normalizedTarget;
+        } else {
+            // Tile logic (strict order usually, or joined string)
+            const currentString = builtSentence.map(w => w.text).join(' ');
+            isCorrect = currentString === puzzle.targetFrench;
+        }
+
+        if (isCorrect) {
             setStatus('correct');
             setFeedback('Perfect! 🎉');
             SoundManager.playSuccess();
-            addXP(20);
+            // Bonus XP for free-form
+            if (!isSpeedRun) addXP(isUsingFreeForm ? 30 : 20);
 
+            handleSuccess();
+        } else {
+            // Check for specific grammar errors to provide feedback
+            const userAnswer = isUsingFreeForm ? typedAnswer : builtSentence.map(w => w.text).join(' ');
+            const grammarErrors = checkGrammar(userAnswer, { scenario: 'sentence_builder' });
+
+            if (grammarErrors.length > 0 && !isSpeedRun) {
+                // Show Learning Moment modal for the first detected error
+                const error = grammarErrors[0];
+
+                // Log concept attempt as failed
+                if (error.miniLesson?.relatedConcepts) {
+                    const conceptId = error.ruleId || error.miniLesson.relatedConcepts[0];
+                    logConceptAttempt(conceptId, false);
+                }
+
+                setLearningMoment({
+                    error,
+                    miniLesson: error.miniLesson,
+                    onDismiss: () => {
+                        setLearningMoment(null);
+                        setStatus('playing');
+                        setFeedback('');
+                    }
+                });
+                setStatus('wrong');
+                setFeedback(error.explanation);
+                SoundManager.playMiss();
+            } else {
+                setStatus('wrong');
+                setFeedback('Not quite right.');
+                SoundManager.playMiss();
+
+                // Adaptive Help Logic (only in normal mode)
+                if (!isSpeedRun && isUsingFreeForm) {
+                    const newFailures = failureCount + 1;
+                    setFailureCount(newFailures);
+                    if (newFailures >= 3) {
+                        setShowFallbackTiles(true);
+                        setFeedback("Let's try with the word blocks instead.");
+                    }
+                }
+
+                setTimeout(() => {
+                    setStatus('playing');
+                    setFeedback('');
+                }, 1000); // Faster reset for speed run
+            }
+        }
+    };
+
+    // Modify checkAnswer success block for speed run
+    const handleSuccess = () => {
+        if (isSpeedRun) {
+            setScore(prev => prev + 1);
+            setTimeLeft(prev => prev + 5); // Bonus time
+            setFeedback('+5s Bonus!');
+            loadNextPuzzle();
+        } else {
             setTimeout(() => {
                 if (questionCount < MAX_QUESTIONS - 1) {
                     setQuestionCount(prev => prev + 1);
@@ -177,18 +297,27 @@ const SentenceBuilder = () => {
                     setTimeout(onExit, 2000);
                 }
             }, 1500);
-        } else {
-            setStatus('wrong');
-            setFeedback('Not quite right.');
-            SoundManager.playMiss();
-            setTimeout(() => {
-                setStatus('playing');
-                setFeedback('');
-            }, 1500);
         }
     };
 
     if (!puzzle) return <div className="text-white text-center p-10">Loading...</div>;
+
+    if (status === 'finished') {
+        return (
+            <GameLayout title="Speed Run Complete" onBack={onExit}>
+                <div className="flex flex-col items-center justify-center h-[60vh] gap-6">
+                    <Zap size={80} className="text-amber-400" />
+                    <h2 className="text-4xl font-black text-white">Time's Up!</h2>
+                    <p className="text-2xl text-slate-300">Sentences cleared: {score}</p>
+                    <p className="text-indigo-400 font-bold">+ {score * 5} XP Earned</p>
+                    <div className="flex gap-4">
+                        <Button onClick={onExit} variant="secondary">Exit</Button>
+                        <Button onClick={startSpeedRun}>Try Again</Button>
+                    </div>
+                </div>
+            </GameLayout>
+        );
+    }
 
     return (
         <GameLayout
@@ -196,8 +325,28 @@ const SentenceBuilder = () => {
             subtitle="Arrange the words to translate the sentence."
             onBack={onExit}
             headerRight={
-                <div className="text-white/50 text-sm font-bold bg-white/10 px-3 py-1 rounded-full">
-                    {questionCount + 1} / {MAX_QUESTIONS}
+                <div className="flex items-center gap-4">
+                    {!isSpeedRun && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={startSpeedRun}
+                            className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                        >
+                            <Zap size={16} className="mr-1" /> Speed Run
+                        </Button>
+                    )}
+                    {isSpeedRun ? (
+                        <div className={`flex items-center gap-2 font-mono text-xl ${timeLeft < 10 ? 'text-red-500 animate-pulse' : 'text-amber-400'}`}>
+                            <Timer size={20} />
+                            {timeLeft}s
+                            <span className="ml-2 text-white">Score: {score}</span>
+                        </div>
+                    ) : (
+                        <div className="text-white/50 text-sm font-bold bg-white/10 px-3 py-1 rounded-full">
+                            {questionCount + 1} / {MAX_QUESTIONS}
+                        </div>
+                    )}
                 </div>
             }
         >
@@ -229,33 +378,60 @@ const SentenceBuilder = () => {
                         )}
                     </AnimatePresence>
 
-                    <div className={`
-                        min-h-[120px] bg-slate-900/50 rounded-3xl p-6 mb-8 flex flex-wrap gap-3 justify-center items-center border-2 border-dashed transition-colors
-                        ${status === 'correct' ? 'border-green-500 bg-green-500/10' : ''}
-                        ${status === 'wrong' ? 'border-red-500 bg-red-500/10' : 'border-white/10'}
-                    `}>
-                        <AnimatePresence mode="popLayout">
-                            {builtSentence.length === 0 && (
-                                <motion.p
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                    className="text-white/20 font-medium absolute pointer-events-none"
-                                    aria-hidden="true"
-                                >
-                                    Tap words to build your sentence...
-                                </motion.p>
+                    {isFreeFormEnabled && !showFallbackTiles ? (
+                        <div className="mb-8 relative">
+                            <input
+                                type="text"
+                                value={typedAnswer}
+                                onChange={(e) => setTypedAnswer(e.target.value)}
+                                placeholder="Type the French translation here..."
+                                className={`
+                                    w-full bg-slate-900/50 rounded-3xl p-6 text-2xl text-center text-white font-bold 
+                                    border-2 transition-all outline-none placeholder:text-slate-600 placeholder:font-normal
+                                    ${status === 'correct' ? 'border-green-500 bg-green-500/10' : ''}
+                                    ${status === 'wrong' ? 'border-red-500 bg-red-500/10 animate-shake' : 'border-white/10 focus:border-indigo-500'}
+                                `}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') checkAnswer();
+                                }}
+                                autoFocus
+                                disabled={status !== 'playing'}
+                            />
+                            {status === 'wrong' && (
+                                <p className="text-red-400 text-sm mt-2 text-center animate-pulse">
+                                    {failureCount}/3 attempts before help
+                                </p>
                             )}
-                            {builtSentence.map((word) => (
-                                <WordTile
-                                    key={word.id}
-                                    word={word}
-                                    onClick={handleRemoveWord}
-                                    variant="selected"
-                                />
-                            ))}
-                        </AnimatePresence>
-                    </div>
+                        </div>
+                    ) : (
+                        <div className={`
+                            min-h-[120px] bg-slate-900/50 rounded-3xl p-6 mb-8 flex flex-wrap gap-3 justify-center items-center border-2 border-dashed transition-colors
+                            ${status === 'correct' ? 'border-green-500 bg-green-500/10' : ''}
+                            ${status === 'wrong' ? 'border-red-500 bg-red-500/10' : 'border-white/10'}
+                        `}>
+                            <AnimatePresence mode="popLayout">
+                                {builtSentence.length === 0 && (
+                                    <motion.p
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="text-white/20 font-medium absolute pointer-events-none"
+                                        aria-hidden="true"
+                                    >
+                                        Tap words to build your sentence...
+                                    </motion.p>
+                                )}
+                                {builtSentence.map((word) => (
+                                    <WordTile
+                                        key={word.id}
+                                        word={word}
+                                        onClick={handleRemoveWord}
+                                        variant="selected"
+                                    />
+                                ))}
+                            </AnimatePresence>
+                        </div>
+                    )}
 
                     {/* Word Bank */}
                     <div className="p-6 bg-slate-900/30 rounded-3xl min-h-[100px]">
@@ -311,7 +487,7 @@ const SentenceBuilder = () => {
                             >
                                 <Button
                                     onClick={checkAnswer}
-                                    disabled={builtSentence.length === 0}
+                                    disabled={isFreeFormEnabled && !showFallbackTiles ? typedAnswer.length === 0 : builtSentence.length === 0}
                                     size="lg"
                                     className="px-12 rounded-full shadow-xl shadow-indigo-500/20"
                                     aria-label="Check answer. Press Enter to submit."
@@ -323,6 +499,111 @@ const SentenceBuilder = () => {
                     </AnimatePresence>
                 </div>
             </div>
+
+            {/* Learning Moment Modal */}
+            <AnimatePresence>
+                {learningMoment && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                        onClick={learningMoment.onDismiss}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                            className="bg-slate-900 border border-indigo-500/30 p-6 rounded-2xl max-w-lg w-full shadow-2xl relative overflow-hidden"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-500" />
+
+                            <div className="flex flex-col space-y-4">
+                                {/* Header */}
+                                <div className="flex items-center gap-3">
+                                    <div className="p-3 rounded-full bg-amber-500/20 text-amber-400">
+                                        <Lightbulb size={24} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-white">
+                                            {learningMoment.miniLesson?.title || 'Learning Moment'}
+                                        </h3>
+                                        <p className="text-sm text-slate-400">Let's learn from this!</p>
+                                    </div>
+                                </div>
+
+                                {/* Error Display */}
+                                <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                                    <div className="flex items-center gap-2 text-red-400 font-medium mb-2">
+                                        <X size={16} />
+                                        <span>Your answer:</span>
+                                    </div>
+                                    <p className="text-white font-mono">{learningMoment.error?.found}</p>
+                                </div>
+
+                                {/* Correct Answer */}
+                                <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                                    <div className="flex items-center gap-2 text-green-400 font-medium mb-2">
+                                        <Check size={16} />
+                                        <span>Should be:</span>
+                                    </div>
+                                    <p className="text-white font-mono">{learningMoment.error?.expected}</p>
+                                </div>
+
+                                {/* Key Point */}
+                                {learningMoment.miniLesson?.keyPoint && (
+                                    <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-4">
+                                        <div className="flex items-center gap-2 text-indigo-400 font-medium mb-2">
+                                            <BookOpen size={16} />
+                                            <span>Key Point</span>
+                                        </div>
+                                        <p className="text-slate-200" dangerouslySetInnerHTML={{
+                                            __html: learningMoment.miniLesson.keyPoint.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
+                                        }} />
+                                    </div>
+                                )}
+
+                                {/* Examples */}
+                                {learningMoment.miniLesson?.examples && learningMoment.miniLesson.examples.length > 0 && (
+                                    <div className="space-y-2">
+                                        <p className="text-sm text-slate-400 font-medium">Examples:</p>
+                                        <div className="grid gap-2">
+                                            {learningMoment.miniLesson.examples.slice(0, 3).map((ex, idx) => (
+                                                <div key={idx} className="flex items-center gap-2 text-sm">
+                                                    {ex.wrong && (
+                                                        <>
+                                                            <span className="text-red-400 line-through">{ex.wrong}</span>
+                                                            <span className="text-slate-500">→</span>
+                                                        </>
+                                                    )}
+                                                    <span className="text-green-400">{ex.correct}</span>
+                                                    {ex.note && <span className="text-slate-500">({ex.note})</span>}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Tip */}
+                                {learningMoment.miniLesson?.tip && (
+                                    <div className="text-sm text-amber-300 bg-amber-500/10 px-3 py-2 rounded-lg">
+                                        💡 {learningMoment.miniLesson.tip}
+                                    </div>
+                                )}
+
+                                {/* Dismiss Button */}
+                                <Button
+                                    onClick={learningMoment.onDismiss}
+                                    className="w-full mt-2"
+                                >
+                                    Got it, let me try again!
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </GameLayout>
     );
 };

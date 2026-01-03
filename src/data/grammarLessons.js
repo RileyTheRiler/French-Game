@@ -11,6 +11,11 @@ export const GRAMMAR_LESSONS = [
         description: 'Learn when to use definite and indefinite articles.',
         sections: [
             {
+                type: 'why',
+                title: 'Why It Matters',
+                content: `Using the correct article is the foundation of French grammar. It tells you the gender and number of the noun, which affects adjectives and pronouns later in the sentence.`
+            },
+            {
                 type: 'explanation',
                 title: 'Definite Articles',
                 content: `In French, every noun has a gender (masculine or feminine).
@@ -57,6 +62,11 @@ export const GRAMMAR_LESSONS = [
         description: 'Master the two most important French verbs.',
         sections: [
             {
+                type: 'why',
+                title: 'Why It Matters',
+                content: `These two verbs are the "powerhouses" of French. You'll use them not just to say who you are or what you have, but also to build past tenses (like "I have eaten").`
+            },
+            {
                 type: 'explanation',
                 title: 'Être (To Be)',
                 content: `**Être** is one of the most used verbs in French.
@@ -100,6 +110,11 @@ export const GRAMMAR_LESSONS = [
         level: 2,
         description: 'Learn the most common verb conjugation pattern.',
         sections: [
+            {
+                type: 'why',
+                title: 'Why It Matters',
+                content: `French verbs change based on who is doing the action. The good news? 80% of verbs follow this EXACT pattern. Learn this once, and you can conjugate thousands of verbs instantly!`
+            },
             {
                 type: 'explanation',
                 title: 'The Pattern',

@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Coffee, Book, Gamepad2, School, MapPin, MessageCircle, X, Send, ArrowLeft, Mic } from 'lucide-react';
+import { Coffee, Book, Gamepad2, School, MapPin, MessageCircle, X, Send, ArrowLeft, Mic, Lock } from 'lucide-react';
 import { PERSONAS } from '../../systems/PersonaDefinitions';
 import { npcSystem } from '../../systems/NPCSystem';
 import { useProgress } from '../../context/ProgressContext';
@@ -10,7 +10,7 @@ import { Badge } from '../ui/Badge';
 
 const Building = ({ type, onClick, label, icon: Icon, color, locked, levelRequred }) => (
     <motion.div
-        whileHover={!locked ? { y: -10 } : {}}
+        whileHover={!locked ? { y: -12, scale: 1.02 } : {}}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         onClick={!locked ? onClick : null}
@@ -40,9 +40,16 @@ const Building = ({ type, onClick, label, icon: Icon, color, locked, levelRequre
             </motion.div>
 
             {locked && (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/40 backdrop-blur-[2px] z-30">
-                    <Badge variant="default" className="flex items-center gap-2 py-2 px-4 bg-slate-950 border-white/20">
-                        🔒 Lvl {levelRequred}
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950/60 backdrop-blur-[2px] z-30 transition-all duration-300 group-hover:bg-slate-950/70">
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="mb-3 p-3 bg-slate-900 rounded-full border border-white/10 shadow-xl"
+                    >
+                        <Lock size={24} className="text-slate-400" />
+                    </motion.div>
+                    <Badge variant="default" className="flex items-center gap-2 py-1.5 px-3 bg-slate-900 border-white/20 text-slate-300">
+                        Lvl {levelRequred}
                     </Badge>
                 </div>
             )}
@@ -129,7 +136,7 @@ const Neighborhood = () => {
     ];
 
     return (
-        <div className="h-screen w-full bg-slate-950 overflow-hidden relative flex flex-col">
+        <div id="main-content" tabIndex={-1} className="h-screen w-full bg-slate-950 overflow-hidden relative flex flex-col">
             {/* Environmental Layer */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_#1e1b4b,_#020617)] overflow-hidden">
                 <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-indigo-600/10 rounded-full blur-[120px]" />

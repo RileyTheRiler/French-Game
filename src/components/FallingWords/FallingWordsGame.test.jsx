@@ -109,4 +109,42 @@ describe('FallingWordsGame', () => {
         expect(screen.getByText(/Score: \d+/)).toBeInTheDocument();
         expect(input.value).toBe(''); // Input should clear
     });
+    it('shows timer in default mode', () => {
+        renderWithContext(<FallingWordsGame />);
+        // 90 seconds = 1:30
+        expect(screen.getByText('1:30')).toBeInTheDocument();
+    });
+
+    it('ends game when time runs out', async () => {
+        renderWithContext(<FallingWordsGame />);
+
+        // Advance past 90 seconds
+        act(() => {
+            vi.advanceTimersByTime(91000);
+        });
+
+        expect(await screen.findByText("Time's Up!")).toBeInTheDocument();
+    });
+
+    it('adds time on correct answer', async () => {
+        mockVocabulary.getWeightedPracticeWords.mockReturnValue([
+            { id: '1', french: 'Chat', english: 'Cat', translation: 'Cat' }
+        ]);
+
+        renderWithContext(<FallingWordsGame />);
+
+        // Advance 10 seconds (should be 1:20 / 80s left)
+        act(() => {
+            vi.advanceTimersByTime(10000);
+        });
+
+        // Initial check if we want, but hard to sync perfectly in test environment without more mocks.
+        // Instead, just trigger correct answer and check if we see the +5s popup or if time didn't go down as much.
+
+        const input = screen.getByPlaceholderText(/Type the French translation/i);
+        fireEvent.change(input, { target: { value: 'Chat' } });
+
+        // Check for +5s popup
+        expect(await screen.findByText('+5s')).toBeInTheDocument();
+    });
 });

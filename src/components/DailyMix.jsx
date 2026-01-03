@@ -15,6 +15,7 @@ import SoundManager from '../utils/SoundManager';
 import { GRAMMAR_DRILLS, DRILL_CATEGORIES } from '../data/grammar';
 import { generateContextCloze } from '../data/contextClozeData';
 import { calculateRetentionProbability } from '../utils/srs';
+import { getDifficultyConfig } from './ui/DifficultyDial';
 
 const CHALLENGE_TYPES = {
     MULTIPLE_CHOICE: 'multiple-choice',
@@ -150,7 +151,9 @@ const DailyMix = () => {
     const onExit = () => navigate('/');
 
     const { vocabulary, getWeightedPracticeWords, updateWordProgress, playWordAudio, preloadAudioForWords } = useVocabulary();
-    const { addXP, addCoins, incrementDailyMixStreak, dailyMixStreak } = useProgress();
+    const { addXP, addCoins, incrementDailyMixStreak, dailyMixStreak, stats, globalDifficulty } = useProgress();
+
+    const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
 
     const [sessionQueue, setSessionQueue] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -199,7 +202,7 @@ const DailyMix = () => {
             // Build options for MCQ/Listening
             let options = [];
             if (type !== CHALLENGE_TYPES.REVERSE_FLASHCARD) {
-                const distractors = vocabulary.filter(w => w.id !== word.id).sort(() => Math.random() - 0.5).slice(0, 3);
+                const distractors = vocabulary.filter(w => w.id !== word.id).sort(() => Math.random() - 0.5).slice(0, difficultyConfig.numOptions - 1);
                 options = [word.english, ...distractors.map(d => d.english)].sort(() => Math.random() - 0.5);
             }
 
@@ -212,8 +215,10 @@ const DailyMix = () => {
             queue.splice(2, 0, { type: CHALLENGE_TYPES.GRAMMAR_CHECK, drill }); // Insert at index 2
         }
 
-        // 3. Add Speed Round as Finale
-        queue.push({ type: CHALLENGE_TYPES.SPEED_ROUND });
+        // 3. Add Speed Round as Finale (if enabled)
+        if (stats.speedRoundEnabled) {
+            queue.push({ type: CHALLENGE_TYPES.SPEED_ROUND });
+        }
 
         setSessionQueue(queue);
         setCurrentIndex(0);

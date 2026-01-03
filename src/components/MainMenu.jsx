@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Users, Target } from 'lucide-react';
+import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Users, Target, Zap, Sparkles, Globe, Wand2, Phone, Table, Layers, Brain, Box, Moon } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import LeaderboardModal from './LeaderboardModal';
@@ -25,6 +25,7 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import LanguageSwitcher from './LanguageSwitcher';
+import WeeklyGoalTracker from './WeeklyGoalTracker';
 
 const MainMenu = () => {
     const navigate = useNavigate();
@@ -104,6 +105,19 @@ const MainMenu = () => {
             };
         }
 
+        // Priority 3: Focus Mode Suggestion (if none completed today)
+        const focusCompletedToday = Object.values(stats.focusModeStats || {}).some(s => s.lastCompletedToday); // Assuming we might track this or just suggest anyway
+        if (!focusCompletedToday) {
+            return {
+                title: "Focus Training",
+                description: "Deep dive into a specific skill today.",
+                icon: <Target className="text-indigo-400" size={24} />,
+                action: () => navigate('/focus'),
+                btnText: "Focus Now",
+                color: "indigo"
+            };
+        }
+
         // Default
         return {
             title: "Keep the Streak",
@@ -174,6 +188,26 @@ const MainMenu = () => {
             path: '/game/daily-mix'
         },
         {
+            id: 'focusTraining',
+            title: 'Focus Training',
+            description: 'Dedicated practice for Grammar, Listening, or Speed',
+            icon: Target,
+            color: 'text-indigo-400',
+            borderColor: 'border-l-indigo-500',
+            minLevel: 1,
+            path: '/focus'
+        },
+        {
+            id: 'customDecks',
+            title: 'Custom Decks',
+            description: 'Create and study your own vocabulary sets',
+            icon: Layers,
+            color: 'text-emerald-400',
+            borderColor: 'border-l-emerald-500',
+            minLevel: 1,
+            path: '/decks'
+        },
+        {
             id: 'conversation',
             title: t('menu.items.roleplay.title'),
             description: t('menu.items.roleplay.desc'),
@@ -202,6 +236,56 @@ const MainMenu = () => {
             borderColor: 'border-l-emerald-500',
             minLevel: 3,
             path: '/game/story'
+        },
+        {
+            id: 'branchingStoryMode',
+            title: "Story Mode 2.0",
+            description: "Branching narratives with multiple endings",
+            icon: Map,
+            color: 'text-orange-400',
+            borderColor: 'border-l-orange-500',
+            minLevel: 1,
+            path: '/game/branching-story'
+        },
+        {
+            id: 'readingRoom',
+            title: "Reading Room",
+            description: "Graded readers with tap-to-translate",
+            icon: BookOpen,
+            color: 'text-blue-400',
+            borderColor: 'border-l-blue-500',
+            minLevel: 1,
+            path: '/reading-room'
+        },
+        {
+            id: 'listenRepeatLab',
+            title: "Listen & Repeat Lab",
+            description: "Shadowing and pronunciation practice",
+            icon: Mic,
+            color: 'text-rose-400',
+            borderColor: 'border-l-rose-500',
+            minLevel: 1,
+            path: '/listen-repeat-lab'
+        },
+        {
+            id: 'culturalDeepDive',
+            title: "Cultural Deep Dives",
+            description: "Immersive articles on French civilization",
+            icon: Globe,
+            color: 'text-indigo-400',
+            borderColor: 'border-l-indigo-500',
+            minLevel: 1,
+            path: '/cultural-deep-dive'
+        },
+        {
+            id: 'lessonCreator',
+            title: "Lesson Creator",
+            description: "Build and share your own learning materials",
+            icon: Sparkles,
+            color: 'text-amber-400',
+            borderColor: 'border-l-amber-500',
+            minLevel: 1,
+            path: '/lesson-creator'
         },
         {
             id: 'sentenceBuilder',
@@ -272,6 +356,189 @@ const MainMenu = () => {
             borderColor: 'border-l-rose-500',
             minLevel: 1,
             path: '/video-immersion'
+        },
+        {
+            id: 'dictation',
+            title: 'La Dictée',
+            description: 'Listen and write what you hear',
+            icon: PenTool,
+            color: 'text-indigo-400',
+            borderColor: 'border-l-indigo-500',
+            minLevel: 1,
+            path: '/game/dictation'
+        },
+        {
+            id: 'conjugationBlitz',
+            title: 'Conjugation Blitz',
+            description: 'Race against time to conjugate verbs',
+            icon: Zap,
+            color: 'text-amber-400',
+            borderColor: 'border-l-amber-500',
+            minLevel: 1,
+            path: '/game/conjugation-blitz'
+        },
+        {
+            id: 'memoryMatch',
+            title: 'Memory Match',
+            description: 'Flip cards and find the pairs',
+            icon: Sparkles,
+            color: 'text-cyan-400',
+            borderColor: 'border-l-cyan-500',
+            minLevel: 1,
+            path: '/game/memory-match'
+        },
+        {
+            id: 'cultureQuest',
+            title: 'Culture Quest',
+            description: 'Trivia on French history & art',
+            icon: Globe,
+            color: 'text-emerald-400',
+            borderColor: 'border-l-emerald-500',
+            minLevel: 1,
+            path: '/game/culture-quest'
+        },
+        {
+            id: 'smartImport',
+            title: 'Smart Importer',
+            description: 'Convert any text into a lesson',
+            icon: Wand2,
+            color: 'text-fuchsia-400',
+            borderColor: 'border-l-fuchsia-500',
+            minLevel: 1,
+            path: '/smart-import'
+        },
+        {
+            id: 'voiceCall',
+            title: 'Phone Call Simulation',
+            description: 'Voice-only practice with AI',
+            icon: Phone,
+            color: 'text-green-400',
+            borderColor: 'border-l-green-500',
+            minLevel: 1,
+            path: '/game/voice-call'
+        },
+        {
+            id: 'cultureMap',
+            title: 'Explore France',
+            description: 'Interactive map, dialects & regions',
+            icon: Globe,
+            color: 'text-indigo-400',
+            borderColor: 'border-l-indigo-500',
+            minLevel: 1,
+            path: '/culture-map'
+        },
+        {
+            id: 'survivalChallenge',
+            title: 'Survival Mode',
+            description: 'Timed high-stakes scenarios',
+            icon: Zap,
+            color: 'text-red-400',
+            borderColor: 'border-l-red-500',
+            minLevel: 1,
+            path: '/survival-challenge'
+        },
+        {
+            id: 'mediaCenter',
+            title: 'Media Center',
+            description: 'Native clips & comprehension quizzes',
+            icon: Play,
+            color: 'text-amber-400',
+            borderColor: 'border-l-amber-500',
+            minLevel: 1,
+            path: '/media-center'
+        },
+        // Real World Phase 11
+        {
+            id: 'slangExplorer',
+            title: 'Slang & Verlan',
+            description: 'Master street French & texting lingo',
+            icon: MessageCircle,
+            color: 'text-fuchsia-400',
+            borderColor: 'border-l-fuchsia-500',
+            minLevel: 1,
+            path: '/real-world/slang'
+        },
+        {
+            id: 'professionalSuite',
+            title: 'Professional Suite',
+            description: 'Business, Medical & Tech French',
+            icon: Briefcase,
+            color: 'text-blue-400',
+            borderColor: 'border-l-blue-500',
+            minLevel: 2,
+            path: '/real-world/professional'
+        },
+        {
+            id: 'dialectTours',
+            title: 'Dialect Tours',
+            description: 'Quebec, Marseille, Belgium & more',
+            icon: Globe,
+            color: 'text-amber-400',
+            borderColor: 'border-l-amber-500',
+            minLevel: 1,
+            path: '/real-world/dialects'
+        },
+        // Learning Styles / Modalities
+        {
+            id: 'podcastMode',
+            title: 'Podcast Mode',
+            description: 'Audio-only lessons for hands-free learning',
+            icon: Mic,
+            color: 'text-indigo-400',
+            borderColor: 'border-l-indigo-500',
+            minLevel: 1,
+            path: '/learn/podcast'
+        },
+        {
+            id: 'visualStoryCards',
+            title: 'Visual Story Cards',
+            description: 'Learn with illustrated vocabulary cards',
+            icon: Sparkles,
+            color: 'text-pink-400',
+            borderColor: 'border-l-pink-500',
+            minLevel: 1,
+            path: '/learn/story-cards'
+        },
+        {
+            id: 'writingPad',
+            title: 'Writing Pad',
+            description: 'Practice writing accents and characters',
+            icon: PenTool,
+            color: 'text-emerald-400',
+            borderColor: 'border-l-emerald-500',
+            minLevel: 1,
+            path: '/learn/writing-pad'
+        },
+        {
+            id: 'patternDrills',
+            title: 'Pattern Drills',
+            description: 'Structured grammar and conjugation drills',
+            icon: Table,
+            color: 'text-blue-400',
+            borderColor: 'border-l-blue-500',
+            minLevel: 1,
+            path: '/learn/pattern-drills'
+        },
+        // Phase 10: The AI Coach
+        {
+            id: 'prosodyLab',
+            title: 'Prosody Lab',
+            description: 'Visualize your rhythm & intonation',
+            icon: Mic,
+            color: 'text-rose-400',
+            borderColor: 'border-l-rose-500',
+            minLevel: 1,
+            path: '/lab/prosody'
+        },
+        {
+            id: 'sentenceBlueprint',
+            title: 'Sentence Architect',
+            description: 'Visualize grammar trees & structure',
+            icon: Layers,
+            color: 'text-cyan-400',
+            borderColor: 'border-l-cyan-500',
+            minLevel: 1,
+            path: '/lab/sentence-blueprint'
         }
     ];
 
@@ -280,7 +547,7 @@ const MainMenu = () => {
     };
 
     return (
-        <div className="min-h-screen relative p-4 md:p-8 flex flex-col items-center max-w-7xl mx-auto">
+        <div id="main-content" tabIndex={-1} className="min-h-screen relative p-4 md:p-8 flex flex-col items-center max-w-7xl mx-auto">
 
             {/* Top Bar Actions */}
             <div className="absolute top-4 right-4 flex gap-2 z-10">
@@ -311,7 +578,7 @@ const MainMenu = () => {
                 <Button variant="ghost" size="sm" onClick={() => setShowGrammar(true)} className="rounded-full h-12 w-12 p-0">
                     <BookOpen size={20} className="text-emerald-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowStats(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => navigate('/mastery')} className="rounded-full h-12 w-12 p-0">
                     <BarChart3 size={20} className="text-indigo-400" />
                 </Button>
                 <Button variant="ghost" size="sm" onClick={() => setShowGoals(true)} className="rounded-full h-12 w-12 p-0">
@@ -365,8 +632,11 @@ const MainMenu = () => {
                 })()}
             </motion.div>
 
-            {/* Daily Goal Ring */}
-            <DailyGoalRing />
+            {/* Goals Section */}
+            <div className="w-full max-w-md space-y-4 mb-8">
+                <DailyGoalRing />
+                <WeeklyGoalTracker />
+            </div>
 
             {/* Quick Session for Beginners */}
             <QuickSessionCard />
@@ -492,6 +762,46 @@ const MainMenu = () => {
                         <div className="text-sm text-indigo-300">{t('menu.visit_quartier_desc')}</div>
                     </div>
                 </button>
+            </motion.div>
+
+            {/* Cognitive Optimization Phase 12 */}
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.32 }}
+                className="w-full max-w-2xl mb-8"
+            >
+                <h2 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent mb-4 flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-purple-400" />
+                    Cognitive Mastery
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                        onClick={() => navigate('/memory-palace')}
+                        className="glass-panel p-4 hover:bg-purple-500/10 border-l-4 border-l-purple-500 text-left transition-all hover:scale-[1.02]"
+                    >
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 rounded-lg bg-purple-500/20 text-purple-300">
+                                <Box className="w-5 h-5" />
+                            </div>
+                            <h3 className="font-bold text-slate-100">Memory Palace</h3>
+                        </div>
+                        <p className="text-xs text-slate-400">Map words to 3D spaces.</p>
+                    </button>
+
+                    <button
+                        onClick={() => navigate('/dream-goals')}
+                        className="glass-panel p-4 hover:bg-blue-500/10 border-l-4 border-l-blue-500 text-left transition-all hover:scale-[1.02]"
+                    >
+                        <div className="flex items-center gap-3 mb-2">
+                            <div className="p-2 rounded-lg bg-blue-500/20 text-blue-300">
+                                <Moon className="w-5 h-5" />
+                            </div>
+                            <h3 className="font-bold text-slate-100">Visionary Goals</h3>
+                        </div>
+                        <p className="text-xs text-slate-400">Track subconscious milestones.</p>
+                    </button>
+                </div>
             </motion.div>
 
             {/* Game Grid */}

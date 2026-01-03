@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap');
 @import "tailwindcss";
 
 :root {
@@ -71,6 +71,86 @@ body[data-theme="forest"] {
 :focus-visible {
   outline: 3px solid var(--accent-primary);
   outline-offset: 3px;
+}
+
+/* Screen Reader Only - Hidden visually but accessible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.sr-only:focus,
+.sr-only:active {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: more) {
+  :root {
+    --bg-primary: #000000;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #333333;
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --text-tertiary: #c0c0c0;
+    --accent-primary: #a78bfa;
+    --accent-secondary: #f472b6;
+    --glass-bg: rgba(0, 0, 0, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.3);
+  }
+
+  .glass-panel {
+    border-width: 2px !important;
+    border-color: rgba(255, 255, 255, 0.4) !important;
+  }
+
+  button,
+  a,
+  [role="button"] {
+    border: 2px solid currentColor !important;
+  }
+}
+
+body.high-contrast {
+  --bg-primary: #000000;
+  --bg-secondary: #1a1a1a;
+  --bg-tertiary: #333333;
+  --text-primary: #ffffff;
+  --text-secondary: #e0e0e0;
+  --accent-primary: #a78bfa;
+  --glass-border: rgba(255, 255, 255, 0.4);
+}
+
+body.high-contrast .glass-panel {
+  border-width: 2px;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* Reduced Motion - System preference */
+@media (prefers-reduced-motion: reduce) {
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 @layer components {
@@ -204,4 +284,25 @@ body[data-theme="forest"] {
 
 .animate-celebration-pulse {
   animation: celebration-pulse 0.5s ease-in-out 3;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #334155;
+  /* slate-700 */
+  border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+  /* slate-600 */
 }

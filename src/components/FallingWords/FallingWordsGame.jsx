@@ -10,6 +10,7 @@ import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { GameLayout } from '../layout/GameLayout';
 import { Ghost, Swords, Clock, TrendingUp } from 'lucide-react';
+import { getDifficultyConfig } from '../ui/DifficultyDial';
 
 const GAME_WIDTH_PERCENT = 90;
 const INITIAL_FALL_SPEED = 0.05;
@@ -38,7 +39,9 @@ const FallingWordsGame = () => {
     const onExit = () => navigate('/');
 
     const { getDueWords, updateWordProgress, getWeightedPracticeWords, vocabulary } = useVocabulary();
-    const { logWordAttempt, difficultySettings } = useProgress();
+    const { logWordAttempt, globalDifficulty, difficultySettings } = useProgress();
+
+    const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
 
     // Game State (Visual)
     const [score, setScore] = useState(0);
@@ -277,7 +280,7 @@ const FallingWordsGame = () => {
         }
 
         const flowMultiplier = 1 + (combo * 0.05);
-        const difficultyMultiplier = difficultySettings?.globalMultiplier || 1.0;
+        const difficultyMultiplier = (globalDifficulty / 50) || 1.0; // Scale speed by difficulty (0.5x to 2.0x roughly)
 
         const effectiveSpeed = currentFallSpeedRef.current * flowMultiplier * difficultyMultiplier;
 
@@ -542,7 +545,11 @@ const FallingWordsGame = () => {
                             x={word.x}
                             y={word.y}
                             isMatched={false}
-                            hint={difficultySettings?.showHints ? word.text.charAt(0) : null}
+                            hint={
+                                difficultySettings?.learnerType === 'scholar'
+                                    ? `[${word.gender || word.category || '?'}]`
+                                    : (difficultyConfig.showInitial ? word.text.charAt(0) : null)
+                            }
                         />
                     ))}
 

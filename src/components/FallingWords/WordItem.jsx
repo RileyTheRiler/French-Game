@@ -40,14 +40,23 @@ const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }
                 boxShadow: isMatched ? '0 0 30px rgba(16, 185, 129, 0.5)' : '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
             }}
         >
-            <span className="relative z-10">{text}</span>
-            {showHint && hint && (
+            <span className="relative z-10 flex flex-col items-center">
+                {/* Scholar Mode Metadata */}
+                {hint && hint.startsWith('[') && (
+                    <span className="text-[10px] uppercase tracking-widest text-indigo-300 mb-1 font-bold opacity-80">
+                        {hint.replace(/[\[\]]/g, '')}
+                    </span>
+                )}
+                <span className="text-xl">{text}</span>
+            </span>
+
+            {showHint && hint && !hint.startsWith('[') && (
                 <motion.div
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     className="absolute -top-3 -right-3 bg-yellow-400 text-slate-900 text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-slate-900"
                 >
-                    {hint}
+                    ?
                 </motion.div>
             )}
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl pointer-events-none" />

@@ -58,6 +58,26 @@ const StatsModal = ({ isOpen, onClose }) => {
         return new Intl.NumberFormat(i18n.language).format(num);
     };
 
+    // Streak Calendar Data (Last 30 days)
+    const getCalendarDays = () => {
+        const days = [];
+        const today = new Date();
+        for (let i = 29; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toDateString();
+            const hasActivity = stats.dailyStats?.[dateStr]?.xp > 0 || stats.lastActiveDate === dateStr;
+            const isToday = i === 0;
+            // Mock freeze logic: if not active but streak was maintained, it was frozen (simplified)
+            // ideally we'd track freeze usage per day in stats
+            const isFrozen = false;
+
+            days.push({ date: d, hasActivity, isToday, isFrozen });
+        }
+        return days;
+    };
+    const calendarDays = getCalendarDays();
+
     return (
         <AnimatePresence>
             <motion.div
@@ -151,6 +171,62 @@ const StatsModal = ({ isOpen, onClose }) => {
                                         <StatCard icon={Target} label={t('stats.stories')} value={formatNumber(stats.storiesCompleted || 0)} color="bg-blue-500/30" />
                                         <StatCard icon={TrendingUp} label={t('stats.roleplay')} value={formatNumber(stats.conversationsCompleted || 0)} color="bg-purple-500/30" />
                                         <StatCard icon={Clock} label={t('stats.perfect_runs')} value={formatNumber(stats.perfectQuizzes || 0)} color="bg-pink-500/30" />
+                                    </div>
+
+                                    {/* Streak Calendar */}
+                                    <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
+                                        <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                                            <Calendar size={20} className="text-orange-400" />
+                                            Streak Calendar
+                                        </h3>
+                                        <div className="flex flex-col items-center">
+                                            <div className="grid grid-cols-7 gap-2 mb-2">
+                                                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => (
+                                                    <div key={d} className="text-[10px] text-slate-500 text-center font-bold uppercase w-8">
+                                                        {d}
+                                                    </div>
+                                                ))}
+                                                {/* Filler for start offset if needed, but for last 30 days pure grid we might align differently. 
+                                                    Let's just show last 30 days as a simple grid, or align to week days. 
+                                                    Aligning to weekdays:
+                                                */}
+                                            </div>
+                                            <div className="grid grid-cols-7 gap-2">
+                                                {Array(calendarDays[0].date.getDay()).fill(null).map((_, i) => (
+                                                    <div key={`empty-${i}`} className="w-8 h-8" />
+                                                ))}
+                                                {calendarDays.map((day, i) => (
+                                                    <div key={i} className="flex justify-center relative group">
+                                                        <div
+                                                            className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs transition-all
+                                                                ${day.isToday ? 'ring-2 ring-white' : ''}
+                                                                ${day.hasActivity
+                                                                    ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20'
+                                                                    : 'bg-slate-800 text-slate-600'
+                                                                }
+                                                            `}
+                                                        >
+                                                            {day.date.getDate()}
+                                                        </div>
+                                                        {day.hasActivity && (
+                                                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-white/10 z-10">
+                                                                Active
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="flex gap-4 mt-4 text-xs text-slate-400">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-3 h-3 rounded-full bg-orange-500" />
+                                                    <span>Active Day</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-3 h-3 rounded-full bg-slate-800" />
+                                                    <span>Missed</span>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Vocabulary Breakdown */}

@@ -33,9 +33,9 @@ export const ProgressProvider = ({ children }) => {
         },
         dailyStats: {}, // { "2024-03-20": { xp: 50, words: 10, accuracy: 0.8, time: 3000 } }
         errorPatterns: {}, // { "word_id": { count: 3, lastMiss: timestamp } }
+        reviewQueue: [], // List of word IDs to review
         difficultySettings: {
             globalMultiplier: 1.0,
-            penaltyScale: 1.0,
             showHints: true,
             practiceModeNoPenalty: false,
             challengeMode: false,      // Disable all hints when true
@@ -46,8 +46,76 @@ export const ProgressProvider = ({ children }) => {
         dailyMixStreak: 0,
         lastDailyMixDate: null,
         weakWords: {}, // { "wordId": { strength: 0-100, lastPracticed: timestamp } }
+        conceptMastery: {}, // { "concept_id": { interval, ef, attempts, correct, masteryLevel, ... } }
         dailyXPGoal: 50, // Default beginner-friendly goal
-        // dailyStats also tracks coinsEarned and dailyXP now
+        conversationHistory: [], // [{ timestamp, promptId, metrics: { fluency, accuracy, vocabulary } }]
+        conversationStats: {
+            totalSessions: 0,
+            avgAccuracy: 0,
+            avgFluency: 0
+        },
+        // Learning Profile Quiz results
+        learningProfile: {
+            preferAudio: null,      // true = audio, false = visual
+            preferStructured: null, // true = structured, false = exploration
+            preferPressure: null,   // true = timed/pressure, false = relaxed
+            preferGrammar: null,    // true = grammar focus, false = vocabulary
+            preferDaily: null,      // true = daily commitment, false = flexible
+            completed: false,
+            completedAt: null
+        },
+        // Global difficulty 0-100 (0=Tourist, 100=Native)
+        globalDifficulty: 25, // Default to Beginner
+        // Weekly goals system (replaces daily streak anxiety)
+        weeklyGoal: {
+            sessionsPerWeek: 3,     // Target sessions per week
+            currentWeekStart: null, // ISO string of week start (Monday)
+            sessionsThisWeek: [],   // Array of dates when sessions completed
+            lastWeekCompleted: false
+        },
+        // Focus mode stats
+        focusModeStats: {
+            grammarHour: { completed: 0, totalTime: 0 },
+            listeningLab: { completed: 0, totalTime: 0 },
+            vocabSprint: { completed: 0, totalTime: 0 }
+        },
+        // Immersive Content Library progress
+        branchingStoriesProgress: {},  // { storyId: { currentNode, history, endings: [] } }
+        readingRoomProgress: {},       // { readerId: { completed, comprehensionScore } }
+        shadowingProgress: {},         // { phraseId: { attempts, bestScore } }
+        cultureArticlesRead: [],       // Array of article IDs
+        userLessonsCreated: 0,
+        // Learning Modalities preferences
+        speedRoundEnabled: true,        // Toggle for timed challenges in Daily Mix
+        preferredPlaybackSpeed: 1.0,    // Default podcast playback speed
+        podcastSessionsCompleted: 0,    // Track podcast mode usage
+        writingPadSessions: 0,          // Track writing pad usage
+        patternDrillsCompleted: 0,      // Track pattern drills usage
+        // Cultural Mastery Phase 8
+        regionProgress: {},             // { regionId: progressPercent }
+        mediaProgress: {},              // { clipId: { watched: boolean, quizScore: number } }
+        // Cognitive & Flow State Phase 12
+        cognitiveStats: {
+            flowMultiplier: 1.0,    // 0.8 (easier) to 1.5 (harder)
+            lastResponseTimes: [],  // Moving window of last 10 responses
+            recentMisses: 0,        // Count of misses in last 10
+            fatigueLevel: 0,        // 0-100
+            sessionStartTime: null,
+            smartBreakSuggested: false
+        },
+        dreamGoals: {
+            thinkingInFrench: null, // Date timestamp
+            dreamingInFrench: null, // Date timestamp
+            firstJokeUnderstood: null,
+            firstSongUnderstood: null
+        },
+        memoryPalace: {
+            rooms: {
+                // 'kitchen': { items: [{ wordId: 'pomme', x: 50, y: 50 }] }
+            },
+            unlockedRooms: ['kitchen']
+        },
+        survivalBest: {}                // { scenarioId: bestTimeRemaining }
     };
 
     const [stats, setStats] = useState(() => {
@@ -65,6 +133,7 @@ export const ProgressProvider = ({ children }) => {
             conversationsCompleted: 0,
             perfectQuizzes: 0,
             unlockedAchievements: [],
+            conversationHistory: [],
             updatedAt: Date.now()
         };
         return saved ? { ...baseState, ...JSON.parse(saved) } : baseState;
@@ -467,14 +536,6 @@ export const ProgressProvider = ({ children }) => {
         setStats(prev => ({ ...prev, lastWeeklyRecap: new Date().toDateString() }));
     };
 
-    const updateUserGoals = useCallback((newGoals) => {
-        setStats(prev => ({
-            ...prev,
-            userGoals: { ...prev.userGoals, ...newGoals },
-            updatedAt: Date.now()
-        }));
-    }, []);
-
     const updateDifficultySettings = useCallback((newSettings) => {
         setStats(prev => ({
             ...prev,
@@ -538,10 +599,314 @@ export const ProgressProvider = ({ children }) => {
         });
     }, []);
 
-    const updateDailyXPGoal = useCallback((goal) => {
+    const addToReviewQueue = useCallback((wordId) => {
+        setStats(prev => {
+            if (prev.reviewQueue?.includes(wordId)) return prev;
+            return {
+                ...prev,
+                reviewQueue: [...(prev.reviewQueue || []), wordId],
+                updatedAt: Date.now()
+            };
+        });
+    }, []);
+
+    const removeFromReviewQueue = useCallback((wordId) => {
+        setStats(prev => ({
+            ...prev,
+            reviewQueue: (prev.reviewQueue || []).filter(id => id !== wordId),
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    const updateUserGoals = useCallback((newGoals) => {
+        setStats(prev => ({
+            ...prev,
+            userGoals: { ...prev.userGoals, ...newGoals },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    const updateDailyXPGoalFn = useCallback((goal) => {
         setStats(prev => ({
             ...prev,
             dailyXPGoal: goal,
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    const trackConversationSession = useCallback((sessionData) => {
+        setStats(prev => {
+            const history = prev.conversationHistory || [];
+            const newHistory = [...history, { ...sessionData, timestamp: Date.now() }];
+
+            // Limit history to last 50 sessions
+            if (newHistory.length > 50) newHistory.shift();
+
+            // Calculate aggregated stats
+            const totalSessions = (prev.conversationStats?.totalSessions || 0) + 1;
+            const currentAvgAcc = prev.conversationStats?.avgAccuracy || 0;
+            const currentAvgFlu = prev.conversationStats?.avgFluency || 0;
+
+            // Moving average
+            const newAvgAcc = ((currentAvgAcc * (totalSessions - 1)) + (sessionData.metrics?.accuracy || 0)) / totalSessions;
+            const newAvgFlu = ((currentAvgFlu * (totalSessions - 1)) + (sessionData.metrics?.fluency || 0)) / totalSessions;
+
+            return {
+                ...prev,
+                conversationHistory: newHistory,
+                conversationStats: {
+                    totalSessions,
+                    avgAccuracy: newAvgAcc,
+                    avgFluency: newAvgFlu
+                },
+                conversationsCompleted: (prev.conversationsCompleted || 0) + 1,
+                updatedAt: Date.now()
+            };
+        });
+    }, []);
+
+    // Concept Mastery Tracking (Smart Review 2.0)
+    const logConceptAttempt = useCallback((conceptId, isCorrect, responseTimeMs = 0) => {
+        setStats(prev => {
+            const currentConcept = prev.conceptMastery?.[conceptId] || {
+                interval: 0,
+                repetition: 0,
+                ef: 2.5,
+                dueDate: 0,
+                attempts: 0,
+                correct: 0,
+                lastPracticed: null,
+                masteryLevel: 0
+            };
+
+            const grade = isCorrect ? (responseTimeMs < 3000 ? 5 : 4) : 1;
+
+            // Calculate new state
+            const attempts = currentConcept.attempts + 1;
+            const correct = currentConcept.correct + (isCorrect ? 1 : 0);
+            let { interval, repetition, ef } = currentConcept;
+
+            if (isCorrect) {
+                if (repetition === 0) interval = 1;
+                else if (repetition === 1) interval = 3;
+                else if (repetition === 2) interval = 7;
+                else interval = Math.round(interval * ef * 0.9);
+                repetition += 1;
+            } else {
+                repetition = 0;
+                interval = 1;
+            }
+
+            // Update ease factor
+            ef = ef + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
+            if (ef < 1.3) ef = 1.3;
+
+            // Calculate mastery level
+            const accuracy = attempts > 0 ? correct / attempts : 0;
+            const recencyBonus = repetition >= 3 ? 20 : repetition * 5;
+            const masteryLevel = Math.min(100, Math.round(accuracy * 80 + recencyBonus));
+
+            const DAY_MS = 24 * 60 * 60 * 1000;
+
+            return {
+                ...prev,
+                conceptMastery: {
+                    ...prev.conceptMastery,
+                    [conceptId]: {
+                        interval,
+                        repetition,
+                        ef,
+                        dueDate: Date.now() + interval * DAY_MS,
+                        attempts,
+                        correct,
+                        lastPracticed: Date.now(),
+                        masteryLevel
+                    }
+                },
+                updatedAt: Date.now()
+            };
+        });
+    }, []);
+
+    // Get weak concepts that need review
+    const getWeakConceptsList = useCallback(() => {
+        const conceptMastery = stats.conceptMastery || {};
+        const weakConcepts = [];
+        const now = Date.now();
+        const masteryThreshold = 70;
+
+        for (const [conceptId, state] of Object.entries(conceptMastery)) {
+            if (!state) continue;
+
+            const isWeak = state.masteryLevel < masteryThreshold;
+            const isOverdue = state.dueDate && now > state.dueDate;
+            const hasEnoughData = state.attempts >= 3;
+
+            if ((isWeak || isOverdue) && hasEnoughData) {
+                weakConcepts.push({
+                    conceptId,
+                    ...state,
+                    isOverdue
+                });
+            }
+        }
+
+        return weakConcepts.sort((a, b) => a.masteryLevel - b.masteryLevel);
+    }, [stats.conceptMastery]);
+
+    // Learning Profile Management
+    const setLearningProfile = useCallback((profile) => {
+        setStats(prev => ({
+            ...prev,
+            learningProfile: {
+                ...prev.learningProfile,
+                ...profile,
+                completed: true,
+                completedAt: Date.now()
+            },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    // Global Difficulty (0-100)
+    const setGlobalDifficulty = useCallback((value) => {
+        const clampedValue = Math.max(0, Math.min(100, value));
+        setStats(prev => ({
+            ...prev,
+            globalDifficulty: clampedValue,
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    // Weekly Goal Management
+    const getWeekStart = () => {
+        const now = new Date();
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday
+        const monday = new Date(now.setDate(diff));
+        monday.setHours(0, 0, 0, 0);
+        return monday.toISOString();
+    };
+
+    const updateWeeklyGoal = useCallback((sessionsPerWeek) => {
+        setStats(prev => ({
+            ...prev,
+            weeklyGoal: {
+                ...prev.weeklyGoal,
+                sessionsPerWeek: Math.max(1, Math.min(7, sessionsPerWeek))
+            },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    const recordWeeklySession = useCallback(() => {
+        const currentWeekStart = getWeekStart();
+        const today = new Date().toDateString();
+
+        setStats(prev => {
+            const weeklyGoal = prev.weeklyGoal || {};
+            let sessionsThisWeek = weeklyGoal.sessionsThisWeek || [];
+
+            // Reset if new week
+            if (weeklyGoal.currentWeekStart !== currentWeekStart) {
+                const wasComplete = sessionsThisWeek.length >= (weeklyGoal.sessionsPerWeek || 3);
+                sessionsThisWeek = [];
+                return {
+                    ...prev,
+                    weeklyGoal: {
+                        ...weeklyGoal,
+                        currentWeekStart,
+                        sessionsThisWeek: [today],
+                        lastWeekCompleted: wasComplete
+                    },
+                    updatedAt: Date.now()
+                };
+            }
+
+            // Add today if not already recorded
+            if (!sessionsThisWeek.includes(today)) {
+                sessionsThisWeek = [...sessionsThisWeek, today];
+            }
+
+            return {
+                ...prev,
+                weeklyGoal: {
+                    ...weeklyGoal,
+                    currentWeekStart,
+                    sessionsThisWeek
+                },
+                updatedAt: Date.now()
+            };
+        });
+    }, []);
+
+    const isWeeklyGoalMet = useCallback(() => {
+        const weeklyGoal = stats.weeklyGoal || {};
+        const currentWeekStart = getWeekStart();
+        if (weeklyGoal.currentWeekStart !== currentWeekStart) return false;
+        return (weeklyGoal.sessionsThisWeek || []).length >= (weeklyGoal.sessionsPerWeek || 3);
+    }, [stats.weeklyGoal]);
+
+    // Focus Mode Stats
+    const recordFocusModeCompletion = useCallback((mode, timeSpentMs) => {
+        setStats(prev => ({
+            ...prev,
+            focusModeStats: {
+                ...prev.focusModeStats,
+                [mode]: {
+                    completed: (prev.focusModeStats?.[mode]?.completed || 0) + 1,
+                    totalTime: (prev.focusModeStats?.[mode]?.totalTime || 0) + timeSpentMs
+                }
+            },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    // Generic updateStats function for flexible state updates
+    const updateStats = useCallback((updates) => {
+        setStats(prev => ({
+            ...prev,
+            ...updates,
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    // Cultural Mastery Phase 8
+    const updateRegionProgress = useCallback((regionId, progress) => {
+        setStats(prev => ({
+            ...prev,
+            regionProgress: {
+                ...prev.regionProgress,
+                [regionId]: Math.max(prev.regionProgress?.[regionId] || 0, progress)
+            },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    const updateMediaProgress = useCallback((clipId, watched, quizScore) => {
+        setStats(prev => {
+            const current = prev.mediaProgress?.[clipId] || { watched: false, quizScore: 0 };
+            return {
+                ...prev,
+                mediaProgress: {
+                    ...prev.mediaProgress,
+                    [clipId]: {
+                        watched: watched || current.watched,
+                        quizScore: Math.max(current.quizScore, quizScore)
+                    }
+                },
+                updatedAt: Date.now()
+            };
+        });
+    }, []);
+
+    const updateSurvivalBest = useCallback((scenarioId, timeRemaining) => {
+        setStats(prev => ({
+            ...prev,
+            survivalBest: {
+                ...prev.survivalBest,
+                [scenarioId]: Math.max(prev.survivalBest?.[scenarioId] || 0, timeRemaining)
+            },
             updatedAt: Date.now()
         }));
     }, []);
@@ -585,8 +950,54 @@ export const ProgressProvider = ({ children }) => {
             markWeeklyRecapSeen,
             weakWords: stats.weakWords,
             markWordStrength,
+            reviewQueue: stats.reviewQueue || [],
+            addToReviewQueue,
+            removeFromReviewQueue,
             dailyXPGoal: stats.dailyXPGoal || 50,
-            updateDailyXPGoal
+            updateDailyXPGoal: updateDailyXPGoalFn,
+            trackConversationSession,
+            conversationHistory: stats.conversationHistory || [],
+            conversationStats: stats.conversationStats || {},
+            // Learning Profile
+            learningProfile: stats.learningProfile || {},
+            setLearningProfile,
+            // Global Difficulty
+            globalDifficulty: stats.globalDifficulty ?? 25,
+            setGlobalDifficulty,
+            // Weekly Goals
+            weeklyGoal: stats.weeklyGoal || { sessionsPerWeek: 3, sessionsThisWeek: [] },
+            updateWeeklyGoal,
+            recordWeeklySession,
+            isWeeklyGoalMet,
+            // Focus Mode Stats
+            focusModeStats: stats.focusModeStats || {},
+            recordFocusModeCompletion,
+            // Concept Mastery (Smart Review 2.0)
+            conceptMastery: stats.conceptMastery || {},
+            logConceptAttempt,
+            getWeakConceptsList,
+            // Generic state updater
+            updateStats,
+            // Immersive Content Library
+            branchingStoriesProgress: stats.branchingStoriesProgress || {},
+            readingRoomProgress: stats.readingRoomProgress || {},
+            shadowingProgress: stats.shadowingProgress || {},
+            cultureArticlesRead: stats.cultureArticlesRead || [],
+            userLessonsCreated: stats.userLessonsCreated || 0,
+            // Cultural Mastery Phase 8
+            regionProgress: stats.regionProgress || {},
+            mediaProgress: stats.mediaProgress || {},
+            survivalBest: stats.survivalBest || {},
+            updateRegionProgress,
+            updateMediaProgress,
+            updateSurvivalBest,
+            // Cognitive Phase 12
+            updateCognitiveState,
+            logDreamGoal,
+            updateMemoryPalaceRoom,
+            cognitiveStats: stats.cognitiveStats || {},
+            dreamGoals: stats.dreamGoals || {},
+            memoryPalace: stats.memoryPalace || {}
         }}>
             {children}
         </ProgressContext.Provider>

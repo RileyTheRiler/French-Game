@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, CheckCircle, BookOpen, ArrowLeft } from 'lucide-react';
+import { ChevronRight, CheckCircle, BookOpen, ArrowLeft, Lightbulb } from 'lucide-react';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
@@ -71,6 +71,18 @@ const GrammarLessonView = () => {
                                 </span>
                                 {section.title}
                             </h3>
+
+                            {section.type === 'why' && (
+                                <div className="bg-indigo-500/10 border-l-4 border-indigo-500 p-6 rounded-r-xl mb-4">
+                                    <h4 className="text-indigo-300 font-bold mb-2 flex items-center gap-2">
+                                        <Lightbulb size={20} />
+                                        Why It Matters
+                                    </h4>
+                                    <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed whitespace-pre-line">
+                                        {section.content}
+                                    </div>
+                                </div>
+                            )}
 
                             {section.type === 'explanation' && (
                                 <div className="prose prose-invert max-w-none text-slate-300 leading-relaxed whitespace-pre-line">

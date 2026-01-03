@@ -125,7 +125,7 @@ const StoryReader = ({ story, onBack, onComplete }) => {
                 <Card className="min-h-[60vh] p-8 md:p-12 md:pb-20 bg-slate-900/40 backdrop-blur-xl border-white/5 relative">
                     {!showQuiz ? (
                         <>
-                            <div className="flex-1 text-xl md:text-2xl leading-[2.5] text-slate-200 font-serif tracking-wide">
+                            <div className="flex-1 text-xl md:text-2xl leading-relaxed md:leading-loose text-slate-100 font-['Crimson_Pro',serif] tracking-wide">
                                 {story.content.map((item, index) => (
                                     <span key={index} className="relative inline-block mx-[3px]">
                                         <span

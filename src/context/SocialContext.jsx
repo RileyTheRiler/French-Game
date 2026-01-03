@@ -13,7 +13,7 @@ const MOCK_NPCS = {
 const SOCIAL_STORAGE_KEY = 'frenchApp_social';
 
 export const SocialProvider = ({ children }) => {
-    const { stats } = useProgress();
+    const { stats, addXP } = useProgress();
 
     // State
     const [friends, setFriends] = useState(() => {
@@ -52,9 +52,33 @@ export const SocialProvider = ({ children }) => {
 
         setActiveChallenge(prev => ({
             ...prev,
-            current: total
+            current: total,
+            isCompleted: total >= prev.target
         }));
     }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
+
+    const claimCoopReward = useCallback(() => {
+        if (!activeChallenge.isCompleted) return;
+
+        // Award bonus
+        addXP(500); // Bonus XP
+        // Could add coins here too if Context supported it
+
+        // Reset or generate new challenge (mock logic)
+        setActiveChallenge(prev => ({
+            ...prev,
+            current: 0,
+            isCompleted: false,
+            target: Math.floor(prev.target * 1.2), // Increase difficulty
+            title: 'Next Team Challenge'
+        }));
+
+        // Reset progress trackers
+        setUserCoopStartXp(stats.xp);
+        setFriendsProgress(0);
+
+        return 500; // Return reward amount
+    }, [activeChallenge.isCompleted, stats.xp, addXP]);
 
     // Persist to local storage
     useEffect(() => {
@@ -149,7 +173,8 @@ export const SocialProvider = ({ children }) => {
         coopGroup,
         createCoopGroup,
         leaveCoopGroup,
-        activeChallenge
+        activeChallenge,
+        claimCoopReward
     };
 
     return (

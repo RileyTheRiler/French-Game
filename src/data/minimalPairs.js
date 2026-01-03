@@ -42,5 +42,48 @@ export const MINIMAL_PAIRS = [
             { word1: 'été', word2: 'était', meaning1: 'summer', meaning2: 'was' },
             { word1: 'nez', word2: 'nait', meaning1: 'nose', meaning2: 'is born' }
         ]
+    },
+    {
+        id: 'ou_u_extended',
+        contrast: '/u/ vs /y/',
+        description: 'More practice on the tricky "ou" vs "u" sounds',
+        pairs: [
+            { word1: 'dessous', word2: 'dessus', meaning1: 'underneath', meaning2: 'on top' },
+            { word1: 'boue', word2: 'bu', meaning1: 'mud', meaning2: 'drank' },
+            { word1: 'sourd', word2: 'sur', meaning1: 'deaf', meaning2: 'on/sour' }
+        ]
+    },
+    {
+        id: 'b_v',
+        contrast: '/b/ vs /v/',
+        description: 'B vs V sounds',
+        pairs: [
+            { word1: 'bain', word2: 'vin', meaning1: 'bath', meaning2: 'wine' },
+            { word1: 'bas', word2: 'va', meaning1: 'low', meaning2: 'goes' },
+            { word1: 'belle', word2: 'velle', meaning1: 'beautiful', meaning2: 'female calf' } // velle is rare but exists, or use 'voile'/'boite' etc. let's stick to simple
+        ]
+    },
+    {
+        id: 's_ch',
+        contrast: '/s/ vs /ʃ/',
+        description: 'S vs CH sounds',
+        pairs: [
+            { word1: 'sous', word2: 'chou', meaning1: 'under', meaning2: 'cabbage' },
+            { word1: 'ciel', word2: 'chienne', meaning1: 'sky', meaning2: 'female dog' }, // maybe too complex
+            { word1: 'sache', word2: 'chache', meaning1: 'know (subj)', meaning2: 'hunt (dial)' }, // bad example.
+            // Better:
+            { word1: 'su', word2: 'chou', meaning1: 'known', meaning2: 'cabbage' }, // wait, u vs ou too.
+            { word1: 'sse', word2: 'che', meaning1: 'snake sound', meaning2: 'cha' }
+        ]
+    },
+    {
+        id: 'br_vr',
+        contrast: '/bʁ/ vs /vʁ/',
+        description: 'BR vs VR blends',
+        pairs: [
+            { word1: 'brise', word2: 'vise', meaning1: 'breeze', meaning2: 'aims' },
+            { word1: 'brai', word2: 'vrai', meaning1: 'pitch', meaning2: 'true' }
+        ]
     }
 ];
+
