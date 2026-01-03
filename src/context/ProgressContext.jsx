@@ -7,6 +7,9 @@ const ProgressContext = createContext();
 export const ProgressProvider = ({ children }) => {
     const defaultStats = {
         xp: 0,
+        seasonalXp: 0,
+        seasonEndsAt: null,
+        seasonId: null,
         streak: 0,
         coins: 50,
         inventory: {},
@@ -17,6 +20,7 @@ export const ProgressProvider = ({ children }) => {
         storiesCompleted: 0,
         conversationsCompleted: 0,
         perfectQuizzes: 0,
+        timedChallengesCompleted: 0,
         unlockedAchievements: [],
         onboardingComplete: false,
         placementComplete: false,
@@ -28,56 +32,43 @@ export const ProgressProvider = ({ children }) => {
             minutes: 120
         },
         categoryPerformance: {},
-        difficultySettings: {
-            fallingWords: 3,
-            flashcards: 2,
-            grammar: 2
-        categoryStats: {}, // { "Family": { attempts: 10, correct: 8, totalResponseTime: 5000 } }
+        categoryStats: {},
         userGoals: {
             targetCEFR: "A1",
             weeklyXP: 1000,
             weeklyWords: 20
         },
         difficultySettings: {
+            fallingWords: 3,
+            flashcards: 2,
+            grammar: 2,
             globalMultiplier: 1.0,
             penaltyScale: 1.0,
             showHints: true
-        }
+        },
+        updatedAt: Date.now()
     };
 
     const [stats, setStats] = useState(() => {
         const saved = localStorage.getItem('frenchApp_progress');
-        const baseState = {
-            xp: 0,
-            seasonalXp: 0,
-            seasonEndsAt: null,
-            seasonId: null,
-            streak: 0,
-            coins: 50,
-            inventory: {},
-            doubleXpUntil: null,
-            lastLoginDate: null,
-            highScore: 0,
-            wordsLearned: 0,
-            storiesCompleted: 0,
-            conversationsCompleted: 0,
-            perfectQuizzes: 0,
-            timedChallengesCompleted: 0,
-            unlockedAchievements: []
-            unlockedAchievements: [],
-            updatedAt: Date.now()
-        };
-        return saved ? { ...baseState, ...JSON.parse(saved) } : baseState;
         if (saved) {
-            const parsed = JSON.parse(saved);
-            return {
-                ...defaultStats,
-                ...parsed,
-                inventory: { ...defaultStats.inventory, ...(parsed.inventory || {}) },
-                weeklyGoal: { ...defaultStats.weeklyGoal, ...(parsed.weeklyGoal || {}) },
-                categoryPerformance: parsed.categoryPerformance || defaultStats.categoryPerformance,
-                difficultySettings: { ...defaultStats.difficultySettings, ...(parsed.difficultySettings || {}) }
-            };
+            try {
+                const parsed = JSON.parse(saved);
+                // Deep merge might be better but shallow merge of top level props + ensuring nested objects exist is a good start
+                return {
+                    ...defaultStats,
+                    ...parsed,
+                    inventory: { ...defaultStats.inventory, ...(parsed.inventory || {}) },
+                    weeklyGoal: { ...defaultStats.weeklyGoal, ...(parsed.weeklyGoal || {}) },
+                    categoryPerformance: { ...defaultStats.categoryPerformance, ...(parsed.categoryPerformance || {}) },
+                    categoryStats: { ...defaultStats.categoryStats, ...(parsed.categoryStats || {}) },
+                    userGoals: { ...defaultStats.userGoals, ...(parsed.userGoals || {}) },
+                    difficultySettings: { ...defaultStats.difficultySettings, ...(parsed.difficultySettings || {}) }
+                };
+            } catch (e) {
+                console.error("Failed to parse saved progress", e);
+                return defaultStats;
+            }
         }
         return defaultStats;
     });
@@ -118,7 +109,6 @@ export const ProgressProvider = ({ children }) => {
             setStats(prev => ({ ...prev, lastLoginDate: today, updatedAt: Date.now() }));
         }
     }, [stats.inventory, stats.lastLoginDate]);
-    }, [stats]);
 
     // Check streak on mount
     useEffect(() => {
@@ -166,7 +156,7 @@ export const ProgressProvider = ({ children }) => {
         setStats(prev => ({
             ...prev,
             xp: prev.xp + finalAmount,
-            seasonalXp: (prev.seasonalXp || 0) + finalAmount
+            seasonalXp: (prev.seasonalXp || 0) + finalAmount,
             updatedAt: Date.now()
         }));
         updateDailyStat('dailyXP', finalAmount);
@@ -225,8 +215,7 @@ export const ProgressProvider = ({ children }) => {
     // Run achievement check when stats change
     useEffect(() => {
         checkAchievements();
-    }, [stats]);
-    }, [checkAchievements]);
+    }, [stats, checkAchievements]);
 
     const addCoins = (amount) => {
         setStats(prev => ({
@@ -281,10 +270,6 @@ export const ProgressProvider = ({ children }) => {
 
     const incrementStreak = () => {
         const today = new Date().toDateString();
-        // Only increment if we haven't already done a "streak action" today? 
-        // For simplicity, let's assume one increment per day logic is handled by the caller or we check a separate "streakIncrementedToday" flag.
-        // For this MVP, we will just ensure we don't double count if we already stored a 'lastStreakDate' (which we can add to stats).
-
         setStats(prev => {
             if (prev.lastStreakDate === today) return prev; // Already incremented today
 
@@ -324,8 +309,7 @@ export const ProgressProvider = ({ children }) => {
         localStorage.setItem('frenchApp_offlineAudio', JSON.stringify(offlineAudio));
     }, [offlineAudio]);
 
-    const toggleAudio = () => setAudioEnabled(prev => !prev);
-    const toggleOfflineAudio = () => setOfflineAudio(prev => !prev);
+    useEffect(() => {
         localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
         document.body.classList.toggle('reduced-motion', reducedMotion);
     }, [reducedMotion]);
@@ -336,30 +320,12 @@ export const ProgressProvider = ({ children }) => {
     }, [colorTheme]);
 
     const toggleAudio = () => setAudioEnabled(prev => !prev);
+    const toggleOfflineAudio = () => setOfflineAudio(prev => !prev);
     const toggleReducedMotion = () => setReducedMotion(prev => !prev);
     const switchColorTheme = (theme) => setColorTheme(theme);
 
     const resetProgress = () => {
-        const initialStats = {
-            xp: 0,
-            seasonalXp: 0,
-            seasonEndsAt: null,
-            seasonId: null,
-            streak: 0,
-            lastLoginDate: null,
-            highScore: 0,
-            coins: 50,
-            inventory: {},
-            unlockedAchievements: [],
-            wordsLearned: 0,
-            storiesCompleted: 0,
-            conversationsCompleted: 0,
-            perfectQuizzes: 0,
-            updatedAt: Date.now()
-        };
-        setStats(initialStats);
-        localStorage.setItem('frenchApp_progress', JSON.stringify(initialStats));
-        setStats({ ...defaultStats });
+        setStats(defaultStats);
         localStorage.setItem('frenchApp_progress', JSON.stringify(defaultStats));
     };
 
@@ -420,6 +386,7 @@ export const ProgressProvider = ({ children }) => {
             };
         });
     };
+
     const hydrateProgress = (incomingStats) => {
         if (!incomingStats) return;
         setStats(prev => ({
@@ -523,7 +490,6 @@ export const ProgressProvider = ({ children }) => {
             activateDoubleXP,
             isDoubleXpActive,
             updateDailyStat,
-            achievements: stats.unlockedAchievements || []
             achievements: stats.unlockedAchievements || [],
             hydrateProgress,
             completeOnboarding,
@@ -531,7 +497,7 @@ export const ProgressProvider = ({ children }) => {
             setTargetCefr,
             setWeeklyGoal,
             setModeDifficulty,
-            recordCategoryPerformance
+            recordCategoryPerformance,
             logWordAttempt,
             updateUserGoals,
             userGoals: stats.userGoals,

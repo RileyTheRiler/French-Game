@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Volume2 } from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
 import { useVocabulary } from '../../context/VocabularyContext';
 import SoundManager from '../../utils/SoundManager';
 import { useNavigate } from 'react-router-dom';
@@ -11,17 +10,20 @@ import { formatRelativeTime } from '../../utils/time';
 const StudySession = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { getDueWords, updateWordProgress } = useVocabulary();
-    const { addXP, addCoins, updateDailyStat } = useProgress();
-    const { getPracticeQueue, updateWordProgress, markWordSeen } = useVocabulary();
+
+    // De-duplicated hooks
     const {
-        getDueWords,
         updateWordProgress,
+        markWordSeen,
+        getDueWords,
         vocabulary,
         playWordAudio,
         preloadAudioForWords,
-        CATEGORIES
+        CATEGORIES,
+        getPracticeQueue
     } = useVocabulary();
+
+    const { addXP, addCoins, updateDailyStat } = useProgress();
 
     const [dueWords, setDueWords] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -32,32 +34,52 @@ const StudySession = () => {
     const [currentStreak, setCurrentStreak] = useState(0);
     const [bestStreak, setBestStreak] = useState(0);
     const [sessionReward, setSessionReward] = useState(null);
+    const containerRef = useRef(null);
 
-    useEffect(() => {
-        setDueWords(getDueWords());
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setSessionComplete(false);
-        setCorrectCount(0);
-        setWrongCount(0);
-        setCurrentStreak(0);
-        setBestStreak(0);
-        setSessionReward(null);
-    }, [getDueWords]);
-
-    const finalizeSession = (metrics) => {
-        const reward = calculateRewards('studySession', metrics);
-        setSessionReward(reward);
-        addXP(reward.xp);
-        addCoins(reward.coins);
-        setSessionComplete(true);
-    };
     const [filterCEFR, setFilterCEFR] = useState('all');
     const [filterCategory, setFilterCategory] = useState('all');
 
     const cefrLevels = useMemo(() => {
         return Array.from(new Set(vocabulary.map(word => word.cefr))).sort();
     }, [vocabulary]);
+
+    // Initial Load - Use practice queue or getDueWords
+    useEffect(() => {
+        // We initially load using the filters logic below, so we can skip direct initialization here
+        // But if we want to ensure we have words even if filters are defaults:
+        const queue = getPracticeQueue('study', 12);
+        if (queue && queue.length > 0) {
+            setDueWords(queue);
+            setCurrentIndex(0);
+            preloadAudioForWords(queue);
+        } else {
+             const baseDue = getDueWords();
+             setDueWords(baseDue.slice(0, 12));
+             preloadAudioForWords(baseDue.slice(0, 12));
+        }
+
+    }, [getPracticeQueue, getDueWords, preloadAudioForWords]);
+
+    // Apply filters
+    useEffect(() => {
+        // If filters are not default, we re-filter from due words
+        if (filterCEFR !== 'all' || filterCategory !== 'all') {
+            const baseDue = getDueWords();
+            const filtered = baseDue.filter(word => {
+                const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
+                const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
+                return matchesCEFR && matchesCategory;
+            });
+
+            setDueWords(filtered);
+            setCurrentIndex(0);
+            setIsFlipped(false);
+            setSessionComplete(filtered.length === 0);
+            preloadAudioForWords(filtered);
+        }
+        // We intentionally avoid depending on vocabulary to prevent resets during a session.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filterCEFR, filterCategory]);
 
     const filterControls = (
         <div className="w-full max-w-3xl mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -89,20 +111,14 @@ const StudySession = () => {
             </div>
         </div>
     );
-    const containerRef = useRef(null);
 
-    useEffect(() => {
-        const queue = getPracticeQueue('study', 12);
-        setDueWords(prev => {
-            const prevIds = prev.map(w => w.id).join(',');
-            const nextIds = queue.map(w => w.id).join(',');
-            if (prevIds === nextIds && prev.length === queue.length) {
-                return queue;
-            }
-            setCurrentIndex(0);
-            return queue;
-        });
-    }, [getPracticeQueue]);
+    const finalizeSession = useCallback((metrics) => {
+        const reward = calculateRewards('studySession', metrics);
+        setSessionReward(reward);
+        addXP(reward.xp);
+        addCoins(reward.coins);
+        setSessionComplete(true);
+    }, [addXP, addCoins]);
 
     useEffect(() => {
         const current = dueWords[currentIndex];
@@ -110,21 +126,6 @@ const StudySession = () => {
             markWordSeen(current.id);
         }
     }, [currentIndex, dueWords, markWordSeen]);
-        const baseDue = getDueWords();
-        const filtered = baseDue.filter(word => {
-            const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
-            const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
-            return matchesCEFR && matchesCategory;
-        });
-
-        setDueWords(filtered);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setSessionComplete(filtered.length === 0);
-        preloadAudioForWords(filtered);
-        // We intentionally avoid depending on vocabulary to prevent resets during a session.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterCEFR, filterCategory]);
 
     useEffect(() => {
         if (containerRef.current) {
@@ -140,12 +141,22 @@ const StudySession = () => {
     };
 
     const handleResult = (grade) => {
-        const passing = grade !== 'again';
-        if (passing) SoundManager.playSuccess();
+        // Map boolean or string grade
+        let success = false;
+        let finalGrade = grade;
+
+        if (typeof grade === 'boolean') {
+            success = grade;
+            finalGrade = success ? 'good' : 'again';
+        } else {
+             success = grade !== 'again';
+        }
+
+        if (success) SoundManager.playSuccess();
         else SoundManager.playFailure();
 
         const currentWord = dueWords[currentIndex];
-        updateWordProgress(currentWord.id, grade);
+        updateWordProgress(currentWord.id, finalGrade);
 
         const nextCorrect = success ? correctCount + 1 : correctCount;
         const nextWrong = success ? wrongCount : wrongCount + 1;
@@ -194,11 +205,11 @@ const StudySession = () => {
         if (isFlipped) {
             if (event.key === 'ArrowLeft') {
                 event.preventDefault();
-                handleResult(false);
+                handleResult('again');
             }
             if (event.key === 'ArrowRight') {
                 event.preventDefault();
-                handleResult(true);
+                handleResult('good');
             }
         }
     };
@@ -267,7 +278,6 @@ const StudySession = () => {
             {/* Flashcard - 3D Container */}
             <div
                 onClick={handleCardClick}
-                className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer"
                 title={metaTooltip}
                 className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 rounded-2xl"
                 role="button"
@@ -325,9 +335,7 @@ const StudySession = () => {
                 <div className="flex flex-wrap gap-4 mt-8 animate-fade-in justify-center">
                     <button
                         onClick={(e) => { e.stopPropagation(); handleResult('again'); }}
-                        className="px-6 py-4 bg-red-600 rounded-xl font-bold hover:bg-red-500 transition-colors shadow-lg min-w-[120px]"
-                        onClick={(e) => { e.stopPropagation(); handleResult(false); }}
-                        className="px-8 py-4 bg-red-600 rounded-xl font-bold hover:bg-red-500 transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
+                        className="px-6 py-4 bg-red-600 rounded-xl font-bold hover:bg-red-500 transition-colors shadow-lg min-w-[120px] focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
                         aria-label="Mark again. Shortcut Left Arrow"
                     >
                         Again
@@ -340,9 +348,7 @@ const StudySession = () => {
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); handleResult('good'); }}
-                        className="px-6 py-4 bg-green-600 rounded-xl font-bold hover:bg-green-500 transition-colors shadow-lg min-w-[120px]"
-                        onClick={(e) => { e.stopPropagation(); handleResult(true); }}
-                        className="px-8 py-4 bg-green-600 rounded-xl font-bold hover:bg-green-500 transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
+                        className="px-6 py-4 bg-green-600 rounded-xl font-bold hover:bg-green-500 transition-colors shadow-lg min-w-[120px] focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
                         aria-label="Mark good. Shortcut Right Arrow"
                     >
                         Good
