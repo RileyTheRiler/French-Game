@@ -30,11 +30,28 @@ const MOCK_ALLTIME = [
     { name: "MotsMarie", xp: 12100, level: 11, streak: 22, country: "🇪🇸" },
 ];
 
+const SEASONAL_PLAYERS = [
+    { name: "WinterWolf", xp: 980, level: 8, streak: 5, country: "🇸🇪" },
+    { name: "NeigeNoire", xp: 1220, level: 9, streak: 11, country: "🇫🇷" },
+    { name: "SkiingSophie", xp: 860, level: 7, streak: 4, country: "🇨🇭" },
+    { name: "PolarPaul", xp: 760, level: 7, streak: 3, country: "🇨🇦" },
+    { name: "GlaceGina", xp: 655, level: 6, streak: 2, country: "🇳🇴" }
+];
+
 const getRankIcon = (rank) => {
     if (rank === 1) return <Crown size={20} className="text-yellow-400" />;
     if (rank === 2) return <Medal size={20} className="text-slate-300" />;
     if (rank === 3) return <Medal size={20} className="text-amber-600" />;
     return <span className="text-slate-500 font-mono text-sm">#{rank}</span>;
+};
+
+const getSeasonCountdown = (timestamp) => {
+    if (!timestamp) return 'Season rolling soon';
+    const diff = timestamp - Date.now();
+    if (diff <= 0) return 'Season resetting...';
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    return `${days}d ${hours}h left`;
 };
 
 const LeaderboardModal = ({ onClose }) => {
@@ -43,6 +60,7 @@ const LeaderboardModal = ({ onClose }) => {
     const [tab, setTab] = useState('weekly');
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
+<<<<<<< HEAD
     React.useEffect(() => {
         const handleOnline = () => setIsOffline(false);
         const handleOffline = () => setIsOffline(true);
@@ -68,11 +86,15 @@ const LeaderboardModal = ({ onClose }) => {
             country: f.country
         }));
     }
+=======
+    const baseData = tab === 'weekly' ? MOCK_WEEKLY : tab === 'alltime' ? MOCK_ALLTIME : SEASONAL_PLAYERS;
+    const isSeasonal = tab === 'seasonal';
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     // Insert user into leaderboard
     const userEntry = {
         name: "You",
-        xp: tab === 'weekly' ? Math.min(stats.xp, 3000) : stats.xp,
+        xp: isSeasonal ? (stats.seasonalXp || 0) : (tab === 'weekly' ? Math.min(stats.xp, 3000) : stats.xp),
         level: level,
         streak: stats.streak || 0,
         country: "🌍",
@@ -174,14 +196,45 @@ const LeaderboardModal = ({ onClose }) => {
                                 className={`flex-1 py-3 text-sm font-bold transition-all capitalize ${tab === t
                                     ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
                                     : 'text-slate-400 hover:text-white'
+<<<<<<< HEAD
                                     }`}
                             >
                                 {t === 'alltime' ? 'All Time' : t}
                             </button>
                         ))}
+=======
+                                }`}
+                        >
+                            This Week
+                        </button>
+                        <button
+                            onClick={() => setTab('alltime')}
+                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'alltime'
+                                    ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
+                                    : 'text-slate-400 hover:text-white'
+                                }`}
+                        >
+                            All Time
+                        </button>
+                        <button
+                            onClick={() => setTab('seasonal')}
+                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'seasonal'
+                                    ? 'text-indigo-300 border-b-2 border-indigo-300 bg-indigo-500/10'
+                                    : 'text-slate-400 hover:text-white'
+                                }`}
+                        >
+                            Seasonal
+                        </button>
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                     </div>
 
                     {/* Leaderboard List */}
+                    {isSeasonal && (
+                        <div className="px-4 py-3 bg-indigo-500/10 border-b border-white/10 flex items-center justify-between text-sm text-indigo-200">
+                            <span>Winter Cup • {getSeasonCountdown(stats.seasonEndsAt)}</span>
+                            <Badge variant="primary" className="bg-indigo-500/30 border-indigo-400/50">Season XP: {stats.seasonalXp || 0}</Badge>
+                        </div>
+                    )}
                     <div className="p-4 max-h-[50vh] overflow-y-auto custom-scrollbar">
                         <motion.div
                             key={tab}

@@ -25,6 +25,16 @@ export const ProgressProvider = ({ children }) => {
         placementComplete: false,
         placementResult: null,
         onboardingRewarded: false,
+        targetCefr: 'B1',
+        weeklyGoal: {
+            sessions: 5,
+            minutes: 120
+        },
+        categoryPerformance: {},
+        difficultySettings: {
+            fallingWords: 3,
+            flashcards: 2,
+            grammar: 2
         categoryStats: {}, // { "Family": { attempts: 10, correct: 8, totalResponseTime: 5000 } }
         userGoals: {
             targetCEFR: "A1",
@@ -122,6 +132,9 @@ export const ProgressProvider = ({ children }) => {
         const saved = localStorage.getItem('frenchApp_progress');
         const baseState = {
             xp: 0,
+            seasonalXp: 0,
+            seasonEndsAt: null,
+            seasonId: null,
             streak: 0,
             coins: 50,
             inventory: {},
@@ -132,11 +145,28 @@ export const ProgressProvider = ({ children }) => {
             storiesCompleted: 0,
             conversationsCompleted: 0,
             perfectQuizzes: 0,
+            timedChallengesCompleted: 0,
+            unlockedAchievements: []
             unlockedAchievements: [],
             conversationHistory: [],
             updatedAt: Date.now()
         };
         return saved ? { ...baseState, ...JSON.parse(saved) } : baseState;
+<<<<<<< HEAD
+=======
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            return {
+                ...defaultStats,
+                ...parsed,
+                inventory: { ...defaultStats.inventory, ...(parsed.inventory || {}) },
+                weeklyGoal: { ...defaultStats.weeklyGoal, ...(parsed.weeklyGoal || {}) },
+                categoryPerformance: parsed.categoryPerformance || defaultStats.categoryPerformance,
+                difficultySettings: { ...defaultStats.difficultySettings, ...(parsed.difficultySettings || {}) }
+            };
+        }
+        return defaultStats;
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     });
 
     // Ensure new fields exist if loading from old state
@@ -154,12 +184,7 @@ export const ProgressProvider = ({ children }) => {
         localStorage.setItem('frenchApp_progress', JSON.stringify(stats));
     }, [stats]);
 
-    // Check streak on mount
-    useEffect(() => {
-        checkStreak();
-    }, []);
-
-    const checkStreak = () => {
+    const checkStreak = useCallback(() => {
         const today = new Date().toDateString();
         const lastLogin = stats.lastLoginDate;
 
@@ -189,13 +214,54 @@ export const ProgressProvider = ({ children }) => {
             // Update login date
             setStats(prev => ({ ...prev, lastLoginDate: today, updatedAt: Date.now() }));
         }
-    };
+    }, [stats.inventory, stats.lastLoginDate]);
+    }, [stats]);
+
+    // Check streak on mount
+    useEffect(() => {
+        checkStreak();
+    }, [checkStreak]);
+
+    const ensureSeasonWindow = useCallback(() => {
+        setStats(prev => {
+            const now = Date.now();
+            if (prev.seasonEndsAt && prev.seasonEndsAt > now) return prev;
+
+            const nextSeasonDate = new Date();
+            nextSeasonDate.setMonth(nextSeasonDate.getMonth() + 1, 1);
+            nextSeasonDate.setHours(0, 0, 0, 0);
+
+            return {
+                ...prev,
+                seasonEndsAt: nextSeasonDate.getTime(),
+                seasonId: `${nextSeasonDate.getFullYear()}-${nextSeasonDate.getMonth() + 1}`,
+                seasonalXp: 0
+            };
+        });
+    }, []);
+
+    useEffect(() => {
+        ensureSeasonWindow();
+    }, [ensureSeasonWindow]);
+
+    const updateDailyStat = useCallback((statName, amount = 1, mode = 'add') => {
+        const today = new Date().toDateString();
+        const stored = localStorage.getItem('frenchApp_dailyStats');
+        const parsed = stored ? JSON.parse(stored) : {};
+        const base = parsed.date === today ? parsed : { date: today };
+        const currentValue = base[statName] || 0;
+        const nextValue = mode === 'max' ? Math.max(currentValue, amount) : currentValue + amount;
+        const updated = { ...base, [statName]: nextValue };
+        localStorage.setItem('frenchApp_dailyStats', JSON.stringify(updated));
+    }, []);
 
     const addXP = (amount) => {
+        ensureSeasonWindow();
         const isDoubleXpActive = stats.doubleXpUntil && Date.now() < stats.doubleXpUntil;
         const finalAmount = isDoubleXpActive ? amount * 2 : amount;
         const today = new Date().toDateString();
 
+<<<<<<< HEAD
         setStats(prev => {
             const currentDaily = prev.dailyStats?.[today] || {};
             const newDailyXP = (currentDaily.dailyXP || 0) + finalAmount;
@@ -214,6 +280,15 @@ export const ProgressProvider = ({ children }) => {
                 updatedAt: Date.now()
             };
         });
+=======
+        setStats(prev => ({
+            ...prev,
+            xp: prev.xp + finalAmount,
+            seasonalXp: (prev.seasonalXp || 0) + finalAmount
+            updatedAt: Date.now()
+        }));
+        updateDailyStat('dailyXP', finalAmount);
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     };
 
     const activateDoubleXP = (durationMinutes = 15) => {
@@ -270,9 +345,11 @@ export const ProgressProvider = ({ children }) => {
     // Run achievement check when stats change
     useEffect(() => {
         checkAchievements();
-    }, [stats.wordsLearned, stats.streak, stats.storiesCompleted, stats.conversationsCompleted, stats.coins]);
+    }, [stats]);
+    }, [checkAchievements]);
 
     const addCoins = (amount) => {
+<<<<<<< HEAD
         setStats(prev => {
             const today = new Date().toDateString();
             const currentDaily = prev.dailyStats?.[today] || {};
@@ -317,6 +394,14 @@ export const ProgressProvider = ({ children }) => {
         });
 
         // Return true/false or actual amount earned if needed later, but void for now
+=======
+        setStats(prev => ({
+            ...prev,
+            coins: (prev.coins || 0) + amount,
+            updatedAt: Date.now()
+        }));
+        updateDailyStat('dailyCoins', amount);
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     };
 
     const spendCoins = (amount) => {
@@ -360,6 +445,20 @@ export const ProgressProvider = ({ children }) => {
             return true;
         }
         return false;
+    };
+
+    const consumeItem = (itemId, amount = 1) => {
+        const owned = stats.inventory?.[itemId] || 0;
+        if (owned < amount) return false;
+
+        setStats(prev => ({
+            ...prev,
+            inventory: {
+                ...prev.inventory,
+                [itemId]: Math.max(0, (prev.inventory?.[itemId] || 0) - amount)
+            }
+        }));
+        return true;
     };
 
     const incrementStreak = () => {
@@ -412,6 +511,11 @@ export const ProgressProvider = ({ children }) => {
         return saved !== null ? JSON.parse(saved) : true;
     });
 
+    const [offlineAudio, setOfflineAudio] = useState(() => {
+        const saved = localStorage.getItem('frenchApp_offlineAudio');
+        return saved !== null ? JSON.parse(saved) : false;
+    });
+
     const [reducedMotion, setReducedMotion] = useState(() => {
         const saved = localStorage.getItem('frenchApp_reducedMotion');
         return saved !== null ? JSON.parse(saved) : false;
@@ -426,6 +530,11 @@ export const ProgressProvider = ({ children }) => {
     }, [audioEnabled]);
 
     useEffect(() => {
+        localStorage.setItem('frenchApp_offlineAudio', JSON.stringify(offlineAudio));
+    }, [offlineAudio]);
+
+    const toggleAudio = () => setAudioEnabled(prev => !prev);
+    const toggleOfflineAudio = () => setOfflineAudio(prev => !prev);
         localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
         document.body.classList.toggle('reduced-motion', reducedMotion);
     }, [reducedMotion]);
@@ -442,6 +551,9 @@ export const ProgressProvider = ({ children }) => {
     const resetProgress = () => {
         const initialStats = {
             xp: 0,
+            seasonalXp: 0,
+            seasonEndsAt: null,
+            seasonId: null,
             streak: 0,
             lastLoginDate: null,
             highScore: 0,
@@ -460,6 +572,63 @@ export const ProgressProvider = ({ children }) => {
         localStorage.setItem('frenchApp_progress', JSON.stringify(defaultStats));
     };
 
+    const setTargetCefr = (level = 'B1') => {
+        setStats(prev => ({ ...prev, targetCefr: level }));
+    };
+
+    const setWeeklyGoal = (goal = {}) => {
+        setStats(prev => ({
+            ...prev,
+            weeklyGoal: {
+                ...prev.weeklyGoal,
+                ...goal
+            }
+        }));
+    };
+
+    const setModeDifficulty = (mode, value) => {
+        setStats(prev => ({
+            ...prev,
+            difficultySettings: {
+                ...prev.difficultySettings,
+                [mode]: value
+            }
+        }));
+    };
+
+    const recordCategoryPerformance = (category, { success = false, responseTime = 0, mode = 'general' } = {}) => {
+        if (!category) return;
+        setStats(prev => {
+            const existing = prev.categoryPerformance?.[category] || {
+                attempts: 0,
+                correct: 0,
+                totalResponseTime: 0,
+                lastResponseTime: 0,
+                lastMode: mode
+            };
+
+            const attempts = existing.attempts + 1;
+            const correct = existing.correct + (success ? 1 : 0);
+            const totalResponseTime = existing.totalResponseTime + (responseTime || 0);
+
+            return {
+                ...prev,
+                categoryPerformance: {
+                    ...(prev.categoryPerformance || {}),
+                    [category]: {
+                        ...existing,
+                        attempts,
+                        correct,
+                        totalResponseTime,
+                        averageResponseTime: totalResponseTime / attempts,
+                        lastResponseTime: responseTime || existing.lastResponseTime,
+                        lastMode: mode,
+                        accuracy: attempts > 0 ? correct / attempts : 0
+                    }
+                }
+            };
+        });
+    };
     const hydrateProgress = (incomingStats) => {
         if (!incomingStats) return;
         setStats(prev => ({
@@ -921,6 +1090,8 @@ export const ProgressProvider = ({ children }) => {
             incrementDailyMixStreak,
             audioEnabled,
             toggleAudio,
+            offlineAudio,
+            toggleOfflineAudio,
             reducedMotion,
             toggleReducedMotion,
             colorTheme,
@@ -929,14 +1100,21 @@ export const ProgressProvider = ({ children }) => {
             addCoins,
             spendCoins,
             buyItem,
+            consumeItem,
             incrementStat,
             checkAchievements,
             activateDoubleXP,
             isDoubleXpActive,
+            updateDailyStat,
+            achievements: stats.unlockedAchievements || []
             achievements: stats.unlockedAchievements || [],
             hydrateProgress,
             completeOnboarding,
             applyPlacementResult,
+            setTargetCefr,
+            setWeeklyGoal,
+            setModeDifficulty,
+            recordCategoryPerformance
             logWordAttempt,
             updateUserGoals,
             userGoals: stats.userGoals,

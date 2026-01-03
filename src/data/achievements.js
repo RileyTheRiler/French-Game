@@ -5,6 +5,7 @@ export const ACHIEVEMENTS = [
         description: 'Learn your first vocabulary word.',
         icon: '📖',
         xpReward: 10,
+        tier: 'Bronze',
         condition: (stats) => stats.wordsLearned >= 1
     },
     {
@@ -13,6 +14,7 @@ export const ACHIEVEMENTS = [
         description: 'Learn 10 vocabulary words.',
         icon: '📚',
         xpReward: 50,
+        tier: 'Bronze',
         condition: (stats) => stats.wordsLearned >= 10
     },
     {
@@ -21,6 +23,7 @@ export const ACHIEVEMENTS = [
         description: 'Learn 50 vocabulary words.',
         icon: '🏆',
         xpReward: 200,
+        tier: 'Silver',
         condition: (stats) => stats.wordsLearned >= 50
     },
     {
@@ -29,6 +32,7 @@ export const ACHIEVEMENTS = [
         description: 'Maintain a 3-day streak.',
         icon: '🔥',
         xpReward: 30,
+        tier: 'Bronze',
         condition: (stats) => stats.streak >= 3
     },
     {
@@ -37,6 +41,7 @@ export const ACHIEVEMENTS = [
         description: 'Maintain a 7-day streak.',
         icon: '💪',
         xpReward: 100,
+        tier: 'Silver',
         condition: (stats) => stats.streak >= 7
     },
     {
@@ -45,6 +50,7 @@ export const ACHIEVEMENTS = [
         description: 'Maintain a 30-day streak.',
         icon: '👑',
         xpReward: 500,
+        tier: 'Gold',
         condition: (stats) => stats.streak >= 30
     },
     {
@@ -96,6 +102,33 @@ export const ACHIEVEMENTS = [
         condition: (stats) => stats.perfectQuizzes >= 1
     },
     {
+        id: 'season_bronze',
+        title: 'Season Scout',
+        description: 'Earn 300 seasonal XP.',
+        icon: '🍂',
+        xpReward: 120,
+        tier: 'Bronze',
+        condition: (stats) => (stats.seasonalXp || 0) >= 300
+    },
+    {
+        id: 'season_silver',
+        title: 'Season Strider',
+        description: 'Earn 800 seasonal XP.',
+        icon: '❄️',
+        xpReward: 250,
+        tier: 'Silver',
+        condition: (stats) => (stats.seasonalXp || 0) >= 800
+    },
+    {
+        id: 'season_gold',
+        title: 'Season Champion',
+        description: 'Earn 1,500 seasonal XP.',
+        icon: '🌸',
+        xpReward: 400,
+        tier: 'Gold',
+        condition: (stats) => (stats.seasonalXp || 0) >= 1500
+    },
+    {
         id: 'all_stories',
         title: 'Story Time',
         description: 'Complete all 6 stories.',
@@ -135,6 +168,7 @@ export const ACHIEVEMENTS = [
         xpReward: 50,
         condition: (stats) => stats.pronunciationPractices >= 5
     },
+<<<<<<< HEAD
     // Community & Messaging Achievements
     {
         id: 'first_writing',
@@ -224,5 +258,24 @@ export const ACHIEVEMENTS = [
         icon: '🎨',
         xpReward: 50,
         condition: (stats) => (stats.userLessonsCreated || 0) >= 1
+=======
+    {
+        id: 'timed_sprinter',
+        title: 'Timed Challenger',
+        description: 'Finish a timed challenge before it expires.',
+        icon: '⏱️',
+        xpReward: 80,
+        tier: 'Bronze',
+        condition: (stats) => (stats.timedChallengesCompleted || 0) >= 1
+    },
+    {
+        id: 'timed_marathoner',
+        title: 'Challenge Conqueror',
+        description: 'Complete 5 timed challenges.',
+        icon: '🚀',
+        xpReward: 180,
+        tier: 'Silver',
+        condition: (stats) => (stats.timedChallengesCompleted || 0) >= 5
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     }
 ];

@@ -4,6 +4,24 @@ import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, Clou
 import DifficultyDial from './ui/DifficultyDial';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
+import { warmVoiceCache } from '../utils/audio';
+
+const SettingsModal = ({ onClose }) => {
+    const { audioEnabled, toggleAudio, offlineAudio, toggleOfflineAudio, resetProgress } = useProgress();
+    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
+    const [confirmReset, setConfirmReset] = React.useState(false);
+    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
+
+    const handleOfflineAudio = async () => {
+        const next = !offlineAudio;
+        toggleOfflineAudio();
+        if (!offlineAudio && next) {
+            setIsCachingAudio(true);
+            warmVoiceCache();
+            await downloadAudioOnce();
+            setIsCachingAudio(false);
+        }
+    };
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
 
@@ -300,6 +318,24 @@ const SettingsModal = ({ onClose }) => {
                         </button>
                     </div>
 
+                    {/* Offline Audio Cache */}
+                    <div className="glass-panel p-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-3 rounded-xl ${offlineAudio ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-500'}`}>
+                                <Check />
+                            </div>
+                            <div>
+                                <h3 className="font-bold">Download audio once</h3>
+                                <p className="text-xs text-slate-400">Cache TTS for offline sessions.</p>
+                                {isCachingAudio && <p className="text-[10px] text-emerald-300 mt-1">Preparing audio cache...</p>}
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleOfflineAudio}
+                            className={`w-14 h-8 rounded-full transition-colors relative ${offlineAudio ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                        >
+                            <motion.div
+                                animate={{ x: offlineAudio ? 26 : 2 }}
                     {/* Privacy & Portability */}
                     <div className="glass-panel p-4 border border-emerald-500/20 bg-emerald-500/5 space-y-3">
                         <div className="flex items-center gap-3">

@@ -151,7 +151,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Je ___ content. (I am happy)',
         answer: 'suis',
         options: ['suis', 'es', 'est', 'sommes'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     {
         id: 'drill_etre_2',
@@ -161,7 +162,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Nous ___ français. (We are French)',
         answer: 'sommes',
         options: ['suis', 'êtes', 'sommes', 'sont'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     {
         id: 'drill_etre_3',
@@ -171,7 +173,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Ils ___ à Paris. (They are in Paris)',
         answer: 'sont',
         options: ['est', 'sommes', 'êtes', 'sont'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     // Articles (Gender)
     {
@@ -182,7 +185,8 @@ export const GRAMMAR_DRILLS = [
         prompt: '___ chat est noir. (The cat is black)',
         answer: 'Le',
         options: ['Le', 'La', 'Les', 'Un'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     {
         id: 'drill_article_2',
@@ -192,7 +196,8 @@ export const GRAMMAR_DRILLS = [
         prompt: '___ maison est grande. (The house is big)',
         answer: 'La',
         options: ['Le', 'La', 'Les', 'Une'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     {
         id: 'drill_article_3',
@@ -202,7 +207,8 @@ export const GRAMMAR_DRILLS = [
         prompt: '___ voiture rouge. (A red car)',
         answer: 'Une',
         options: ['Un', 'Une', 'Le', 'La'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     // Negation
     {
@@ -213,7 +219,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Je ___ comprends ___. (I do not understand)',
         answer: 'ne...pas',
         options: ['ne...pas', 'pas...ne', 'non...pas', 'ne...non'],
-        xpReward: 15
+        xpReward: 15,
+        difficulty: 'intermediate'
     },
     {
         id: 'drill_neg_2',
@@ -223,7 +230,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Translate: "I do not speak French"',
         answer: 'Je ne parle pas français',
         options: ['Je parle pas français', 'Je ne parle pas français', 'Je non parle français', 'Pas je parle français'],
-        xpReward: 20
+        xpReward: 20,
+        difficulty: 'intermediate'
     },
     // Adjective Placement
     {
@@ -234,7 +242,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Put in correct order: "red car"',
         answer: 'voiture rouge',
         options: ['voiture rouge', 'rouge voiture'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     {
         id: 'drill_adj_2',
@@ -244,7 +253,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Put in correct order: "small house"',
         answer: 'petite maison',
         options: ['petite maison', 'maison petite'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     // Tu vs Vous
     {
@@ -255,7 +265,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Speaking to your boss, use:',
         answer: 'Vous',
         options: ['Tu', 'Vous'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     {
         id: 'drill_tu_2',
@@ -265,6 +276,7 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Speaking to your best friend, use:',
         answer: 'Tu',
         options: ['Tu', 'Vous'],
+<<<<<<< HEAD
         xpReward: 10
     },
     // Passé Composé
@@ -369,6 +381,10 @@ export const GRAMMAR_DRILLS = [
         answer: 'faisait',
         options: ['a fait', 'faisait', 'fait', 'fera'],
         xpReward: 20
+=======
+        xpReward: 10,
+        difficulty: 'beginner'
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     }
 ];
 

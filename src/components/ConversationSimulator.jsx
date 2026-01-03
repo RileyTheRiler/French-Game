@@ -1,22 +1,36 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Send, User, Bot, Lightbulb } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useProgress } from '../context/ProgressContext';
+=======
+import React, { useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { MessageCircle, Send, User, Bot, Award } from 'lucide-react';
+import { useProgress } from '../context/ProgressContext';
+import { SCENARIOS } from '../data/conversationScenarios';
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 import { GameLayout } from './layout/GameLayout';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import SoundManager from '../utils/SoundManager';
 import { npcSystem } from '../systems/NPCSystem';
+<<<<<<< HEAD
 import { getDifficultyConfig } from './ui/DifficultyDial';
 
 import { SCENARIOS } from '../data/conversationScenarios';
 import { findBestMatch, isFuzzyMatch } from '../utils/textMatching';
+=======
+import { calculateRewards } from '../utils/rewardSystem';
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const ConversationSimulator = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
+<<<<<<< HEAD
     const { addXP, globalDifficulty, difficultySettings } = useProgress();
 
     const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
@@ -81,6 +95,75 @@ const ConversationSimulator = () => {
         return () => {
             if (optionsTimerRef.current) {
                 clearTimeout(optionsTimerRef.current);
+=======
+    const { addXP, addCoins, updateDailyStat, incrementStat } = useProgress();
+
+    const [activeScenario, setActiveScenario] = useState(null);
+    const [currentNodeId, setCurrentNodeId] = useState('start');
+    const [history, setHistory] = useState([]);
+    const [gameOver, setGameOver] = useState(false);
+    const [stepsTaken, setStepsTaken] = useState(0);
+    const [mistakes, setMistakes] = useState(0);
+    const [sessionReward, setSessionReward] = useState(null);
+    const [outcome, setOutcome] = useState(null);
+
+    const messagesEndRef = useRef(null);
+
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [history]);
+
+    const startScenario = (scenario) => {
+        setActiveScenario(scenario);
+        setCurrentNodeId('start');
+        setHistory([{
+            text: scenario.initialMessage,
+            speaker: scenario.initialSpeaker,
+            isUser: false
+        }]);
+        setGameOver(false);
+        setStepsTaken(0);
+        setMistakes(0);
+        setSessionReward(null);
+        setOutcome(null);
+    };
+
+    const grantRewards = (success) => {
+        if (!activeScenario) return;
+        const reward = calculateRewards('conversation', {
+            baseXp: activeScenario.xpReward,
+            difficulty: activeScenario.difficulty,
+            mistakes,
+            steps: stepsTaken,
+            success
+        });
+        setSessionReward(reward);
+        if (success) {
+            addXP(reward.xp);
+            addCoins(reward.coins);
+            updateDailyStat('dailyConversations', 1);
+            incrementStat('conversationsCompleted', 1);
+        }
+    };
+
+    const handleOptionClick = (option) => {
+        if (!activeScenario || gameOver) return;
+        SoundManager.playPop();
+        setHistory(prev => [...prev, { text: option.text, isUser: true }]);
+        setStepsTaken(prev => prev + 1);
+        if (!option.isCorrect) setMistakes(prev => prev + 1);
+
+        const nextNode = activeScenario.nodes[option.nextNode];
+        if (nextNode) {
+            if (activeScenario.npcId) {
+                npcSystem.interact(activeScenario.npcId, option.text).then(response => {
+                    if (response.text) {
+                        setHistory(prev => [...prev, { text: response.text, isUser: false, speaker: nextNode.speaker }]);
+                    }
+                });
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
             }
         };
     }, [currentNodeId, activeScenario, gameOver, hintDelay, feedbackModal]);
@@ -111,19 +194,28 @@ const ConversationSimulator = () => {
                 }
 
                 if (nextNode.end) {
+                    const success = !!nextNode.success;
+                    setOutcome(success ? 'success' : 'fail');
                     setGameOver(true);
+<<<<<<< HEAD
                     if (nextNode.success) {
                         addXP(scenario.xpReward);
                         SoundManager.playLevelUp();
                         setHistory(prev => [...prev, { text: `🎉 Scenario Complete! +${scenario.xpReward} XP`, isSystem: true }]);
+=======
+                    if (success) {
+                        SoundManager.playLevelUp();
+                        setHistory(prev => [...prev, { text: `🎉 Scenario Complete!`, isSystem: true }]);
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                     } else {
                         SoundManager.playMiss();
                         setHistory(prev => [...prev, { text: "Scenario failed. Try again!", isSystem: true }]);
                     }
+                    grantRewards(success);
                 } else {
                     setCurrentNodeId(nextNodeId);
                 }
-            }, 800);
+            }, 600);
         }
     };
 
@@ -256,8 +348,15 @@ const ConversationSimulator = () => {
     const reset = () => {
         setActiveScenario(null);
         setHistory([]);
+<<<<<<< HEAD
         setShowOptions(false);
         setFeedbackModal(null);
+=======
+        setGameOver(false);
+        setCurrentNodeId('start');
+        setSessionReward(null);
+        setOutcome(null);
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     };
 
     // Scenario Selection Screen
@@ -288,10 +387,13 @@ const ConversationSimulator = () => {
                                 </div>
                                 <h3 className="text-xl font-bold text-white mb-2">{scenario.title}</h3>
                                 <p className="text-slate-400 text-sm mb-4">{scenario.description}</p>
-                                <div className="mt-auto">
+                                <div className="mt-auto flex items-center justify-between">
                                     <span className="text-xs uppercase tracking-wider font-bold text-slate-500 bg-slate-900/50 px-2 py-1 rounded">
                                         {scenario.difficulty}
                                     </span>
+                                    <Badge variant="outline" className="text-[10px] text-indigo-200 border-indigo-400/40">
+                                        {scenario.nodes ? Object.keys(scenario.nodes).length - 1 : 0} steps
+                                    </Badge>
                                 </div>
                             </Card>
                         </motion.div>
@@ -308,6 +410,11 @@ const ConversationSimulator = () => {
             title={activeScenario.title}
             subtitle="Choose the best response."
             onBack={reset}
+            headerRight={sessionReward && (
+                <Badge variant="primary" className="bg-indigo-500/20 border-indigo-400/40 text-indigo-200">
+                    Session: +{sessionReward.xp} XP / +{sessionReward.coins}⛃
+                </Badge>
+            )}
         >
             <div className="flex flex-col h-[calc(100vh-180px)] max-w-3xl mx-auto">
                 {/* Chat Area */}
@@ -347,7 +454,15 @@ const ConversationSimulator = () => {
                 </Card>
 
                 {/* Input Area */}
-                <div className="min-h-[140px]">
+                <div className="min-h-[160px] space-y-3">
+                    {sessionReward && (
+                        <div className={`p-3 rounded-xl border ${outcome === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200' : 'bg-red-500/10 border-red-500/30 text-red-200'}`}>
+                            <div className="flex items-center gap-2">
+                                <Award size={18} />
+                                <span>{outcome === 'success' ? 'Scenario complete!' : 'Scenario failed.'} +{sessionReward.xp} XP / +{sessionReward.coins}⛃</span>
+                            </div>
+                        </div>
+                    )}
                     {gameOver ? (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <Button

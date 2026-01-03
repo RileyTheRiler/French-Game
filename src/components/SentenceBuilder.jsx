@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, RotateCcw, Timer, Zap, Lightbulb, BookOpen } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
+import { calculateRewards } from '../utils/rewardSystem';
 import { GameLayout } from './layout/GameLayout';
 import { Card } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
@@ -53,6 +54,7 @@ import { AlertTriangle, Info } from 'lucide-react';
 const SentenceBuilder = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
+<<<<<<< HEAD
     const { addXP, globalDifficulty, logConceptAttempt } = useProgress();
 
     const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
@@ -64,6 +66,10 @@ const SentenceBuilder = () => {
 
     // Game State
     const [puzzle, setPuzzle] = useState(null);
+=======
+    const { addXP, addCoins, stats, consumeItem, updateDailyStat, incrementStat } = useProgress();
+    const [currentIndex, setCurrentIndex] = useState(0);
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     const [availableWords, setAvailableWords] = useState([]);
     const [builtSentence, setBuiltSentence] = useState([]);
     const [typedAnswer, setTypedAnswer] = useState(''); // Free-form input
@@ -71,11 +77,16 @@ const SentenceBuilder = () => {
     const [showFallbackTiles, setShowFallbackTiles] = useState(false); // Show tiles if struggling
     const [status, setStatus] = useState('loading'); // 'loading', 'playing', 'correct', 'wrong'
     const [feedback, setFeedback] = useState('');
+<<<<<<< HEAD
     const [grammarWarnings, setGrammarWarnings] = useState([]);
     const [visibleGrammarWarnings, setVisibleGrammarWarnings] = useState([]); // Delayed display
     const [questionCount, setQuestionCount] = useState(0);
     const [learningMoment, setLearningMoment] = useState(null); // { miniLesson, onDismiss }
     const MAX_QUESTIONS = 5;
+=======
+    const [mistakes, setMistakes] = useState(0);
+    const [sessionTotals, setSessionTotals] = useState({ xp: 0, coins: 0 });
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     // Speed Run State
     const [isSpeedRun, setIsSpeedRun] = useState(false);
@@ -85,6 +96,7 @@ const SentenceBuilder = () => {
 
     // Timer Logic
     useEffect(() => {
+<<<<<<< HEAD
         if (speedRunActive && timeLeft > 0) {
             const timer = setInterval(() => {
                 setTimeLeft(prev => prev - 1);
@@ -187,6 +199,16 @@ const SentenceBuilder = () => {
             navigate('/');
         }
     };
+=======
+        if (!targetSentenceData) return;
+        const words = [...targetSentenceData.french].sort(() => Math.random() - 0.5);
+        setAvailableWords(words.map((w, i) => ({ id: `${currentIndex}-${i}`, text: w })));
+        setBuiltSentence([]);
+        setStatus('playing');
+        setFeedback('');
+        setMistakes(0);
+    }, [currentIndex]);
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     const handleWordClick = (word) => {
         if (status !== 'playing') return;
@@ -200,6 +222,20 @@ const SentenceBuilder = () => {
         SoundManager.playPop();
         setAvailableWords(prev => [...prev, word]);
         setBuiltSentence(prev => prev.filter(w => w.id !== word.id));
+    };
+
+    const useHintToken = () => {
+        if (!stats.inventory?.['hint_token']) return;
+        const nextText = targetSentenceData.french[builtSentence.length];
+        const hintWord = availableWords.find(w => w.text === nextText);
+        if (!hintWord) return;
+        const consumed = consumeItem('hint_token');
+        if (!consumed) return;
+
+        SoundManager.playSuccess();
+        setBuiltSentence(prev => [...prev, hintWord]);
+        setAvailableWords(prev => prev.filter(w => w.id !== hintWord.id));
+        setFeedback('Hint used!');
     };
 
     const checkAnswer = () => {
@@ -225,6 +261,7 @@ const SentenceBuilder = () => {
             setStatus('correct');
             setFeedback('Perfect! 🎉');
             SoundManager.playSuccess();
+<<<<<<< HEAD
             // Bonus XP for free-form
             if (!isSpeedRun) addXP(isUsingFreeForm ? 30 : 20);
 
@@ -287,6 +324,21 @@ const SentenceBuilder = () => {
             setFeedback('+5s Bonus!');
             loadNextPuzzle();
         } else {
+=======
+            const reward = calculateRewards('sentenceBuilder', {
+                words: targetSentenceData.french.length,
+                mistakes
+            });
+            addXP(reward.xp);
+            addCoins(reward.coins);
+            setSessionTotals(prev => ({
+                xp: prev.xp + reward.xp,
+                coins: prev.coins + reward.coins
+            }));
+            updateDailyStat('dailyReviews', targetSentenceData.french.length);
+            incrementStat('sentencesBuilt', 1);
+            setMistakes(0);
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
             setTimeout(() => {
                 if (questionCount < MAX_QUESTIONS - 1) {
                     setQuestionCount(prev => prev + 1);
@@ -297,6 +349,18 @@ const SentenceBuilder = () => {
                     setTimeout(onExit, 2000);
                 }
             }, 1500);
+<<<<<<< HEAD
+=======
+        } else {
+            setStatus('wrong');
+            setFeedback('Not quite right.');
+            SoundManager.playMiss();
+            setMistakes(prev => prev + 1);
+            setTimeout(() => {
+                setStatus('playing');
+                setFeedback('');
+            }, 1500);
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
         }
     };
 
@@ -325,6 +389,7 @@ const SentenceBuilder = () => {
             subtitle="Arrange the words to translate the sentence."
             onBack={onExit}
             headerRight={
+<<<<<<< HEAD
                 <div className="flex items-center gap-4">
                     {!isSpeedRun && (
                         <Button
@@ -347,6 +412,15 @@ const SentenceBuilder = () => {
                             {questionCount + 1} / {MAX_QUESTIONS}
                         </div>
                     )}
+=======
+                <div className="flex items-center gap-2">
+                    <div className="text-white/50 text-sm font-bold bg-white/10 px-3 py-1 rounded-full">
+                        {currentIndex + 1} / {SENTENCES.length}
+                    </div>
+                    <div className="text-xs font-bold bg-indigo-500/10 border border-indigo-500/30 text-indigo-200 px-3 py-1 rounded-full">
+                        +{sessionTotals.xp} XP / +{sessionTotals.coins}⛃
+                    </div>
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                 </div>
             }
         >
@@ -485,6 +559,25 @@ const SentenceBuilder = () => {
                                 animate={{ y: 0, opacity: 1 }}
                                 exit={{ y: 20, opacity: 0 }}
                             >
+                                <div className="flex items-center gap-3">
+                                    <Button
+                                        onClick={checkAnswer}
+                                        disabled={builtSentence.length === 0}
+                                        size="lg"
+                                        className="px-12 rounded-full shadow-xl shadow-indigo-500/20"
+                                    >
+                                        Check Answer
+                                    </Button>
+                                    <Button
+                                        variant="secondary"
+                                        size="lg"
+                                        disabled={!stats.inventory?.['hint_token'] || status !== 'playing'}
+                                        onClick={useHintToken}
+                                        className="rounded-full"
+                                    >
+                                        Hint ({stats.inventory?.['hint_token'] || 0})
+                                    </Button>
+                                </div>
                                 <Button
                                     onClick={checkAnswer}
                                     disabled={isFreeFormEnabled && !showFallbackTiles ? typedAnswer.length === 0 : builtSentence.length === 0}

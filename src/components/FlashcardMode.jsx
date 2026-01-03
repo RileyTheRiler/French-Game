@@ -1,26 +1,87 @@
+<<<<<<< HEAD
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
+=======
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, Check, X, RotateCcw } from 'lucide-react';
+import { Volume2, Check, X, RotateCcw, Pin, Clock3, BellOff } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
+import { useProgress } from '../context/ProgressContext';
 import { speak } from '../utils/audio';
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
 import { useProgress } from '../context/ProgressContext';
+<<<<<<< HEAD
 import { getDifficultyConfig } from './ui/DifficultyDial';
 import GrammarInsightCard from './ui/GrammarInsightCard';
+=======
+import { calculateRewards } from '../utils/rewardSystem';
+import DifficultySlider from './ui/DifficultySlider';
+import { formatRelativeTime } from '../utils/time';
+
+import { useProgress } from '../context/ProgressContext';
+import { useNavigate } from 'react-router-dom';
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const FlashcardMode = ({ mode = 'standard' }) => {
     const { deckId } = useParams();
     const navigate = useNavigate();
     const onExit = () => navigate('/');
+<<<<<<< HEAD
     const { updateWordProgress, vocabulary, getWeightedPracticeWords, getDeckWords, customDecks } = useVocabulary();
     const { reducedMotion, logWordAttempt, globalDifficulty } = useProgress();
 
     const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
+=======
+    const { getDueWords, updateWordProgress, vocabulary } = useVocabulary();
+    const { addXP, addCoins, updateDailyStat } = useProgress();
+    const { updateWordProgress, vocabulary, CATEGORIES } = useVocabulary();
+    const { stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+    const difficultySetting = stats?.difficultySettings?.flashcards || 2;
+    const [difficulty, setDifficulty] = useState(difficultySetting);
+    const [sessionScore, setSessionScore] = useState(0);
+    const cardStartRef = useRef(0);
+
+    const categoryPerformance = stats?.categoryPerformance || {};
+    const getCategoryAccuracy = useCallback((category) => {
+        const perf = categoryPerformance?.[category];
+        if (!perf) return 0.9;
+        return perf.accuracy ?? (perf.correct / (perf.attempts || 1));
+    }, [categoryPerformance]);
+
+    const getStudyQueue = useCallback(() => {
+        const cefrBias = {
+            A1: 0,
+            A2: 0.25,
+            B1: 0.5,
+            B2: 1,
+            C1: 1.5,
+            C2: 2
+        };
+        const targetBias = cefrBias[stats?.targetCefr] || 0.5;
+        const minLevel = Math.max(1, Math.round(difficulty + targetBias) - 1);
+        const maxLevel = Math.min(5, Math.round(difficulty + targetBias) + 1);
+
+        let pool = vocabulary.filter(word => word.level >= minLevel && word.level <= maxLevel);
+        if (pool.length < 8) {
+            pool = [...vocabulary].sort((a, b) => a.level - b.level);
+        }
+        if (mode === 'mix') {
+            pool = [...pool].sort(() => Math.random() - 0.5);
+        }
+        return pool.slice(0, 12); // Smaller sets for better focus
+    }, [difficulty, mode, stats?.targetCefr, vocabulary]);
+    const { updateWordProgress, getPracticeQueue, markWordSeen, togglePinWord, snoozeWord, clearSnooze } = useVocabulary();
+    const { updateWordProgress, vocabulary, getWeightedPracticeWords } = useVocabulary();
+    const { getDueWords, updateWordProgress, vocabulary } = useVocabulary();
+    const { reducedMotion } = useProgress();
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     const containerRef = useRef(null);
 
     const getStudyQueue = useCallback(() => {
@@ -45,13 +106,14 @@ const FlashcardMode = ({ mode = 'standard' }) => {
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [sessionComplete, setSessionComplete] = useState(false);
-
-    useEffect(() => {
-        setQueue(getStudyQueue());
-    }, [getStudyQueue]);
-
+    const [correctCount, setCorrectCount] = useState(0);
+    const [wrongCount, setWrongCount] = useState(0);
+    const [currentStreak, setCurrentStreak] = useState(0);
+    const [bestStreak, setBestStreak] = useState(0);
+    const [sessionReward, setSessionReward] = useState(null);
     const currentWord = queue[currentCardIndex];
 
+<<<<<<< HEAD
     const getGrammarTip = (word) => {
         if (!word) return null;
 
@@ -77,6 +139,64 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         return null;
     };
 
+=======
+    useEffect(() => {
+        const queueForMode = getPracticeQueue(mode === 'mix' ? 'dailyMix' : 'flashcards', 10);
+        setQueue(prev => {
+            const prevIds = prev.map(w => w.id).join(',');
+            const nextIds = queueForMode.map(w => w.id).join(',');
+            if (prevIds === nextIds && prev.length === queueForMode.length) {
+                return queueForMode;
+            }
+            setCurrentCardIndex(0);
+            setSessionComplete(false);
+            return queueForMode;
+        });
+    }, [mode, getPracticeQueue]);
+        setQueue(getStudyQueue());
+        setCurrentCardIndex(0);
+        setSessionComplete(false);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setCurrentStreak(0);
+        setBestStreak(0);
+        setSessionReward(null);
+    }, [mode]);
+        setSessionScore(0);
+        cardStartRef.current = performance.now();
+    }, [getStudyQueue]);
+
+    useEffect(() => {
+        setModeDifficulty('flashcards', difficulty);
+    }, [difficulty, setModeDifficulty]);
+    }, [getStudyQueue]);
+
+    useEffect(() => {
+        if (currentWord) {
+            markWordSeen(currentWord.id);
+        }
+    }, [currentWord?.id, markWordSeen]);
+
+    useEffect(() => {
+        cardStartRef.current = performance.now();
+    }, [currentCardIndex]);
+
+    const shouldShowHint = useMemo(() => {
+        if (!currentWord) return false;
+        return difficulty <= 2 || getCategoryAccuracy(currentWord.category) < 0.65;
+    }, [currentWord, difficulty, getCategoryAccuracy]);
+
+    const finishSession = (metrics) => {
+        const reward = calculateRewards('flashcards', metrics);
+        setSessionReward(reward);
+        addXP(reward.xp);
+        addCoins(reward.coins);
+        setSessionComplete(true);
+    };
+
+    const handleFlip = () => {
+        setIsFlipped(!isFlipped);
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     const handleFlip = useCallback(() => {
         setIsFlipped(prev => !prev);
         if (!isFlipped && currentWord) {
@@ -87,17 +207,50 @@ const FlashcardMode = ({ mode = 'standard' }) => {
     const handleGrading = useCallback((grade) => {
         if (!currentWord) return;
 
+<<<<<<< HEAD
         // Log the attempt for analytics
         // Determine correctness based on grade
         const isCorrect = grade === 'good' || grade === 'easy' || grade === true; // true from boolean shortcuts
         logWordAttempt(currentWord.category || 'General', isCorrect, 0, currentWord.id);
 
+=======
+        const nextCorrect = success ? correctCount + 1 : correctCount;
+        const nextWrong = success ? wrongCount : wrongCount + 1;
+        const nextStreak = success ? currentStreak + 1 : 0;
+        const nextBestStreak = success ? Math.max(bestStreak, nextStreak) : bestStreak;
+
+        setCorrectCount(nextCorrect);
+        setWrongCount(nextWrong);
+        setCurrentStreak(nextStreak);
+        setBestStreak(nextBestStreak);
+
+        if (success) {
+            updateDailyStat('dailyStreak', nextStreak, 'max');
+        }
+        updateDailyStat('dailyReviews', 1);
+        const responseTime = performance.now() - cardStartRef.current;
+        recordCategoryPerformance(currentWord.category, { success, responseTime, mode: 'flashcards' });
+
+        const accuracyBoost = getCategoryAccuracy(currentWord.category) < 0.75 ? 1.25 : 1;
+        const difficultyBoost = 1 + (difficulty - 2) * 0.12;
+        const speedBoost = responseTime < 2500 ? 1.1 : 0.9;
+        const delta = Math.max(5, Math.round(40 * accuracyBoost * difficultyBoost * speedBoost));
+        setSessionScore(prev => Math.max(0, success ? prev + delta : prev - Math.round(delta * 0.4)));
+
+        updateWordProgress(currentWord.id, success);
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
         updateWordProgress(currentWord.id, grade);
         setIsFlipped(false);
+
         if (currentCardIndex < queue.length - 1) {
             setCurrentCardIndex(prev => prev + 1);
+            cardStartRef.current = performance.now();
         } else {
-            setSessionComplete(true);
+            finishSession({
+                correct: nextCorrect,
+                total: queue.length,
+                bestStreak: nextBestStreak
+            });
         }
     }, [currentCardIndex, currentWord, queue.length, updateWordProgress, logWordAttempt]);
 
@@ -153,11 +306,33 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                     <p className="text-slate-400 mb-8 max-w-md">
                         You've completed your study session. Your spaced repetition stats have been updated.
                     </p>
+                    {sessionReward && (
+                        <div className="flex gap-6 mb-8">
+                            <div className="bg-indigo-500/10 border border-indigo-500/30 px-6 py-4 rounded-2xl text-center">
+                                <p className="text-xs uppercase text-indigo-200 tracking-wider">XP</p>
+                                <p className="text-3xl font-black text-indigo-300">+{sessionReward.xp}</p>
+                            </div>
+                            <div className="bg-amber-500/10 border border-amber-500/30 px-6 py-4 rounded-2xl text-center">
+                                <p className="text-xs uppercase text-amber-200 tracking-wider">Coins</p>
+                                <p className="text-3xl font-black text-amber-300">+{sessionReward.coins}</p>
+                            </div>
+                        </div>
+                    )}
+                    <Badge variant="outline" className="mb-6">
+                        Adaptive Score: {sessionScore}
+                    </Badge>
                     <div className="flex gap-4">
                         <Button size="lg" onClick={() => {
-                            setQueue(getStudyQueue());
+                            setQueue(getPracticeQueue(mode === 'mix' ? 'dailyMix' : 'flashcards', 10));
                             setCurrentCardIndex(0);
                             setSessionComplete(false);
+                            setCorrectCount(0);
+                            setWrongCount(0);
+                            setCurrentStreak(0);
+                            setBestStreak(0);
+                            setSessionReward(null);
+                            setSessionScore(0);
+                            cardStartRef.current = performance.now();
                         }}>
                             <RotateCcw size={20} /> Review Again
                         </Button>
@@ -170,15 +345,31 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         );
     }
 
+    const now = Date.now();
+    const isSnoozed = currentWord?.snoozeUntil && currentWord.snoozeUntil > now;
+    const metaTooltip = currentWord ? `Lvl ${currentWord.level} • Last seen ${formatRelativeTime(currentWord.lastSeen)}${currentWord.pinned ? ' • Pinned' : ''}` : '';
+
     return (
         <GameLayout
             title={deckId ? (customDecks.find(d => d.id === deckId)?.name || 'Custom Deck') : (mode === 'mix' ? "Daily Mix" : "Flashcards")}
             subtitle={deckId ? "Reviewing your custom word collection." : "Practice your vocabulary with spaced repetition."}
             onBack={onExit}
             headerRight={
-                <Badge variant="primary" className="text-lg py-1 px-4">
-                    {currentCardIndex + 1} / {queue.length}
-                </Badge>
+                <div className="flex items-center gap-3">
+                    <div className="hidden md:block w-44">
+                        <DifficultySlider
+                            value={difficulty}
+                            onChange={setDifficulty}
+                            label="Difficulty"
+                        />
+                    </div>
+                    <Badge variant="outline" className="text-xs py-1 px-3">
+                        Session Score: {sessionScore}
+                    </Badge>
+                    <Badge variant="primary" className="text-lg py-1 px-4">
+                        {currentCardIndex + 1} / {queue.length}
+                    </Badge>
+                </div>
             }
         >
             <div
@@ -210,6 +401,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                         <Card
                             className="absolute inset-0 backface-hidden flex flex-col items-center justify-center bg-slate-900 border-white/10 shadow-[0_35px_60px_-15px_rgba(0,0,0,0.6)] rounded-[40px] overflow-hidden"
                             style={{ backfaceVisibility: "hidden" }}
+                            title={metaTooltip}
                         >
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,_rgba(99,102,241,0.15),_transparent)]" />
                             <Badge variant="primary" className="absolute top-8 left-8 bg-indigo-500/20 text-indigo-300 border-indigo-500/30 font-bold px-4 py-1">Lvl {currentWord.level}</Badge>
@@ -253,6 +445,37 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                             </Button>
                         </Card>
                     </motion.div>
+                </div>
+
+                {shouldShowHint && (
+                    <div className="mt-6 text-center text-sm text-slate-300">
+                        <Badge variant="outline" className="mr-2">Hint</Badge>
+                        <span>{currentWord.english} · {CATEGORIES?.[currentWord.category]?.name || currentWord.category}</span>
+                    </div>
+                )}
+                <div className="mt-8 flex flex-wrap items-center justify-center gap-3 text-sm text-slate-400">
+                    <Badge variant="outline" className="bg-white/5 border-white/10 flex items-center gap-2">
+                        <Clock3 size={14} /> Last seen: {formatRelativeTime(currentWord.lastSeen)}
+                    </Badge>
+                    <Badge variant="primary" className="flex items-center gap-2">
+                        Mastery Lvl {currentWord.level}
+                    </Badge>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className={`rounded-full ${currentWord.pinned ? 'text-emerald-300' : ''}`}
+                        onClick={() => togglePinWord(currentWord.id)}
+                    >
+                        <Pin size={14} /> {currentWord.pinned ? 'Unpin' : 'Pin'}
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="rounded-full"
+                        onClick={() => isSnoozed ? clearSnooze(currentWord.id) : snoozeWord(currentWord.id)}
+                    >
+                        <BellOff size={14} /> {isSnoozed ? 'Unsnooze' : 'Snooze 6h'}
+                    </Button>
                 </div>
 
                 {/* Grading Controls */}
