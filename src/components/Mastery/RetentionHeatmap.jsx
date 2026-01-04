@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { motion } from 'framer-motion';
 
-const RetentionHeatmap = ({ data }) => {
+const RetentionHeatmap = memo(({ data }) => {
     // Generate grid data for last 52 weeks
     const grid = useMemo(() => {
         const weeks = [];
@@ -54,22 +54,25 @@ const RetentionHeatmap = ({ data }) => {
 
             <div className="flex gap-1 min-w-max">
                 {grid.map((week, wIndex) => (
-                    <div key={wIndex} className="flex flex-col gap-1">
-                        {week.map((day, dIndex) => (
-                            <motion.div
+                    <motion.div
+                        key={wIndex}
+                        className="flex flex-col gap-1"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: wIndex * 0.01 }}
+                    >
+                        {week.map((day) => (
+                            <div
                                 key={day.date}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: wIndex * 0.01 + dIndex * 0.005 }}
                                 className={`w-3 h-3 rounded-sm ${getColor(day.intensity)} relative group cursor-pointer`}
                             >
                                 {/* Tooltip */}
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black text-xs text-white rounded opacity-0 group-hover:opacity-100 whitespace-nowrap z-50 pointer-events-none transition-opacity">
                                     {day.date}: {day.count} reviews
                                 </div>
-                            </motion.div>
+                            </div>
                         ))}
-                    </div>
+                    </motion.div>
                 ))}
             </div>
 
@@ -84,6 +87,6 @@ const RetentionHeatmap = ({ data }) => {
             </div>
         </div>
     );
-};
+});
 
 export default RetentionHeatmap;

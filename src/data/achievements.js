@@ -168,7 +168,6 @@ export const ACHIEVEMENTS = [
         xpReward: 50,
         condition: (stats) => stats.pronunciationPractices >= 5
     },
-<<<<<<< HEAD
     // Community & Messaging Achievements
     {
         id: 'first_writing',
@@ -258,7 +257,7 @@ export const ACHIEVEMENTS = [
         icon: '🎨',
         xpReward: 50,
         condition: (stats) => (stats.userLessonsCreated || 0) >= 1
-=======
+    },
     {
         id: 'timed_sprinter',
         title: 'Timed Challenger',
@@ -276,6 +275,5 @@ export const ACHIEVEMENTS = [
         xpReward: 180,
         tier: 'Silver',
         condition: (stats) => (stats.timedChallengesCompleted || 0) >= 5
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     }
 ];

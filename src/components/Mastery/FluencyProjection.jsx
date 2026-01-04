@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { Rocket, Flag, Calendar } from 'lucide-react';
 
-const FluencyProjection = ({ data }) => {
+const FluencyProjection = memo(({ data }) => {
     // data: { currentWordCount, velocity, milestones: [{ level, words, date }] }
 
     // Calculate progress percentage relative to B2 (4000 words)
@@ -77,6 +77,6 @@ const FluencyProjection = ({ data }) => {
             </div>
         </div>
     );
-};
+});
 
 export default FluencyProjection;

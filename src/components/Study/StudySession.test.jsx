@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StudySession from './StudySession';
 import { VocabularyContext } from '../../context/VocabularyContext';
+import { ProgressContext } from '../../context/ProgressContext';
+import { ToastContext } from '../../context/ToastContext';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mocks
@@ -10,12 +12,19 @@ vi.mock('../../utils/SoundManager', () => ({
         playFlip: vi.fn(),
         playSuccess: vi.fn(),
         playFailure: vi.fn(),
+        playLevelUp: vi.fn() // Added playLevelUp
     },
 }));
 
 vi.mock('../../utils/InteractionEffects', () => ({
     triggerShake: vi.fn(),
     triggerConfetti: vi.fn(),
+}));
+
+vi.mock('../../services/downloadManager', () => ({
+    isCategoryDownloaded: vi.fn().mockResolvedValue(false),
+    downloadCategoryAssets: vi.fn(),
+    deleteCategoryAssets: vi.fn()
 }));
 
 const mockVocabulary = {
@@ -27,16 +36,32 @@ const mockVocabulary = {
     ],
     playWordAudio: vi.fn(),
     preloadAudioForWords: vi.fn(),
-    CATEGORIES: { 'Greetings': { name: 'Greetings' }, 'Animals': { name: 'Animals' } }
+    CATEGORIES: { 'Greetings': { name: 'Greetings' }, 'Animals': { name: 'Animals' } },
+    getPracticeQueue: vi.fn(),
+    markWordSeen: vi.fn()
+};
+
+const mockProgress = {
+    addXP: vi.fn(),
+    addCoins: vi.fn(),
+    updateDailyStat: vi.fn()
+};
+
+const mockToast = {
+    showToast: vi.fn()
 };
 
 const renderWithContext = (ui) => {
     return render(
-        <VocabularyContext.Provider value={mockVocabulary}>
-            <MemoryRouter>
-                {ui}
-            </MemoryRouter>
-        </VocabularyContext.Provider>
+        <ProgressContext.Provider value={mockProgress}>
+            <ToastContext.Provider value={mockToast}>
+                <VocabularyContext.Provider value={mockVocabulary}>
+                    <MemoryRouter>
+                        {ui}
+                    </MemoryRouter>
+                </VocabularyContext.Provider>
+            </ToastContext.Provider>
+        </ProgressContext.Provider>
     );
 };
 
@@ -54,21 +79,18 @@ describe('StudySession', () => {
 
     it('renders flashcard when there are due words', () => {
         mockVocabulary.getDueWords.mockReturnValue([
-            { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1' }
+            { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1', category: 'Greetings' }
         ]);
         renderWithContext(<StudySession />);
 
         expect(screen.getByText('Bonjour')).toBeInTheDocument();
-        // English should be "hidden" (technically rendered but on the back face)
-        // Testing visibility in jsdom with 3d transforms is tricky, 
-        // passing check that it exists in the document is a start.
         expect(screen.getByText('Hello')).toBeInTheDocument();
         expect(screen.getByText('French')).toBeInTheDocument();
     });
 
     it('flips card on click and shows controls', () => {
         mockVocabulary.getDueWords.mockReturnValue([
-            { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1' }
+            { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1', category: 'Greetings' }
         ]);
         renderWithContext(<StudySession />);
 
@@ -82,8 +104,8 @@ describe('StudySession', () => {
 
     it('handles grading and moves to next card', () => {
         mockVocabulary.getDueWords.mockReturnValue([
-            { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1' },
-            { id: '2', french: 'Chat', english: 'Cat', cefr: 'A1' }
+            { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1', category: 'Greetings' },
+            { id: '2', french: 'Chat', english: 'Cat', cefr: 'A1', category: 'Animals' }
         ]);
         renderWithContext(<StudySession />);
 
