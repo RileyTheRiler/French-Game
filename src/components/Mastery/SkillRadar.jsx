@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 
-const SkillRadar = ({ data }) => {
+const SkillRadar = memo(({ data }) => {
     // Data format: [{ subject: 'Math', A: 120, fullMark: 150 }, ...]
     // We normalize to 100 on the fly
 
@@ -125,6 +125,6 @@ const SkillRadar = ({ data }) => {
             </div>
         </div>
     );
-};
+});
 
 export default SkillRadar;
