@@ -1,12 +1,5 @@
-<<<<<<< HEAD
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-
-=======
-import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import React, { useState, useEffect, useCallback } from 'react';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, Check, X, RotateCcw, Pin, Clock3, BellOff } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
@@ -16,33 +9,44 @@ import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
-import { useProgress } from '../context/ProgressContext';
-<<<<<<< HEAD
 import { getDifficultyConfig } from './ui/DifficultyDial';
 import GrammarInsightCard from './ui/GrammarInsightCard';
-=======
-import { calculateRewards } from '../utils/rewardSystem';
 import DifficultySlider from './ui/DifficultySlider';
 import { formatRelativeTime } from '../utils/time';
-
-import { useProgress } from '../context/ProgressContext';
-import { useNavigate } from 'react-router-dom';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+import { calculateRewards } from '../utils/rewardSystem';
 
 const FlashcardMode = ({ mode = 'standard' }) => {
     const { deckId } = useParams();
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-<<<<<<< HEAD
-    const { updateWordProgress, vocabulary, getWeightedPracticeWords, getDeckWords, customDecks } = useVocabulary();
-    const { reducedMotion, logWordAttempt, globalDifficulty } = useProgress();
+    const {
+        updateWordProgress,
+        vocabulary,
+        getWeightedPracticeWords,
+        getDeckWords,
+        customDecks,
+        getPracticeQueue,
+        markWordSeen,
+        togglePinWord,
+        snoozeWord,
+        clearSnooze,
+        CATEGORIES
+    } = useVocabulary();
+    const {
+        reducedMotion,
+        logWordAttempt,
+        globalDifficulty,
+        addXP,
+        addCoins,
+        updateDailyStat,
+        stats,
+        recordCategoryPerformance,
+        setModeDifficulty
+    } = useProgress();
 
     const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
-=======
-    const { getDueWords, updateWordProgress, vocabulary } = useVocabulary();
-    const { addXP, addCoins, updateDailyStat } = useProgress();
-    const { updateWordProgress, vocabulary, CATEGORIES } = useVocabulary();
-    const { stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+    const containerRef = useRef(null);
+
     const difficultySetting = stats?.difficultySettings?.flashcards || 2;
     const [difficulty, setDifficulty] = useState(difficultySetting);
     const [sessionScore, setSessionScore] = useState(0);
@@ -56,38 +60,14 @@ const FlashcardMode = ({ mode = 'standard' }) => {
     }, [categoryPerformance]);
 
     const getStudyQueue = useCallback(() => {
-        const cefrBias = {
-            A1: 0,
-            A2: 0.25,
-            B1: 0.5,
-            B2: 1,
-            C1: 1.5,
-            C2: 2
-        };
-        const targetBias = cefrBias[stats?.targetCefr] || 0.5;
-        const minLevel = Math.max(1, Math.round(difficulty + targetBias) - 1);
-        const maxLevel = Math.min(5, Math.round(difficulty + targetBias) + 1);
-
-        let pool = vocabulary.filter(word => word.level >= minLevel && word.level <= maxLevel);
-        if (pool.length < 8) {
-            pool = [...vocabulary].sort((a, b) => a.level - b.level);
-        }
-        if (mode === 'mix') {
-            pool = [...pool].sort(() => Math.random() - 0.5);
-        }
-        return pool.slice(0, 12); // Smaller sets for better focus
-    }, [difficulty, mode, stats?.targetCefr, vocabulary]);
-    const { updateWordProgress, getPracticeQueue, markWordSeen, togglePinWord, snoozeWord, clearSnooze } = useVocabulary();
-    const { updateWordProgress, vocabulary, getWeightedPracticeWords } = useVocabulary();
-    const { getDueWords, updateWordProgress, vocabulary } = useVocabulary();
-    const { reducedMotion } = useProgress();
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
-    const containerRef = useRef(null);
-
-    const getStudyQueue = useCallback(() => {
         if (deckId) {
             const deckWords = getDeckWords(deckId);
             return deckWords.slice(0, 20); // Focus on deck words
+        }
+
+        // Use practice queue if available (smarter), otherwise fallback
+        if (getPracticeQueue) {
+            return getPracticeQueue(mode === 'mix' ? 'dailyMix' : 'flashcards', 10);
         }
 
         let pool = getWeightedPracticeWords ? getWeightedPracticeWords(20) : vocabulary;
@@ -100,7 +80,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         // Session size adjusted by difficulty
         const sessionSize = globalDifficulty > 70 ? 15 : 10;
         return pool.slice(0, sessionSize);
-    }, [getWeightedPracticeWords, vocabulary, mode, deckId, getDeckWords, globalDifficulty]);
+    }, [getWeightedPracticeWords, vocabulary, mode, deckId, getDeckWords, globalDifficulty, getPracticeQueue]);
 
     const [queue, setQueue] = useState([]);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -113,7 +93,6 @@ const FlashcardMode = ({ mode = 'standard' }) => {
     const [sessionReward, setSessionReward] = useState(null);
     const currentWord = queue[currentCardIndex];
 
-<<<<<<< HEAD
     const getGrammarTip = (word) => {
         if (!word) return null;
 
@@ -139,20 +118,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         return null;
     };
 
-=======
     useEffect(() => {
-        const queueForMode = getPracticeQueue(mode === 'mix' ? 'dailyMix' : 'flashcards', 10);
-        setQueue(prev => {
-            const prevIds = prev.map(w => w.id).join(',');
-            const nextIds = queueForMode.map(w => w.id).join(',');
-            if (prevIds === nextIds && prev.length === queueForMode.length) {
-                return queueForMode;
-            }
-            setCurrentCardIndex(0);
-            setSessionComplete(false);
-            return queueForMode;
-        });
-    }, [mode, getPracticeQueue]);
         setQueue(getStudyQueue());
         setCurrentCardIndex(0);
         setSessionComplete(false);
@@ -161,18 +127,18 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         setCurrentStreak(0);
         setBestStreak(0);
         setSessionReward(null);
-    }, [mode]);
         setSessionScore(0);
         cardStartRef.current = performance.now();
-    }, [getStudyQueue]);
+    }, [getStudyQueue, mode]);
 
     useEffect(() => {
-        setModeDifficulty('flashcards', difficulty);
+        if (setModeDifficulty) {
+            setModeDifficulty('flashcards', difficulty);
+        }
     }, [difficulty, setModeDifficulty]);
-    }, [getStudyQueue]);
 
     useEffect(() => {
-        if (currentWord) {
+        if (currentWord && markWordSeen) {
             markWordSeen(currentWord.id);
         }
     }, [currentWord?.id, markWordSeen]);
@@ -187,16 +153,17 @@ const FlashcardMode = ({ mode = 'standard' }) => {
     }, [currentWord, difficulty, getCategoryAccuracy]);
 
     const finishSession = (metrics) => {
-        const reward = calculateRewards('flashcards', metrics);
+        let reward = { xp: 50, coins: 10 };
+        if (calculateRewards) {
+            reward = calculateRewards('flashcards', metrics);
+        }
+
         setSessionReward(reward);
-        addXP(reward.xp);
-        addCoins(reward.coins);
+        if (addXP) addXP(reward.xp);
+        if (addCoins) addCoins(reward.coins);
         setSessionComplete(true);
     };
 
-    const handleFlip = () => {
-        setIsFlipped(!isFlipped);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     const handleFlip = useCallback(() => {
         setIsFlipped(prev => !prev);
         if (!isFlipped && currentWord) {
@@ -207,13 +174,14 @@ const FlashcardMode = ({ mode = 'standard' }) => {
     const handleGrading = useCallback((grade) => {
         if (!currentWord) return;
 
-<<<<<<< HEAD
-        // Log the attempt for analytics
         // Determine correctness based on grade
-        const isCorrect = grade === 'good' || grade === 'easy' || grade === true; // true from boolean shortcuts
-        logWordAttempt(currentWord.category || 'General', isCorrect, 0, currentWord.id);
+        const success = grade === 'good' || grade === 'easy' || grade === true; // true from boolean shortcuts
 
-=======
+        // Log the attempt for analytics
+        if (logWordAttempt) {
+            logWordAttempt(currentWord.category || 'General', success, 0, currentWord.id);
+        }
+
         const nextCorrect = success ? correctCount + 1 : correctCount;
         const nextWrong = success ? wrongCount : wrongCount + 1;
         const nextStreak = success ? currentStreak + 1 : 0;
@@ -224,12 +192,17 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         setCurrentStreak(nextStreak);
         setBestStreak(nextBestStreak);
 
-        if (success) {
+        if (success && updateDailyStat) {
             updateDailyStat('dailyStreak', nextStreak, 'max');
         }
-        updateDailyStat('dailyReviews', 1);
+        if (updateDailyStat) {
+            updateDailyStat('dailyReviews', 1);
+        }
+
         const responseTime = performance.now() - cardStartRef.current;
-        recordCategoryPerformance(currentWord.category, { success, responseTime, mode: 'flashcards' });
+        if (recordCategoryPerformance) {
+            recordCategoryPerformance(currentWord.category, { success, responseTime, mode: 'flashcards' });
+        }
 
         const accuracyBoost = getCategoryAccuracy(currentWord.category) < 0.75 ? 1.25 : 1;
         const difficultyBoost = 1 + (difficulty - 2) * 0.12;
@@ -237,8 +210,6 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         const delta = Math.max(5, Math.round(40 * accuracyBoost * difficultyBoost * speedBoost));
         setSessionScore(prev => Math.max(0, success ? prev + delta : prev - Math.round(delta * 0.4)));
 
-        updateWordProgress(currentWord.id, success);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
         updateWordProgress(currentWord.id, grade);
         setIsFlipped(false);
 
@@ -252,7 +223,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                 bestStreak: nextBestStreak
             });
         }
-    }, [currentCardIndex, currentWord, queue.length, updateWordProgress, logWordAttempt]);
+    }, [currentCardIndex, currentWord, queue.length, updateWordProgress, logWordAttempt, correctCount, wrongCount, currentStreak, bestStreak, updateDailyStat, recordCategoryPerformance, getCategoryAccuracy, difficulty]);
 
     useEffect(() => {
         if (containerRef.current) {
@@ -278,11 +249,11 @@ const FlashcardMode = ({ mode = 'standard' }) => {
             if (isFlipped) {
                 if (event.key === 'ArrowLeft') {
                     event.preventDefault();
-                    handleGrading(false);
+                    handleGrading('again'); // Map arrow left to Again
                 }
                 if (event.key === 'ArrowRight') {
                     event.preventDefault();
-                    handleGrading(true);
+                    handleGrading('good'); // Map arrow right to Good
                 }
             }
         };
@@ -323,7 +294,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                     </Badge>
                     <div className="flex gap-4">
                         <Button size="lg" onClick={() => {
-                            setQueue(getPracticeQueue(mode === 'mix' ? 'dailyMix' : 'flashcards', 10));
+                            setQueue(getPracticeQueue ? getPracticeQueue(mode === 'mix' ? 'dailyMix' : 'flashcards', 10) : []);
                             setCurrentCardIndex(0);
                             setSessionComplete(false);
                             setCorrectCount(0);

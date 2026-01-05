@@ -1,20 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
+import React from 'react';
 import { ProgressProvider, useProgress } from './ProgressContext';
-import { ToastContext } from './ToastContext';
 
 // Mock ToastContext
-const mockToast = {
-    showAchievement: vi.fn(),
-    showSuccess: vi.fn(),
-    showError: vi.fn(),
-    showInfo: vi.fn(),
-};
+// We need to mock the entire module to avoid the undefined Provider issue
+vi.mock('./ToastContext', () => ({
+    useToast: () => ({
+        showAchievement: vi.fn(),
+        showSuccess: vi.fn(),
+        showError: vi.fn(),
+        showInfo: vi.fn(),
+        addToast: vi.fn(),
+        removeToast: vi.fn()
+    })
+}));
 
-const wrapper = ({ children }) => (
-    <ToastContext.Provider value={mockToast}>
-        <ProgressProvider>{children}</ProgressProvider>
-    </ToastContext.Provider>
+const TestWrapper = ({ children }) => (
+    <ProgressProvider>{children}</ProgressProvider>
 );
 
 describe('ProgressContext', () => {
@@ -29,13 +32,13 @@ describe('ProgressContext', () => {
     });
 
     it('initializes with default values', () => {
-        const { result } = renderHook(() => useProgress(), { wrapper });
+        const { result } = renderHook(() => useProgress(), { wrapper: TestWrapper });
         expect(result.current.stats.xp).toBe(0);
         expect(result.current.stats.coins).toBe(50);
     });
 
     it('adds XP correctly', () => {
-        const { result } = renderHook(() => useProgress(), { wrapper });
+        const { result } = renderHook(() => useProgress(), { wrapper: TestWrapper });
 
         act(() => {
             result.current.addXP(100);
@@ -45,7 +48,7 @@ describe('ProgressContext', () => {
     });
 
     it('doubles XP when double XP is active', () => {
-        const { result } = renderHook(() => useProgress(), { wrapper });
+        const { result } = renderHook(() => useProgress(), { wrapper: TestWrapper });
 
         act(() => {
             result.current.activateDoubleXP(15);
@@ -62,7 +65,7 @@ describe('ProgressContext', () => {
     });
 
     it('adds coins correctly', () => {
-        const { result } = renderHook(() => useProgress(), { wrapper });
+        const { result } = renderHook(() => useProgress(), { wrapper: TestWrapper });
 
         act(() => {
             result.current.addCoins(50);
@@ -72,7 +75,7 @@ describe('ProgressContext', () => {
     });
 
     it('spends coins if sufficient balance', () => {
-        const { result } = renderHook(() => useProgress(), { wrapper });
+        const { result } = renderHook(() => useProgress(), { wrapper: TestWrapper });
 
         let success;
         act(() => {
@@ -84,7 +87,7 @@ describe('ProgressContext', () => {
     });
 
     it('fails to spend coins if insufficient balance', () => {
-        const { result } = renderHook(() => useProgress(), { wrapper });
+        const { result } = renderHook(() => useProgress(), { wrapper: TestWrapper });
 
         let success;
         act(() => {
@@ -96,7 +99,7 @@ describe('ProgressContext', () => {
     });
 
     it('buying item updates inventory', () => {
-        const { result } = renderHook(() => useProgress(), { wrapper });
+        const { result } = renderHook(() => useProgress(), { wrapper: TestWrapper });
         const item = { id: 'potion', price: 20, type: 'consumable' };
 
         act(() => {
