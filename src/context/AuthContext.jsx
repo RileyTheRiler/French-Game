@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { nanoid } from '../utils/id';
+import { hashPassword } from '../utils/crypto';
 
 const AuthContext = createContext();
 
@@ -35,7 +36,8 @@ export const AuthProvider = ({ children }) => {
             if (credentials[email]) {
                 throw new Error('Account already exists');
             }
-            credentials[email] = { password, createdAt: Date.now() };
+            const hashedPassword = await hashPassword(password);
+            credentials[email] = { password: hashedPassword, createdAt: Date.now() };
             localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
             const newUser = { id: nanoid(), email, createdAt: Date.now(), provider: 'email' };
             setUser(newUser);
@@ -59,9 +61,21 @@ export const AuthProvider = ({ children }) => {
             }
             const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
             const record = credentials[email];
-            if (!record || record.password !== password) {
+
+            if (!record) {
                 throw new Error('Invalid credentials');
             }
+
+            const inputHash = await hashPassword(password);
+
+            // Backward compatibility: If stored password matches plain text, migrate to hash
+            if (record.password === password) {
+                record.password = inputHash;
+                localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+            } else if (record.password !== inputHash) {
+                throw new Error('Invalid credentials');
+            }
+
             const signedInUser = { id: email, email, provider: 'email', createdAt: record.createdAt };
             setUser(signedInUser);
             return signedInUser;
