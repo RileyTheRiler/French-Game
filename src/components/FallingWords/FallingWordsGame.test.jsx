@@ -25,6 +25,14 @@ vi.mock('lucide-react', () => ({
     Play: () => <div data-testid="icon-play" />,
     Volume2: () => <div data-testid="icon-volume" />,
     Settings: () => <div data-testid="icon-settings" />,
+    Clock: () => <div data-testid="icon-clock" />,
+    TrendingUp: () => <div data-testid="icon-trending-up" />,
+    Mic: () => <div data-testid="icon-mic" />,
+    Globe: () => <div data-testid="icon-globe" />,
+    User: () => <div data-testid="icon-user" />,
+    GraduationCap: () => <div data-testid="icon-graduation-cap" />,
+    Crown: () => <div data-testid="icon-crown" />,
+    Rocket: () => <div data-testid="icon-rocket" />,
 }));
 
 const mockVocabulary = {
@@ -42,7 +50,18 @@ const mockProgress = {
     difficultySettings: {
         globalMultiplier: 1.0,
         showHints: false
-    }
+    },
+    stats: {
+        difficultySettings: { fallingWords: 3 }
+    },
+    recordCategoryPerformance: vi.fn(),
+    setModeDifficulty: vi.fn(),
+    globalDifficulty: 25,
+    addXP: vi.fn(),
+    addCoins: vi.fn(),
+    updateDailyStat: vi.fn(),
+    incrementStat: vi.fn(),
+    offlineAudio: false
 };
 
 const renderWithContext = (ui) => {

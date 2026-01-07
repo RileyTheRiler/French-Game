@@ -2,10 +2,10 @@ import React, { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { formatRelativeTime } from '../../utils/time';
 
-<<<<<<< HEAD
-const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }) => {
+const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8, mastery, lastSeen }) => {
     // Only show hint after hintDelay seconds have passed since spawn
     const [showHint, setShowHint] = useState(false);
+    const tooltip = `Lvl ${mastery || 1} • Last seen ${formatRelativeTime(lastSeen)}`;
 
     useEffect(() => {
         if (!hint || hintDelay === 0) {
@@ -13,25 +13,24 @@ const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }
             return;
         }
 
-        const elapsed = Date.now() - spawnTime;
-        const remainingDelay = Math.max(0, (hintDelay * 1000) - elapsed);
+        // If spawnTime is not provided, treat as if it just spawned or handled elsewhere
+        if (!spawnTime) return;
 
-        if (remainingDelay === 0) {
-            setShowHint(true);
-            return;
-        }
+        // Use performance.now() if spawnTime is high resolution, but here spawnTime seems to be number
+        // Check if spawnTime is from performance.now() or Date.now()
+        // In FallingWordsGame.jsx: spawnTime: now (performance.now())
+        // But here we are calculating difference.
+        // Wait, Date.now() vs performance.now(). FallingWordsGame uses performance.now().
+        // So we cannot compare with Date.now() here unless we change logic.
+        // Actually, let's just use a simple timeout since mount.
 
         const timer = setTimeout(() => {
             setShowHint(true);
-        }, remainingDelay);
+        }, hintDelay * 1000);
 
         return () => clearTimeout(timer);
-    }, [hint, spawnTime, hintDelay]);
+    }, [hint, hintDelay]); // Removed spawnTime dependency to simplify for now
 
-=======
-const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
-    const tooltip = `Lvl ${mastery || 1} • Last seen ${formatRelativeTime(lastSeen)}`;
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     return (
         <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -72,4 +71,3 @@ const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
 });
 
 export default WordItem;
-
