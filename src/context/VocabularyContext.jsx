@@ -1,27 +1,11 @@
-<<<<<<< HEAD
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
-=======
-import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
-import { useProgress } from './ProgressContext';
-import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
-import { cacheVocabularyAudio } from '../utils/audio';
-
-const enhanceWord = (word) => ({
-    ...word,
-    audio: word.audio || { type: 'tts', text: word.french },
-    phonemes: word.phonemes || [],
-    level: word.level || 1,
-    nextReview: word.nextReview || 0
-});
-import { buildPracticeQueue } from '../utils/practiceQueue';
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 import { useProgress } from './ProgressContext';
 import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
 import { calculateNextReview, getInitialState, isPassingGrade, normalizeGrade } from '../utils/srs';
-import { speak } from '../utils/audio';
+import { speak, cacheVocabularyAudio } from '../utils/audio';
+import { buildPracticeQueue } from '../utils/practiceQueue';
 
-const VocabularyContext = createContext();
+export const VocabularyContext = createContext();
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const ensureSrsState = (state) => {
@@ -49,12 +33,16 @@ const hydrateWord = (word) => {
         successStreak: word.successStreak ?? 0,
         lapses: word.lapses ?? 0,
         reviewHistory: word.reviewHistory ?? [],
-        lastPracticed: word.lastPracticed ?? 0
+        lastPracticed: word.lastPracticed ?? 0,
+        lastSeen: word.lastSeen || null,
+        pinned: word.pinned || false,
+        snoozeUntil: word.snoozeUntil || null,
+        lastLapsed: word.lastLapsed || null,
+        lapseCount: word.lapseCount || 0,
+        updatedAt: word.updatedAt || Date.now()
     };
 };
 
-// Map imported vocabulary to include SRS fields
-const INITIAL_VOCABULARY = vocabularyList.map(enhanceWord);
 const INITIAL_VOCABULARY = vocabularyList.map(word => hydrateWord({
     ...word,
     srs: getInitialState(),
@@ -65,21 +53,9 @@ const INITIAL_VOCABULARY = vocabularyList.map(word => hydrateWord({
     pinned: false,
     snoozeUntil: null,
     lastLapsed: null,
-    lapseCount: 0
+    lapseCount: 0,
     updatedAt: Date.now()
 }));
-
-const normalizeWord = (word) => ({
-    ...word,
-    level: word.level || 1,
-    nextReview: word.nextReview || 0,
-    lastSeen: word.lastSeen || null,
-    lastPracticed: word.lastPracticed || null,
-    pinned: word.pinned || false,
-    snoozeUntil: word.snoozeUntil || null,
-    lastLapsed: word.lastLapsed || null,
-    lapseCount: word.lapseCount || 0
-});
 
 export const VocabularyProvider = ({ children }) => {
     const { addXP } = useProgress();
@@ -87,13 +63,9 @@ export const VocabularyProvider = ({ children }) => {
     const [vocabulary, setVocabulary] = useState(() => {
         const saved = localStorage.getItem('frenchApp_vocab');
         const base = saved ? JSON.parse(saved) : INITIAL_VOCABULARY;
-        return base.map(enhanceWord);
-        const parsed = saved ? JSON.parse(saved) : INITIAL_VOCABULARY;
-        return parsed.map(normalizeWord);
-        return parsed.map(hydrateWord);
+        return base.map(hydrateWord);
     });
 
-    // Custom Study Decks
     const [customDecks, setCustomDecks] = useState(() => {
         const saved = localStorage.getItem('frenchApp_decks');
         return saved ? JSON.parse(saved) : [];
@@ -118,9 +90,6 @@ export const VocabularyProvider = ({ children }) => {
         audioCacheRef.current = {};
     };
 
-    const updateWordProgress = useCallback((wordId, success) => {
-        setVocabulary(prev => prev.map(word => {
-            if (word.id !== wordId) return word;
     const computePriority = useCallback((word) => {
         const now = Date.now();
         const srs = ensureSrsState(word.srs);
@@ -152,24 +121,17 @@ export const VocabularyProvider = ({ children }) => {
 
             return {
                 ...word,
-<<<<<<< HEAD
-=======
-                level: newLevel,
-                lastSeen: now,
-                lastPracticed: now,
-                nextReview: nextReviewTime,
-                snoozeUntil: success ? null : word.snoozeUntil,
-                lastLapsed: success ? word.lastLapsed : now,
-                lapseCount: success ? word.lapseCount : (word.lapseCount || 0) + 1
-                updatedAt: now
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                 srs: nextSrs,
                 level: Math.max(1, nextSrs.repetition || 1),
                 lastPracticed: reviewedAt,
                 nextReview: nextSrs.dueDate,
                 successStreak: passed ? (word.successStreak || 0) + 1 : 0,
                 lapses: passed ? (word.lapses || 0) : (word.lapses || 0) + 1,
-                reviewHistory: [historyEntry, ...(word.reviewHistory || [])].slice(0, 50)
+                reviewHistory: [historyEntry, ...(word.reviewHistory || [])].slice(0, 50),
+                snoozeUntil: passed ? null : word.snoozeUntil,
+                lastLapsed: passed ? word.lastLapsed : reviewedAt,
+                lapseCount: passed ? word.lapseCount : (word.lapseCount || 0) + 1,
+                updatedAt: reviewedAt
             };
         }));
 
@@ -227,11 +189,7 @@ export const VocabularyProvider = ({ children }) => {
         speak(word.french);
     };
 
-<<<<<<< HEAD
-    const getDueWords = useCallback(() => {
-=======
     const markWordSeen = useCallback((wordId) => {
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
         const now = Date.now();
         setVocabulary(prev => prev.map(word => word.id === wordId ? { ...word, lastSeen: now } : word));
     }, []);
@@ -262,17 +220,14 @@ export const VocabularyProvider = ({ children }) => {
 
     const getDueWords = useCallback(() => {
         const now = Date.now();
-        return vocabularyRef.current.filter(word => (!word.snoozeUntil || word.snoozeUntil <= now) && word.nextReview <= now);
-    }, []);
+        return vocabularyRef.current
+            .filter(word => (!word.snoozeUntil || word.snoozeUntil <= now) && word.nextReview <= now)
+            .sort((a, b) => computePriority(b) - computePriority(a));
+    }, [computePriority]);
 
     const getPracticeQueue = useCallback((mode = 'default', limit) => {
         return buildPracticeQueue(vocabularyRef.current, mode, limit);
     }, []);
-        return vocabulary
-            .map(hydrateWord)
-            .filter(word => ensureSrsState(word.srs).dueDate <= now)
-            .sort((a, b) => computePriority(b) - computePriority(a));
-    }, [vocabulary, computePriority]);
 
     const getWeightedPracticeWords = useCallback((limit = 30) => {
         return vocabulary
@@ -287,14 +242,13 @@ export const VocabularyProvider = ({ children }) => {
 
     useEffect(() => {
         preloadAudioForWords(getDueWords());
-    }, []);
+    }, [getDueWords]);
 
     const hydrateVocabulary = (incomingVocabulary) => {
         if (!incomingVocabulary) return;
         setVocabulary(incomingVocabulary);
     };
 
-<<<<<<< HEAD
     const addCustomWord = useCallback((newWord) => {
         const wordWithDefaults = {
             ...newWord,
@@ -310,7 +264,6 @@ export const VocabularyProvider = ({ children }) => {
         const hydrated = hydrateWord(wordWithDefaults);
 
         setVocabulary(prev => {
-            // Check for duplicates based on french text
             const exists = prev.some(w => w.french.toLowerCase() === hydrated.french.toLowerCase());
             if (exists) return prev;
             return [...prev, hydrated];
@@ -318,8 +271,6 @@ export const VocabularyProvider = ({ children }) => {
 
         return hydrated;
     }, []);
-
-    // === CUSTOM DECK MANAGEMENT ===
 
     const createDeck = useCallback((name, description = '', wordIds = [], color = 'indigo') => {
         const newDeck = {
@@ -376,7 +327,6 @@ export const VocabularyProvider = ({ children }) => {
         }));
     }, []);
 
-    // Export deck as JSON
     const exportDeck = useCallback((deckId) => {
         const deck = customDecks.find(d => d.id === deckId);
         if (!deck) return null;
@@ -412,7 +362,6 @@ export const VocabularyProvider = ({ children }) => {
         return exportData;
     }, [customDecks, vocabulary]);
 
-    // Import deck from JSON
     const importDeck = useCallback(async (file) => {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -426,7 +375,6 @@ export const VocabularyProvider = ({ children }) => {
 
                     const importedWordsIds = [];
 
-                    // Add any new words to vocabulary
                     data.deck.words.forEach(wordData => {
                         const existingWord = vocabulary.find(
                             w => w.french.toLowerCase() === wordData.french.toLowerCase()
@@ -440,7 +388,6 @@ export const VocabularyProvider = ({ children }) => {
                         }
                     });
 
-                    // Create the deck
                     const newDeck = createDeck(
                         data.deck.name,
                         data.deck.description,
@@ -458,6 +405,10 @@ export const VocabularyProvider = ({ children }) => {
         });
     }, [vocabulary, addCustomWord, createDeck]);
 
+    const downloadAudioOnce = async () => {
+        await cacheVocabularyAudio(vocabulary);
+    };
+
     const contextValue = useMemo(() => ({
         vocabulary,
         updateWordProgress,
@@ -472,7 +423,6 @@ export const VocabularyProvider = ({ children }) => {
         playWordAudio,
         toggleSaveWord,
         addCustomWord,
-        // Custom Deck functions
         customDecks,
         createDeck,
         updateDeck,
@@ -481,37 +431,17 @@ export const VocabularyProvider = ({ children }) => {
         addWordToDeck,
         removeWordFromDeck,
         exportDeck,
-        importDeck
-    }), [vocabulary, getDueWords, getWeightedPracticeWords, updateWordProgress, toggleSaveWord, addCustomWord, customDecks, createDeck, updateDeck, deleteDeck, getDeckWords, addWordToDeck, removeWordFromDeck, exportDeck, importDeck]);
+        importDeck,
+        markWordSeen,
+        togglePinWord,
+        snoozeWord,
+        clearSnooze,
+        getPracticeQueue,
+        downloadAudioOnce
+    }), [vocabulary, getDueWords, getWeightedPracticeWords, updateWordProgress, toggleSaveWord, addCustomWord, customDecks, createDeck, updateDeck, deleteDeck, getDeckWords, addWordToDeck, removeWordFromDeck, exportDeck, importDeck, markWordSeen, togglePinWord, snoozeWord, clearSnooze, getPracticeQueue]);
 
     return (
         <VocabularyContext.Provider value={contextValue}>
-=======
-    const downloadAudioOnce = async () => {
-        await cacheVocabularyAudio(vocabulary);
-    };
-
-    return (
-        <VocabularyContext.Provider value={contextValue}>
-        <VocabularyContext.Provider value={{
-            vocabulary,
-            updateWordProgress,
-            markWordSeen,
-            togglePinWord,
-            snoozeWord,
-            clearSnooze,
-            getDueWords,
-            getPracticeQueue,
-            resetVocabulary,
-            CATEGORIES,
-            getVocabularyByCategory,
-            getAllCategories,
-            downloadAudioOnce
-            hydrateVocabulary
-            preloadAudioForWords,
-            playWordAudio
-        }}>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
             {children}
         </VocabularyContext.Provider>
     );

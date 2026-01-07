@@ -4,7 +4,7 @@ import { useProgress } from './ProgressContext';
 import { useVocabulary } from './VocabularyContext';
 import { exportPayload, loadRemoteState, mergeState, saveRemoteState } from '../services/cloudSync';
 
-const SyncContext = createContext();
+export const SyncContext = createContext();
 
 export const SyncProvider = ({ children }) => {
     const { user } = useAuth();
