@@ -4,7 +4,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { checkStreakMilestone } from '../data/leagues';
 import { useToast } from './ToastContext';
 
-const ProgressContext = createContext();
+export const ProgressContext = createContext();
 
 export const ProgressProvider = ({ children }) => {
     const { showAchievement, showSuccess } = useToast();
@@ -35,125 +35,77 @@ export const ProgressProvider = ({ children }) => {
             fallingWords: 3,
             flashcards: 2,
             grammar: 2
-        categoryStats: {}, // { "Family": { attempts: 10, correct: 8, totalResponseTime: 5000 } }
+        },
+        categoryStats: {},
         userGoals: {
             targetCEFR: "A1",
             weeklyXP: 1000,
             weeklyWords: 20
         },
-        dailyStats: {}, // { "2024-03-20": { xp: 50, words: 10, accuracy: 0.8, time: 3000 } }
-        errorPatterns: {}, // { "word_id": { count: 3, lastMiss: timestamp } }
-        reviewQueue: [], // List of word IDs to review
-        difficultySettings: {
-            globalMultiplier: 1.0,
-            showHints: true,
-            practiceModeNoPenalty: false,
-            challengeMode: false,      // Disable all hints when true
-            hintDelay: 8,              // Seconds before hints appear (0-10)
-            freeFormInput: false,      // Use text input instead of multiple choice
-            learnerType: 'casual'      // 'casual' | 'scholar'
-        },
+        dailyStats: {},
+        errorPatterns: {},
+        reviewQueue: [],
         dailyMixStreak: 0,
         lastDailyMixDate: null,
-        weakWords: {}, // { "wordId": { strength: 0-100, lastPracticed: timestamp } }
-        conceptMastery: {}, // { "concept_id": { interval, ef, attempts, correct, masteryLevel, ... } }
-        dailyXPGoal: 50, // Default beginner-friendly goal
-        conversationHistory: [], // [{ timestamp, promptId, metrics: { fluency, accuracy, vocabulary } }]
+        weakWords: {},
+        conceptMastery: {},
+        dailyXPGoal: 50,
+        conversationHistory: [],
         conversationStats: {
             totalSessions: 0,
             avgAccuracy: 0,
             avgFluency: 0
         },
-        // Learning Profile Quiz results
         learningProfile: {
-            preferAudio: null,      // true = audio, false = visual
-            preferStructured: null, // true = structured, false = exploration
-            preferPressure: null,   // true = timed/pressure, false = relaxed
-            preferGrammar: null,    // true = grammar focus, false = vocabulary
-            preferDaily: null,      // true = daily commitment, false = flexible
+            preferAudio: null,
+            preferStructured: null,
+            preferPressure: null,
+            preferGrammar: null,
+            preferDaily: null,
             completed: false,
             completedAt: null
         },
-        // Global difficulty 0-100 (0=Tourist, 100=Native)
-        globalDifficulty: 25, // Default to Beginner
-        // Weekly goals system (replaces daily streak anxiety)
-        weeklyGoal: {
-            sessionsPerWeek: 3,     // Target sessions per week
-            currentWeekStart: null, // ISO string of week start (Monday)
-            sessionsThisWeek: [],   // Array of dates when sessions completed
-            lastWeekCompleted: false
-        },
-        // Focus mode stats
+        globalDifficulty: 25,
         focusModeStats: {
             grammarHour: { completed: 0, totalTime: 0 },
             listeningLab: { completed: 0, totalTime: 0 },
             vocabSprint: { completed: 0, totalTime: 0 }
         },
-        // Immersive Content Library progress
-        branchingStoriesProgress: {},  // { storyId: { currentNode, history, endings: [] } }
-        readingRoomProgress: {},       // { readerId: { completed, comprehensionScore } }
-        shadowingProgress: {},         // { phraseId: { attempts, bestScore } }
-        cultureArticlesRead: [],       // Array of article IDs
+        branchingStoriesProgress: {},
+        readingRoomProgress: {},
+        shadowingProgress: {},
+        cultureArticlesRead: [],
         userLessonsCreated: 0,
-        // Learning Modalities preferences
-        speedRoundEnabled: true,        // Toggle for timed challenges in Daily Mix
-        preferredPlaybackSpeed: 1.0,    // Default podcast playback speed
-        podcastSessionsCompleted: 0,    // Track podcast mode usage
-        writingPadSessions: 0,          // Track writing pad usage
-        patternDrillsCompleted: 0,      // Track pattern drills usage
-        // Cultural Mastery Phase 8
-        regionProgress: {},             // { regionId: progressPercent }
-        mediaProgress: {},              // { clipId: { watched: boolean, quizScore: number } }
-        // Cognitive & Flow State Phase 12
+        speedRoundEnabled: true,
+        preferredPlaybackSpeed: 1.0,
+        podcastSessionsCompleted: 0,
+        writingPadSessions: 0,
+        patternDrillsCompleted: 0,
+        regionProgress: {},
+        mediaProgress: {},
         cognitiveStats: {
-            flowMultiplier: 1.0,    // 0.8 (easier) to 1.5 (harder)
-            lastResponseTimes: [],  // Moving window of last 10 responses
-            recentMisses: 0,        // Count of misses in last 10
-            fatigueLevel: 0,        // 0-100
+            flowMultiplier: 1.0,
+            lastResponseTimes: [],
+            recentMisses: 0,
+            fatigueLevel: 0,
             sessionStartTime: null,
             smartBreakSuggested: false
         },
         dreamGoals: {
-            thinkingInFrench: null, // Date timestamp
-            dreamingInFrench: null, // Date timestamp
+            thinkingInFrench: null,
+            dreamingInFrench: null,
             firstJokeUnderstood: null,
             firstSongUnderstood: null
         },
         memoryPalace: {
-            rooms: {
-                // 'kitchen': { items: [{ wordId: 'pomme', x: 50, y: 50 }] }
-            },
+            rooms: {},
             unlockedRooms: ['kitchen']
         },
-        survivalBest: {}                // { scenarioId: bestTimeRemaining }
+        survivalBest: {}
     };
 
     const [stats, setStats] = useState(() => {
         const saved = localStorage.getItem('frenchApp_progress');
-        const baseState = {
-            xp: 0,
-            seasonalXp: 0,
-            seasonEndsAt: null,
-            seasonId: null,
-            streak: 0,
-            coins: 50,
-            inventory: {},
-            doubleXpUntil: null,
-            lastLoginDate: null,
-            highScore: 0,
-            wordsLearned: 0,
-            storiesCompleted: 0,
-            conversationsCompleted: 0,
-            perfectQuizzes: 0,
-            timedChallengesCompleted: 0,
-            unlockedAchievements: []
-            unlockedAchievements: [],
-            conversationHistory: [],
-            updatedAt: Date.now()
-        };
-        return saved ? { ...baseState, ...JSON.parse(saved) } : baseState;
-<<<<<<< HEAD
-=======
         if (saved) {
             const parsed = JSON.parse(saved);
             return {
@@ -166,10 +118,8 @@ export const ProgressProvider = ({ children }) => {
             };
         }
         return defaultStats;
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     });
 
-    // Ensure new fields exist if loading from old state
     useEffect(() => {
         setStats(prev => ({
             ...prev,
@@ -179,7 +129,6 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
-    // Save to local storage whenever stats change
     useEffect(() => {
         localStorage.setItem('frenchApp_progress', JSON.stringify(stats));
     }, [stats]);
@@ -189,14 +138,12 @@ export const ProgressProvider = ({ children }) => {
         const lastLogin = stats.lastLoginDate;
 
         if (lastLogin !== today) {
-            // It's a new day or first login
             const yesterday = new Date();
             yesterday.setDate(yesterday.getDate() - 1);
 
             if (lastLogin === yesterday.toDateString()) {
                 // Maintained streak
             } else if (lastLogin && new Date(lastLogin) < yesterday) {
-                // Streak broken - Check for Freeze
                 if (stats.inventory?.['streak_freeze'] > 0) {
                     setStats(prev => ({
                         ...prev,
@@ -204,20 +151,17 @@ export const ProgressProvider = ({ children }) => {
                             ...prev.inventory,
                             'streak_freeze': prev.inventory['streak_freeze'] - 1
                         },
-                        frozenUsed: true, // Optional flag to show user they were saved
+                        frozenUsed: true,
                         updatedAt: Date.now()
                     }));
                 } else {
                     setStats(prev => ({ ...prev, streak: 0, updatedAt: Date.now() }));
                 }
             }
-            // Update login date
             setStats(prev => ({ ...prev, lastLoginDate: today, updatedAt: Date.now() }));
         }
     }, [stats.inventory, stats.lastLoginDate]);
-    }, [stats]);
 
-    // Check streak on mount
     useEffect(() => {
         checkStreak();
     }, [checkStreak]);
@@ -259,36 +203,14 @@ export const ProgressProvider = ({ children }) => {
         ensureSeasonWindow();
         const isDoubleXpActive = stats.doubleXpUntil && Date.now() < stats.doubleXpUntil;
         const finalAmount = isDoubleXpActive ? amount * 2 : amount;
-        const today = new Date().toDateString();
 
-<<<<<<< HEAD
-        setStats(prev => {
-            const currentDaily = prev.dailyStats?.[today] || {};
-            const newDailyXP = (currentDaily.dailyXP || 0) + finalAmount;
-
-            return {
-                ...prev,
-                xp: prev.xp + finalAmount,
-                dailyStats: {
-                    ...prev.dailyStats,
-                    [today]: {
-                        ...currentDaily,
-                        dailyXP: newDailyXP,
-                        xp: (currentDaily.xp || 0) + finalAmount
-                    }
-                },
-                updatedAt: Date.now()
-            };
-        });
-=======
         setStats(prev => ({
             ...prev,
             xp: prev.xp + finalAmount,
-            seasonalXp: (prev.seasonalXp || 0) + finalAmount
+            seasonalXp: (prev.seasonalXp || 0) + finalAmount,
             updatedAt: Date.now()
         }));
         updateDailyStat('dailyXP', finalAmount);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     };
 
     const activateDoubleXP = (durationMinutes = 15) => {
@@ -304,7 +226,6 @@ export const ProgressProvider = ({ children }) => {
         return stats.doubleXpUntil && Date.now() < stats.doubleXpUntil;
     };
 
-    // Stat incrementers for achievement tracking
     const incrementStat = (statName, amount = 1) => {
         setStats(prev => ({
             ...prev,
@@ -313,7 +234,6 @@ export const ProgressProvider = ({ children }) => {
         }));
     };
 
-    // Check and unlock achievements
     const checkAchievements = useCallback(() => {
         const currentLevel = calculateLevel(stats.xp);
         const newUnlocks = [];
@@ -332,7 +252,7 @@ export const ProgressProvider = ({ children }) => {
                 unlockedAchievements: [...(prev.unlockedAchievements || []), ...newUnlocks],
                 xp: prev.xp + newUnlocks.reduce((sum, id) => {
                     const ach = ACHIEVEMENTS.find(a => a.id === id);
-                    if (ach) showAchievement(ach); // Trigger Toast
+                    if (ach) showAchievement(ach);
                     return sum + (ach?.xpReward || 0);
                 }, 0),
                 updatedAt: Date.now()
@@ -342,66 +262,17 @@ export const ProgressProvider = ({ children }) => {
         return [];
     }, [stats]);
 
-    // Run achievement check when stats change
     useEffect(() => {
         checkAchievements();
-    }, [stats]);
     }, [checkAchievements]);
 
     const addCoins = (amount) => {
-<<<<<<< HEAD
-        setStats(prev => {
-            const today = new Date().toDateString();
-            const currentDaily = prev.dailyStats?.[today] || {};
-            const coinsAlreadyEarned = currentDaily.coinsEarned || 0;
-
-            // Soft Cap Logic
-            // 0-100: 100%
-            // 100-250: 50%
-            // 250+: 10%
-
-            let effectiveAmount = 0;
-            let remainingAmount = amount;
-            let currentTierBase = coinsAlreadyEarned;
-
-            // Simple stepwise calculation
-            // Note: This is a bit simplified, calculating per-event rather than strictly cutting off mid-amount,
-            // but for small increments (typical 5-10 coins) it's fine to just check the starting tier.
-
-            let multiplier = 1.0;
-            if (currentTierBase >= 250) {
-                multiplier = 0.1;
-            } else if (currentTierBase >= 100) {
-                multiplier = 0.5;
-            }
-
-            // Apply multiplier
-            effectiveAmount = Math.ceil(amount * multiplier);
-
-            // Update stats
-            return {
-                ...prev,
-                coins: (prev.coins || 0) + effectiveAmount,
-                dailyStats: {
-                    ...prev.dailyStats,
-                    [today]: {
-                        ...currentDaily,
-                        coinsEarned: coinsAlreadyEarned + effectiveAmount
-                    }
-                },
-                updatedAt: Date.now()
-            };
-        });
-
-        // Return true/false or actual amount earned if needed later, but void for now
-=======
         setStats(prev => ({
             ...prev,
             coins: (prev.coins || 0) + amount,
             updatedAt: Date.now()
         }));
         updateDailyStat('dailyCoins', amount);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     };
 
     const spendCoins = (amount) => {
@@ -417,21 +288,16 @@ export const ProgressProvider = ({ children }) => {
     };
 
     const buyItem = (item) => {
-        // item object should have id, basePrice (or price), type
         const cost = item.price || item.basePrice;
         if (stats.coins >= cost) {
             setStats(prev => {
                 const currentInventory = prev.inventory || {};
                 let newInventoryData = 0;
-
-                // If it's a cosmetic, we just store "true" (owned) or 1.
-                // If it's a consumable, we stack it.
                 if (item.type === 'cosmetic') {
-                    newInventoryData = 1; // Owned
+                    newInventoryData = 1;
                 } else {
                     newInventoryData = (currentInventory[item.id] || 0) + 1;
                 }
-
                 return {
                     ...prev,
                     coins: prev.coins - cost,
@@ -450,7 +316,6 @@ export const ProgressProvider = ({ children }) => {
     const consumeItem = (itemId, amount = 1) => {
         const owned = stats.inventory?.[itemId] || 0;
         if (owned < amount) return false;
-
         setStats(prev => ({
             ...prev,
             inventory: {
@@ -463,17 +328,12 @@ export const ProgressProvider = ({ children }) => {
 
     const incrementStreak = () => {
         const today = new Date().toDateString();
-
         setStats(prev => {
-            if (prev.lastStreakDate === today) return prev; // Already incremented today
-
+            if (prev.lastStreakDate === today) return prev;
             const newStreak = prev.streak + 1;
-
-            // Check for milestone rewards
             const milestone = checkStreakMilestone(newStreak);
             let bonusXP = 0;
             let bonusCoins = 0;
-
             if (milestone) {
                 bonusXP = milestone.xpBonus;
                 bonusCoins = milestone.coinBonus;
@@ -481,7 +341,6 @@ export const ProgressProvider = ({ children }) => {
             } else if (newStreak % 5 === 0) {
                 showSuccess(`🔥 ${newStreak} Day Streak! Keep it up!`);
             }
-
             return {
                 ...prev,
                 streak: newStreak,
@@ -533,8 +392,7 @@ export const ProgressProvider = ({ children }) => {
         localStorage.setItem('frenchApp_offlineAudio', JSON.stringify(offlineAudio));
     }, [offlineAudio]);
 
-    const toggleAudio = () => setAudioEnabled(prev => !prev);
-    const toggleOfflineAudio = () => setOfflineAudio(prev => !prev);
+    useEffect(() => {
         localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
         document.body.classList.toggle('reduced-motion', reducedMotion);
     }, [reducedMotion]);
@@ -545,29 +403,11 @@ export const ProgressProvider = ({ children }) => {
     }, [colorTheme]);
 
     const toggleAudio = () => setAudioEnabled(prev => !prev);
+    const toggleOfflineAudio = () => setOfflineAudio(prev => !prev);
     const toggleReducedMotion = () => setReducedMotion(prev => !prev);
     const switchColorTheme = (theme) => setColorTheme(theme);
 
     const resetProgress = () => {
-        const initialStats = {
-            xp: 0,
-            seasonalXp: 0,
-            seasonEndsAt: null,
-            seasonId: null,
-            streak: 0,
-            lastLoginDate: null,
-            highScore: 0,
-            coins: 50,
-            inventory: {},
-            unlockedAchievements: [],
-            wordsLearned: 0,
-            storiesCompleted: 0,
-            conversationsCompleted: 0,
-            perfectQuizzes: 0,
-            updatedAt: Date.now()
-        };
-        setStats(initialStats);
-        localStorage.setItem('frenchApp_progress', JSON.stringify(initialStats));
         setStats({ ...defaultStats });
         localStorage.setItem('frenchApp_progress', JSON.stringify(defaultStats));
     };
@@ -606,11 +446,9 @@ export const ProgressProvider = ({ children }) => {
                 lastResponseTime: 0,
                 lastMode: mode
             };
-
             const attempts = existing.attempts + 1;
             const correct = existing.correct + (success ? 1 : 0);
             const totalResponseTime = existing.totalResponseTime + (responseTime || 0);
-
             return {
                 ...prev,
                 categoryPerformance: {
@@ -629,6 +467,7 @@ export const ProgressProvider = ({ children }) => {
             };
         });
     };
+
     const hydrateProgress = (incomingStats) => {
         if (!incomingStats) return;
         setStats(prev => ({
@@ -644,7 +483,6 @@ export const ProgressProvider = ({ children }) => {
             const currentCatStats = prev.categoryStats?.[category] || { attempts: 0, correct: 0, totalResponseTime: 0 };
             const currentDaily = prev.dailyStats?.[today] || { xp: 0, words: 0, accuracy: 0, time: 0, attempts: 0, correct: 0 };
 
-            // Update Error Patterns if wrong
             let newErrorPatterns = { ...prev.errorPatterns };
             if (!isCorrect && wordId) {
                 const currentError = newErrorPatterns[wordId] || { count: 0, lastMiss: 0 };
@@ -654,7 +492,6 @@ export const ProgressProvider = ({ children }) => {
                 };
             }
 
-            // Daily Stats Math
             const newDailyAttempts = (currentDaily.attempts || 0) + 1;
             const newDailyCorrect = (currentDaily.correct || 0) + (isCorrect ? 1 : 0);
             const newDailyAccuracy = newDailyAttempts > 0 ? newDailyCorrect / newDailyAttempts : 0;
@@ -751,9 +588,7 @@ export const ProgressProvider = ({ children }) => {
     const markWordStrength = useCallback((wordId, score) => {
         setStats(prev => {
             const currentStrength = prev.weakWords?.[wordId]?.strength || 0;
-            // Weighted average: 70% old strength, 30% new score
             const newStrength = Math.round((currentStrength * 0.7) + (score * 0.3));
-
             return {
                 ...prev,
                 weakWords: {
@@ -807,16 +642,12 @@ export const ProgressProvider = ({ children }) => {
         setStats(prev => {
             const history = prev.conversationHistory || [];
             const newHistory = [...history, { ...sessionData, timestamp: Date.now() }];
-
-            // Limit history to last 50 sessions
             if (newHistory.length > 50) newHistory.shift();
 
-            // Calculate aggregated stats
             const totalSessions = (prev.conversationStats?.totalSessions || 0) + 1;
             const currentAvgAcc = prev.conversationStats?.avgAccuracy || 0;
             const currentAvgFlu = prev.conversationStats?.avgFluency || 0;
 
-            // Moving average
             const newAvgAcc = ((currentAvgAcc * (totalSessions - 1)) + (sessionData.metrics?.accuracy || 0)) / totalSessions;
             const newAvgFlu = ((currentAvgFlu * (totalSessions - 1)) + (sessionData.metrics?.fluency || 0)) / totalSessions;
 
@@ -834,7 +665,6 @@ export const ProgressProvider = ({ children }) => {
         });
     }, []);
 
-    // Concept Mastery Tracking (Smart Review 2.0)
     const logConceptAttempt = useCallback((conceptId, isCorrect, responseTimeMs = 0) => {
         setStats(prev => {
             const currentConcept = prev.conceptMastery?.[conceptId] || {
@@ -849,8 +679,6 @@ export const ProgressProvider = ({ children }) => {
             };
 
             const grade = isCorrect ? (responseTimeMs < 3000 ? 5 : 4) : 1;
-
-            // Calculate new state
             const attempts = currentConcept.attempts + 1;
             const correct = currentConcept.correct + (isCorrect ? 1 : 0);
             let { interval, repetition, ef } = currentConcept;
@@ -866,15 +694,12 @@ export const ProgressProvider = ({ children }) => {
                 interval = 1;
             }
 
-            // Update ease factor
             ef = ef + (0.1 - (5 - grade) * (0.08 + (5 - grade) * 0.02));
             if (ef < 1.3) ef = 1.3;
 
-            // Calculate mastery level
             const accuracy = attempts > 0 ? correct / attempts : 0;
             const recencyBonus = repetition >= 3 ? 20 : repetition * 5;
             const masteryLevel = Math.min(100, Math.round(accuracy * 80 + recencyBonus));
-
             const DAY_MS = 24 * 60 * 60 * 1000;
 
             return {
@@ -897,7 +722,6 @@ export const ProgressProvider = ({ children }) => {
         });
     }, []);
 
-    // Get weak concepts that need review
     const getWeakConceptsList = useCallback(() => {
         const conceptMastery = stats.conceptMastery || {};
         const weakConcepts = [];
@@ -906,7 +730,6 @@ export const ProgressProvider = ({ children }) => {
 
         for (const [conceptId, state] of Object.entries(conceptMastery)) {
             if (!state) continue;
-
             const isWeak = state.masteryLevel < masteryThreshold;
             const isOverdue = state.dueDate && now > state.dueDate;
             const hasEnoughData = state.attempts >= 3;
@@ -919,11 +742,9 @@ export const ProgressProvider = ({ children }) => {
                 });
             }
         }
-
         return weakConcepts.sort((a, b) => a.masteryLevel - b.masteryLevel);
     }, [stats.conceptMastery]);
 
-    // Learning Profile Management
     const setLearningProfile = useCallback((profile) => {
         setStats(prev => ({
             ...prev,
@@ -937,7 +758,6 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
-    // Global Difficulty (0-100)
     const setGlobalDifficulty = useCallback((value) => {
         const clampedValue = Math.max(0, Math.min(100, value));
         setStats(prev => ({
@@ -947,11 +767,10 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
-    // Weekly Goal Management
     const getWeekStart = () => {
         const now = new Date();
         const day = now.getDay();
-        const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Adjust for Monday
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
         const monday = new Date(now.setDate(diff));
         monday.setHours(0, 0, 0, 0);
         return monday.toISOString();
@@ -976,7 +795,6 @@ export const ProgressProvider = ({ children }) => {
             const weeklyGoal = prev.weeklyGoal || {};
             let sessionsThisWeek = weeklyGoal.sessionsThisWeek || [];
 
-            // Reset if new week
             if (weeklyGoal.currentWeekStart !== currentWeekStart) {
                 const wasComplete = sessionsThisWeek.length >= (weeklyGoal.sessionsPerWeek || 3);
                 sessionsThisWeek = [];
@@ -992,7 +810,6 @@ export const ProgressProvider = ({ children }) => {
                 };
             }
 
-            // Add today if not already recorded
             if (!sessionsThisWeek.includes(today)) {
                 sessionsThisWeek = [...sessionsThisWeek, today];
             }
@@ -1016,7 +833,6 @@ export const ProgressProvider = ({ children }) => {
         return (weeklyGoal.sessionsThisWeek || []).length >= (weeklyGoal.sessionsPerWeek || 3);
     }, [stats.weeklyGoal]);
 
-    // Focus Mode Stats
     const recordFocusModeCompletion = useCallback((mode, timeSpentMs) => {
         setStats(prev => ({
             ...prev,
@@ -1031,7 +847,6 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
-    // Generic updateStats function for flexible state updates
     const updateStats = useCallback((updates) => {
         setStats(prev => ({
             ...prev,
@@ -1040,7 +855,6 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
-    // Cultural Mastery Phase 8
     const updateRegionProgress = useCallback((regionId, progress) => {
         setStats(prev => ({
             ...prev,
@@ -1080,6 +894,36 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
+    // Cognitive Stats Update (placeholder as original code seemed to lack definition or it was cut off in context)
+    const updateCognitiveState = useCallback((newState) => {
+        setStats(prev => ({
+            ...prev,
+            cognitiveStats: { ...prev.cognitiveStats, ...newState },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    // Dream Goals Log
+    const logDreamGoal = useCallback((goalKey, value) => {
+        setStats(prev => ({
+            ...prev,
+            dreamGoals: { ...prev.dreamGoals, [goalKey]: value },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    // Memory Palace
+    const updateMemoryPalaceRoom = useCallback((roomKey, roomData) => {
+        setStats(prev => ({
+            ...prev,
+            memoryPalace: {
+                ...prev.memoryPalace,
+                rooms: { ...prev.memoryPalace.rooms, [roomKey]: roomData }
+            },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
     return (
         <ProgressContext.Provider value={{
             stats,
@@ -1106,7 +950,6 @@ export const ProgressProvider = ({ children }) => {
             activateDoubleXP,
             isDoubleXpActive,
             updateDailyStat,
-            achievements: stats.unlockedAchievements || []
             achievements: stats.unlockedAchievements || [],
             hydrateProgress,
             completeOnboarding,
@@ -1114,7 +957,7 @@ export const ProgressProvider = ({ children }) => {
             setTargetCefr,
             setWeeklyGoal,
             setModeDifficulty,
-            recordCategoryPerformance
+            recordCategoryPerformance,
             logWordAttempt,
             updateUserGoals,
             userGoals: stats.userGoals,
@@ -1136,40 +979,31 @@ export const ProgressProvider = ({ children }) => {
             trackConversationSession,
             conversationHistory: stats.conversationHistory || [],
             conversationStats: stats.conversationStats || {},
-            // Learning Profile
             learningProfile: stats.learningProfile || {},
             setLearningProfile,
-            // Global Difficulty
             globalDifficulty: stats.globalDifficulty ?? 25,
             setGlobalDifficulty,
-            // Weekly Goals
             weeklyGoal: stats.weeklyGoal || { sessionsPerWeek: 3, sessionsThisWeek: [] },
             updateWeeklyGoal,
             recordWeeklySession,
             isWeeklyGoalMet,
-            // Focus Mode Stats
             focusModeStats: stats.focusModeStats || {},
             recordFocusModeCompletion,
-            // Concept Mastery (Smart Review 2.0)
             conceptMastery: stats.conceptMastery || {},
             logConceptAttempt,
             getWeakConceptsList,
-            // Generic state updater
             updateStats,
-            // Immersive Content Library
             branchingStoriesProgress: stats.branchingStoriesProgress || {},
             readingRoomProgress: stats.readingRoomProgress || {},
             shadowingProgress: stats.shadowingProgress || {},
             cultureArticlesRead: stats.cultureArticlesRead || [],
             userLessonsCreated: stats.userLessonsCreated || 0,
-            // Cultural Mastery Phase 8
             regionProgress: stats.regionProgress || {},
             mediaProgress: stats.mediaProgress || {},
             survivalBest: stats.survivalBest || {},
             updateRegionProgress,
             updateMediaProgress,
             updateSurvivalBest,
-            // Cognitive Phase 12
             updateCognitiveState,
             logDreamGoal,
             updateMemoryPalaceRoom,

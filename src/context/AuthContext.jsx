@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { nanoid } from '../utils/id';
 
-const AuthContext = createContext();
+export const AuthContext = createContext();
 
 const STORAGE_KEY = 'frenchApp_user';
 const CREDENTIALS_KEY = 'frenchApp_credentials';
