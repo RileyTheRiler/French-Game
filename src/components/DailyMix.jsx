@@ -1,93 +1,7 @@
-<<<<<<< HEAD
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-=======
-import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, Award, Check, X, Lightbulb } from 'lucide-react';
-import { GameLayout } from './layout/GameLayout';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
-import { Card } from './ui/Card';
-import { useVocabulary } from '../context/VocabularyContext';
-import { useProgress } from '../context/ProgressContext';
-import { speak } from '../utils/audio';
-import SoundManager from '../utils/SoundManager';
-import { calculateRewards } from '../utils/rewardSystem';
-import React, { useMemo, useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Lightbulb, Volume2, Award, Check, X, Mic, Keyboard, Repeat } from 'lucide-react';
-import SoundManager from '../utils/SoundManager';
-import { useVocabulary } from '../context/VocabularyContext';
-import { useProgress } from '../context/ProgressContext';
-import { playWordAudio } from '../utils/audio';
-import { scorePronunciation } from '../utils/phonetics';
-import { Badge } from './ui/Badge';
-import { Button } from './ui/Button';
-import { Card } from './ui/Card';
-import { GameLayout } from './layout/GameLayout';
-
-const CHALLENGE_TYPES = {
-    MULTIPLE_CHOICE: 'multiple_choice',
-    LISTENING: 'listening',
-    REVERSE_FLASHCARD: 'reverse_flashcard'
-};
-
-const buildOptions = (word, vocabulary) => {
-    const distractors = [...vocabulary]
-        .filter(w => w.id !== word.id)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, 3)
-        .map(w => w.english);
-    const options = [word.english, ...distractors].sort(() => Math.random() - 0.5);
-    return options;
-};
-
-const buildSession = (vocabulary) => {
-    const pool = [...vocabulary].sort(() => Math.random() - 0.5).slice(0, 8);
-    return pool.map((word, idx) => {
-        const typeCycle = idx % 3;
-        const type = typeCycle === 0 ? CHALLENGE_TYPES.MULTIPLE_CHOICE : typeCycle === 1 ? CHALLENGE_TYPES.LISTENING : CHALLENGE_TYPES.REVERSE_FLASHCARD;
-        return {
-            id: `${word.id}-${idx}`,
-            word,
-            options: buildOptions(word, vocabulary),
-            type
-        };
-    });
-};
-    REVERSE_FLASHCARD: 'reverse_flashcard',
-    LISTEN_AND_TYPE: 'listen_type',
-    SHADOW: 'shadow_audio'
-};
-
-const buildOptions = (word, vocabulary) => {
-    const pool = vocabulary.filter(w => w.id !== word.id);
-    const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 3).map(w => w.english);
-    return [...shuffled, word.english].sort(() => Math.random() - 0.5);
-};
-
-const buildQueue = (vocabulary) => {
-    const sequence = [CHALLENGE_TYPES.MULTIPLE_CHOICE, CHALLENGE_TYPES.LISTENING, CHALLENGE_TYPES.LISTEN_AND_TYPE, CHALLENGE_TYPES.SHADOW, CHALLENGE_TYPES.REVERSE_FLASHCARD];
-    const seed = [...vocabulary].sort(() => Math.random() - 0.5).slice(0, 8);
-
-    return seed.map((word, idx) => {
-        const type = sequence[idx % sequence.length];
-        return {
-            word,
-            type,
-            options: buildOptions(word, vocabulary)
-        };
-    });
-};
-
-const normalize = (text) => text.toLowerCase().trim().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '');
-import React, { useEffect, useMemo, useState } from 'react';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
-import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Award, Check, Lightbulb, Volume2, X, Timer, Zap, RotateCcw, Calendar } from 'lucide-react';
+import { Award, Check, Lightbulb, Volume2, X, Timer, Zap, RotateCcw, Calendar, Mic, Keyboard, Repeat } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from './layout/GameLayout';
@@ -102,6 +16,8 @@ import { GRAMMAR_DRILLS, DRILL_CATEGORIES } from '../data/grammar';
 import { generateContextCloze } from '../data/contextClozeData';
 import { calculateRetentionProbability } from '../utils/srs';
 import { getDifficultyConfig } from './ui/DifficultyDial';
+import { scorePronunciation } from '../utils/phonetics';
+import { calculateRewards } from '../utils/rewardSystem';
 
 const CHALLENGE_TYPES = {
     MULTIPLE_CHOICE: 'multiple-choice',
@@ -109,10 +25,12 @@ const CHALLENGE_TYPES = {
     REVERSE_FLASHCARD: 'reverse-flashcard',
     GRAMMAR_CHECK: 'grammar-check',
     SPEED_ROUND: 'speed-round',
-    CONTEXT_CLOZE: 'context-cloze'
+    CONTEXT_CLOZE: 'context-cloze',
+    LISTEN_AND_TYPE: 'listen_type',
+    SHADOW: 'shadow_audio'
 };
 
-const SESSION_SIZE = 8; // Increased size to fit variety
+const normalize = (text) => text.toLowerCase().trim().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '');
 
 const SpeedRound = ({ vocabulary, onComplete }) => {
     const [timeLeft, setTimeLeft] = useState(30);
@@ -234,39 +152,10 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
 
 const DailyMix = () => {
     const navigate = useNavigate();
-    const { vocabulary, updateWordProgress } = useVocabulary();
-    const { addXP, addCoins, updateDailyStat } = useProgress();
-
-    const [sessionQueue, setSessionQueue] = useState([]);
-    const [currentIndex, setCurrentIndex] = useState(0);
-    const [isAnswered, setIsAnswered] = useState(false);
-    const [isCorrect, setIsCorrect] = useState(false);
-    const [selectedOption, setSelectedOption] = useState(null);
-    const [sessionComplete, setSessionComplete] = useState(false);
-    const [correctCount, setCorrectCount] = useState(0);
-    const [sessionReward, setSessionReward] = useState(null);
-
-    const currentChallenge = sessionQueue[currentIndex];
-
-    useEffect(() => {
-        setSessionQueue(buildSession(vocabulary));
-        setCurrentIndex(0);
-        setIsAnswered(false);
-        setIsCorrect(false);
-        setSelectedOption(null);
-        setSessionComplete(false);
-        setCorrectCount(0);
-        setSessionReward(null);
-    }, [vocabulary]);
-
     const onExit = () => navigate('/');
-    const { vocabulary, updateWordProgress, downloadAudioOnce } = useVocabulary();
-    const { addXP, addCoins, offlineAudio } = useProgress();
 
-    const [sessionQueue, setSessionQueue] = useState(() => buildQueue(vocabulary));
-
-    const { vocabulary, getWeightedPracticeWords, updateWordProgress, playWordAudio, preloadAudioForWords } = useVocabulary();
-    const { addXP, addCoins, incrementDailyMixStreak, dailyMixStreak, stats, globalDifficulty } = useProgress();
+    const { vocabulary, getWeightedPracticeWords, updateWordProgress, playWordAudio, preloadAudioForWords, downloadAudioOnce, CATEGORIES } = useVocabulary();
+    const { addXP, addCoins, incrementDailyMixStreak, updateDailyStat, stats, globalDifficulty, offlineAudio } = useProgress();
 
     const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
 
@@ -277,41 +166,105 @@ const DailyMix = () => {
     const [isAnswered, setIsAnswered] = useState(false);
     const [isCorrect, setIsCorrect] = useState(false);
     const [selectedOption, setSelectedOption] = useState(null);
-<<<<<<< HEAD
     const [isRevealed, setIsRevealed] = useState(false); // For Flashcards
-
-    // Session State
-=======
     const [inputValue, setInputValue] = useState('');
-    const [sessionComplete, setSessionComplete] = useState(false);
-    const [totalXP, setTotalXP] = useState(0);
     const [shadowResult, setShadowResult] = useState(null);
     const [isShadowing, setIsShadowing] = useState(false);
+
+    // Session State
+    const [sessionComplete, setSessionComplete] = useState(false);
+    const [totalXP, setTotalXP] = useState(0);
+    const [bonusXP, setBonusXP] = useState(0);
+    const [combo, setCombo] = useState(0);
+    const [sessionReward, setSessionReward] = useState(null);
 
     const recognitionRef = useRef(null);
     const hasPrefetchedAudio = useRef(false);
 
-    const currentChallenge = useMemo(() => sessionQueue[currentIndex], [sessionQueue, currentIndex]);
+    // Build the Mixed Session
+    const generateSession = () => {
+        const weightedWords = getWeightedPracticeWords ? getWeightedPracticeWords(10) : vocabulary.slice(0, 10);
 
-    useEffect(() => {
-        setSessionQueue(buildQueue(vocabulary));
+        let queue = [];
+
+        // 1. Add Vocabulary Challenges (Mixed Types)
+        // Prioritize context cloze for words with low retention
+        weightedWords.slice(0, 5).forEach(word => {
+            const retention = calculateRetentionProbability(word.srs);
+
+            // For low-retention words, try context cloze first
+            if (retention < 0.7) {
+                const clozeExercise = generateContextCloze(word, 2);
+                if (clozeExercise) {
+                    queue.push({
+                        word,
+                        type: CHALLENGE_TYPES.CONTEXT_CLOZE,
+                        clozeData: clozeExercise,
+                        retention,
+                        isSRSFocus: true
+                    });
+                    return;
+                }
+            }
+
+            const types = [CHALLENGE_TYPES.MULTIPLE_CHOICE, CHALLENGE_TYPES.LISTENING, CHALLENGE_TYPES.REVERSE_FLASHCARD, CHALLENGE_TYPES.LISTEN_AND_TYPE, CHALLENGE_TYPES.SHADOW];
+            const type = types[Math.floor(Math.random() * types.length)];
+
+            // Build options for MCQ/Listening
+            let options = [];
+            if (type === CHALLENGE_TYPES.MULTIPLE_CHOICE || type === CHALLENGE_TYPES.LISTENING) {
+                const distractors = vocabulary.filter(w => w.id !== word.id).sort(() => Math.random() - 0.5).slice(0, difficultyConfig.numOptions - 1);
+                options = [word.english, ...distractors.map(d => d.english)].sort(() => Math.random() - 0.5);
+            }
+
+            queue.push({ word, type, options, retention });
+        });
+
+        // 2. Add Grammar Drill (1-2 per session)
+        if (GRAMMAR_DRILLS.length > 0) {
+            const drill = GRAMMAR_DRILLS[Math.floor(Math.random() * GRAMMAR_DRILLS.length)];
+            queue.splice(2, 0, { type: CHALLENGE_TYPES.GRAMMAR_CHECK, drill }); // Insert at index 2
+        }
+
+        // 3. Add Speed Round as Finale (if enabled)
+        if (stats?.speedRoundEnabled) {
+            queue.push({ type: CHALLENGE_TYPES.SPEED_ROUND });
+        }
+
+        setSessionQueue(queue);
         setCurrentIndex(0);
+        setSessionComplete(false);
+        setTotalXP(0);
+        setBonusXP(0);
+        setCombo(0);
         setIsAnswered(false);
-        setIsCorrect(false);
+        setIsRevealed(false);
         setInputValue('');
         setShadowResult(null);
-        setTotalXP(0);
+
+        preloadAudioForWords(weightedWords);
+    };
+
+    // Initial Load
+    useEffect(() => {
+        if (vocabulary.length > 0 && sessionQueue.length === 0) {
+            generateSession();
+        }
     }, [vocabulary]);
 
     useEffect(() => {
-        if (offlineAudio && !hasPrefetchedAudio.current) {
+        if (offlineAudio && !hasPrefetchedAudio.current && downloadAudioOnce) {
             hasPrefetchedAudio.current = true;
             downloadAudioOnce();
         }
     }, [offlineAudio, downloadAudioOnce]);
 
+    const currentChallenge = sessionQueue[currentIndex];
+
+    // Shadowing Effect
     useEffect(() => {
         if (!currentChallenge) return;
+        if (currentChallenge.type !== CHALLENGE_TYPES.SHADOW) return;
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return;
@@ -344,82 +297,6 @@ const DailyMix = () => {
         recognitionRef.current.onend = () => setIsShadowing(false);
         recognitionRef.current.onerror = () => setIsShadowing(false);
     }, [currentChallenge, updateWordProgress]);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
-    const [sessionComplete, setSessionComplete] = useState(false);
-    const [totalXP, setTotalXP] = useState(0);
-    const [bonusXP, setBonusXP] = useState(0);
-    const [combo, setCombo] = useState(0);
-
-    // Build the Mixed Session
-    const generateSession = () => {
-        const weightedWords = getWeightedPracticeWords(10); // Get top priority words
-
-        let queue = [];
-
-        // 1. Add Vocabulary Challenges (Mixed Types)
-        // Prioritize context cloze for words with low retention
-        weightedWords.slice(0, 5).forEach(word => {
-            const retention = calculateRetentionProbability(word.srs);
-
-            // For low-retention words, try context cloze first
-            if (retention < 0.7) {
-                const clozeExercise = generateContextCloze(word, 2);
-                if (clozeExercise) {
-                    queue.push({
-                        word,
-                        type: CHALLENGE_TYPES.CONTEXT_CLOZE,
-                        clozeData: clozeExercise,
-                        retention,
-                        isSRSFocus: true
-                    });
-                    return;
-                }
-            }
-
-            const types = [CHALLENGE_TYPES.MULTIPLE_CHOICE, CHALLENGE_TYPES.LISTENING, CHALLENGE_TYPES.REVERSE_FLASHCARD];
-            const type = types[Math.floor(Math.random() * types.length)];
-
-            // Build options for MCQ/Listening
-            let options = [];
-            if (type !== CHALLENGE_TYPES.REVERSE_FLASHCARD) {
-                const distractors = vocabulary.filter(w => w.id !== word.id).sort(() => Math.random() - 0.5).slice(0, difficultyConfig.numOptions - 1);
-                options = [word.english, ...distractors.map(d => d.english)].sort(() => Math.random() - 0.5);
-            }
-
-            queue.push({ word, type, options, retention });
-        });
-
-        // 2. Add Grammar Drill (1-2 per session)
-        if (GRAMMAR_DRILLS.length > 0) {
-            const drill = GRAMMAR_DRILLS[Math.floor(Math.random() * GRAMMAR_DRILLS.length)];
-            queue.splice(2, 0, { type: CHALLENGE_TYPES.GRAMMAR_CHECK, drill }); // Insert at index 2
-        }
-
-        // 3. Add Speed Round as Finale (if enabled)
-        if (stats.speedRoundEnabled) {
-            queue.push({ type: CHALLENGE_TYPES.SPEED_ROUND });
-        }
-
-        setSessionQueue(queue);
-        setCurrentIndex(0);
-        setSessionComplete(false);
-        setTotalXP(0);
-        setBonusXP(0);
-        setCombo(0);
-        setIsAnswered(false);
-
-        console.log("Daily Mix Generated:", queue.length, "items");
-        preloadAudioForWords(weightedWords);
-    };
-
-    // Initial Load
-    useEffect(() => {
-        if (vocabulary.length > 0 && sessionQueue.length === 0) {
-            generateSession();
-        }
-    }, [vocabulary]);
-
-    const currentChallenge = sessionQueue[currentIndex];
 
     const handleAnswer = (answer) => {
         if (isAnswered || !currentChallenge) return;
@@ -447,7 +324,32 @@ const DailyMix = () => {
         }
     };
 
-<<<<<<< HEAD
+    const handleTypedAnswer = () => {
+        if (isAnswered) return;
+        const cleaned = normalize(inputValue);
+        const target = normalize(currentChallenge.word.french);
+        const correct = cleaned === target;
+
+        setIsCorrect(correct);
+        setIsAnswered(true);
+        if (correct) {
+            SoundManager.playMatch();
+            setTotalXP(prev => prev + 15);
+            updateWordProgress(currentChallenge.word.id, true);
+        } else {
+            SoundManager.playMiss();
+            updateWordProgress(currentChallenge.word.id, false);
+        }
+    };
+
+    const startShadowing = () => {
+        if (!recognitionRef.current || isShadowing) return;
+        setShadowResult(null);
+        setIsShadowing(true);
+        recognitionRef.current.start();
+        playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio });
+    };
+
     const handleGrammarAnswer = (option) => {
         if (isAnswered) return;
         const isRight = option === currentChallenge.drill.answer;
@@ -490,34 +392,6 @@ const DailyMix = () => {
     };
 
     const handleFlashcardGrade = (grade) => {
-=======
-    const handleTypedAnswer = () => {
-        if (isAnswered) return;
-        const cleaned = normalize(inputValue);
-        const target = normalize(currentChallenge.word.french);
-        const correct = cleaned === target;
-
-        setIsCorrect(correct);
-        setIsAnswered(true);
-        if (correct) {
-            SoundManager.playMatch();
-            setCorrectCount(prev => prev + 1);
-            updateWordProgress(currentChallenge.word.id, true);
-        } else {
-            SoundManager.playMiss();
-            updateWordProgress(currentChallenge.word.id, false);
-        }
-    };
-
-    const startShadowing = () => {
-        if (!recognitionRef.current || isShadowing) return;
-        setShadowResult(null);
-        setIsShadowing(true);
-        recognitionRef.current.start();
-        playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio });
-    const handleSelfGrade = (grade) => {
-        const correct = grade !== 'again';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
         updateWordProgress(currentChallenge.word.id, grade);
         if (grade !== 'again') {
             SoundManager.playMatch();
@@ -527,6 +401,10 @@ const DailyMix = () => {
             triggerShake('daily-mix-container');
         }
         handleNext();
+    };
+
+    const handleSelfGrade = (grade) => {
+        handleFlashcardGrade(grade);
     };
 
     const handleSpeedRoundComplete = (xpEarned) => {
@@ -544,32 +422,23 @@ const DailyMix = () => {
             setShadowResult(null);
             setIsRevealed(false);
         } else {
-<<<<<<< HEAD
             finishSession();
-=======
-            const reward = calculateRewards('dailyMix', {
-                correct: correctCount,
-                total: sessionQueue.length
-            });
-            setSessionReward(reward);
-            addXP(reward.xp);
-            addCoins(reward.coins);
-            updateDailyStat('dailyReviews', sessionQueue.length);
-            addXP(totalXP);
-            addCoins(20);
-            SoundManager.playLevelUp();
-            setSessionComplete(true);
-            SoundManager.playLevelUp();
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
         }
     };
 
     const finishSession = () => {
+        const reward = calculateRewards ? calculateRewards('dailyMix', {
+            correct: Math.floor(totalXP / 10), // Approximate correct count
+            total: sessionQueue.length
+        }) : { xp: totalXP + bonusXP, coins: 25 };
+
+        setSessionReward(reward);
         SoundManager.playLevelUp();
         triggerConfetti();
-        addXP(totalXP + bonusXP);
-        addCoins(25);
-        incrementDailyMixStreak();
+        if (addXP) addXP(reward.xp);
+        if (addCoins) addCoins(reward.coins);
+        if (incrementDailyMixStreak) incrementDailyMixStreak();
+        if (updateDailyStat) updateDailyStat('dailyReviews', sessionQueue.length);
         setSessionComplete(true);
     };
 
@@ -579,7 +448,6 @@ const DailyMix = () => {
 
     if (sessionComplete) {
         return (
-<<<<<<< HEAD
             <GameLayout title="Daily Mix Complete" onBack={onExit}>
                 <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)]">
                     <SuccessState
@@ -603,66 +471,22 @@ const DailyMix = () => {
                     >
                         <div className="grid grid-cols-2 gap-4 w-full max-w-sm mx-auto">
                             <div className="bg-white/5 p-4 rounded-2xl text-center">
-                                <div className="text-3xl font-black text-indigo-400">+{totalXP + bonusXP}</div>
+                                <div className="text-3xl font-black text-indigo-400">+{sessionReward ? sessionReward.xp : totalXP + bonusXP}</div>
                                 <div className="text-xs text-slate-400 uppercase font-bold">Total XP</div>
                             </div>
                             <div className="bg-white/5 p-4 rounded-2xl text-center">
-                                <div className="text-3xl font-black text-amber-400">+25</div>
+                                <div className="text-3xl font-black text-amber-400">+{sessionReward ? sessionReward.coins : 25}</div>
                                 <div className="text-xs text-slate-400 uppercase font-bold">Coins</div>
                             </div>
                         </div>
                     </SuccessState>
-=======
-            <GameLayout title="Session Complete" onBack={onExit}>
-                <div className="h-[60vh] flex flex-col items-center justify-center text-center">
-                    <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="mb-8 p-8 bg-indigo-500/20 rounded-full"
-                    >
-                        <Award size={80} className="text-indigo-400" />
-                    </motion.div>
-                    <h2 className="text-5xl font-black mb-4 title-gradient">Daily Mix Done!</h2>
-                    <p className="text-slate-400 mb-8 max-w-md text-lg">
-                        Fantastic job! Recently missed items were prioritized to keep you sharp.
-                    </p>
-                    {sessionReward && (
-                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-12 w-full max-w-xs flex flex-col items-center shadow-2xl">
-                            <span className="text-slate-400 uppercase tracking-widest text-xs font-bold mb-2">Rewards</span>
-                            <div className="flex gap-8">
-                                <div className="text-center">
-                                    <span className="text-3xl font-black text-indigo-400">+{sessionReward.xp}</span>
-                                    <p className="text-xs text-indigo-300">XP</p>
-                                </div>
-                                <div className="text-center">
-                                    <span className="text-3xl font-black text-amber-400">+{sessionReward.coins}</span>
-                                    <p className="text-xs text-amber-300">Coins</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    <Button size="lg" onClick={onExit} className="px-12 py-4 text-xl">
-                        Return to Hub
-                    </Button>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                 </div>
             </GameLayout>
         );
     }
 
-<<<<<<< HEAD
     // Speed Round View
     if (currentChallenge.type === CHALLENGE_TYPES.SPEED_ROUND) {
-=======
-    const headerLabel = {
-        [CHALLENGE_TYPES.MULTIPLE_CHOICE]: 'What does this mean?',
-        [CHALLENGE_TYPES.LISTENING]: 'What did you hear?',
-        [CHALLENGE_TYPES.REVERSE_FLASHCARD]: 'Can you recall the translation?',
-        [CHALLENGE_TYPES.LISTEN_AND_TYPE]: 'Listen, then type the word',
-        [CHALLENGE_TYPES.SHADOW]: 'Shadow the audio in French'
-    }[currentChallenge.type];
-    if (!currentChallenge) {
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
         return (
             <GameLayout title="Daily Mix" subtitle="Speed Round" onBack={onExit}>
                 <div className="flex-1 flex flex-col justify-center">
@@ -671,6 +495,16 @@ const DailyMix = () => {
             </GameLayout>
         );
     }
+
+    const headerLabel = {
+        [CHALLENGE_TYPES.MULTIPLE_CHOICE]: 'What does this mean?',
+        [CHALLENGE_TYPES.LISTENING]: 'What did you hear?',
+        [CHALLENGE_TYPES.REVERSE_FLASHCARD]: 'Can you recall the translation?',
+        [CHALLENGE_TYPES.LISTEN_AND_TYPE]: 'Listen, then type the word',
+        [CHALLENGE_TYPES.SHADOW]: 'Shadow the audio in French',
+        [CHALLENGE_TYPES.GRAMMAR_CHECK]: 'Grammar Check',
+        [CHALLENGE_TYPES.CONTEXT_CLOZE]: 'Fill in the blank'
+    }[currentChallenge.type];
 
     // Standard Views
     return (
@@ -686,7 +520,16 @@ const DailyMix = () => {
         >
             <div id="daily-mix-container" className="max-w-2xl mx-auto w-full flex-1 flex flex-col justify-center p-4">
 
-<<<<<<< HEAD
+                {/* Challenge Header */}
+                {currentChallenge.type !== CHALLENGE_TYPES.GRAMMAR_CHECK && currentChallenge.type !== CHALLENGE_TYPES.CONTEXT_CLOZE && (
+                    <div className="text-center mb-12">
+                        <Badge variant="outline" className="mb-4 text-slate-400 border-white/10 flex items-center gap-2 mx-auto w-fit">
+                            <Lightbulb size={14} className="text-yellow-400" />
+                            {headerLabel}
+                        </Badge>
+                    </div>
+                )}
+
                 {/* Grammar View */}
                 {currentChallenge.type === CHALLENGE_TYPES.GRAMMAR_CHECK && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -718,60 +561,9 @@ const DailyMix = () => {
                                 </Button>
                             ))}
                         </div>
-=======
-                <div className="flex items-center justify-between mb-6">
-                    <Badge variant="outline" className="text-sm text-slate-300 border-white/10">
-                        CEFR {currentChallenge.word.cefr}
-                    </Badge>
-                    <Badge variant="secondary" className="text-sm">
-                        {CATEGORIES[currentChallenge.word.category]?.name || currentChallenge.word.category}
-                    </Badge>
-                </div>
-
-                {/* Challenge Header */}
-                <div className="text-center mb-12">
-                    <Badge variant="outline" className="mb-4 text-slate-400 border-white/10 flex items-center gap-2 mx-auto w-fit">
-                        <Lightbulb size={14} className="text-yellow-400" />
-                        {headerLabel}
-                    </Badge>
-
-                    <div className="flex items-center justify-center gap-6">
-                        {currentChallenge.type === CHALLENGE_TYPES.LISTENING && (
-                            <Button
-                                variant="default"
-                                size="lg"
-                                className="rounded-full w-24 h-24 bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-500/20 group"
-                                onClick={() => playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio })}
-                                onClick={handleListen}
-                            >
-                                <Volume2 size={40} className="group-hover:scale-110 transition-transform" />
-                            </Button>
-                        )}
-                        {currentChallenge.type === CHALLENGE_TYPES.REVERSE_FLASHCARD && (
-                            <h2 className="text-6xl font-black text-white px-8">
-                                {currentChallenge.word.english}
-                            </h2>
-                        )}
-                        {(currentChallenge.type === CHALLENGE_TYPES.MULTIPLE_CHOICE || currentChallenge.type === CHALLENGE_TYPES.LISTEN_AND_TYPE || currentChallenge.type === CHALLENGE_TYPES.SHADOW) && (
-                            <h2 className="text-6xl font-black text-white px-8">
-                                {currentChallenge.word.french}
-                            </h2>
-                        )}
-                        {currentChallenge.type !== CHALLENGE_TYPES.LISTENING && (
-                            <Button
-                                variant="ghost"
-                                className="rounded-full p-2 h-10 w-10"
-                                onClick={() => playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio })}
-                                onClick={handleListen}
-                            >
-                                <Volume2 size={24} className="text-slate-500" />
-                            </Button>
-                        )}
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                     </div>
                 )}
 
-<<<<<<< HEAD
                 {/* Context Cloze View (SRS Focus) */}
                 {currentChallenge.type === CHALLENGE_TYPES.CONTEXT_CLOZE && currentChallenge.clozeData && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -810,152 +602,6 @@ const DailyMix = () => {
                         {!isAnswered && (
                             <div className="grid grid-cols-2 gap-3">
                                 {currentChallenge.clozeData.options.map((opt, i) => (
-=======
-                {/* Challenge Area */}
-                <div className="flex-1 flex flex-col items-center justify-center p-4 w-full">
-                    <AnimatePresence mode="wait">
-                        {currentChallenge.type === CHALLENGE_TYPES.REVERSE_FLASHCARD ? (
-                            <motion.div
-                                key="reverse"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="w-full max-w-lg"
-                            >
-                                {!isRevealed ? (
-                                    <Card
-                                        className="h-64 flex flex-col items-center justify-center cursor-pointer hover:bg-white/5 transition-colors border-dashed border-2 border-white/10"
-                                        onClick={() => setIsRevealed(true)}
-                                    >
-                                        <p className="text-slate-500 uppercase tracking-widest font-bold">Think of the French word</p>
-                                        <p className="mt-4 text-indigo-400 font-bold">Click to show answer</p>
-                                    </Card>
-                                ) : (
-                                    <Card className="h-64 flex flex-col items-center justify-center bg-indigo-950/20 border-indigo-500/30">
-                                        <h3 className="text-4xl font-black text-indigo-300">{currentChallenge.word.french}</h3>
-                                        <div className="mt-12 flex gap-3 w-full px-6 flex-wrap">
-                                        <p className="text-indigo-200 mt-2">{currentChallenge.word.ipa}</p>
-                                        <p className="text-center text-slate-300 mt-3 px-6 text-base">
-                                            {currentChallenge.word.example?.french}
-                                            <span className="block text-slate-400 text-sm mt-1">{currentChallenge.word.example?.english}</span>
-                                        </p>
-                                        <div className="mt-12 flex gap-4 w-full px-6">
-                                            <Button
-                                                className="flex-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 border border-red-500/20 h-14"
-                                                onClick={() => handleSelfGrade('again')}
-                                            >
-                                                <X className="mr-2" /> Again
-                                            </Button>
-                                            <Button
-                                                className="flex-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/20 h-14"
-                                                onClick={() => handleSelfGrade('hard')}
-                                            >
-                                                Hard
-                                            </Button>
-                                            <Button
-                                                className="flex-1 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 h-14"
-                                                onClick={() => { setIsCorrect(true); setCorrectCount(prev => prev + 1); handleNext(); }}
-                                                onClick={() => handleSelfGrade('good')}
-                                            >
-                                                Good
-                                            </Button>
-                                            <Button
-                                                className="flex-1 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 border border-blue-500/20 h-14"
-                                                onClick={() => handleSelfGrade('easy')}
-                                            >
-                                                Easy
-                                            </Button>
-                                        </div>
-                                    </Card>
-                                )}
-                            </motion.div>
-                        ) : currentChallenge.type === CHALLENGE_TYPES.LISTEN_AND_TYPE ? (
-                            <motion.div
-                                key="listen-type"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="w-full max-w-xl flex flex-col gap-4"
-                            >
-                                <Card className="p-6 bg-white/5 border-white/10 flex flex-col gap-4">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2 text-slate-400 text-sm uppercase tracking-widest">
-                                            <Keyboard size={16} />
-                                            Listen then type in French
-                                        </div>
-                                        <Button
-                                            variant="secondary"
-                                            size="sm"
-                                            className="rounded-full"
-                                            onClick={() => playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio })}
-                                        >
-                                            <Volume2 size={18} className="mr-2" /> Play Audio
-                                        </Button>
-                                    </div>
-                                    <input
-                                        value={inputValue}
-                                        onChange={(e) => setInputValue(e.target.value)}
-                                        className="w-full bg-slate-900/60 border border-white/10 rounded-xl p-4 text-white text-xl"
-                                        placeholder="Type what you hear"
-                                        disabled={isAnswered}
-                                    />
-                                    <Button onClick={handleTypedAnswer} disabled={isAnswered || inputValue.length === 0}>
-                                        Submit
-                                    </Button>
-                                </Card>
-                            </motion.div>
-                        ) : currentChallenge.type === CHALLENGE_TYPES.SHADOW ? (
-                            <motion.div
-                                key="shadow"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="w-full max-w-xl flex flex-col gap-4 items-center"
-                            >
-                                <Card className="p-6 bg-white/5 border-white/10 w-full text-center flex flex-col gap-4 items-center">
-                                    <div className="flex items-center gap-2 text-slate-400 text-sm uppercase tracking-widest">
-                                        <Repeat size={16} />
-                                        Shadow the audio
-                                    </div>
-                                    <Button
-                                        onClick={startShadowing}
-                                        disabled={isShadowing}
-                                        className="rounded-full w-24 h-24 bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-500/20 group flex items-center justify-center text-lg"
-                                    >
-                                        <Mic size={32} className="mr-2" />
-                                        {isShadowing ? 'Listening' : 'Start'}
-                                    </Button>
-                                    {shadowResult && (
-                                        <div className="flex flex-col gap-2 items-center">
-                                            <p className={`font-bold ${shadowResult.accuracy >= 70 ? 'text-emerald-400' : 'text-red-400'}`}>
-                                                Accuracy: {shadowResult.accuracy}%
-                                            </p>
-                                            <div className="flex flex-wrap gap-2 justify-center">
-                                                {shadowResult.feedback.map((item, idx) => (
-                                                    <span
-                                                        key={`${item.phoneme}-${idx}`}
-                                                        className={`px-2 py-1 rounded-full text-xs font-semibold ${item.status === 'match' ? 'bg-emerald-500/20 text-emerald-300' :
-                                                            item.status === 'close' ? 'bg-amber-500/20 text-amber-300' :
-                                                                'bg-red-500/20 text-red-300'}`}
-                                                    >
-                                                        {item.phoneme}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </Card>
-                            </motion.div>
-                        ) : (
-                            <motion.div
-                                key="options"
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl"
-                            >
-                                {currentChallenge.options.map((option, idx) => (
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                                     <Button
                                         key={i}
                                         variant="outline"
@@ -1047,6 +693,89 @@ const DailyMix = () => {
                     </div>
                 )}
 
+                {/* Listen and Type View */}
+                {currentChallenge.type === CHALLENGE_TYPES.LISTEN_AND_TYPE && (
+                    <motion.div
+                        key="listen-type"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="w-full max-w-xl flex flex-col gap-4 mx-auto"
+                    >
+                        <Card className="p-6 bg-white/5 border-white/10 flex flex-col gap-4">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 text-slate-400 text-sm uppercase tracking-widest">
+                                    <Keyboard size={16} />
+                                    Listen then type in French
+                                </div>
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    className="rounded-full"
+                                    onClick={() => playWordAudio(currentChallenge.word, { preferCache: true, offlineOnly: offlineAudio })}
+                                >
+                                    <Volume2 size={18} className="mr-2" /> Play Audio
+                                </Button>
+                            </div>
+                            <input
+                                value={inputValue}
+                                onChange={(e) => setInputValue(e.target.value)}
+                                className="w-full bg-slate-900/60 border border-white/10 rounded-xl p-4 text-white text-xl"
+                                placeholder="Type what you hear"
+                                disabled={isAnswered}
+                            />
+                            <Button onClick={handleTypedAnswer} disabled={isAnswered || inputValue.length === 0}>
+                                Submit
+                            </Button>
+                        </Card>
+                    </motion.div>
+                )}
+
+                {/* Shadow View */}
+                {currentChallenge.type === CHALLENGE_TYPES.SHADOW && (
+                    <motion.div
+                        key="shadow"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="w-full max-w-xl flex flex-col gap-4 items-center mx-auto"
+                    >
+                        <Card className="p-6 bg-white/5 border-white/10 w-full text-center flex flex-col gap-4 items-center">
+                            <div className="flex items-center gap-2 text-slate-400 text-sm uppercase tracking-widest">
+                                <Repeat size={16} />
+                                Shadow the audio
+                            </div>
+                            <Button
+                                onClick={startShadowing}
+                                disabled={isShadowing}
+                                className="rounded-full w-24 h-24 bg-indigo-600 hover:bg-indigo-500 shadow-xl shadow-indigo-500/20 group flex items-center justify-center text-lg"
+                            >
+                                <Mic size={32} className="mr-2" />
+                                {isShadowing ? 'Listening' : 'Start'}
+                            </Button>
+                            {shadowResult && (
+                                <div className="flex flex-col gap-2 items-center">
+                                    <p className={`font-bold ${shadowResult.accuracy >= 70 ? 'text-emerald-400' : 'text-red-400'}`}>
+                                        Accuracy: {shadowResult.accuracy}%
+                                    </p>
+                                    <div className="flex flex-wrap gap-2 justify-center">
+                                        {shadowResult.feedback.map((item, idx) => (
+                                            <span
+                                                key={`${item.phoneme}-${idx}`}
+                                                className={`px-2 py-1 rounded-full text-xs font-semibold ${item.status === 'match' ? 'bg-emerald-500/20 text-emerald-300' :
+                                                    item.status === 'close' ? 'bg-amber-500/20 text-amber-300' :
+                                                        'bg-red-500/20 text-red-300'}`}
+                                            >
+                                                {item.phoneme}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </Card>
+                    </motion.div>
+                )}
+
                 {/* Feedback Footer (Shared for MCQ/Grammar/Listening) */}
                 {isAnswered && !isRevealed && currentChallenge.type !== CHALLENGE_TYPES.REVERSE_FLASHCARD && (
                     <motion.div
@@ -1067,7 +796,7 @@ const DailyMix = () => {
                                                 ? currentChallenge.drill.answer
                                                 : currentChallenge.type === CHALLENGE_TYPES.CONTEXT_CLOZE
                                                     ? currentChallenge.clozeData?.answer
-                                                    : currentChallenge.word?.english}
+                                                    : currentChallenge.word?.english || currentChallenge.word?.french}
                                         </span>
                                     </div>
                                 )}

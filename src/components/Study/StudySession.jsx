@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Volume2, Ghost } from 'lucide-react';
+import { Volume2, Ghost, Download, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { LoadingState } from '../ui/LoadingState';
 import { EmptyState } from '../ui/EmptyState';
 import { SuccessState } from '../ui/SuccessState';
@@ -7,30 +7,28 @@ import { triggerShake, triggerConfetti } from '../../utils/InteractionEffects';
 import { useVocabulary } from '../../context/VocabularyContext';
 import SoundManager from '../../utils/SoundManager';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
-import { downloadCategoryAssets, isCategoryDownloaded, deleteCategoryAssets } from '../../services/downloadManager';
-import { Download, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
-import { useToast } from '../../context/ToastContext';
-=======
 import { useProgress } from '../../context/ProgressContext';
 import { calculateRewards } from '../../utils/rewardSystem';
 import { formatRelativeTime } from '../../utils/time';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+import { downloadCategoryAssets, isCategoryDownloaded, deleteCategoryAssets } from '../../services/downloadManager';
+import { useToast } from '../../context/ToastContext';
 
 const StudySession = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { getDueWords, updateWordProgress } = useVocabulary();
-    const { addXP, addCoins, updateDailyStat } = useProgress();
-    const { getPracticeQueue, updateWordProgress, markWordSeen } = useVocabulary();
+
     const {
         getDueWords,
         updateWordProgress,
         vocabulary,
         playWordAudio,
         preloadAudioForWords,
-        CATEGORIES
+        CATEGORIES,
+        getPracticeQueue,
+        markWordSeen
     } = useVocabulary();
+
+    const { addXP, addCoins, updateDailyStat } = useProgress();
 
     const [dueWords, setDueWords] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -42,25 +40,6 @@ const StudySession = () => {
     const [bestStreak, setBestStreak] = useState(0);
     const [sessionReward, setSessionReward] = useState(null);
 
-    useEffect(() => {
-        setDueWords(getDueWords());
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setSessionComplete(false);
-        setCorrectCount(0);
-        setWrongCount(0);
-        setCurrentStreak(0);
-        setBestStreak(0);
-        setSessionReward(null);
-    }, [getDueWords]);
-
-    const finalizeSession = (metrics) => {
-        const reward = calculateRewards('studySession', metrics);
-        setSessionReward(reward);
-        addXP(reward.xp);
-        addCoins(reward.coins);
-        setSessionComplete(true);
-    };
     const [filterCEFR, setFilterCEFR] = useState('all');
     const [filterCategory, setFilterCategory] = useState('all');
 
@@ -159,42 +138,51 @@ const StudySession = () => {
             </div>
         </div>
     );
+
     const containerRef = useRef(null);
 
     useEffect(() => {
-        const queue = getPracticeQueue('study', 12);
-        setDueWords(prev => {
-            const prevIds = prev.map(w => w.id).join(',');
-            const nextIds = queue.map(w => w.id).join(',');
-            if (prevIds === nextIds && prev.length === queue.length) {
-                return queue;
-            }
-            setCurrentIndex(0);
-            return queue;
-        });
-    }, [getPracticeQueue]);
-
-    useEffect(() => {
-        const current = dueWords[currentIndex];
-        if (current) {
-            markWordSeen(current.id);
-        }
-    }, [currentIndex, dueWords, markWordSeen]);
-        const baseDue = getDueWords();
+        // Use getDueWords if available, otherwise fallback or empty
+        const baseDue = getDueWords ? getDueWords() : [];
         const filtered = baseDue.filter(word => {
             const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
             const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
             return matchesCEFR && matchesCategory;
         });
 
-        setDueWords(filtered);
+        // If no due words, try fallback to practice queue if available
+        if (filtered.length === 0 && getPracticeQueue) {
+             const queue = getPracticeQueue('study', 12);
+              const filteredQueue = queue.filter(word => {
+                const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
+                const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
+                return matchesCEFR && matchesCategory;
+            });
+             setDueWords(filteredQueue);
+        } else {
+             setDueWords(filtered);
+        }
+
         setCurrentIndex(0);
         setIsFlipped(false);
-        setSessionComplete(filtered.length === 0);
-        preloadAudioForWords(filtered);
-        // We intentionally avoid depending on vocabulary to prevent resets during a session.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterCEFR, filterCategory]);
+        setSessionComplete(false);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setCurrentStreak(0);
+        setBestStreak(0);
+        setSessionReward(null);
+
+        if (filtered.length > 0 && preloadAudioForWords) {
+             preloadAudioForWords(filtered);
+        }
+    }, [filterCEFR, filterCategory, getDueWords, getPracticeQueue, preloadAudioForWords]);
+
+    useEffect(() => {
+        const current = dueWords[currentIndex];
+        if (current && markWordSeen) {
+            markWordSeen(current.id);
+        }
+    }, [currentIndex, dueWords, markWordSeen]);
 
     useEffect(() => {
         if (containerRef.current) {
@@ -210,8 +198,10 @@ const StudySession = () => {
     };
 
     const handleResult = (grade) => {
-        const passing = grade !== 'again';
-        if (passing) {
+        // grade: 'again', 'hard', 'good', 'easy' or boolean
+        const success = grade !== 'again' && grade !== false;
+
+        if (success) {
             SoundManager.playSuccess();
         } else {
             SoundManager.playFailure();
@@ -231,24 +221,28 @@ const StudySession = () => {
         setCurrentStreak(nextStreak);
         setBestStreak(nextBestStreak);
 
-        updateDailyStat('dailyReviews', 1);
-        if (success) updateDailyStat('dailyStreak', nextStreak, 'max');
+        if (updateDailyStat) {
+             updateDailyStat('dailyReviews', 1);
+             if (success) updateDailyStat('dailyStreak', nextStreak, 'max');
+        }
 
         setIsFlipped(false);
 
         if (currentIndex < dueWords.length - 1) {
             setCurrentIndex(prev => prev + 1);
         } else {
-<<<<<<< HEAD
-            setSessionComplete(true);
-            triggerConfetti();
-=======
-            finalizeSession({
+            const reward = calculateRewards ? calculateRewards('studySession', {
                 correct: nextCorrect,
                 total: dueWords.length,
                 bestStreak: nextBestStreak
-            });
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+            }) : { xp: nextCorrect * 10, coins: nextCorrect * 2 };
+
+            setSessionReward(reward);
+            if (addXP) addXP(reward.xp);
+            if (addCoins) addCoins(reward.coins);
+
+            setSessionComplete(true);
+            triggerConfetti();
         }
     };
 
@@ -300,37 +294,26 @@ const StudySession = () => {
 
     if (sessionComplete) {
         return (
-<<<<<<< HEAD
-            <main className="min-h-screen p-4 flex flex-col items-center justify-center">
-                <SuccessState
+            <main className="flex flex-col items-center justify-center min-h-screen text-white p-4" role="main">
+                 <SuccessState
                     title="Session Complete!"
                     description={`You reviewed ${dueWords.length} words.`}
                     actionLabel="Return to Menu"
                     onAction={handleExit}
-                />
-=======
-            <main className="flex flex-col items-center justify-center min-h-screen text-white p-4" role="main">
-                <h2 className="text-3xl font-bold mb-4">Session Complete!</h2>
-                <p className="text-xl mb-8">You reviewed {dueWords.length} words.</p>
-                {sessionReward && (
-                    <div className="flex gap-4 mb-6">
-                        <div className="px-6 py-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl text-center">
-                            <p className="text-xs uppercase text-indigo-200 tracking-wider">XP</p>
-                            <p className="text-3xl font-black text-indigo-300">+{sessionReward.xp}</p>
-                        </div>
-                        <div className="px-6 py-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-center">
-                            <p className="text-xs uppercase text-amber-200 tracking-wider">Coins</p>
-                            <p className="text-3xl font-black text-amber-300">+{sessionReward.coins}</p>
-                        </div>
-                    </div>
-                )}
-                <button
-                    onClick={handleExit}
-                    className="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-500 transition-colors"
                 >
-                    Return to Menu
-                </button>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+                    {sessionReward && (
+                        <div className="flex gap-4 mt-6 justify-center">
+                            <div className="px-6 py-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl text-center">
+                                <p className="text-xs uppercase text-indigo-200 tracking-wider">XP</p>
+                                <p className="text-3xl font-black text-indigo-300">+{sessionReward.xp}</p>
+                            </div>
+                            <div className="px-6 py-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-center">
+                                <p className="text-xs uppercase text-amber-200 tracking-wider">Coins</p>
+                                <p className="text-3xl font-black text-amber-300">+{sessionReward.coins}</p>
+                            </div>
+                        </div>
+                    )}
+                </SuccessState>
             </main>
         );
     }
@@ -357,9 +340,8 @@ const StudySession = () => {
             <div
                 id="flashcard-container"
                 onClick={handleCardClick}
-                className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer"
-                title={metaTooltip}
                 className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 rounded-2xl"
+                title={metaTooltip}
                 role="button"
                 tabIndex={0}
                 aria-pressed={isFlipped}

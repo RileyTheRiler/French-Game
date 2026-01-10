@@ -1,31 +1,17 @@
-import React, { useState } from 'react';
-<<<<<<< HEAD
-import { Star, Bookmark } from 'lucide-react';
-=======
-import { Volume2 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+import React, { useState, useMemo } from 'react';
+import { Volume2, Star, Pin, Clock3, BellOff } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
 import { useProgress } from '../context/ProgressContext';
 import { playWordAudio } from '../utils/audio';
 import { GRAMMAR_TIPS } from '../data/grammar';
-import { Pin, Clock3, BellOff } from 'lucide-react';
 import { formatRelativeTime, formatDateTime } from '../utils/time';
 import { Button } from './ui/Button';
 
-<<<<<<< HEAD
 const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
-    const { vocabulary, toggleSaveWord } = useVocabulary();
+    const { vocabulary, toggleSaveWord, togglePinWord, snoozeWord, clearSnooze } = useVocabulary();
+    const { offlineAudio } = useProgress();
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
     const [activeTab, setActiveTab] = useState('vocab'); // 'vocab', 'grammar', 'saved'
-=======
-const DictionaryModal = ({ onClose }) => {
-    const { vocabulary } = useVocabulary();
-    const { offlineAudio } = useProgress();
-    const { vocabulary, togglePinWord, snoozeWord, clearSnooze } = useVocabulary();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState('vocab'); // 'vocab' or 'grammar'
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     const filteredVocab = vocabulary.filter(word =>
         (activeTab === 'saved' ? word.isSaved : true) &&
@@ -37,6 +23,7 @@ const DictionaryModal = ({ onClose }) => {
         tip.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tip.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
     const now = useMemo(() => Date.now(), [vocabulary]);
 
     return (
@@ -86,42 +73,44 @@ const DictionaryModal = ({ onClose }) => {
                 <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                     {activeTab === 'vocab' || activeTab === 'saved' ? (
                         filteredVocab.length > 0 ? (
-<<<<<<< HEAD
-                            filteredVocab.map(word => (
-                                <div key={word.id} className="p-4 bg-white/5 rounded-xl border border-white/5 flex justify-between items-center group hover:bg-white/10 transition-colors">
-                                    <div className="flex-1">
-                                        <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
-                                        <p className="text-[var(--text-secondary)]">{word.english}</p>
-                                    </div>
-                                    <div className="text-right flex items-center gap-3">
-                                        <button
-                                            onClick={() => toggleSaveWord(word.id)}
-                                            className={`transition-all hover:scale-110 ${word.isSaved ? 'text-amber-400' : 'text-white/20 hover:text-amber-200'}`}
-                                        >
-                                            <Star size={20} fill={word.isSaved ? "currentColor" : "none"} />
-=======
                             filteredVocab.map(word => {
                                 const snoozed = word.snoozeUntil && word.snoozeUntil > now;
                                 return (
                                     <div key={word.id} className="p-4 bg-white/5 rounded-xl border border-white/5 flex flex-col gap-3 group hover:bg-white/10 transition-colors">
                                         <div className="flex justify-between items-start gap-3">
-                                            <div>
+                                            <div className="flex-1">
                                                 <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
                                                 <p className="text-[var(--text-secondary)]">{word.english}</p>
                                                 <p className="text-xs text-slate-400 mt-2 flex items-center gap-2">
                                                     <Clock3 size={14} /> Last seen: {formatRelativeTime(word.lastSeen || word.lastPracticed)}
                                                 </p>
                                             </div>
-                                            <div className="text-right">
+                                            <div className="text-right flex flex-col items-end gap-2">
                                                 <span className={`text-xs font-bold px-2 py-1 rounded ${word.level >= 5 ? 'bg-green-500/20 text-green-400' :
                                                     word.level >= 3 ? 'bg-yellow-500/20 text-yellow-400' :
                                                         'bg-white/10 text-white/40'
                                                 }`}>
                                                     Lvl {word.level}
                                                 </span>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => playWordAudio(word, { preferCache: true, offlineOnly: offlineAudio })}
+                                                        className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors"
+                                                        aria-label="Listen"
+                                                    >
+                                                        <Volume2 size={16} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => toggleSaveWord(word.id)}
+                                                        className={`p-2 rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition-colors ${word.isSaved ? 'text-amber-400' : 'text-white/20 hover:text-amber-200'}`}
+                                                        aria-label="Save"
+                                                    >
+                                                        <Star size={16} fill={word.isSaved ? "currentColor" : "none"} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2 flex-wrap">
+                                        <div className="flex items-center gap-2 flex-wrap border-t border-white/5 pt-2 mt-1">
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -140,23 +129,6 @@ const DictionaryModal = ({ onClose }) => {
                                             </Button>
                                         </div>
                                     </div>
-                                    <div className="text-right flex items-center gap-2">
-                                        <button
-                                            onClick={() => playWordAudio(word, { preferCache: true, offlineOnly: offlineAudio })}
-                                            className="p-2 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors"
-                                        >
-                                            <Volume2 size={16} />
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
-                                        </button>
-                                        <span className={`text-xs font-bold px-2 py-1 rounded ${word.level >= 5 ? 'bg-green-500/20 text-green-400' :
-                                            word.level >= 3 ? 'bg-yellow-500/20 text-yellow-400' :
-                                                'bg-white/10 text-white/40'
-                                            }`}>
-                                            Lvl {word.level}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))
                                 );
                             })
                         ) : (
