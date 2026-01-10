@@ -2,11 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-<<<<<<< HEAD
 import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Users, Target, Zap, Sparkles, Globe, Wand2, Phone, Table, Layers, Brain, Box, Moon } from 'lucide-react';
-=======
-import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Target, Zap, Compass } from 'lucide-react';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import LeaderboardModal from './LeaderboardModal';
@@ -33,14 +29,9 @@ import WeeklyGoalTracker from './WeeklyGoalTracker';
 
 const MainMenu = () => {
     const navigate = useNavigate();
-<<<<<<< HEAD
     const { t, i18n } = useTranslation();
-    const { stats, level, progressToNextLevel, getWeeklySummary } = useProgress();
+    const { stats, level, progressToNextLevel, getWeeklySummary, setTargetCefr, setWeeklyGoal } = useProgress();
     const { getDueWords } = useVocabulary();
-=======
-    const { stats, level, progressToNextLevel, setTargetCefr, setWeeklyGoal } = useProgress();
-    const { getDueWords, CATEGORIES } = useVocabulary();
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     const dueCount = getDueWords().length;
     const [targetLevel, setTargetLevel] = useState(stats.targetCefr || 'B1');
     const [weeklySessions, setWeeklySessions] = useState(stats.weeklyGoal?.sessions || 5);
@@ -144,11 +135,11 @@ const MainMenu = () => {
     const nextAction = getNextBestAction();
 
     useEffect(() => {
-        setTargetCefr(targetLevel);
+        if (setTargetCefr) setTargetCefr(targetLevel);
     }, [targetLevel, setTargetCefr]);
 
     useEffect(() => {
-        setWeeklyGoal({ sessions: weeklySessions, minutes: weeklyMinutes });
+        if (setWeeklyGoal) setWeeklyGoal({ sessions: weeklySessions, minutes: weeklyMinutes });
     }, [setWeeklyGoal, weeklyMinutes, weeklySessions]);
 
     const categoryPerformance = stats?.categoryPerformance || {};
@@ -575,58 +566,9 @@ const MainMenu = () => {
         }
     ];
 
-<<<<<<< HEAD
     const formatNumber = (num) => {
         return new Intl.NumberFormat(i18n.language).format(num);
     };
-=======
-    const nextActions = useMemo(() => {
-        const actions = [];
-        if (dueCount > 0) {
-            actions.push({
-                title: 'Clear your review queue',
-                description: `${dueCount} cards are waiting in spaced repetition.`,
-                cta: 'Study Session',
-                onClick: () => navigate('/study-session'),
-                icon: Book
-            });
-        }
-
-        if (toughestCategory) {
-            const cat = CATEGORIES?.[toughestCategory.category];
-            actions.push({
-                title: `Strengthen ${cat?.name || toughestCategory.category}`,
-                description: `Accuracy ${Math.round((toughestCategory.accuracy || 0) * 100)}% · Avg ${Math.round(toughestCategory.response || 0)}ms`,
-                cta: 'Play Falling Words',
-                onClick: () => navigate('/game/falling-words'),
-                icon: Target
-            });
-        }
-
-        const cefrRank = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 };
-        const levelGap = (cefrRank[targetLevel] || 3) - (level || 1);
-        if (levelGap > 1) {
-            actions.push({
-                title: 'Bridge to your CEFR goal',
-                description: `Target ${targetLevel}. Complete a grammar drill and Daily Mix for faster progression.`,
-                cta: 'Open Grammar',
-                onClick: () => navigate('/game/grammar'),
-                icon: Compass
-            });
-        }
-
-        if (actions.length < 3) {
-            actions.push({
-                title: 'Chase a speed bonus',
-                description: 'Run an adaptive Falling Words sprint to unlock multipliers.',
-                cta: 'Start Falling Words',
-                onClick: () => navigate('/game/falling-words'),
-                icon: Zap
-            });
-        }
-        return actions.slice(0, 3);
-    }, [CATEGORIES, dueCount, level, navigate, targetLevel, toughestCategory]);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     return (
         <div id="main-content" tabIndex={-1} className="min-h-screen relative p-4 md:p-8 flex flex-col items-center max-w-7xl mx-auto">
@@ -634,19 +576,19 @@ const MainMenu = () => {
             {/* Top Bar Actions */}
             <div className="absolute top-4 right-4 flex gap-2 z-10">
                 <LanguageSwitcher />
-                <Button variant="ghost" size="sm" onClick={() => setShowLeaderboard(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowLeaderboard(true)} className="rounded-full h-12 w-12 p-0" aria-label={t('menu.leaderboard', 'Leaderboard')}>
                     <Trophy size={20} className="text-yellow-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowSocial(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowSocial(true)} className="rounded-full h-12 w-12 p-0" aria-label={t('menu.social', 'Social')}>
                     <Users size={20} className="text-violet-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowDictionary(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowDictionary(true)} className="rounded-full h-12 w-12 p-0" aria-label={t('menu.dictionary', 'Dictionary')}>
                     <Book size={20} className="text-blue-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)} className="rounded-full h-12 w-12 p-0" aria-label={t('menu.settings', 'Settings')}>
                     <Settings size={20} className="text-slate-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowShop(true)} className="rounded-full h-12 w-12 p-0 relative">
+                <Button variant="ghost" size="sm" onClick={() => setShowShop(true)} className="rounded-full h-12 w-12 p-0 relative" aria-label={stats.coins > 0 ? t('menu.shop_coins', { coins: formatNumber(stats.coins), defaultValue: `Shop, ${formatNumber(stats.coins)} coins` }) : t('menu.shop', 'Shop')}>
                     <ShoppingBag size={20} className="text-amber-400" />
                     {stats.coins > 0 && (
                         <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
@@ -654,16 +596,16 @@ const MainMenu = () => {
                         </span>
                     )}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowAchievements(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowAchievements(true)} className="rounded-full h-12 w-12 p-0" aria-label={t('menu.achievements', 'Achievements')}>
                     <Award size={20} className="text-orange-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowGrammar(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowGrammar(true)} className="rounded-full h-12 w-12 p-0" aria-label={t('menu.grammar', 'Grammar')}>
                     <BookOpen size={20} className="text-emerald-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/mastery')} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => navigate('/mastery')} className="rounded-full h-12 w-12 p-0" aria-label={t('menu.mastery', 'Mastery Statistics')}>
                     <BarChart3 size={20} className="text-indigo-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowGoals(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowGoals(true)} className="rounded-full h-12 w-12 p-0" aria-label={t('menu.goals', 'Daily Goals')}>
                     <Target size={20} className="text-red-400" />
                 </Button>
             </div>
@@ -754,7 +696,6 @@ const MainMenu = () => {
             {/* Daily Challenges */}
             <DailyChallengeWidget />
 
-<<<<<<< HEAD
             {/* League Progress Widget */}
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
@@ -763,93 +704,6 @@ const MainMenu = () => {
                 className="w-full max-w-md mb-6"
             >
                 <LeagueProgressWidget onClick={() => setShowLeaderboard(true)} />
-=======
-            {/* Goals */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-4xl mb-8"
-            >
-                <Card className="border border-indigo-500/20 bg-slate-900/60">
-                    <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-bold text-white">Personal Targets</h3>
-                        <Badge variant="outline">Weekly Momentum</Badge>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div>
-                            <p className="text-xs uppercase text-slate-400 mb-1">Target CEFR</p>
-                            <select
-                                value={targetLevel}
-                                onChange={(e) => setTargetLevel(e.target.value)}
-                                className="w-full bg-slate-900 border border-white/10 rounded-xl p-3 text-white"
-                            >
-                                {['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(level => (
-                                    <option key={level} value={level}>{level}</option>
-                                ))}
-                            </select>
-                            <p className="text-xs text-slate-500 mt-2">We\'ll tune difficulty toward {targetLevel}.</p>
-                        </div>
-                        <div>
-                            <p className="text-xs uppercase text-slate-400 mb-1">Sessions / week</p>
-                            <input
-                                type="range"
-                                min="2"
-                                max="14"
-                                value={weeklySessions}
-                                onChange={(e) => setWeeklySessions(Number(e.target.value))}
-                                className="w-full accent-indigo-400"
-                            />
-                            <p className="text-sm text-white font-semibold">{weeklySessions} focused sessions</p>
-                        </div>
-                        <div>
-                            <p className="text-xs uppercase text-slate-400 mb-1">Minutes / week</p>
-                            <input
-                                type="range"
-                                min="60"
-                                max="300"
-                                step="15"
-                                value={weeklyMinutes}
-                                onChange={(e) => setWeeklyMinutes(Number(e.target.value))}
-                                className="w-full accent-indigo-400"
-                            />
-                            <p className="text-sm text-white font-semibold">{weeklyMinutes} min goal</p>
-                        </div>
-                    </div>
-                </Card>
-            </motion.div>
-
-            {/* Next Best Action */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="w-full max-w-5xl mb-10"
-            >
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                        <Zap size={18} className="text-amber-400" /> Next Best Actions
-                    </h3>
-                    <p className="text-xs text-slate-500">Guided by your goals and accuracy.</p>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {nextActions.map((action, idx) => (
-                        <Card
-                            key={idx}
-                            hover
-                            onClick={action.onClick}
-                            className="border border-white/10 bg-white/5"
-                        >
-                            <div className="flex items-center gap-3 mb-3">
-                                <span className="p-2 rounded-xl bg-white/10">
-                                    <action.icon size={18} className="text-amber-300" />
-                                </span>
-                                <h4 className="font-bold text-white">{action.title}</h4>
-                            </div>
-                            <p className="text-sm text-slate-400 mb-4">{action.description}</p>
-                            <Badge variant="primary" className="mt-auto">{action.cta}</Badge>
-                        </Card>
-                    ))}
-                </div>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
             </motion.div>
 
             {/* Additional Navigation Buttons */}

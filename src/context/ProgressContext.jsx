@@ -10,6 +10,9 @@ export const ProgressProvider = ({ children }) => {
     const { showAchievement, showSuccess } = useToast();
     const defaultStats = {
         xp: 0,
+        seasonalXp: 0,
+        seasonEndsAt: null,
+        seasonId: null,
         streak: 0,
         coins: 50,
         inventory: {},
@@ -28,13 +31,13 @@ export const ProgressProvider = ({ children }) => {
         targetCefr: 'B1',
         weeklyGoal: {
             sessions: 5,
-            minutes: 120
+            minutes: 120,
+            sessionsPerWeek: 3,
+            currentWeekStart: null,
+            sessionsThisWeek: [],
+            lastWeekCompleted: false
         },
         categoryPerformance: {},
-        difficultySettings: {
-            fallingWords: 3,
-            flashcards: 2,
-            grammar: 2
         categoryStats: {}, // { "Family": { attempts: 10, correct: 8, totalResponseTime: 5000 } }
         userGoals: {
             targetCEFR: "A1",
@@ -45,6 +48,9 @@ export const ProgressProvider = ({ children }) => {
         errorPatterns: {}, // { "word_id": { count: 3, lastMiss: timestamp } }
         reviewQueue: [], // List of word IDs to review
         difficultySettings: {
+            fallingWords: 3,
+            flashcards: 2,
+            grammar: 2,
             globalMultiplier: 1.0,
             showHints: true,
             practiceModeNoPenalty: false,
@@ -76,13 +82,6 @@ export const ProgressProvider = ({ children }) => {
         },
         // Global difficulty 0-100 (0=Tourist, 100=Native)
         globalDifficulty: 25, // Default to Beginner
-        // Weekly goals system (replaces daily streak anxiety)
-        weeklyGoal: {
-            sessionsPerWeek: 3,     // Target sessions per week
-            currentWeekStart: null, // ISO string of week start (Monday)
-            sessionsThisWeek: [],   // Array of dates when sessions completed
-            lastWeekCompleted: false
-        },
         // Focus mode stats
         focusModeStats: {
             grammarHour: { completed: 0, totalTime: 0 },
@@ -130,30 +129,6 @@ export const ProgressProvider = ({ children }) => {
 
     const [stats, setStats] = useState(() => {
         const saved = localStorage.getItem('frenchApp_progress');
-        const baseState = {
-            xp: 0,
-            seasonalXp: 0,
-            seasonEndsAt: null,
-            seasonId: null,
-            streak: 0,
-            coins: 50,
-            inventory: {},
-            doubleXpUntil: null,
-            lastLoginDate: null,
-            highScore: 0,
-            wordsLearned: 0,
-            storiesCompleted: 0,
-            conversationsCompleted: 0,
-            perfectQuizzes: 0,
-            timedChallengesCompleted: 0,
-            unlockedAchievements: []
-            unlockedAchievements: [],
-            conversationHistory: [],
-            updatedAt: Date.now()
-        };
-        return saved ? { ...baseState, ...JSON.parse(saved) } : baseState;
-<<<<<<< HEAD
-=======
         if (saved) {
             const parsed = JSON.parse(saved);
             return {
@@ -166,7 +141,6 @@ export const ProgressProvider = ({ children }) => {
             };
         }
         return defaultStats;
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     });
 
     // Ensure new fields exist if loading from old state
@@ -215,7 +189,6 @@ export const ProgressProvider = ({ children }) => {
             setStats(prev => ({ ...prev, lastLoginDate: today, updatedAt: Date.now() }));
         }
     }, [stats.inventory, stats.lastLoginDate]);
-    }, [stats]);
 
     // Check streak on mount
     useEffect(() => {
@@ -261,7 +234,6 @@ export const ProgressProvider = ({ children }) => {
         const finalAmount = isDoubleXpActive ? amount * 2 : amount;
         const today = new Date().toDateString();
 
-<<<<<<< HEAD
         setStats(prev => {
             const currentDaily = prev.dailyStats?.[today] || {};
             const newDailyXP = (currentDaily.dailyXP || 0) + finalAmount;
@@ -269,6 +241,7 @@ export const ProgressProvider = ({ children }) => {
             return {
                 ...prev,
                 xp: prev.xp + finalAmount,
+                seasonalXp: (prev.seasonalXp || 0) + finalAmount,
                 dailyStats: {
                     ...prev.dailyStats,
                     [today]: {
@@ -280,15 +253,7 @@ export const ProgressProvider = ({ children }) => {
                 updatedAt: Date.now()
             };
         });
-=======
-        setStats(prev => ({
-            ...prev,
-            xp: prev.xp + finalAmount,
-            seasonalXp: (prev.seasonalXp || 0) + finalAmount
-            updatedAt: Date.now()
-        }));
         updateDailyStat('dailyXP', finalAmount);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     };
 
     const activateDoubleXP = (durationMinutes = 15) => {
@@ -340,16 +305,14 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats]);
+    }, [stats, showAchievement]);
 
     // Run achievement check when stats change
     useEffect(() => {
         checkAchievements();
-    }, [stats]);
     }, [checkAchievements]);
 
     const addCoins = (amount) => {
-<<<<<<< HEAD
         setStats(prev => {
             const today = new Date().toDateString();
             const currentDaily = prev.dailyStats?.[today] || {};
@@ -361,13 +324,10 @@ export const ProgressProvider = ({ children }) => {
             // 250+: 10%
 
             let effectiveAmount = 0;
-            let remainingAmount = amount;
+            // let remainingAmount = amount; // Unused
             let currentTierBase = coinsAlreadyEarned;
 
             // Simple stepwise calculation
-            // Note: This is a bit simplified, calculating per-event rather than strictly cutting off mid-amount,
-            // but for small increments (typical 5-10 coins) it's fine to just check the starting tier.
-
             let multiplier = 1.0;
             if (currentTierBase >= 250) {
                 multiplier = 0.1;
@@ -392,16 +352,7 @@ export const ProgressProvider = ({ children }) => {
                 updatedAt: Date.now()
             };
         });
-
-        // Return true/false or actual amount earned if needed later, but void for now
-=======
-        setStats(prev => ({
-            ...prev,
-            coins: (prev.coins || 0) + amount,
-            updatedAt: Date.now()
-        }));
         updateDailyStat('dailyCoins', amount);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     };
 
     const spendCoins = (amount) => {
@@ -533,8 +484,7 @@ export const ProgressProvider = ({ children }) => {
         localStorage.setItem('frenchApp_offlineAudio', JSON.stringify(offlineAudio));
     }, [offlineAudio]);
 
-    const toggleAudio = () => setAudioEnabled(prev => !prev);
-    const toggleOfflineAudio = () => setOfflineAudio(prev => !prev);
+    useEffect(() => {
         localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
         document.body.classList.toggle('reduced-motion', reducedMotion);
     }, [reducedMotion]);
@@ -545,6 +495,7 @@ export const ProgressProvider = ({ children }) => {
     }, [colorTheme]);
 
     const toggleAudio = () => setAudioEnabled(prev => !prev);
+    const toggleOfflineAudio = () => setOfflineAudio(prev => !prev);
     const toggleReducedMotion = () => setReducedMotion(prev => !prev);
     const switchColorTheme = (theme) => setColorTheme(theme);
 
@@ -568,8 +519,6 @@ export const ProgressProvider = ({ children }) => {
         };
         setStats(initialStats);
         localStorage.setItem('frenchApp_progress', JSON.stringify(initialStats));
-        setStats({ ...defaultStats });
-        localStorage.setItem('frenchApp_progress', JSON.stringify(defaultStats));
     };
 
     const setTargetCefr = (level = 'B1') => {
@@ -1080,6 +1029,37 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
+    // Missing functions implementation
+    const updateCognitiveState = useCallback((updates) => {
+        setStats(prev => ({
+            ...prev,
+            cognitiveStats: { ...prev.cognitiveStats, ...updates },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    const logDreamGoal = useCallback((goal, value) => {
+        setStats(prev => ({
+            ...prev,
+            dreamGoals: { ...prev.dreamGoals, [goal]: value },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
+    const updateMemoryPalaceRoom = useCallback((roomId, data) => {
+        setStats(prev => ({
+            ...prev,
+            memoryPalace: {
+                ...prev.memoryPalace,
+                rooms: {
+                    ...prev.memoryPalace.rooms,
+                    [roomId]: data
+                }
+            },
+            updatedAt: Date.now()
+        }));
+    }, []);
+
     return (
         <ProgressContext.Provider value={{
             stats,
@@ -1106,7 +1086,6 @@ export const ProgressProvider = ({ children }) => {
             activateDoubleXP,
             isDoubleXpActive,
             updateDailyStat,
-            achievements: stats.unlockedAchievements || []
             achievements: stats.unlockedAchievements || [],
             hydrateProgress,
             completeOnboarding,
@@ -1114,7 +1093,7 @@ export const ProgressProvider = ({ children }) => {
             setTargetCefr,
             setWeeklyGoal,
             setModeDifficulty,
-            recordCategoryPerformance
+            recordCategoryPerformance,
             logWordAttempt,
             updateUserGoals,
             userGoals: stats.userGoals,

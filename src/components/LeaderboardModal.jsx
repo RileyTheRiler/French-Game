@@ -55,12 +55,11 @@ const getSeasonCountdown = (timestamp) => {
 };
 
 const LeaderboardModal = ({ onClose }) => {
-    const { stats, level } = useProgress();
+    const { stats, level, getWeeklySummary } = useProgress();
     const { friends } = useSocial();
     const [tab, setTab] = useState('weekly');
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-<<<<<<< HEAD
     React.useEffect(() => {
         const handleOnline = () => setIsOffline(false);
         const handleOffline = () => setIsOffline(true);
@@ -76,9 +75,10 @@ const LeaderboardModal = ({ onClose }) => {
     let baseData = [];
     if (tab === 'weekly') baseData = MOCK_WEEKLY;
     else if (tab === 'alltime') baseData = MOCK_ALLTIME;
+    else if (tab === 'seasonal') baseData = SEASONAL_PLAYERS;
     else if (tab === 'friends') {
         // Map friends to leaderboard format
-        baseData = friends.map(f => ({
+        baseData = (friends || []).map(f => ({
             name: f.name,
             xp: f.weeklyXp || f.xp, // Simulating weekly vs total for now
             level: f.level,
@@ -86,10 +86,8 @@ const LeaderboardModal = ({ onClose }) => {
             country: f.country
         }));
     }
-=======
-    const baseData = tab === 'weekly' ? MOCK_WEEKLY : tab === 'alltime' ? MOCK_ALLTIME : SEASONAL_PLAYERS;
+
     const isSeasonal = tab === 'seasonal';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     // Insert user into leaderboard
     const userEntry = {
@@ -189,43 +187,18 @@ const LeaderboardModal = ({ onClose }) => {
 
                     {/* Tabs */}
                     <div className="flex border-b border-white/10">
-                        {['weekly', 'alltime', 'friends'].map((t) => (
+                        {['weekly', 'alltime', 'seasonal', 'friends'].map((t) => (
                             <button
                                 key={t}
                                 onClick={() => setTab(t)}
                                 className={`flex-1 py-3 text-sm font-bold transition-all capitalize ${tab === t
                                     ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
                                     : 'text-slate-400 hover:text-white'
-<<<<<<< HEAD
                                     }`}
                             >
                                 {t === 'alltime' ? 'All Time' : t}
                             </button>
                         ))}
-=======
-                                }`}
-                        >
-                            This Week
-                        </button>
-                        <button
-                            onClick={() => setTab('alltime')}
-                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'alltime'
-                                    ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
-                                    : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            All Time
-                        </button>
-                        <button
-                            onClick={() => setTab('seasonal')}
-                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'seasonal'
-                                    ? 'text-indigo-300 border-b-2 border-indigo-300 bg-indigo-500/10'
-                                    : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            Seasonal
-                        </button>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                     </div>
 
                     {/* Leaderboard List */}
