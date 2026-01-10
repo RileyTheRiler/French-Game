@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { nanoid } from '../utils/id';
+import { generateSalt, hashPassword, verifyPassword } from '../utils/crypto';
 
 const AuthContext = createContext();
 
@@ -35,7 +36,11 @@ export const AuthProvider = ({ children }) => {
             if (credentials[email]) {
                 throw new Error('Account already exists');
             }
-            credentials[email] = { password, createdAt: Date.now() };
+
+            const salt = generateSalt();
+            const hash = await hashPassword(password, salt);
+
+            credentials[email] = { hash, salt, createdAt: Date.now() };
             localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
             const newUser = { id: nanoid(), email, createdAt: Date.now(), provider: 'email' };
             setUser(newUser);
@@ -59,9 +64,33 @@ export const AuthProvider = ({ children }) => {
             }
             const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
             const record = credentials[email];
-            if (!record || record.password !== password) {
+
+            if (!record) {
                 throw new Error('Invalid credentials');
             }
+
+            // Check if record has hash/salt (new format) or password (old format)
+            if (record.hash && record.salt) {
+                const isValid = await verifyPassword(password, record.salt, record.hash);
+                if (!isValid) {
+                    throw new Error('Invalid credentials');
+                }
+            } else if (record.password) {
+                 // Fallback for old unhashed passwords - upgrade on next login could be implemented here
+                 // For now, just check equality but warn or migrate
+                 // Let's migrate immediately if possible, but simplest is to just accept
+                 if (record.password !== password) {
+                     throw new Error('Invalid credentials');
+                 }
+                 // Optional: Migrate to secure format
+                 const salt = generateSalt();
+                 const hash = await hashPassword(password, salt);
+                 credentials[email] = { hash, salt, createdAt: record.createdAt };
+                 localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+            } else {
+                throw new Error('Invalid credentials');
+            }
+
             const signedInUser = { id: email, email, provider: 'email', createdAt: record.createdAt };
             setUser(signedInUser);
             return signedInUser;
