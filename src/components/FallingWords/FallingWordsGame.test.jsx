@@ -25,6 +25,13 @@ vi.mock('lucide-react', () => ({
     Play: () => <div data-testid="icon-play" />,
     Volume2: () => <div data-testid="icon-volume" />,
     Settings: () => <div data-testid="icon-settings" />,
+    Mic: () => <div data-testid="icon-mic" />,
+    Clock: () => <div data-testid="icon-clock" />,
+    TrendingUp: () => <div data-testid="icon-trending" />,
+    Globe: () => <div data-testid="icon-globe" />,
+    User: () => <div data-testid="icon-user" />,
+    ChevronLeft: () => <div data-testid="icon-chevron-left" />,
+    GraduationCap: () => <div data-testid="icon-graduation-cap" />
 }));
 
 const mockVocabulary = {

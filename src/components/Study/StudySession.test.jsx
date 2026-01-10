@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StudySession from './StudySession';
 import { VocabularyContext } from '../../context/VocabularyContext';
+import { ProgressContext } from '../../context/ProgressContext';
+import { ToastContext } from '../../context/ToastContext';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mocks
@@ -27,16 +29,31 @@ const mockVocabulary = {
     ],
     playWordAudio: vi.fn(),
     preloadAudioForWords: vi.fn(),
+    getPracticeQueue: vi.fn().mockReturnValue([]),
+    markWordSeen: vi.fn(),
     CATEGORIES: { 'Greetings': { name: 'Greetings' }, 'Animals': { name: 'Animals' } }
 };
 
 const renderWithContext = (ui) => {
+    const mockProgress = {
+        addXP: vi.fn(),
+        addCoins: vi.fn(),
+        updateDailyStat: vi.fn()
+    };
+    const mockToast = {
+        showToast: vi.fn()
+    };
+
     return render(
-        <VocabularyContext.Provider value={mockVocabulary}>
-            <MemoryRouter>
-                {ui}
-            </MemoryRouter>
-        </VocabularyContext.Provider>
+        <ProgressContext.Provider value={mockProgress}>
+            <ToastContext.Provider value={mockToast}>
+                <VocabularyContext.Provider value={mockVocabulary}>
+                    <MemoryRouter>
+                        {ui}
+                    </MemoryRouter>
+                </VocabularyContext.Provider>
+            </ToastContext.Provider>
+        </ProgressContext.Provider>
     );
 };
 
@@ -67,9 +84,14 @@ describe('StudySession', () => {
     });
 
     it('flips card on click and shows controls', () => {
+        // Mock getPracticeQueue to mimic getDueWords behavior for the default case
+        mockVocabulary.getPracticeQueue.mockReturnValue([
+            { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1' }
+        ]);
         mockVocabulary.getDueWords.mockReturnValue([
             { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1' }
         ]);
+
         renderWithContext(<StudySession />);
 
         const card = screen.getByRole('button', { name: /Reveal translation/i });
@@ -81,10 +103,16 @@ describe('StudySession', () => {
     });
 
     it('handles grading and moves to next card', () => {
+        // Mock getPracticeQueue to mimic getDueWords behavior for the default case
+        mockVocabulary.getPracticeQueue.mockReturnValue([
+            { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1' },
+            { id: '2', french: 'Chat', english: 'Cat', cefr: 'A1' }
+        ]);
         mockVocabulary.getDueWords.mockReturnValue([
             { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1' },
             { id: '2', french: 'Chat', english: 'Cat', cefr: 'A1' }
         ]);
+
         renderWithContext(<StudySession />);
 
         // Flip
