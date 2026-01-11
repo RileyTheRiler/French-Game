@@ -1,0 +1,3 @@
+## 2024-05-21 - Icon-Only Button Accessibility Pattern
+**Learning:** Many modal components use icon-only close buttons (typically an 'X' icon) implemented either with raw `<button>` tags or the custom `<Button>` component. These frequently miss `aria-label` attributes, making them inaccessible to screen reader users who only hear "button" or nothing at all.
+**Action:** When creating or reviewing modals and other UI surfaces, explicitly check all icon-only buttons for `aria-label` attributes. Add descriptive labels like "Close settings", "Close achievements", or "Close modal" instead of just "Close" where context aids clarity.
