@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { nanoid } from '../utils/id';
+import { generateSalt, hashPassword } from '../utils/crypto';
 
 const AuthContext = createContext();
 
@@ -35,7 +36,11 @@ export const AuthProvider = ({ children }) => {
             if (credentials[email]) {
                 throw new Error('Account already exists');
             }
-            credentials[email] = { password, createdAt: Date.now() };
+
+            const salt = generateSalt();
+            const hash = await hashPassword(password, salt);
+
+            credentials[email] = { hash, salt, createdAt: Date.now() };
             localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
             const newUser = { id: nanoid(), email, createdAt: Date.now(), provider: 'email' };
             setUser(newUser);
@@ -59,9 +64,30 @@ export const AuthProvider = ({ children }) => {
             }
             const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
             const record = credentials[email];
-            if (!record || record.password !== password) {
+
+            if (!record) {
                 throw new Error('Invalid credentials');
             }
+
+            // Handle legacy plaintext passwords
+            if (record.password) {
+                if (record.password !== password) {
+                    throw new Error('Invalid credentials');
+                }
+
+                // Migrate to secure hash
+                const salt = generateSalt();
+                const hash = await hashPassword(password, salt);
+                credentials[email] = { hash, salt, createdAt: record.createdAt };
+                localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+            } else {
+                // Handle hashed passwords
+                const hash = await hashPassword(password, record.salt);
+                if (record.hash !== hash) {
+                    throw new Error('Invalid credentials');
+                }
+            }
+
             const signedInUser = { id: email, email, provider: 'email', createdAt: record.createdAt };
             setUser(signedInUser);
             return signedInUser;
