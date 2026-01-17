@@ -38,6 +38,18 @@ export const ProgressProvider = ({ children }) => {
             lastWeekCompleted: false
         },
         categoryPerformance: {},
+        difficultySettings: {
+            fallingWords: 3,
+            flashcards: 2,
+            grammar: 2,
+            globalMultiplier: 1.0,
+            showHints: true,
+            practiceModeNoPenalty: false,
+            challengeMode: false,
+            hintDelay: 8,
+            freeFormInput: false,
+            learnerType: 'casual'
+        },
         categoryStats: {},
         userGoals: {
             targetCEFR: "A1",
@@ -153,6 +165,32 @@ export const ProgressProvider = ({ children }) => {
     }, [stats]);
 
     // Also save on unmount/page hide to ensure data isn't lost
+        const saved = localStorage.getItem('frenchApp_progress');
+        const baseState = {
+            ...defaultStats,
+            seasonEndsAt: null,
+            seasonId: null,
+            updatedAt: Date.now()
+        };
+
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            return {
+                ...baseState,
+                ...parsed,
+                inventory: { ...baseState.inventory, ...(parsed.inventory || {}) },
+                weeklyGoal: { ...baseState.weeklyGoal, ...(parsed.weeklyGoal || {}) },
+                categoryPerformance: parsed.categoryPerformance || baseState.categoryPerformance,
+                difficultySettings: { ...baseState.difficultySettings, ...(parsed.difficultySettings || {}) },
+                dailyStats: parsed.dailyStats || {},
+                errorPatterns: parsed.errorPatterns || {},
+                lastWeeklyRecap: parsed.lastWeeklyRecap || null
+            };
+        }
+        return baseState;
+    });
+
+    // Save to local storage whenever stats change
     useEffect(() => {
         const handleBeforeUnload = () => {
             localStorage.setItem('frenchApp_progress', JSON.stringify(stats));
@@ -203,6 +241,13 @@ export const ProgressProvider = ({ children }) => {
     useEffect(() => {
         checkStreak();
     }, []); // Only check on mount to prevent loops. The user logs in once per session.
+    // Check streak on mount - use timeout to avoid synchronous setState warning
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            checkStreak();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [checkStreak]);
 
     const ensureSeasonWindow = useCallback(() => {
         setStats(prev => {
@@ -224,7 +269,10 @@ export const ProgressProvider = ({ children }) => {
 
     // Also ensure season window on mount
     useEffect(() => {
-        ensureSeasonWindow();
+        const timer = setTimeout(() => {
+            ensureSeasonWindow();
+        }, 0);
+        return () => clearTimeout(timer);
     }, [ensureSeasonWindow]);
 
     const updateDailyStat = useCallback((statName, amount = 1, mode = 'add') => {
@@ -273,6 +321,9 @@ export const ProgressProvider = ({ children }) => {
                 updatedAt: Date.now()
             };
         });
+
+        // Also update the separate dailyStats localStorage for redundancy if needed
+        updateDailyStat('dailyXP', finalAmount);
     };
 
     const activateDoubleXP = (durationMinutes = 15) => {
@@ -331,8 +382,16 @@ export const ProgressProvider = ({ children }) => {
     }, [stats.xp, stats.wordsLearned, stats.storiesCompleted, stats.conversationsCompleted, stats.streak, checkAchievements]);
 
     const addCoins = (amount) => {
+        const timer = setTimeout(() => {
+            checkAchievements();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [checkAchievements]);
+
+    const addCoins = (amount) => {
+        const today = new Date().toDateString();
+
         setStats(prev => {
-            const today = new Date().toDateString();
             const currentDaily = prev.dailyStats?.[today] || {};
             const coinsAlreadyEarned = currentDaily.coinsEarned || 0;
 
@@ -362,6 +421,8 @@ export const ProgressProvider = ({ children }) => {
                 updatedAt: Date.now()
             };
         });
+
+        updateDailyStat('dailyCoins', amount);
     };
 
     const spendCoins = (amount) => {
@@ -1007,6 +1068,18 @@ export const ProgressProvider = ({ children }) => {
         setStats(prev => ({
             ...prev,
             dreamGoals: { ...prev.dreamGoals, [goalType]: Date.now() },
+    const updateCognitiveState = useCallback((newState) => {
+         setStats(prev => ({
+             ...prev,
+             cognitiveStats: { ...prev.cognitiveStats, ...newState },
+             updatedAt: Date.now()
+         }));
+    }, []);
+
+    const logDreamGoal = useCallback((goalId) => {
+        setStats(prev => ({
+            ...prev,
+            dreamGoals: { ...prev.dreamGoals, [goalId]: Date.now() },
             updatedAt: Date.now()
         }));
     }, []);
@@ -1019,6 +1092,15 @@ export const ProgressProvider = ({ children }) => {
                 rooms: { ...prev.memoryPalace.rooms, [roomId]: data }
             },
             updatedAt: Date.now()
+             ...prev,
+             memoryPalace: {
+                 ...prev.memoryPalace,
+                 rooms: {
+                     ...prev.memoryPalace?.rooms,
+                     [roomId]: data
+                 }
+             },
+             updatedAt: Date.now()
         }));
     }, []);
 

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, Save, Trash2, Edit3, Share2,
-    Book, List, CheckSquare, Sparkles, ChevronRight, X
+    Book, List, CheckSquare, Sparkles, ChevronRight, X, Play
 } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { Badge } from './ui/Badge';
@@ -10,6 +11,7 @@ import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
 import SoundManager from '../utils/SoundManager';
+import { speak } from '../utils/audio';
 import { getDifficultyConfig } from './ui/DifficultyDial';
 import { GameLayout } from './layout/GameLayout';
 
@@ -186,16 +188,16 @@ const LessonCreator = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="sm" className="h-10 w-10 p-0" onClick={() => deleteLesson(lesson.id)}>
+                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)}>
                                     <Trash2 size={16} className="text-slate-600 hover:text-red-400" />
                                 </Button>
-                                <Button variant="secondary" size="sm" className="h-10 w-10 p-0" onClick={() => {
+                                <Button variant="secondary" size="icon" onClick={() => {
                                     setCurrentLesson(lesson);
                                     setStep(lesson.type === 'deck' ? 'create_deck' : 'create_quiz');
                                 }}>
                                     <Edit3 size={16} />
                                 </Button>
-                                <Button variant="primary" size="sm" className="h-10 w-10 p-0" onClick={() => startStudy(lesson)}>
+                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)}>
                                     <Play size={16} fill="currentColor" />
                                 </Button>
                             </div>

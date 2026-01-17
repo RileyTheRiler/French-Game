@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Target, Settings, Zap, BookOpen, Clock } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
@@ -256,12 +257,15 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
 
                                     <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10">
                                         <div>
-                                            <div className="font-bold text-slate-200">Show Helper Hints</div>
+                                            <div id="hints-label" className="font-bold text-slate-200">Show Helper Hints</div>
                                             <div className="text-xs text-slate-500">Display first letter/color hints for difficult words</div>
                                         </div>
                                         <button
+                                            role="switch"
+                                            aria-checked={localDifficulty.showHints}
+                                            aria-labelledby="hints-label"
                                             onClick={() => setLocalDifficulty(prev => ({ ...prev, showHints: !prev.showHints }))}
-                                            className={`w-12 h-6 rounded-full transition-colors relative ${localDifficulty.showHints ? 'bg-green-500' : 'bg-slate-700'}`}
+                                            className={`w-12 h-6 rounded-full transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-purple-500 focus-visible:ring-offset-slate-900 ${localDifficulty.showHints ? 'bg-green-500' : 'bg-slate-700'}`}
                                         >
                                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${localDifficulty.showHints ? 'left-7' : 'left-1'}`} />
                                         </button>
