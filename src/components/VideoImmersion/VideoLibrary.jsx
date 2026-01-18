@@ -8,9 +8,10 @@ const VideoLibrary = ({ onSelectVideo, onBack }) => {
             <div className="max-w-6xl mx-auto mb-8 flex items-center">
                 <button
                     onClick={onBack}
-                    className="mr-4 p-2 rounded-full hover:bg-white/10 transition-colors"
+                    className="mr-4 p-2 rounded-full hover:bg-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                    aria-label="Go back"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                     </svg>
                 </button>
@@ -23,21 +24,21 @@ const VideoLibrary = ({ onSelectVideo, onBack }) => {
             {/* Video Grid */}
             <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {VIDEO_CONTENT.map(video => (
-                    <div
+                    <button
                         key={video.id}
                         onClick={() => onSelectVideo(video)}
-                        className="bg-white/5 rounded-2xl overflow-hidden border border-white/5 hover:border-[var(--accent-primary)] hover:scale-[1.02] transition-all cursor-pointer group shadow-lg"
+                        className="w-full text-left bg-white/5 rounded-2xl overflow-hidden border border-white/5 hover:border-[var(--accent-primary)] hover:scale-[1.02] transition-all cursor-pointer group shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                     >
                         {/* Thumbnail */}
                         <div className="relative aspect-video bg-black">
                             <img
                                 src={video.thumbnail}
-                                alt={video.title}
+                                alt=""
                                 className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                             />
                             <div className="absolute inset-0 flex items-center justify-center">
                                 <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full group-hover:bg-[var(--accent-primary)] transition-colors">
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
                                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" />
                                     </svg>
                                 </div>
@@ -64,7 +65,7 @@ const VideoLibrary = ({ onSelectVideo, onBack }) => {
                                 {video.description}
                             </p>
                         </div>
-                    </div>
+                    </button>
                 ))}
             </div>
         </div>
