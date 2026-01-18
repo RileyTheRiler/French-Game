@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, BookOpen, BarChart3, Users, Target, Zap, Sparkles, Globe, Wand2, Phone, Table, Layers, Brain, Box, Moon, Briefcase } from 'lucide-react';
 import {
     Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings,
     Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Users, Target,
@@ -35,10 +36,11 @@ import WeeklyGoalTracker from './WeeklyGoalTracker';
 const MainMenu = () => {
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
+    const { stats, level, progressToNextLevel, getWeeklySummary, setWeeklyGoal } = useProgress();
+    const { getDueWords } = useVocabulary();
     const { stats, level, progressToNextLevel, getWeeklySummary, setTargetCefr, setWeeklyGoal } = useProgress();
     const { getDueWords, CATEGORIES } = useVocabulary();
     const dueCount = getDueWords().length;
-    const [targetLevel, setTargetLevel] = useState(stats.targetCefr || 'B1');
     const [weeklySessions, setWeeklySessions] = useState(stats.weeklyGoal?.sessions || 5);
     const [weeklyMinutes, setWeeklyMinutes] = useState(stats.weeklyGoal?.minutes || 120);
 
@@ -74,26 +76,62 @@ const MainMenu = () => {
         }
     }, [getWeeklySummary, stats.lastWeeklyRecap]);
 
-    useEffect(() => {
-        setTargetCefr(targetLevel);
-    }, [targetLevel, setTargetCefr]);
+    const getNextBestAction = () => {
+        // Priority 1: Due Words
+        if (dueCount > 5) {
+            return {
+                title: "Memory Refresh",
+                description: `You have ${dueCount} words ready for review.`,
+                icon: <BookOpen className="text-pink-400" size={24} />,
+                action: () => navigate('/study-session'),
+                btnText: t('menu.actions.start_review'),
+                color: "pink"
+            };
+        }
+
+        // Priority 2: Weak Words (Words to Polish)
+        if (weakWordsCount > 2) {
+            return {
+                title: "Polissage de Prononciation",
+                description: `You have ${weakWordsCount} words that need pronunciation polish.`,
+                icon: <Mic className="text-rose-400" size={24} />,
+                action: () => navigate('/pronunciation'),
+                btnText: t('menu.actions.polish_now'),
+                color: "rose"
+            };
+        }
+
+        // Priority 3: Focus Mode Suggestion (if none completed today)
+        const focusCompletedToday = Object.values(stats.focusModeStats || {}).some(s => s.lastCompletedToday);
+        if (!focusCompletedToday) {
+            return {
+                title: "Focus Training",
+                description: "Deep dive into a specific skill today.",
+                icon: <Target className="text-indigo-400" size={24} />,
+                action: () => navigate('/focus'),
+                btnText: "Focus Now",
+                color: "indigo"
+            };
+        }
+
+        // Default
+        return {
+            title: "Keep the Streak",
+            description: "Play a quick round of Falling Words.",
+            icon: <Play className="text-violet-400" size={24} />,
+            action: () => navigate('/game/falling-words'),
+            btnText: t('menu.actions.play_now'),
+            color: "violet"
+        };
+    };
+
+    const nextAction = getNextBestAction();
 
     useEffect(() => {
         setWeeklyGoal({ sessions: weeklySessions, minutes: weeklyMinutes });
     }, [setWeeklyGoal, weeklyMinutes, weeklySessions]);
 
     const categoryPerformance = stats?.categoryPerformance || {};
-    const toughestCategory = useMemo(() => {
-        const entries = Object.entries(categoryPerformance);
-        if (!entries.length) return null;
-        return entries.reduce((lowest, [category, perf]) => {
-            const accuracy = perf.accuracy ?? (perf.correct / (perf.attempts || 1));
-            if (!lowest || accuracy < lowest.accuracy) {
-                return { category, accuracy, response: perf.averageResponseTime };
-            }
-            return lowest;
-        }, null);
-    }, [categoryPerformance]);
 
     const nextActions = useMemo(() => {
         const actions = [];
@@ -647,6 +685,39 @@ const MainMenu = () => {
                 })()}
             </motion.div>
 
+            {/* Goals Section */}
+            <div className="w-full max-w-md space-y-4 mb-8">
+                <DailyGoalRing />
+                <WeeklyGoalTracker />
+            </div>
+
+            {/* Quick Session for Beginners */}
+            <QuickSessionCard />
+
+            {/* Next Best Action Card */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.25 }}
+                className="w-full max-w-md mb-8"
+            >
+                <Card className={`border-${nextAction.color}-500/30 bg-gradient-to-r from-${nextAction.color}-900/20 to-slate-900/50`}>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className={`p-3 rounded-full bg-${nextAction.color}-500/20`}>
+                                {nextAction.icon}
+                            </div>
+                            <div>
+                                <Badge variant="outline" className={`mb-1 text-[10px] border-${nextAction.color}-400/50 text-${nextAction.color}-300`}>
+                                    {t('menu.recommended')}
+                                </Badge>
+                                <h3 className="font-bold text-white">{nextAction.title}</h3>
+                                <p className="text-xs text-slate-400">{nextAction.description}</p>
+                            </div>
+                        </div>
+                        <Button size="sm" onClick={nextAction.action} className={`bg-${nextAction.color}-600 hover:bg-${nextAction.color}-500`}>
+                            {nextAction.btnText}
+                        </Button>
             {/* Goals */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -701,6 +772,8 @@ const MainMenu = () => {
                 </Card>
             </motion.div>
 
+            {/* Daily Challenges */}
+            <DailyChallengeWidget />
             {/* Next Best Action */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
