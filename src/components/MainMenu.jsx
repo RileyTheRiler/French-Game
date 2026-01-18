@@ -2,10 +2,9 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, BookOpen, BarChart3, Users, Target, Zap, Sparkles, Globe, Wand2, Phone, Table, Layers, Brain, Box, Moon, Briefcase } from 'lucide-react';
 import {
     Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings,
-    Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Users, Target,
+    Mic, ShoppingBag, Award, BookOpen, BarChart3, Users, Target,
     Zap, Sparkles, Globe, Wand2, Phone, Table, Layers, Brain, Box, Moon,
     Compass, Briefcase
 } from 'lucide-react';
@@ -36,13 +35,12 @@ import WeeklyGoalTracker from './WeeklyGoalTracker';
 const MainMenu = () => {
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
-    const { stats, level, progressToNextLevel, getWeeklySummary, setWeeklyGoal } = useProgress();
-    const { getDueWords } = useVocabulary();
     const { stats, level, progressToNextLevel, getWeeklySummary, setTargetCefr, setWeeklyGoal } = useProgress();
     const { getDueWords, CATEGORIES } = useVocabulary();
     const dueCount = getDueWords().length;
     const [weeklySessions, setWeeklySessions] = useState(stats.weeklyGoal?.sessions || 5);
     const [weeklyMinutes, setWeeklyMinutes] = useState(stats.weeklyGoal?.minutes || 120);
+    const [targetLevel, setTargetLevel] = useState(stats.targetCefr || 'B1');
 
     // Calculate weak words count
     const weakWordsCount = Object.values(stats.weakWords || {}).filter(w => w.strength < 70).length;
@@ -58,6 +56,20 @@ const MainMenu = () => {
     const [showStats, setShowStats] = useState(false);
     const [showGoals, setShowGoals] = useState(false);
     const [showWeeklyRecap, setShowWeeklyRecap] = useState(false);
+
+    // Derived toughest category
+    const toughestCategory = useMemo(() => {
+        const perf = stats.categoryPerformance || {};
+        let worst = null;
+        let minAcc = 1;
+        Object.entries(perf).forEach(([cat, data]) => {
+            if (data.accuracy < minAcc) {
+                minAcc = data.accuracy;
+                worst = { category: cat, ...data };
+            }
+        });
+        return worst;
+    }, [stats.categoryPerformance]);
 
     // Check for Weekly Recap
     React.useEffect(() => {
@@ -131,8 +143,6 @@ const MainMenu = () => {
         setWeeklyGoal({ sessions: weeklySessions, minutes: weeklyMinutes });
     }, [setWeeklyGoal, weeklyMinutes, weeklySessions]);
 
-    const categoryPerformance = stats?.categoryPerformance || {};
-
     const nextActions = useMemo(() => {
         const actions = [];
         if (dueCount > 0) {
@@ -150,7 +160,7 @@ const MainMenu = () => {
             const cat = CATEGORIES?.[toughestCategory.category];
             actions.push({
                 title: `Strengthen ${cat?.name || toughestCategory.category}`,
-                description: `Accuracy ${Math.round((toughestCategory.accuracy || 0) * 100)}% · Avg ${Math.round(toughestCategory.response || 0)}ms`,
+                description: `Accuracy ${Math.round((toughestCategory.accuracy || 0) * 100)}%`,
                 cta: 'Play Falling Words',
                 onClick: () => navigate('/game/falling-words'),
                 icon: Target,
@@ -163,7 +173,7 @@ const MainMenu = () => {
         if (levelGap > 1) {
             actions.push({
                 title: 'Bridge to your CEFR goal',
-                description: `Target ${targetLevel}. Complete a grammar drill and Daily Mix for faster progression.`,
+                description: `Target ${targetLevel}. Complete a grammar drill.`,
                 cta: 'Open Grammar',
                 onClick: () => navigate('/game/grammar'),
                 icon: Compass,
@@ -174,7 +184,7 @@ const MainMenu = () => {
         if (actions.length < 3) {
             actions.push({
                 title: 'Chase a speed bonus',
-                description: 'Run an adaptive Falling Words sprint to unlock multipliers.',
+                description: 'Run an adaptive Falling Words sprint.',
                 cta: 'Start Falling Words',
                 onClick: () => navigate('/game/falling-words'),
                 icon: Zap,
@@ -500,7 +510,6 @@ const MainMenu = () => {
             minLevel: 1,
             path: '/media-center'
         },
-        // Real World Phase 11
         {
             id: 'slangExplorer',
             title: 'Slang & Verlan',
@@ -531,7 +540,6 @@ const MainMenu = () => {
             minLevel: 1,
             path: '/real-world/dialects'
         },
-        // Learning Styles / Modalities
         {
             id: 'podcastMode',
             title: 'Podcast Mode',
@@ -572,7 +580,6 @@ const MainMenu = () => {
             minLevel: 1,
             path: '/learn/pattern-drills'
         },
-        // Phase 10: The AI Coach
         {
             id: 'prosodyLab',
             title: 'Prosody Lab',
@@ -718,6 +725,10 @@ const MainMenu = () => {
                         <Button size="sm" onClick={nextAction.action} className={`bg-${nextAction.color}-600 hover:bg-${nextAction.color}-500`}>
                             {nextAction.btnText}
                         </Button>
+                    </div>
+                </Card>
+            </motion.div>
+
             {/* Goals */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -774,7 +785,7 @@ const MainMenu = () => {
 
             {/* Daily Challenges */}
             <DailyChallengeWidget />
-            {/* Next Best Action */}
+            {/* Next Best Action Grid */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

@@ -1,36 +1,27 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Volume2, Ghost } from 'lucide-react';
+import { Volume2, Ghost, Download, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { LoadingState } from '../ui/LoadingState';
 import { EmptyState } from '../ui/EmptyState';
 import { SuccessState } from '../ui/SuccessState';
 import { triggerShake, triggerConfetti } from '../../utils/InteractionEffects';
 import { useVocabulary } from '../../context/VocabularyContext';
+import { useProgress } from '../../context/ProgressContext';
 import SoundManager from '../../utils/SoundManager';
 import { useNavigate } from 'react-router-dom';
-<<<<<<< HEAD
 import { downloadCategoryAssets, isCategoryDownloaded, deleteCategoryAssets } from '../../services/downloadManager';
-import { Download, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
-=======
-import { useProgress } from '../../context/ProgressContext';
 import { calculateRewards } from '../../utils/rewardSystem';
 import { formatRelativeTime } from '../../utils/time';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const StudySession = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { getDueWords, updateWordProgress } = useVocabulary();
-    const { addXP, addCoins, updateDailyStat } = useProgress();
-    const { getPracticeQueue, updateWordProgress, markWordSeen } = useVocabulary();
     const {
-        getDueWords,
-        updateWordProgress,
-        vocabulary,
-        playWordAudio,
-        preloadAudioForWords,
-        CATEGORIES
+        getDueWords, updateWordProgress, vocabulary, playWordAudio,
+        preloadAudioForWords, CATEGORIES, markWordSeen
     } = useVocabulary();
+    const { addXP, addCoins, updateDailyStat } = useProgress();
+    const { showToast } = useToast();
 
     const [dueWords, setDueWords] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -42,34 +33,14 @@ const StudySession = () => {
     const [bestStreak, setBestStreak] = useState(0);
     const [sessionReward, setSessionReward] = useState(null);
 
-    useEffect(() => {
-        setDueWords(getDueWords());
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setSessionComplete(false);
-        setCorrectCount(0);
-        setWrongCount(0);
-        setCurrentStreak(0);
-        setBestStreak(0);
-        setSessionReward(null);
-    }, [getDueWords]);
-
-    const finalizeSession = (metrics) => {
-        const reward = calculateRewards('studySession', metrics);
-        setSessionReward(reward);
-        addXP(reward.xp);
-        addCoins(reward.coins);
-        setSessionComplete(true);
-    };
     const [filterCEFR, setFilterCEFR] = useState('all');
     const [filterCategory, setFilterCategory] = useState('all');
+    const [downloadStatus, setDownloadStatus] = useState('idle');
+    const containerRef = useRef(null);
 
     const cefrLevels = useMemo(() => {
         return Array.from(new Set(vocabulary.map(word => word.cefr))).sort();
     }, [vocabulary]);
-
-    const [downloadStatus, setDownloadStatus] = useState('idle'); // idle, checking, downloading, downloaded
-    const { showToast } = useToast();
 
     useEffect(() => {
         if (filterCategory === 'all') {
@@ -104,6 +75,125 @@ const StudySession = () => {
         showToast('Local assets removed.', 'info');
     };
 
+    useEffect(() => {
+        const baseDue = getDueWords();
+        const filtered = baseDue.filter(word => {
+            const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
+            const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
+            return matchesCEFR && matchesCategory;
+        });
+
+        setDueWords(filtered);
+        setCurrentIndex(0);
+        setIsFlipped(false);
+        setSessionComplete(filtered.length === 0);
+        setCorrectCount(0);
+        setWrongCount(0);
+        setCurrentStreak(0);
+        setBestStreak(0);
+        setSessionReward(null);
+        preloadAudioForWords(filtered);
+    }, [filterCEFR, filterCategory, getDueWords, preloadAudioForWords]);
+
+    useEffect(() => {
+        const current = dueWords[currentIndex];
+        if (current) {
+            markWordSeen(current.id);
+        }
+    }, [currentIndex, dueWords, markWordSeen]);
+
+    useEffect(() => {
+        if (containerRef.current) {
+            containerRef.current.focus();
+        }
+    }, [currentIndex, sessionComplete]);
+
+    const finalizeSession = (metrics) => {
+        const reward = calculateRewards('studySession', metrics);
+        setSessionReward(reward);
+        addXP(reward.xp);
+        addCoins(reward.coins);
+        setSessionComplete(true);
+        triggerConfetti();
+    };
+
+    const handleCardClick = () => {
+        if (!sessionComplete) {
+            setIsFlipped(!isFlipped);
+            SoundManager.playFlip();
+        }
+    };
+
+    const handleResult = (grade) => {
+        const isCorrect = grade !== 'again';
+
+        if (isCorrect) {
+            SoundManager.playSuccess();
+        } else {
+            SoundManager.playFailure();
+            triggerShake('flashcard-container');
+        }
+
+        const currentWord = dueWords[currentIndex];
+        updateWordProgress(currentWord.id, grade);
+
+        const nextCorrect = isCorrect ? correctCount + 1 : correctCount;
+        const nextWrong = isCorrect ? wrongCount : wrongCount + 1;
+        const nextStreak = isCorrect ? currentStreak + 1 : 0;
+        const nextBestStreak = isCorrect ? Math.max(bestStreak, nextStreak) : bestStreak;
+
+        setCorrectCount(nextCorrect);
+        setWrongCount(nextWrong);
+        setCurrentStreak(nextStreak);
+        setBestStreak(nextBestStreak);
+
+        updateDailyStat('dailyReviews', 1);
+        if (isCorrect) updateDailyStat('dailyStreak', nextStreak, 'max');
+
+        setIsFlipped(false);
+
+        if (currentIndex < dueWords.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+        } else {
+            finalizeSession({
+                correct: nextCorrect,
+                total: dueWords.length,
+                bestStreak: nextBestStreak
+            });
+        }
+    };
+
+    const handleExit = () => {
+        if (onExit) onExit();
+    };
+
+    const handleKeyDown = (event) => {
+        if (event.key === 'Escape') {
+            event.preventDefault();
+            handleExit();
+            return;
+        }
+
+        if (sessionComplete || dueWords.length === 0) return;
+
+        if (event.key === ' ' || event.key === 'Enter') {
+            event.preventDefault();
+            handleCardClick();
+        }
+
+        if (isFlipped) {
+            if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                handleResult('again');
+            }
+            if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                handleResult('good');
+            }
+        }
+    };
+
+    // Filter Controls JSX
     const filterControls = (
         <div className="w-full max-w-3xl mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-2">
@@ -159,128 +249,6 @@ const StudySession = () => {
             </div>
         </div>
     );
-    const containerRef = useRef(null);
-
-    useEffect(() => {
-        const queue = getPracticeQueue('study', 12);
-        setDueWords(prev => {
-            const prevIds = prev.map(w => w.id).join(',');
-            const nextIds = queue.map(w => w.id).join(',');
-            if (prevIds === nextIds && prev.length === queue.length) {
-                return queue;
-            }
-            setCurrentIndex(0);
-            return queue;
-        });
-    }, [getPracticeQueue]);
-
-    useEffect(() => {
-        const current = dueWords[currentIndex];
-        if (current) {
-            markWordSeen(current.id);
-        }
-    }, [currentIndex, dueWords, markWordSeen]);
-        const baseDue = getDueWords();
-        const filtered = baseDue.filter(word => {
-            const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
-            const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
-            return matchesCEFR && matchesCategory;
-        });
-
-        setDueWords(filtered);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setSessionComplete(filtered.length === 0);
-        preloadAudioForWords(filtered);
-        // We intentionally avoid depending on vocabulary to prevent resets during a session.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterCEFR, filterCategory]);
-
-    useEffect(() => {
-        if (containerRef.current) {
-            containerRef.current.focus();
-        }
-    }, [currentIndex, sessionComplete]);
-
-    const handleCardClick = () => {
-        if (!sessionComplete) {
-            setIsFlipped(!isFlipped);
-            SoundManager.playFlip();
-        }
-    };
-
-    const handleResult = (grade) => {
-        const passing = grade !== 'again';
-        if (passing) {
-            SoundManager.playSuccess();
-        } else {
-            SoundManager.playFailure();
-            triggerShake('flashcard-container');
-        }
-
-        const currentWord = dueWords[currentIndex];
-        updateWordProgress(currentWord.id, grade);
-
-        const nextCorrect = success ? correctCount + 1 : correctCount;
-        const nextWrong = success ? wrongCount : wrongCount + 1;
-        const nextStreak = success ? currentStreak + 1 : 0;
-        const nextBestStreak = success ? Math.max(bestStreak, nextStreak) : bestStreak;
-
-        setCorrectCount(nextCorrect);
-        setWrongCount(nextWrong);
-        setCurrentStreak(nextStreak);
-        setBestStreak(nextBestStreak);
-
-        updateDailyStat('dailyReviews', 1);
-        if (success) updateDailyStat('dailyStreak', nextStreak, 'max');
-
-        setIsFlipped(false);
-
-        if (currentIndex < dueWords.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-        } else {
-<<<<<<< HEAD
-            setSessionComplete(true);
-            triggerConfetti();
-=======
-            finalizeSession({
-                correct: nextCorrect,
-                total: dueWords.length,
-                bestStreak: nextBestStreak
-            });
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
-        }
-    };
-
-    const handleExit = () => {
-        if (onExit) onExit();
-    };
-
-    const handleKeyDown = (event) => {
-        if (event.key === 'Escape') {
-            event.preventDefault();
-            handleExit();
-            return;
-        }
-
-        if (sessionComplete || dueWords.length === 0) return;
-
-        if (event.key === ' ' || event.key === 'Enter') {
-            event.preventDefault();
-            handleCardClick();
-        }
-
-        if (isFlipped) {
-            if (event.key === 'ArrowLeft') {
-                event.preventDefault();
-                handleResult(false);
-            }
-            if (event.key === 'ArrowRight') {
-                event.preventDefault();
-                handleResult(true);
-            }
-        }
-    };
 
     if (dueWords.length === 0) {
         return (
@@ -300,37 +268,26 @@ const StudySession = () => {
 
     if (sessionComplete) {
         return (
-<<<<<<< HEAD
             <main className="min-h-screen p-4 flex flex-col items-center justify-center">
                 <SuccessState
                     title="Session Complete!"
                     description={`You reviewed ${dueWords.length} words.`}
                     actionLabel="Return to Menu"
                     onAction={handleExit}
-                />
-=======
-            <main className="flex flex-col items-center justify-center min-h-screen text-white p-4" role="main">
-                <h2 className="text-3xl font-bold mb-4">Session Complete!</h2>
-                <p className="text-xl mb-8">You reviewed {dueWords.length} words.</p>
-                {sessionReward && (
-                    <div className="flex gap-4 mb-6">
-                        <div className="px-6 py-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl text-center">
-                            <p className="text-xs uppercase text-indigo-200 tracking-wider">XP</p>
-                            <p className="text-3xl font-black text-indigo-300">+{sessionReward.xp}</p>
-                        </div>
-                        <div className="px-6 py-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-center">
-                            <p className="text-xs uppercase text-amber-200 tracking-wider">Coins</p>
-                            <p className="text-3xl font-black text-amber-300">+{sessionReward.coins}</p>
-                        </div>
-                    </div>
-                )}
-                <button
-                    onClick={handleExit}
-                    className="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-500 transition-colors"
                 >
-                    Return to Menu
-                </button>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+                    {sessionReward && (
+                        <div className="flex gap-4 mt-6 justify-center">
+                            <div className="px-6 py-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl text-center">
+                                <p className="text-xs uppercase text-indigo-200 tracking-wider">XP</p>
+                                <p className="text-3xl font-black text-indigo-300">+{sessionReward.xp}</p>
+                            </div>
+                            <div className="px-6 py-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-center">
+                                <p className="text-xs uppercase text-amber-200 tracking-wider">Coins</p>
+                                <p className="text-3xl font-black text-amber-300">+{sessionReward.coins}</p>
+                            </div>
+                        </div>
+                    )}
+                </SuccessState>
             </main>
         );
     }
@@ -357,9 +314,8 @@ const StudySession = () => {
             <div
                 id="flashcard-container"
                 onClick={handleCardClick}
-                className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer"
-                title={metaTooltip}
                 className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 rounded-2xl"
+                title={metaTooltip}
                 role="button"
                 tabIndex={0}
                 aria-pressed={isFlipped}
