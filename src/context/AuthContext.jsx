@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { nanoid } from '../utils/id';
+import { generateSalt, hashPassword } from '../utils/crypto';
+import { hashPassword, verifyPassword } from '../utils/crypto';
 
 const AuthContext = createContext();
 
@@ -35,7 +37,14 @@ export const AuthProvider = ({ children }) => {
             if (credentials[email]) {
                 throw new Error('Account already exists');
             }
-            credentials[email] = { password, createdAt: Date.now() };
+
+            // Security: Hash password before storage
+            const salt = generateSalt();
+            const hash = await hashPassword(password, salt);
+
+            credentials[email] = { hash, salt, createdAt: Date.now() };
+            const hashedPassword = await hashPassword(password);
+            credentials[email] = { password: hashedPassword, createdAt: Date.now() };
             localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
             const newUser = { id: nanoid(), email, createdAt: Date.now(), provider: 'email' };
             setUser(newUser);
@@ -59,9 +68,53 @@ export const AuthProvider = ({ children }) => {
             }
             const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
             const record = credentials[email];
-            if (!record || record.password !== password) {
+
+            if (!record) {
                 throw new Error('Invalid credentials');
             }
+
+            // Migration: If legacy password exists, verify and migrate
+            if (record.password) {
+                if (record.password !== password) {
+                    throw new Error('Invalid credentials');
+                }
+
+                // Migrate to hashed password
+                const salt = generateSalt();
+                const hash = await hashPassword(password, salt);
+                credentials[email] = { hash, salt, createdAt: record.createdAt };
+                localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+            } else {
+                // Verify hash
+                const hash = await hashPassword(password, record.salt);
+                if (hash !== record.hash) {
+                    throw new Error('Invalid credentials');
+                }
+                throw new Error('Invalid credentials');
+            }
+
+            let isValid = await verifyPassword(password, record.password);
+
+            // Auto-migrate legacy plaintext passwords
+            if (!isValid && record.password === password) {
+                isValid = true;
+                const newHash = await hashPassword(password);
+                credentials[email] = { ...record, password: newHash };
+                localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+            }
+
+            const isValid = record && await verifyPassword(record.password, password);
+            if (!isValid) {
+                throw new Error('Invalid credentials');
+            }
+
+            // Upgrade legacy password if needed
+            if (!record.password.includes(':')) {
+                const newHash = await hashPassword(password);
+                credentials[email] = { ...record, password: newHash };
+                localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+            }
+
             const signedInUser = { id: email, email, provider: 'email', createdAt: record.createdAt };
             setUser(signedInUser);
             return signedInUser;
