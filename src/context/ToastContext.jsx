@@ -1,8 +1,8 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Award, X, Check, AlertCircle, Info } from 'lucide-react';
 
-const ToastContext = createContext();
+export const ToastContext = createContext();
 
 let toastId = 0;
 
@@ -49,8 +49,18 @@ export const ToastProvider = ({ children }) => {
         addToast({ type: 'info', message, duration: 3000 });
     }, [addToast]);
 
+    // Optimize context value to prevent unnecessary re-renders
+    const contextValue = useMemo(() => ({
+        addToast,
+        removeToast,
+        showAchievement,
+        showSuccess,
+        showError,
+        showInfo
+    }), [addToast, removeToast, showAchievement, showSuccess, showError, showInfo]);
+
     return (
-        <ToastContext.Provider value={{ addToast, removeToast, showAchievement, showSuccess, showError, showInfo }}>
+        <ToastContext.Provider value={contextValue}>
             {children}
             <ToastContainer toasts={toasts} removeToast={removeToast} />
         </ToastContext.Provider>

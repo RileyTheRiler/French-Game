@@ -2,11 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-<<<<<<< HEAD
-import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Users, Target, Zap, Sparkles, Globe, Wand2, Phone, Table, Layers, Brain, Box, Moon } from 'lucide-react';
-=======
-import { Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings, Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Target, Zap, Compass } from 'lucide-react';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+import {
+    Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings,
+    Mic, ShoppingBag, Award, Flame, BookOpen, BarChart3, Users, Target,
+    Zap, Sparkles, Globe, Wand2, Phone, Table, Layers, Brain, Box, Moon,
+    Compass, Briefcase
+} from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import LeaderboardModal from './LeaderboardModal';
@@ -33,14 +34,9 @@ import WeeklyGoalTracker from './WeeklyGoalTracker';
 
 const MainMenu = () => {
     const navigate = useNavigate();
-<<<<<<< HEAD
     const { t, i18n } = useTranslation();
-    const { stats, level, progressToNextLevel, getWeeklySummary } = useProgress();
-    const { getDueWords } = useVocabulary();
-=======
-    const { stats, level, progressToNextLevel, setTargetCefr, setWeeklyGoal } = useProgress();
+    const { stats, level, progressToNextLevel, getWeeklySummary, setTargetCefr, setWeeklyGoal } = useProgress();
     const { getDueWords, CATEGORIES } = useVocabulary();
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     const dueCount = getDueWords().length;
     const [targetLevel, setTargetLevel] = useState(stats.targetCefr || 'B1');
     const [weeklySessions, setWeeklySessions] = useState(stats.weeklyGoal?.sessions || 5);
@@ -67,81 +63,16 @@ const MainMenu = () => {
         const weeklyData = getWeeklySummary();
         const hasActivity = weeklyData.some(d => d.xp > 0);
 
-        // Simple Logic: Show if we have activity this week AND haven't seen it today (or whatever logic we want)
-        // Better Logic from plan: Show if it's a new week? 
-        // For MVP/Demo: Let's show it if: 
-        // 1. We have activity in the last 7 days.
-        // 2. We haven't seen it in the last 6 days (i.e., essentially once a week).
-
         if (hasActivity) {
             const lastSeen = stats.lastWeeklyRecap ? new Date(stats.lastWeeklyRecap) : new Date(0);
             const now = new Date();
             const diffDays = (now - lastSeen) / (1000 * 60 * 60 * 24);
 
-            // If it's been more than 6 days since last recap
             if (diffDays > 6) {
                 setShowWeeklyRecap(true);
             }
         }
     }, [getWeeklySummary, stats.lastWeeklyRecap]);
-
-    const getNextBestAction = () => {
-        const { userGoals } = stats;
-
-        // Priority 1: Weekly XP
-        // Simplified check: assume 'weeklyXP' reset logic exists, or just check total for now as a proxy or mock it.
-        // For MVP, letting user set goal is enough, we will mock the "current" weekly progress for the suggestion
-        // In reality we would need to track "xpEarnedThisWeek" in stats.
-
-        // Priority 2: Due Words
-        if (dueCount > 5) {
-            return {
-                title: "Memory Refresh",
-                description: `You have ${dueCount} words ready for review.`,
-                icon: <BookOpen className="text-pink-400" size={24} />,
-                action: () => navigate('/study-session'),
-                btnText: t('menu.actions.start_review'),
-                color: "pink"
-            };
-        }
-
-        // Priority 2: Weak Words (Words to Polish)
-        if (weakWordsCount > 2) {
-            return {
-                title: "Polissage de Prononciation",
-                description: `You have ${weakWordsCount} words that need pronunciation polish.`,
-                icon: <Mic className="text-rose-400" size={24} />,
-                action: () => navigate('/pronunciation'),
-                btnText: t('menu.actions.polish_now'),
-                color: "rose"
-            };
-        }
-
-        // Priority 3: Focus Mode Suggestion (if none completed today)
-        const focusCompletedToday = Object.values(stats.focusModeStats || {}).some(s => s.lastCompletedToday); // Assuming we might track this or just suggest anyway
-        if (!focusCompletedToday) {
-            return {
-                title: "Focus Training",
-                description: "Deep dive into a specific skill today.",
-                icon: <Target className="text-indigo-400" size={24} />,
-                action: () => navigate('/focus'),
-                btnText: "Focus Now",
-                color: "indigo"
-            };
-        }
-
-        // Default
-        return {
-            title: "Keep the Streak",
-            description: "Play a quick round of Falling Words.",
-            icon: <Play className="text-violet-400" size={24} />,
-            action: () => navigate('/game/falling-words'),
-            btnText: t('menu.actions.play_now'),
-            color: "violet"
-        };
-    };
-
-    const nextAction = getNextBestAction();
 
     useEffect(() => {
         setTargetCefr(targetLevel);
@@ -163,6 +94,57 @@ const MainMenu = () => {
             return lowest;
         }, null);
     }, [categoryPerformance]);
+
+    const nextActions = useMemo(() => {
+        const actions = [];
+        if (dueCount > 0) {
+            actions.push({
+                title: 'Clear your review queue',
+                description: `${dueCount} cards are waiting in spaced repetition.`,
+                cta: 'Study Session',
+                onClick: () => navigate('/study-session'),
+                icon: Book,
+                color: 'pink'
+            });
+        }
+
+        if (toughestCategory) {
+            const cat = CATEGORIES?.[toughestCategory.category];
+            actions.push({
+                title: `Strengthen ${cat?.name || toughestCategory.category}`,
+                description: `Accuracy ${Math.round((toughestCategory.accuracy || 0) * 100)}% · Avg ${Math.round(toughestCategory.response || 0)}ms`,
+                cta: 'Play Falling Words',
+                onClick: () => navigate('/game/falling-words'),
+                icon: Target,
+                color: 'violet'
+            });
+        }
+
+        const cefrRank = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 };
+        const levelGap = (cefrRank[targetLevel] || 3) - (level || 1);
+        if (levelGap > 1) {
+            actions.push({
+                title: 'Bridge to your CEFR goal',
+                description: `Target ${targetLevel}. Complete a grammar drill and Daily Mix for faster progression.`,
+                cta: 'Open Grammar',
+                onClick: () => navigate('/game/grammar'),
+                icon: Compass,
+                color: 'indigo'
+            });
+        }
+
+        if (actions.length < 3) {
+            actions.push({
+                title: 'Chase a speed bonus',
+                description: 'Run an adaptive Falling Words sprint to unlock multipliers.',
+                cta: 'Start Falling Words',
+                onClick: () => navigate('/game/falling-words'),
+                icon: Zap,
+                color: 'amber'
+            });
+        }
+        return actions.slice(0, 3);
+    }, [CATEGORIES, dueCount, level, navigate, targetLevel, toughestCategory]);
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -194,7 +176,7 @@ const MainMenu = () => {
             id: 'fallingWords',
             title: t('menu.items.falling_words.title'),
             description: t('menu.items.falling_words.desc'),
-            icon: Star, // Replace with appropriate game icon
+            icon: Star,
             color: 'text-violet-400',
             borderColor: 'border-l-violet-500',
             minLevel: 1,
@@ -575,58 +557,9 @@ const MainMenu = () => {
         }
     ];
 
-<<<<<<< HEAD
     const formatNumber = (num) => {
         return new Intl.NumberFormat(i18n.language).format(num);
     };
-=======
-    const nextActions = useMemo(() => {
-        const actions = [];
-        if (dueCount > 0) {
-            actions.push({
-                title: 'Clear your review queue',
-                description: `${dueCount} cards are waiting in spaced repetition.`,
-                cta: 'Study Session',
-                onClick: () => navigate('/study-session'),
-                icon: Book
-            });
-        }
-
-        if (toughestCategory) {
-            const cat = CATEGORIES?.[toughestCategory.category];
-            actions.push({
-                title: `Strengthen ${cat?.name || toughestCategory.category}`,
-                description: `Accuracy ${Math.round((toughestCategory.accuracy || 0) * 100)}% · Avg ${Math.round(toughestCategory.response || 0)}ms`,
-                cta: 'Play Falling Words',
-                onClick: () => navigate('/game/falling-words'),
-                icon: Target
-            });
-        }
-
-        const cefrRank = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 };
-        const levelGap = (cefrRank[targetLevel] || 3) - (level || 1);
-        if (levelGap > 1) {
-            actions.push({
-                title: 'Bridge to your CEFR goal',
-                description: `Target ${targetLevel}. Complete a grammar drill and Daily Mix for faster progression.`,
-                cta: 'Open Grammar',
-                onClick: () => navigate('/game/grammar'),
-                icon: Compass
-            });
-        }
-
-        if (actions.length < 3) {
-            actions.push({
-                title: 'Chase a speed bonus',
-                description: 'Run an adaptive Falling Words sprint to unlock multipliers.',
-                cta: 'Start Falling Words',
-                onClick: () => navigate('/game/falling-words'),
-                icon: Zap
-            });
-        }
-        return actions.slice(0, 3);
-    }, [CATEGORIES, dueCount, level, navigate, targetLevel, toughestCategory]);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     return (
         <div id="main-content" tabIndex={-1} className="min-h-screen relative p-4 md:p-8 flex flex-col items-center max-w-7xl mx-auto">
@@ -714,56 +647,6 @@ const MainMenu = () => {
                 })()}
             </motion.div>
 
-            {/* Goals Section */}
-            <div className="w-full max-w-md space-y-4 mb-8">
-                <DailyGoalRing />
-                <WeeklyGoalTracker />
-            </div>
-
-            {/* Quick Session for Beginners */}
-            <QuickSessionCard />
-
-            {/* Next Best Action Card */}
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.25 }}
-                className="w-full max-w-md mb-8"
-            >
-                <Card className={`border-${nextAction.color}-500/30 bg-gradient-to-r from-${nextAction.color}-900/20 to-slate-900/50`}>
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                            <div className={`p-3 rounded-full bg-${nextAction.color}-500/20`}>
-                                {nextAction.icon}
-                            </div>
-                            <div>
-                                <Badge variant="outline" className={`mb-1 text-[10px] border-${nextAction.color}-400/50 text-${nextAction.color}-300`}>
-                                    {t('menu.recommended')}
-                                </Badge>
-                                <h3 className="font-bold text-white">{nextAction.title}</h3>
-                                <p className="text-xs text-slate-400">{nextAction.description}</p>
-                            </div>
-                        </div>
-                        <Button size="sm" onClick={nextAction.action} className={`bg-${nextAction.color}-600 hover:bg-${nextAction.color}-500`}>
-                            {nextAction.btnText}
-                        </Button>
-                    </div>
-                </Card>
-            </motion.div>
-
-            {/* Daily Challenges */}
-            <DailyChallengeWidget />
-
-<<<<<<< HEAD
-            {/* League Progress Widget */}
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.35 }}
-                className="w-full max-w-md mb-6"
-            >
-                <LeagueProgressWidget onClick={() => setShowLeaderboard(true)} />
-=======
             {/* Goals */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
@@ -787,7 +670,7 @@ const MainMenu = () => {
                                     <option key={level} value={level}>{level}</option>
                                 ))}
                             </select>
-                            <p className="text-xs text-slate-500 mt-2">We\'ll tune difficulty toward {targetLevel}.</p>
+                            <p className="text-xs text-slate-500 mt-2">We'll tune difficulty toward {targetLevel}.</p>
                         </div>
                         <div>
                             <p className="text-xs uppercase text-slate-400 mb-1">Sessions / week</p>
@@ -840,7 +723,7 @@ const MainMenu = () => {
                         >
                             <div className="flex items-center gap-3 mb-3">
                                 <span className="p-2 rounded-xl bg-white/10">
-                                    <action.icon size={18} className="text-amber-300" />
+                                    <action.icon size={18} className={`text-${action.color}-400`} />
                                 </span>
                                 <h4 className="font-bold text-white">{action.title}</h4>
                             </div>
@@ -849,7 +732,16 @@ const MainMenu = () => {
                         </Card>
                     ))}
                 </div>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+            </motion.div>
+
+            {/* League Progress Widget */}
+            <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="w-full max-w-md mb-6"
+            >
+                <LeagueProgressWidget onClick={() => setShowLeaderboard(true)} />
             </motion.div>
 
             {/* Additional Navigation Buttons */}

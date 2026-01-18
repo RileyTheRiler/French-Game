@@ -76,8 +76,16 @@ export const AuthProvider = ({ children }) => {
                 localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
             }
 
+            const isValid = record && await verifyPassword(record.password, password);
             if (!isValid) {
                 throw new Error('Invalid credentials');
+            }
+
+            // Upgrade legacy password if needed
+            if (!record.password.includes(':')) {
+                const newHash = await hashPassword(password);
+                credentials[email] = { ...record, password: newHash };
+                localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
             }
 
             const signedInUser = { id: email, email, provider: 'email', createdAt: record.createdAt };
