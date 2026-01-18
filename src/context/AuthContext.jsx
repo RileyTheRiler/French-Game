@@ -62,6 +62,20 @@ export const AuthProvider = ({ children }) => {
             const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
             const record = credentials[email];
 
+            if (!record) {
+                throw new Error('Invalid credentials');
+            }
+
+            let isValid = await verifyPassword(password, record.password);
+
+            // Auto-migrate legacy plaintext passwords
+            if (!isValid && record.password === password) {
+                isValid = true;
+                const newHash = await hashPassword(password);
+                credentials[email] = { ...record, password: newHash };
+                localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+            }
+
             const isValid = record && await verifyPassword(record.password, password);
             if (!isValid) {
                 throw new Error('Invalid credentials');
