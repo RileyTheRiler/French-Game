@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { nanoid } from '../utils/id';
+import { generateSalt, hashPassword } from '../utils/crypto';
 import { hashPassword, verifyPassword } from '../utils/crypto';
 
 const AuthContext = createContext();
@@ -36,6 +37,12 @@ export const AuthProvider = ({ children }) => {
             if (credentials[email]) {
                 throw new Error('Account already exists');
             }
+
+            // Security: Hash password before storage
+            const salt = generateSalt();
+            const hash = await hashPassword(password, salt);
+
+            credentials[email] = { hash, salt, createdAt: Date.now() };
             const hashedPassword = await hashPassword(password);
             credentials[email] = { password: hashedPassword, createdAt: Date.now() };
             localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
@@ -63,6 +70,26 @@ export const AuthProvider = ({ children }) => {
             const record = credentials[email];
 
             if (!record) {
+                throw new Error('Invalid credentials');
+            }
+
+            // Migration: If legacy password exists, verify and migrate
+            if (record.password) {
+                if (record.password !== password) {
+                    throw new Error('Invalid credentials');
+                }
+
+                // Migrate to hashed password
+                const salt = generateSalt();
+                const hash = await hashPassword(password, salt);
+                credentials[email] = { hash, salt, createdAt: record.createdAt };
+                localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
+            } else {
+                // Verify hash
+                const hash = await hashPassword(password, record.salt);
+                if (hash !== record.hash) {
+                    throw new Error('Invalid credentials');
+                }
                 throw new Error('Invalid credentials');
             }
 
