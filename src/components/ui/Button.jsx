@@ -1,9 +1,11 @@
 import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { cn } from '../../utils/cn';
 
 const variants = {
     default: "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-indigo-500/20 border-transparent hover:shadow-indigo-500/40",
+    primary: "bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-indigo-500/20 border-transparent hover:shadow-indigo-500/40",
     secondary: "bg-pink-600 text-white shadow-lg shadow-pink-500/20 border-transparent hover:shadow-pink-500/40",
     outline: "bg-transparent border-white/20 text-white hover:bg-white/5",
     ghost: "bg-transparent text-slate-300 hover:text-white hover:bg-white/5",
@@ -14,6 +16,7 @@ const sizes = {
     sm: "px-3 py-1.5 text-sm",
     md: "px-5 py-2.5 text-base",
     lg: "px-8 py-3 text-lg font-bold",
+    icon: "h-10 w-10 p-0 grid place-items-center",
 };
 
 export const Button = ({

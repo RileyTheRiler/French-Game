@@ -20,6 +20,10 @@ export const nanoid = (size = 12) => {
                 id += alphabet[byte % alphabet.length];
             }
         }
+    const randomValues = new Uint8Array(length);
+    crypto.getRandomValues(randomValues);
+    for (let i = 0; i < length; i += 1) {
+        id += alphabet[randomValues[i] % alphabet.length];
     }
 
     return id;
