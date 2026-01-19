@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, RotateCcw, Timer, Zap, Lightbulb, BookOpen } from 'lucide-react';
+import { Check, X, RotateCcw, Timer, Zap, Lightbulb, BookOpen, AlertTriangle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
-import { calculateRewards } from '../utils/rewardSystem';
 import { GameLayout } from './layout/GameLayout';
 import { Card } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
@@ -10,14 +10,7 @@ import SoundManager from '../utils/SoundManager';
 import { Button } from './ui/Button';
 import { checkGrammar } from '../data/grammarTips';
 import { getDifficultyConfig } from './ui/DifficultyDial';
-
-const SENTENCES = [
-    { english: "I would like a coffee.", french: ["Je", "voudrais", "un", "café", "."] },
-    { english: "Where is the train station?", french: ["Où", "est", "la", "gare", "?"] },
-    { english: "I do not understand.", french: ["Je", "ne", "comprends", "pas", "."] },
-    { english: "He eats an apple.", french: ["Il", "mange", "une", "pomme", "."] },
-    { english: "It is very beautiful.", french: ["C'est", "très", "beau", "."] }
-];
+import { generateSentenceBuilder } from '../systems/ExerciseGenerator';
 
 const WordTile = ({ word, onClick, variant = "default" }) => (
     <motion.button
@@ -48,28 +41,22 @@ const WordTile = ({ word, onClick, variant = "default" }) => (
     </motion.button>
 );
 
-import { generateSentenceBuilder } from '../systems/ExerciseGenerator';
-import { AlertTriangle, Info } from 'lucide-react';
-
 const SentenceBuilder = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-<<<<<<< HEAD
-    const { addXP, globalDifficulty, logConceptAttempt } = useProgress();
+
+    // Merged useProgress from both branches
+    const { addXP, globalDifficulty, logConceptAttempt, stats, consumeItem } = useProgress();
 
     const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
 
     // Difficulty Settings
     const hintDelay = difficultyConfig.hintDelay;
-    const isFreeFormEnabled = difficultyConfig.strictSpelling; // Using strictSpelling as a proxy for free-form or just add it to config
+    const isFreeFormEnabled = difficultyConfig.strictSpelling;
     const warningTimerRef = useRef(null);
 
     // Game State
     const [puzzle, setPuzzle] = useState(null);
-=======
-    const { addXP, addCoins, stats, consumeItem, updateDailyStat, incrementStat } = useProgress();
-    const [currentIndex, setCurrentIndex] = useState(0);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     const [availableWords, setAvailableWords] = useState([]);
     const [builtSentence, setBuiltSentence] = useState([]);
     const [typedAnswer, setTypedAnswer] = useState(''); // Free-form input
@@ -77,16 +64,12 @@ const SentenceBuilder = () => {
     const [showFallbackTiles, setShowFallbackTiles] = useState(false); // Show tiles if struggling
     const [status, setStatus] = useState('loading'); // 'loading', 'playing', 'correct', 'wrong'
     const [feedback, setFeedback] = useState('');
-<<<<<<< HEAD
-    const [grammarWarnings, setGrammarWarnings] = useState([]);
+
+    // const [grammarWarnings, setGrammarWarnings] = useState([]); // REMOVED
     const [visibleGrammarWarnings, setVisibleGrammarWarnings] = useState([]); // Delayed display
     const [questionCount, setQuestionCount] = useState(0);
     const [learningMoment, setLearningMoment] = useState(null); // { miniLesson, onDismiss }
     const MAX_QUESTIONS = 5;
-=======
-    const [mistakes, setMistakes] = useState(0);
-    const [sessionTotals, setSessionTotals] = useState({ xp: 0, coins: 0 });
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     // Speed Run State
     const [isSpeedRun, setIsSpeedRun] = useState(false);
@@ -94,44 +77,9 @@ const SentenceBuilder = () => {
     const [score, setScore] = useState(0);
     const [speedRunActive, setSpeedRunActive] = useState(false);
 
-    // Timer Logic
-    useEffect(() => {
-<<<<<<< HEAD
-        if (speedRunActive && timeLeft > 0) {
-            const timer = setInterval(() => {
-                setTimeLeft(prev => prev - 1);
-            }, 1000);
-            return () => clearInterval(timer);
-        } else if (speedRunActive && timeLeft === 0) {
-            endSpeedRun();
-        }
-    }, [speedRunActive, timeLeft]);
-
-    const startSpeedRun = () => {
-        setIsSpeedRun(true);
-        setSpeedRunActive(true);
-        setTimeLeft(60);
-        setScore(0);
-        setQuestionCount(0);
-        loadNextPuzzle();
-    };
-
-    const endSpeedRun = () => {
-        setSpeedRunActive(false);
-        setStatus('finished');
-        SoundManager.playLevelUp();
-        addXP(score * 5); // 5 XP per correct
-    };
-
-    // Load initial puzzle
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
-
-    // Check grammar rules in real-time (internal)
-    useEffect(() => {
+    // Derived State (useMemo)
+    const grammarWarnings = useMemo(() => {
         const warnings = [];
-
         // Simple Agreement Check logic
         for (let i = 0; i < builtSentence.length - 1; i++) {
             const current = builtSentence[i];
@@ -154,34 +102,10 @@ const SentenceBuilder = () => {
                 }
             }
         }
-        setGrammarWarnings(warnings);
+        return warnings;
     }, [builtSentence]);
 
-    // Delay grammar warning visibility to encourage thinking
-    useEffect(() => {
-        // Clear any pending timer
-        if (warningTimerRef.current) {
-            clearTimeout(warningTimerRef.current);
-        }
-
-        // If no warnings or instant mode, update immediately
-        if (grammarWarnings.length === 0 || hintDelay === 0) {
-            setVisibleGrammarWarnings(grammarWarnings);
-            return;
-        }
-
-        // Delay showing warnings to let user think
-        warningTimerRef.current = setTimeout(() => {
-            setVisibleGrammarWarnings(grammarWarnings);
-        }, hintDelay * 1000);
-
-        return () => {
-            if (warningTimerRef.current) {
-                clearTimeout(warningTimerRef.current);
-            }
-        };
-    }, [grammarWarnings, hintDelay]);
-
+    // Helper Functions
     const loadNextPuzzle = () => {
         const newPuzzle = generateSentenceBuilder(1);
         if (newPuzzle) {
@@ -193,22 +117,28 @@ const SentenceBuilder = () => {
             setShowFallbackTiles(false);
             setStatus('playing');
             setFeedback('');
-            setGrammarWarnings([]);
+            // setGrammarWarnings([]); // REMOVED - Derived
         } else {
             // Fallback if generator fails
             navigate('/');
         }
     };
-=======
-        if (!targetSentenceData) return;
-        const words = [...targetSentenceData.french].sort(() => Math.random() - 0.5);
-        setAvailableWords(words.map((w, i) => ({ id: `${currentIndex}-${i}`, text: w })));
-        setBuiltSentence([]);
-        setStatus('playing');
-        setFeedback('');
-        setMistakes(0);
-    }, [currentIndex]);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+
+    const endSpeedRun = () => {
+        setSpeedRunActive(false);
+        setStatus('finished');
+        SoundManager.playLevelUp();
+        addXP(score * 5); // 5 XP per correct
+    };
+
+    const startSpeedRun = () => {
+        setIsSpeedRun(true);
+        setSpeedRunActive(true);
+        setTimeLeft(60);
+        setScore(0);
+        setQuestionCount(0);
+        loadNextPuzzle();
+    };
 
     const handleWordClick = (word) => {
         if (status !== 'playing') return;
@@ -226,9 +156,16 @@ const SentenceBuilder = () => {
 
     const useHintToken = () => {
         if (!stats.inventory?.['hint_token']) return;
-        const nextText = targetSentenceData.french[builtSentence.length];
+
+        // Fix for useHintToken using puzzle data instead of missing targetSentenceData
+        const targetWords = puzzle.targetFrench.split(' ');
+        const nextText = targetWords[builtSentence.length];
+
+        if (!nextText) return;
+
         const hintWord = availableWords.find(w => w.text === nextText);
         if (!hintWord) return;
+
         const consumed = consumeItem('hint_token');
         if (!consumed) return;
 
@@ -236,6 +173,26 @@ const SentenceBuilder = () => {
         setBuiltSentence(prev => [...prev, hintWord]);
         setAvailableWords(prev => prev.filter(w => w.id !== hintWord.id));
         setFeedback('Hint used!');
+    };
+
+    const handleSuccess = () => {
+        if (isSpeedRun) {
+            setScore(prev => prev + 1);
+            setTimeLeft(prev => prev + 5); // Bonus time
+            setFeedback('+5s Bonus!');
+            loadNextPuzzle();
+        } else {
+            setTimeout(() => {
+                if (questionCount < MAX_QUESTIONS - 1) {
+                    setQuestionCount(prev => prev + 1);
+                    loadNextPuzzle();
+                } else {
+                    SoundManager.playLevelUp();
+                    setFeedback('All sentences completed!');
+                    setTimeout(onExit, 2000);
+                }
+            }, 1500);
+        }
     };
 
     const checkAnswer = () => {
@@ -261,7 +218,6 @@ const SentenceBuilder = () => {
             setStatus('correct');
             setFeedback('Perfect! 🎉');
             SoundManager.playSuccess();
-<<<<<<< HEAD
             // Bonus XP for free-form
             if (!isSpeedRun) addXP(isUsingFreeForm ? 30 : 20);
 
@@ -316,53 +272,54 @@ const SentenceBuilder = () => {
         }
     };
 
-    // Modify checkAnswer success block for speed run
-    const handleSuccess = () => {
-        if (isSpeedRun) {
-            setScore(prev => prev + 1);
-            setTimeLeft(prev => prev + 5); // Bonus time
-            setFeedback('+5s Bonus!');
-            loadNextPuzzle();
-        } else {
-=======
-            const reward = calculateRewards('sentenceBuilder', {
-                words: targetSentenceData.french.length,
-                mistakes
-            });
-            addXP(reward.xp);
-            addCoins(reward.coins);
-            setSessionTotals(prev => ({
-                xp: prev.xp + reward.xp,
-                coins: prev.coins + reward.coins
-            }));
-            updateDailyStat('dailyReviews', targetSentenceData.french.length);
-            incrementStat('sentencesBuilt', 1);
-            setMistakes(0);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+    // Effects
+    useEffect(() => {
+        if (speedRunActive && timeLeft > 0) {
+            const timer = setInterval(() => {
+                setTimeLeft(prev => prev - 1);
+            }, 1000);
+            return () => clearInterval(timer);
+        } else if (speedRunActive && timeLeft === 0) {
             setTimeout(() => {
-                if (questionCount < MAX_QUESTIONS - 1) {
-                    setQuestionCount(prev => prev + 1);
-                    loadNextPuzzle();
-                } else {
-                    SoundManager.playLevelUp();
-                    setFeedback('All sentences completed!');
-                    setTimeout(onExit, 2000);
-                }
-            }, 1500);
-<<<<<<< HEAD
-=======
-        } else {
-            setStatus('wrong');
-            setFeedback('Not quite right.');
-            SoundManager.playMiss();
-            setMistakes(prev => prev + 1);
-            setTimeout(() => {
-                setStatus('playing');
-                setFeedback('');
-            }, 1500);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+                endSpeedRun();
+            }, 0);
         }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [speedRunActive, timeLeft]);
+
+    useEffect(() => {
+        setTimeout(() => {
+            loadNextPuzzle();
+        }, 0);
+    }, []);
+
+    // Grammar check effect removed (replaced by useMemo)
+
+    useEffect(() => {
+        // Clear any pending timer
+        if (warningTimerRef.current) {
+            clearTimeout(warningTimerRef.current);
+        }
+
+        // If no warnings or instant mode, update immediately
+        if (grammarWarnings.length === 0 || hintDelay === 0) {
+            setTimeout(() => {
+                setVisibleGrammarWarnings(grammarWarnings);
+            }, 0);
+            return;
+        }
+
+        // Delay showing warnings to let user think
+        warningTimerRef.current = setTimeout(() => {
+            setVisibleGrammarWarnings(grammarWarnings);
+        }, hintDelay * 1000);
+
+        return () => {
+            if (warningTimerRef.current) {
+                clearTimeout(warningTimerRef.current);
+            }
+        };
+    }, [grammarWarnings, hintDelay]);
 
     if (!puzzle) return <div className="text-white text-center p-10">Loading...</div>;
 
@@ -389,7 +346,6 @@ const SentenceBuilder = () => {
             subtitle="Arrange the words to translate the sentence."
             onBack={onExit}
             headerRight={
-<<<<<<< HEAD
                 <div className="flex items-center gap-4">
                     {!isSpeedRun && (
                         <Button
@@ -412,15 +368,6 @@ const SentenceBuilder = () => {
                             {questionCount + 1} / {MAX_QUESTIONS}
                         </div>
                     )}
-=======
-                <div className="flex items-center gap-2">
-                    <div className="text-white/50 text-sm font-bold bg-white/10 px-3 py-1 rounded-full">
-                        {currentIndex + 1} / {SENTENCES.length}
-                    </div>
-                    <div className="text-xs font-bold bg-indigo-500/10 border border-indigo-500/30 text-indigo-200 px-3 py-1 rounded-full">
-                        +{sessionTotals.xp} XP / +{sessionTotals.coins}⛃
-                    </div>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                 </div>
             }
         >
@@ -651,9 +598,13 @@ const SentenceBuilder = () => {
                                             <BookOpen size={16} />
                                             <span>Key Point</span>
                                         </div>
-                                        <p className="text-slate-200" dangerouslySetInnerHTML={{
-                                            __html: learningMoment.miniLesson.keyPoint.replace(/\*\*(.*?)\*\*/g, '<strong class="text-white">$1</strong>')
-                                        }} />
+                                        <p className="text-slate-200">
+                                            {learningMoment.miniLesson.keyPoint.split(/(\*\*.*?\*\*)/g).map((part, index) => (
+                                                part.startsWith('**') && part.endsWith('**')
+                                                    ? <strong key={index} className="text-white">{part.slice(2, -2)}</strong>
+                                                    : part
+                                            ))}
+                                        </p>
                                     </div>
                                 )}
 
