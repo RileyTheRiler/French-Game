@@ -4,7 +4,7 @@ import { PhoneOff, Mic, MicOff, User } from 'lucide-react';
 
 const CallScreen = ({ npcName, isNpcSpeaking, isUserListening, onEndCall, onToggleMic, transcript, status }) => {
     return (
-        <div className="flex flex-col h-full bg-slate-900 relative overflow-hidden">
+        <div id="main-content" tabIndex={-1} className="flex flex-col h-full bg-slate-900 relative overflow-hidden">
             {/* Ambient Background */}
             <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-indigo-950/20 to-slate-900 pointer-events-none" />
 

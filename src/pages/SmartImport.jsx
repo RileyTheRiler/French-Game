@@ -43,7 +43,7 @@ const SmartImport = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 p-6 pb-24 font-sans text-slate-100">
+        <div id="main-content" tabIndex={-1} className="min-h-screen bg-slate-950 p-6 pb-24 font-sans text-slate-100">
             {/* Header */}
             <header className="max-w-4xl mx-auto flex items-center justify-between mb-8">
                 <button

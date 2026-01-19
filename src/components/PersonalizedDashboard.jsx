@@ -85,7 +85,7 @@ const PersonalizedDashboard = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-6">
+        <div id="main-content" tabIndex={-1} className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-6">
             <div className="max-w-6xl mx-auto">
 
                 {/* Header */}
