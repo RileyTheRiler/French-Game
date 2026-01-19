@@ -5,12 +5,14 @@ import { VocabularyProvider, useVocabulary } from './VocabularyContext';
 import { ProgressProvider } from './ProgressContext';
 
 // Mock ProgressContext to avoid complex dependencies
+const { mockAddXP } = vi.hoisted(() => ({ mockAddXP: vi.fn() }));
+
 vi.mock('./ProgressContext', async () => {
     const actual = await vi.importActual('./ProgressContext');
     return {
         ...actual,
         useProgress: () => ({
-            addXP: vi.fn(),
+            addXP: mockAddXP,
         }),
         ProgressProvider: ({ children }) => <div>{children}</div>
     };
