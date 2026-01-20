@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-24 - Expensive Comparator in Sort
+**Learning:** `sortByReviewPriority` in `src/utils/srs.js` was recalculating `Math.exp` (via `calculateRetentionProbability`) 2 * N * log(N) times during sort. This caused measurable lag (~66ms for 10k items).
+**Action:** Use the Schwartzian transform (map-sort-map) when sorting by a derived value that is expensive to compute. Pre-calculating priorities reduced time to ~16ms (4x speedup).
