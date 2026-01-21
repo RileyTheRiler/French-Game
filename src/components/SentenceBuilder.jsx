@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, RotateCcw, Timer, Zap, Lightbulb, BookOpen, AlertTriangle } from 'lucide-react';
@@ -12,7 +12,7 @@ import { checkGrammar } from '../data/grammarTips';
 import { getDifficultyConfig } from './ui/DifficultyDial';
 import { generateSentenceBuilder } from '../systems/ExerciseGenerator';
 
-const WordTile = ({ word, onClick, variant = "default" }) => (
+const WordTile = React.memo(({ word, onClick, variant = "default" }) => (
     <motion.button
         layoutId={`word-${word.id}`}
         initial={{ scale: 0.8, opacity: 0 }}
@@ -39,7 +39,7 @@ const WordTile = ({ word, onClick, variant = "default" }) => (
     >
         {word.text}
     </motion.button>
-);
+));
 
 const SentenceBuilder = () => {
     const navigate = useNavigate();
@@ -140,19 +140,19 @@ const SentenceBuilder = () => {
         loadNextPuzzle();
     };
 
-    const handleWordClick = (word) => {
+    const handleWordClick = useCallback((word) => {
         if (status !== 'playing') return;
         SoundManager.playPop();
         setBuiltSentence(prev => [...prev, word]);
         setAvailableWords(prev => prev.filter(w => w.id !== word.id));
-    };
+    }, [status]);
 
-    const handleRemoveWord = (word) => {
+    const handleRemoveWord = useCallback((word) => {
         if (status !== 'playing') return;
         SoundManager.playPop();
         setAvailableWords(prev => [...prev, word]);
         setBuiltSentence(prev => prev.filter(w => w.id !== word.id));
-    };
+    }, [status]);
 
     const useHintToken = () => {
         if (!stats.inventory?.['hint_token']) return;
