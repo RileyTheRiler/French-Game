@@ -119,7 +119,7 @@ const MinimalPairDrill = ({ onComplete, onExit }) => {
                         }`}>
                         <div className="text-3xl font-bold text-center mb-2">{word1}</div>
                         <div className="text-slate-400 text-sm text-center mb-4">{currentItem.pair.meaning1}</div>
-                        <Button size="mt-2" variant="ghost" onClick={() => speak(word1)}><Volume2 size={16} /></Button>
+                        <Button className="mt-2" size="icon" variant="ghost" onClick={() => speak(word1)} aria-label={`Listen to ${word1}`}><Volume2 size={16} /></Button>
                     </div>
 
                     <div className="flex flex-col justify-center text-slate-600 font-bold text-xl">VS</div>
@@ -130,7 +130,7 @@ const MinimalPairDrill = ({ onComplete, onExit }) => {
                         }`}>
                         <div className="text-3xl font-bold text-center mb-2">{word2}</div>
                         <div className="text-slate-400 text-sm text-center mb-4">{currentItem.pair.meaning2}</div>
-                        <Button size="mt-2" variant="ghost" onClick={() => speak(word2)}><Volume2 size={16} /></Button>
+                        <Button className="mt-2" size="icon" variant="ghost" onClick={() => speak(word2)} aria-label={`Listen to ${word2}`}><Volume2 size={16} /></Button>
                     </div>
                 </div>
 
@@ -149,6 +149,7 @@ const MinimalPairDrill = ({ onComplete, onExit }) => {
                         onClick={startListening}
                         disabled={status === 'success' || status === 'listening'}
                         className={`w-20 h-20 rounded-full mb-8 ${isListening ? 'animate-pulse bg-indigo-500' : 'bg-indigo-600'}`}
+                        aria-label={isListening ? "Stop listening" : "Start listening"}
                     >
                         {isListening ? <MicOff size={32} /> : <Mic size={32} />}
                     </Button>
