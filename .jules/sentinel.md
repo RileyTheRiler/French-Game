@@ -1,7 +1,3 @@
-## 2024-05-22 - Client-Side Hashing & Legacy Migration
-**Vulnerability:** User passwords were stored in plaintext in `localStorage`.
-**Learning:** Client-side apps without a backend often default to insecure storage. Migrating data on the client requires careful handling of "legacy" states (plaintext) vs "secure" states (hashed) during the first login after the fix.
-**Prevention:** Always use `Web Crypto API` (PBKDF2/SHA-256) for any sensitive data, even in demos. Never store plaintext credentials.
 # Sentinel Journal
 
 ## 2024-05-22 - Plaintext Password Storage
@@ -13,3 +9,8 @@
 **Vulnerability:** `dangerouslySetInnerHTML` was used in `SentenceBuilder.jsx` to render bold text (`**text**`) within feedback messages. The implementation used a simple regex replacement which failed to sanitize the remaining text, leaving it vulnerable to XSS if the input contained malicious HTML.
 **Learning:** Using `dangerouslySetInnerHTML` for simple formatting (like bolding) is overkill and risky. Even with regex replacement for the "safe" parts, the "unsafe" parts remain exposed.
 **Prevention:** Avoid `dangerouslySetInnerHTML`. Use a parsing function that splits the string into tokens and renders them as an array of React elements (e.g., `<span>` and `<strong>`). This ensures all content is properly escaped by React by default.
+
+## 2024-05-24 - Timing Attack in Password Verification
+**Vulnerability:** `verifyPassword` used a standard string comparison (`===`) for validating password hashes, which is vulnerable to timing attacks. Additionally, the `src/utils/crypto.js` file contained duplicate implementations due to a bad merge.
+**Learning:** Even when using strong hashing (PBKDF2), the verification step must be timing-safe. Code quality issues (merge conflicts) can hide security vulnerabilities.
+**Prevention:** Use a constant-time comparison algorithm for checking hashes.
