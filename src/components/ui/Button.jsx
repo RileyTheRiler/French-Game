@@ -29,6 +29,12 @@ export const Button = ({
     'aria-label': ariaLabel,
     ...props
 }) => {
+    React.useEffect(() => {
+        if (import.meta.env.DEV && size === 'icon' && !ariaLabel && !props['aria-labelledby']) {
+            console.warn('Button with size="icon" must have an aria-label or aria-labelledby prop for accessibility.');
+        }
+    }, [size, ariaLabel, props]);
+
     return (
         <motion.button
             whileHover={{ scale: disabled ? 1 : 1.02 }}

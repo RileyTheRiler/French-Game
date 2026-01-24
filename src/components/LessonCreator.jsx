@@ -188,16 +188,16 @@ const LessonCreator = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)}>
+                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)} aria-label="Delete lesson">
                                     <Trash2 size={16} className="text-slate-600 hover:text-red-400" />
                                 </Button>
                                 <Button variant="secondary" size="icon" onClick={() => {
                                     setCurrentLesson(lesson);
                                     setStep(lesson.type === 'deck' ? 'create_deck' : 'create_quiz');
-                                }}>
+                                }} aria-label="Edit lesson">
                                     <Edit3 size={16} />
                                 </Button>
-                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)}>
+                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)} aria-label="Start lesson">
                                     <Play size={16} fill="currentColor" />
                                 </Button>
                             </div>
@@ -261,6 +261,7 @@ const LessonCreator = () => {
                                         <button
                                             onClick={() => setNewQuizItem(prev => ({ ...prev, correctAnswer: opt }))}
                                             className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded text-[10px] font-black uppercase ${newQuizItem.correctAnswer === opt && opt !== '' ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-500'}`}
+                                            aria-label={`Mark option ${idx + 1} as correct`}
                                         >
                                             Correct
                                         </button>
@@ -290,7 +291,11 @@ const LessonCreator = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400">
+                                <button
+                                    onClick={() => removeWordFromDeck(item.id)}
+                                    className="text-slate-600 hover:text-red-400"
+                                    aria-label="Remove question"
+                                >
                                     <X size={18} />
                                 </button>
                             </div>
@@ -378,7 +383,11 @@ const LessonCreator = () => {
                                     <span className="text-indigo-400">→</span>
                                     <span className="text-slate-400 italic">{item.english}</span>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                                <button
+                                    onClick={() => removeWordFromDeck(item.id)}
+                                    className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                                    aria-label="Remove word"
+                                >
                                     <X size={18} />
                                 </button>
                             </motion.div>
