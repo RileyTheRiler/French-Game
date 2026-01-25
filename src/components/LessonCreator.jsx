@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, Save, Trash2, Edit3, Share2,
-    Book, List, CheckSquare, Sparkles, ChevronRight, X, Play
+    Book, List, CheckSquare, Sparkles, ChevronRight, X, Play, Volume2
 } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { Badge } from './ui/Badge';
@@ -188,16 +188,16 @@ const LessonCreator = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)}>
+                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)} aria-label="Delete lesson">
                                     <Trash2 size={16} className="text-slate-600 hover:text-red-400" />
                                 </Button>
                                 <Button variant="secondary" size="icon" onClick={() => {
                                     setCurrentLesson(lesson);
                                     setStep(lesson.type === 'deck' ? 'create_deck' : 'create_quiz');
-                                }}>
+                                }} aria-label="Edit lesson">
                                     <Edit3 size={16} />
                                 </Button>
-                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)}>
+                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)} aria-label="Start lesson">
                                     <Play size={16} fill="currentColor" />
                                 </Button>
                             </div>
@@ -290,7 +290,7 @@ const LessonCreator = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400">
+                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400" aria-label="Remove question">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -378,7 +378,7 @@ const LessonCreator = () => {
                                     <span className="text-indigo-400">→</span>
                                     <span className="text-slate-400 italic">{item.english}</span>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all" aria-label="Remove word">
                                     <X size={18} />
                                 </button>
                             </motion.div>
