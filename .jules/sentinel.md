@@ -13,3 +13,8 @@
 **Vulnerability:** `dangerouslySetInnerHTML` was used in `SentenceBuilder.jsx` to render bold text (`**text**`) within feedback messages. The implementation used a simple regex replacement which failed to sanitize the remaining text, leaving it vulnerable to XSS if the input contained malicious HTML.
 **Learning:** Using `dangerouslySetInnerHTML` for simple formatting (like bolding) is overkill and risky. Even with regex replacement for the "safe" parts, the "unsafe" parts remain exposed.
 **Prevention:** Avoid `dangerouslySetInnerHTML`. Use a parsing function that splits the string into tokens and renders them as an array of React elements (e.g., `<span>` and `<strong>`). This ensures all content is properly escaped by React by default.
+
+## 2024-05-24 - Timing Attacks & Code Duplication
+**Vulnerability:** `verifyPassword` used a simple string comparison (`===`) for hash verification, making it susceptible to timing attacks. Additionally, duplicate function implementations in `src/utils/crypto.js` created ambiguity about which version was active.
+**Learning:** Duplicate code blocks can silently override security fixes or introduce subtle bugs (like swapped arguments). Standard string comparison returns early on mismatch, leaking information about the hash content.
+**Prevention:** Always use constant-time comparison for verifying hashes/signatures. Enforce strict linting to catch duplicate declarations.
