@@ -12,7 +12,8 @@ import { checkGrammar } from '../data/grammarTips';
 import { getDifficultyConfig } from './ui/DifficultyDial';
 import { generateSentenceBuilder } from '../systems/ExerciseGenerator';
 
-const WordTile = ({ word, onClick, variant = "default" }) => (
+// Optimization: Memoize WordTile to prevent re-renders of all tiles when one is clicked
+const WordTile = React.memo(({ word, onClick, variant = "default" }) => (
     <motion.button
         layoutId={`word-${word.id}`}
         initial={{ scale: 0.8, opacity: 0 }}
@@ -39,7 +40,7 @@ const WordTile = ({ word, onClick, variant = "default" }) => (
     >
         {word.text}
     </motion.button>
-);
+));
 
 const SentenceBuilder = () => {
     const navigate = useNavigate();
@@ -140,19 +141,20 @@ const SentenceBuilder = () => {
         loadNextPuzzle();
     };
 
-    const handleWordClick = (word) => {
+    // Memoize handlers to keep WordTile efficient
+    const handleWordClick = React.useCallback((word) => {
         if (status !== 'playing') return;
         SoundManager.playPop();
         setBuiltSentence(prev => [...prev, word]);
         setAvailableWords(prev => prev.filter(w => w.id !== word.id));
-    };
+    }, [status]);
 
-    const handleRemoveWord = (word) => {
+    const handleRemoveWord = React.useCallback((word) => {
         if (status !== 'playing') return;
         SoundManager.playPop();
         setAvailableWords(prev => [...prev, word]);
         setBuiltSentence(prev => prev.filter(w => w.id !== word.id));
-    };
+    }, [status]);
 
     const useHintToken = () => {
         if (!stats.inventory?.['hint_token']) return;
