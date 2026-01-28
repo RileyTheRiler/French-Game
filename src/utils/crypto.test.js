@@ -1,6 +1,6 @@
 
 import { describe, it, expect } from 'vitest';
-import { hashPassword, verifyPassword } from './crypto';
+import { hashPassword, verifyPassword, constantTimeEqual } from './crypto';
 
 describe('Crypto Utils', () => {
     it('should hash a password and return a salt:hash string', async () => {
@@ -43,5 +43,22 @@ describe('Crypto Utils', () => {
         // 'invalidFormat' doesn't have a colon, so it falls back to plaintext check
         // 'invalidFormat' !== 'somePassword' => false
         expect(isValid).toBe(false);
+    });
+
+    describe('constantTimeEqual', () => {
+        it('should return true for identical strings', () => {
+            expect(constantTimeEqual('abc', 'abc')).toBe(true);
+            expect(constantTimeEqual('', '')).toBe(true);
+        });
+
+        it('should return false for different strings', () => {
+            expect(constantTimeEqual('abc', 'abd')).toBe(false);
+            expect(constantTimeEqual('abc', 'abC')).toBe(false);
+        });
+
+        it('should return false for strings of different lengths', () => {
+            expect(constantTimeEqual('abc', 'abcd')).toBe(false);
+            expect(constantTimeEqual('abc', 'ab')).toBe(false);
+        });
     });
 });
