@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { cn } from '../../utils/cn';
@@ -19,7 +19,7 @@ const sizes = {
     icon: "h-10 w-10 p-0 grid place-items-center",
 };
 
-export const Button = ({
+export const Button = memo(({
     children,
     variant = 'default',
     size = 'md',
@@ -48,4 +48,6 @@ export const Button = ({
             {children}
         </motion.button>
     );
-};
+});
+
+Button.displayName = 'Button';

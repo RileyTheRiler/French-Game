@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { cn } from '../../utils/cn';
 
 const variants = {
@@ -9,7 +9,7 @@ const variants = {
     danger: "bg-red-500/20 text-red-300 border-red-500/30",
 };
 
-export const Badge = ({ children, variant = 'default', className }) => {
+export const Badge = memo(({ children, variant = 'default', className }) => {
     return (
         <span className={cn(
             "px-2.5 py-0.5 rounded-full text-xs font-semibold border uppercase tracking-wide",
@@ -19,4 +19,6 @@ export const Badge = ({ children, variant = 'default', className }) => {
             {children}
         </span>
     );
-};
+});
+
+Badge.displayName = 'Badge';
