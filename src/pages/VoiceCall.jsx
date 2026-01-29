@@ -26,6 +26,34 @@ const VoiceCall = () => {
 
     const currentNode = scenario.nodes[currentNodeId];
 
+    const handleSpeak = (text, onEnd) => {
+        // Defer state updates to avoid "synchronous setState in effect" error
+        setTimeout(() => {
+            setCallState('npc_speaking');
+            setIsNpcSpeaking(true);
+            setStatus('Speaking...');
+        }, 0);
+
+        // Simulating speech end for visualizer since web speech API doesn't have reliable 'onend' callback for TTS in all browsers or wrapper
+        // We use a rough estimation of time: 100ms per character?
+        // OR better: speak() function in utils/audio is fire and forget.
+        // For a hack, let's assume average reading speed.
+        speak(text);
+
+        const duration = Math.max(2000, text.length * 80);
+        setTimeout(() => {
+            setIsNpcSpeaking(false);
+            if (onEnd) onEnd();
+        }, duration);
+    };
+
+    const startListeningPhase = () => {
+        setCallState('listening');
+        setStatus('Listening...');
+        resetTranscript();
+        startListening();
+    };
+
     // Effect: Handle Node Transitions
     useEffect(() => {
         if (!currentNode) return;
@@ -50,54 +78,16 @@ const VoiceCall = () => {
         const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
 
         if (messageToSpeak) {
-            setStatus('Speaking...');
             handleSpeak(messageToSpeak, () => {
                 // After speaking, start listening
                 startListeningPhase();
             });
         } else {
             // No message (rare), just listen
-            startListeningPhase();
+            setTimeout(() => startListeningPhase(), 0);
         }
 
     }, [currentNodeId, scenario]);
-
-    const handleSpeak = (text, onEnd) => {
-        setCallState('npc_speaking');
-        setIsNpcSpeaking(true);
-        setStatus('Speaking...');
-
-        // Simulating speech end for visualizer since web speech API doesn't have reliable 'onend' callback for TTS in all browsers or wrapper
-        // We use a rough estimation of time: 100ms per character?
-        // OR better: speak() function in utils/audio is fire and forget. 
-        // For a hack, let's assume average reading speed.
-        speak(text);
-
-        const duration = Math.max(2000, text.length * 80);
-        setTimeout(() => {
-            setIsNpcSpeaking(false);
-            if (onEnd) onEnd();
-        }, duration);
-    };
-
-    const startListeningPhase = () => {
-        setCallState('listening');
-        setStatus('Listening...');
-        resetTranscript();
-        startListening();
-    };
-
-    // Effect: Check transcript for matches
-    useEffect(() => {
-        if (callState !== 'listening' || !transcript) return;
-
-        // Debounce slightly to wait for user to finish sentence
-        const timer = setTimeout(() => {
-            handleProcessInput(transcript);
-        }, 1500);
-
-        return () => clearTimeout(timer);
-    }, [transcript, callState]);
 
     const handleProcessInput = (input) => {
         stopListening();
@@ -127,6 +117,18 @@ const VoiceCall = () => {
             });
         }
     };
+
+    // Effect: Check transcript for matches
+    useEffect(() => {
+        if (callState !== 'listening' || !transcript) return;
+
+        // Debounce slightly to wait for user to finish sentence
+        const timer = setTimeout(() => {
+            handleProcessInput(transcript);
+        }, 1500);
+
+        return () => clearTimeout(timer);
+    }, [transcript, callState]);
 
     const handleToggleMic = () => {
         if (isListening) {
