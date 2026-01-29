@@ -58,7 +58,7 @@ const MemoryMatchGame = () => {
 
     // Initialize Game
     useEffect(() => {
-        startNewGame();
+        setTimeout(() => startNewGame(), 0);
     }, []);
 
     const handleClick = (id) => {
@@ -117,7 +117,7 @@ const MemoryMatchGame = () => {
     // Check Win Condition
     useEffect(() => {
         if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
+            setTimeout(() => handleWin(), 0);
         }
     }, [solved]);
 
