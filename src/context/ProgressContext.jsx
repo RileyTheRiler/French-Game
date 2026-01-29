@@ -353,7 +353,7 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
+    }, [stats, showAchievement]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
