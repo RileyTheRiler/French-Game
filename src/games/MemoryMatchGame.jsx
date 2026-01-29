@@ -24,11 +24,6 @@ const MemoryMatchGame = () => {
     const [gameComplete, setGameComplete] = useState(false);
     const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
-
     const startNewGame = () => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
@@ -60,6 +55,11 @@ const MemoryMatchGame = () => {
         setGameComplete(false);
         setDisabled(false);
     };
+
+    // Initialize Game
+    useEffect(() => {
+        startNewGame();
+    }, []);
 
     const handleClick = (id) => {
         if (disabled || gameComplete) return;
