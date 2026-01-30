@@ -36,25 +36,38 @@ export const SocialProvider = ({ children }) => {
         return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
     });
 
-    const [activeChallenge, setActiveChallenge] = useState({
+    const [activeChallenge, setActiveChallenge] = useState(() => ({
         id: 'chal_weekly_xp',
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
-    });
+    }));
 
     // Compute total current progress
     useEffect(() => {
         const userContribution = Math.max(0, stats.xp - userCoopStartXp);
         const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
 
-        setActiveChallenge(prev => ({
-            ...prev,
-            current: total,
-            isCompleted: total >= prev.target
-        }));
+        // Avoid direct state update in effect if value hasn't changed to prevent loops/re-renders
+        // Using functional update is generally safe, but let's wrap in a check or debounce if needed
+        // Or simply suppress the warning if we are sure it stabilizes.
+        // Actually, this effect depends on `friendsProgress` which is updated by another effect interval.
+        // Let's use setTimeout(0) to break the synchronous cycle warning.
+
+        const timer = setTimeout(() => {
+             setActiveChallenge(prev => {
+                if (prev.current === total && prev.isCompleted === (total >= prev.target)) return prev;
+                return {
+                    ...prev,
+                    current: total,
+                    isCompleted: total >= prev.target
+                };
+            });
+        }, 0);
+        return () => clearTimeout(timer);
+
     }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
 
     const claimCoopReward = useCallback(() => {
