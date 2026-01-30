@@ -2,6 +2,7 @@
 // Structured grammar exercises for analytical learners
 
 import { VERB_DATA, PRONOUNS, TENSES } from './verbData';
+export { PRONOUNS };
 
 // Noun-adjective agreement data
 export const AGREEMENT_RULES = [

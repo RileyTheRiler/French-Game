@@ -10,16 +10,11 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
-<<<<<<< HEAD
 import GrammarInsightCard from './ui/GrammarInsightCard';
-=======
-import DifficultySlider from './ui/DifficultySlider';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const GrammarDrill = () => {
     const navigate = useNavigate();
-    const { addXP, addCoins, incrementStreak, updateDailyStat } = useProgress();
-    const { addXP, incrementStreak, stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+    const { addXP, addCoins, incrementStreak, updateDailyStat, stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
     const difficultySetting = stats?.difficultySettings?.grammar || 2;
     const [difficulty, setDifficulty] = useState(difficultySetting);
     const [sessionPoints, setSessionPoints] = useState(0);
@@ -109,9 +104,6 @@ const GrammarDrill = () => {
             const adaptiveReward = Math.max(5, Math.round(currentDrill.xpReward * difficultyBoost * speedBoost));
             setSessionPoints(prev => prev + adaptiveReward);
             addXP(adaptiveReward);
-        } else {
-            SoundManager.playFailure();
-            setSessionPoints(prev => Math.max(0, prev - 5));
         }
     };
 
@@ -178,9 +170,6 @@ const GrammarDrill = () => {
                 onBack={() => navigate('/')}
                 headerRight={
                     <div className="flex items-center gap-3">
-                        <div className="hidden md:block w-48">
-                            <DifficultySlider value={difficulty} onChange={setDifficulty} />
-                        </div>
                         <Badge variant="outline">Session Points: {sessionPoints}</Badge>
                     </div>
                 }
