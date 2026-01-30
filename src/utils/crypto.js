@@ -55,16 +55,16 @@ export async function hashPassword(password) {
     return `${saltHex}:${hashHex}`;
 }
 
-export async function verifyPassword(stored, password) {
-    if (!stored || typeof stored !== 'string') return false;
+export async function verifyPassword(password, storedHash) {
+    if (!storedHash || typeof storedHash !== 'string') return false;
     if (!password || typeof password !== 'string') return false;
 
     // Legacy plaintext support - insecure but necessary for backward compatibility until migrated
-    if (!stored.includes(':')) {
-        return constantTimeEqual(stored, password);
+    if (!storedHash.includes(':')) {
+        return constantTimeEqual(storedHash, password);
     }
 
-    const parts = stored.split(':');
+    const parts = storedHash.split(':');
     if (parts.length !== 2) return false;
 
     const [saltHex, originalHashHex] = parts;

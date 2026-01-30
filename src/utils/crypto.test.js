@@ -16,7 +16,8 @@ describe('Crypto Utils', () => {
     it('should verify a correct password', async () => {
         const password = 'mySecretPassword';
         const hashedPassword = await hashPassword(password);
-        const isValid = await verifyPassword(hashedPassword, password);
+        // Correct signature: verifyPassword(password, storedHash)
+        const isValid = await verifyPassword(password, hashedPassword);
 
         expect(isValid).toBe(true);
     });
@@ -24,7 +25,8 @@ describe('Crypto Utils', () => {
     it('should reject an incorrect password', async () => {
         const password = 'mySecretPassword';
         const hashedPassword = await hashPassword(password);
-        const isValid = await verifyPassword(hashedPassword, 'wrongPassword');
+        // Correct signature: verifyPassword(password, storedHash)
+        const isValid = await verifyPassword('wrongPassword', hashedPassword);
 
         expect(isValid).toBe(false);
     });
@@ -34,12 +36,12 @@ describe('Crypto Utils', () => {
         const isValid = await verifyPassword(legacyPassword, legacyPassword);
         expect(isValid).toBe(true);
 
-        const isInvalid = await verifyPassword(legacyPassword, 'wrongLegacy');
+        const isInvalid = await verifyPassword('wrongLegacy', legacyPassword);
         expect(isInvalid).toBe(false);
     });
 
     it('should return false for invalid stored format', async () => {
-        const isValid = await verifyPassword('invalidFormat', 'somePassword');
+        const isValid = await verifyPassword('somePassword', 'invalidFormat');
         // 'invalidFormat' doesn't have a colon, so it falls back to plaintext check
         // 'invalidFormat' !== 'somePassword' => false
         expect(isValid).toBe(false);
