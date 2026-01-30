@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
                 record.password = `${record.salt}:${record.hash}`;
             }
 
-            const isValid = await verifyPassword(record.password, password);
+            const isValid = await verifyPassword(password, record.password);
             if (!isValid) {
                 throw new Error('Invalid credentials');
             }
