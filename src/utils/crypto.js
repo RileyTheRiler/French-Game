@@ -56,8 +56,8 @@ export async function hashPassword(password) {
 }
 
 export async function verifyPassword(stored, password) {
-    if (!stored) return false;
-    if (typeof stored !== 'string') return false;
+    if (!stored || typeof stored !== 'string') return false;
+    if (!password || typeof password !== 'string') return false;
 
     // Legacy plaintext support - insecure but necessary for backward compatibility until migrated
     if (!stored.includes(':')) {
