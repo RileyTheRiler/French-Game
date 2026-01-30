@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { X, Trophy, Medal, Crown, Flame, Globe, TrendingUp } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useSocial } from '../context/SocialContext';
@@ -60,7 +60,6 @@ const LeaderboardModal = ({ onClose }) => {
     const [tab, setTab] = useState('weekly');
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-<<<<<<< HEAD
     React.useEffect(() => {
         const handleOnline = () => setIsOffline(false);
         const handleOffline = () => setIsOffline(true);
@@ -76,6 +75,7 @@ const LeaderboardModal = ({ onClose }) => {
     let baseData = [];
     if (tab === 'weekly') baseData = MOCK_WEEKLY;
     else if (tab === 'alltime') baseData = MOCK_ALLTIME;
+    else if (tab === 'seasonal') baseData = SEASONAL_PLAYERS;
     else if (tab === 'friends') {
         // Map friends to leaderboard format
         baseData = friends.map(f => ({
@@ -86,10 +86,8 @@ const LeaderboardModal = ({ onClose }) => {
             country: f.country
         }));
     }
-=======
-    const baseData = tab === 'weekly' ? MOCK_WEEKLY : tab === 'alltime' ? MOCK_ALLTIME : SEASONAL_PLAYERS;
+
     const isSeasonal = tab === 'seasonal';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     // Insert user into leaderboard
     const userEntry = {
@@ -106,7 +104,7 @@ const LeaderboardModal = ({ onClose }) => {
         .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
 
     // Calculate user's league info
-    const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
+    const weeklyData = useProgress().getWeeklySummary ? useProgress().getWeeklySummary() : [];
     const userWeeklyXP = weeklyData.reduce((sum, day) => sum + (day.xp || 0), 0);
     const userLeague = getLeagueByXP(userWeeklyXP);
     const nextLeague = getNextLeague(userLeague.id);
@@ -189,43 +187,18 @@ const LeaderboardModal = ({ onClose }) => {
 
                     {/* Tabs */}
                     <div className="flex border-b border-white/10">
-                        {['weekly', 'alltime', 'friends'].map((t) => (
+                        {['weekly', 'alltime', 'friends', 'seasonal'].map((t) => (
                             <button
                                 key={t}
                                 onClick={() => setTab(t)}
                                 className={`flex-1 py-3 text-sm font-bold transition-all capitalize ${tab === t
                                     ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
                                     : 'text-slate-400 hover:text-white'
-<<<<<<< HEAD
                                     }`}
                             >
                                 {t === 'alltime' ? 'All Time' : t}
                             </button>
                         ))}
-=======
-                                }`}
-                        >
-                            This Week
-                        </button>
-                        <button
-                            onClick={() => setTab('alltime')}
-                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'alltime'
-                                    ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
-                                    : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            All Time
-                        </button>
-                        <button
-                            onClick={() => setTab('seasonal')}
-                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'seasonal'
-                                    ? 'text-indigo-300 border-b-2 border-indigo-300 bg-indigo-500/10'
-                                    : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            Seasonal
-                        </button>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                     </div>
 
                     {/* Leaderboard List */}

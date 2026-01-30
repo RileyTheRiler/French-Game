@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Globe, User, GraduationCap, Rocket, Crown } from 'lucide-react';
 
@@ -99,13 +100,13 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
                     max="100"
                     value={value}
                     onChange={handleChange}
-                    className="absolute inset-0 w-full h-3 opacity-0 cursor-pointer"
+                    className="absolute inset-0 w-full h-3 opacity-0 cursor-pointer peer focus:outline-none"
                     aria-label="Difficulty level"
                 />
 
                 {/* Custom Thumb */}
                 <motion.div
-                    className="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-slate-300 pointer-events-none"
+                    className="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-slate-300 pointer-events-none peer-focus-visible:ring-4 peer-focus-visible:ring-indigo-400/50 peer-focus-visible:border-indigo-500 transition-shadow"
                     animate={{ left: `calc(${fillPercentage}% - 12px)` }}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 />
@@ -131,6 +132,7 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
 };
 
 // Helper function for components to apply difficulty settings
+// eslint-disable-next-line react-refresh/only-export-components
 export const getDifficultyConfig = (globalDifficulty) => {
     const d = globalDifficulty ?? 25;
 

@@ -1,66 +1,11 @@
-<<<<<<< HEAD
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShoppingBag, Zap, Shield, Sparkles, Clock, Palette } from 'lucide-react';
+import { X, ShoppingBag, Clock } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { Button } from './ui/Button';
 import SoundManager from '../utils/SoundManager';
 import { getDailyShopSelection } from '../utils/market';
-=======
-import React from 'react';
-import { motion } from 'framer-motion';
-import { X, ShoppingBag, Zap, Shield, Sparkles, Lightbulb, Clock3 } from 'lucide-react'; // Shield for Streak Freeze
-import { useProgress } from '../context/ProgressContext';
-import { Button } from './ui/Button';
-import SoundManager from '../utils/SoundManager';
-
-const ITEMS = [
-    {
-        id: 'streak_freeze',
-        name: 'Streak Freeze',
-        description: 'Miss a day without losing your streak!',
-        price: 50,
-        icon: <Shield className="text-blue-400" size={32} />,
-        color: 'bg-blue-500/10 border-blue-500/30'
-    },
-    {
-        id: 'hint_token',
-        name: 'Hint Token',
-        description: 'Spend in Sentence Builder for an auto-placed word.',
-        price: 40,
-        icon: <Lightbulb className="text-emerald-400" size={32} />,
-        color: 'bg-emerald-500/10 border-emerald-500/30'
-    },
-    {
-        id: 'double_xp',
-        name: 'Double XP Potion',
-        description: 'Earn 2x XP for the next 15 minutes.',
-        price: 100,
-        icon: <Zap className="text-yellow-400" size={32} />,
-        color: 'bg-yellow-500/10 border-yellow-500/30',
-        disabled: false
-    },
-    {
-        id: 'xp_boost_30',
-        name: 'Extended XP Brew',
-        description: 'Boost XP gains for the next 30 minutes.',
-        price: 160,
-        icon: <Clock3 className="text-indigo-300" size={32} />,
-        color: 'bg-indigo-500/10 border-indigo-500/30',
-        disabled: false
-    },
-    {
-        id: 'theme_neon',
-        name: 'Neo-Tokyo Theme',
-        description: 'Unlock a cyberpunk aesthetic. (Coming Soon)',
-        price: 200,
-        icon: <Sparkles className="text-pink-400" size={32} />,
-        color: 'bg-pink-500/10 border-pink-500/30',
-        disabled: true
-    }
-];
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const ShopModal = ({ onClose }) => {
     const { t, i18n } = useTranslation();
@@ -86,16 +31,14 @@ const ShopModal = ({ onClose }) => {
 
         const success = buyItem(item);
         if (success) {
-<<<<<<< HEAD
-            if (item.effect?.type === 'add_streak_freeze') {
+            if (item.effect?.type === 'add_streak_freeze' || item.id === 'streak_freeze') {
                 // Instant effect handled by context or just inventory
-=======
+            }
             // Activate Double XP immediately upon purchase
             if (item.id === 'double_xp') {
                 activateDoubleXP(15);
             } else if (item.id === 'xp_boost_30') {
                 activateDoubleXP(30);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
             }
             SoundManager.playSuccess();
         } else {
