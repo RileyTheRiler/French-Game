@@ -48,10 +48,6 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
         return () => clearInterval(timer);
     }, [isActive, gameOver]);
 
-    useEffect(() => {
-        nextQuestion();
-    }, []);
-
     const nextQuestion = () => {
         if (vocabulary.length < 4) return;
         const target = vocabulary[Math.floor(Math.random() * vocabulary.length)];
@@ -64,6 +60,11 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
         setCurrentWord(target);
         setOptions([target.english, ...distractors].sort(() => Math.random() - 0.5));
     };
+
+    useEffect(() => {
+        const timer = setTimeout(() => nextQuestion(), 0);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleAnswer = (answer) => {
         if (gameOver) return;
