@@ -18,23 +18,29 @@ export const A11yProvider = ({ children }) => {
     // Detect reduced motion preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        setPrefersReducedMotion(mediaQuery.matches);
+        const timer = setTimeout(() => setPrefersReducedMotion(mediaQuery.matches), 0);
 
         const handleChange = (e) => setPrefersReducedMotion(e.matches);
         mediaQuery.addEventListener('change', handleChange);
 
-        return () => mediaQuery.removeEventListener('change', handleChange);
+        return () => {
+            clearTimeout(timer);
+            mediaQuery.removeEventListener('change', handleChange);
+        };
     }, []);
 
     // Detect high contrast preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-contrast: more)');
-        setHighContrast(mediaQuery.matches);
+        const timer = setTimeout(() => setHighContrast(mediaQuery.matches), 0);
 
         const handleChange = (e) => setHighContrast(e.matches);
         mediaQuery.addEventListener('change', handleChange);
 
-        return () => mediaQuery.removeEventListener('change', handleChange);
+        return () => {
+            clearTimeout(timer);
+            mediaQuery.removeEventListener('change', handleChange);
+        };
     }, []);
 
     // Apply body class for reduced motion

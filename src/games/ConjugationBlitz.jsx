@@ -1,68 +1,61 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Zap, Trophy, RotateCcw, ArrowRight, X } from 'lucide-react';
+import { Zap, Timer, CheckCircle, AlertOctagon } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import SoundManager from '../utils/SoundManager';
-import { VERB_DATA, PRONOUNS, TENSES } from '../data/verbData';
 import confetti from 'canvas-confetti';
+
+// Mock Data - In real app, import from verb conjugation data
+const VERB_DATA = [
+    { infinitive: 'Avoir', tense: 'Présent', pronoun: 'Tu', answer: 'as' },
+    { infinitive: 'Être', tense: 'Présent', pronoun: 'Nous', answer: 'sommes' },
+    { infinitive: 'Aller', tense: 'Futur', pronoun: 'Il', answer: 'ira' },
+    { infinitive: 'Faire', tense: 'Imparfait', pronoun: 'Vous', answer: 'faisiez' },
+    { infinitive: 'Manger', tense: 'Passé Composé', pronoun: 'Elle', answer: 'a mangé' }
+];
+
+const PRONOUNS = ['Je', 'Tu', 'Il/Elle', 'Nous', 'Vous', 'Ils/Elles'];
+const TENSES = ['Présent', 'Passé Composé', 'Imparfait', 'Futur Simple'];
 
 const ConjugationBlitz = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
 
-    // Game State
-    const [status, setStatus] = useState('menu'); // menu, playing, finished
     const [timeLeft, setTimeLeft] = useState(60);
-    const [currentChallenge, setCurrentChallenge] = useState(null);
-    const [userInput, setUserInput] = useState('');
     const [score, setScore] = useState(0);
-    const [streak, setStreak] = useState(0);
-    const [results, setResults] = useState([]); // Array of { challenge, input, correct }
+    const [currentVerb, setCurrentVerb] = useState(null);
+    const [input, setInput] = useState('');
+    const [status, setStatus] = useState('waiting'); // waiting, playing, finished
+    const [feedback, setFeedback] = useState(null); // 'correct', 'wrong'
 
-    const inputRef = useRef(null);
     const timerRef = useRef(null);
-
-    // Helpers
-    const getRandomChallenge = () => {
-        const verb = VERB_DATA[Math.floor(Math.random() * VERB_DATA.length)];
-        const tense = TENSES[Math.floor(Math.random() * TENSES.length)];
-        const pronoun = PRONOUNS[Math.floor(Math.random() * PRONOUNS.length)];
-
-        // Handle special case for 'je' before vowel/mute h? (j'aime)
-        // For simplicity in data, we stored full "je ..." or "j'..."? 
-        // Wait, data stored just "aime". Code needs to handle pronoun display?
-        // Actually, let's look at my data structure.
-        // Data: { present: { je: 'aime' ... } }
-        // So I need to construct the prompt carefully.
-
-        return {
-            verb,
-            tense,
-            pronoun,
-            answer: verb.conjugations[tense.id][pronoun]
-        };
-    };
+    const inputRef = useRef(null);
+    const scoreRef = useRef(0);
 
     const startGame = () => {
         setScore(0);
-        setStreak(0);
-        setResults([]);
+        scoreRef.current = 0;
         setTimeLeft(60);
         setStatus('playing');
-        loadNextChallenge();
-    };
+        generateQuestion();
 
-    const loadNextChallenge = () => {
-        setCurrentChallenge(getRandomChallenge());
-        setUserInput('');
         if (inputRef.current) inputRef.current.focus();
     };
 
-    // Timer Logic
+    const endGame = () => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = scoreRef.current * 2;
+        addXP(baseXP);
+    };
+
     useEffect(() => {
         if (status === 'playing') {
             timerRef.current = setInterval(() => {
@@ -78,197 +71,124 @@ const ConjugationBlitz = () => {
         return () => clearInterval(timerRef.current);
     }, [status]);
 
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
+    const generateQuestion = () => {
+        const verb = VERB_DATA[Math.floor(Math.random() * VERB_DATA.length)];
+        // Add random variation if data allows, for now just static list
+        setCurrentVerb(verb);
+        setInput('');
+        setFeedback(null);
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        checkAnswer();
-    };
+        if (status !== 'playing') return;
 
-    const checkAnswer = () => {
-        const normalizedInput = userInput.trim().toLowerCase();
-        const correctAnswer = currentChallenge.answer.toLowerCase();
-
-        const isCorrect = normalizedInput === correctAnswer;
-
-        // Record result
-        setResults(prev => [...prev, {
-            challenge: currentChallenge,
-            userAnswer: normalizedInput,
-            isCorrect
-        }]);
-
-        if (isCorrect) {
+        if (input.trim().toLowerCase() === currentVerb.answer.toLowerCase()) {
+            // Correct
+            const newScore = score + 1;
+            setScore(newScore);
+            scoreRef.current = newScore;
+            setFeedback('correct');
             SoundManager.playSuccess();
-            setScore(s => s + 1);
-            setStreak(prev => {
-                const newStreak = prev + 1;
-                if (newStreak % 5 === 0) SoundManager.playLevelUp(); // Mini milestone sound?
-                return newStreak;
-            });
-            // Add slight time bonus?
-            setTimeLeft(t => Math.min(t + 2, 60)); // +2 seconds cap at 60
-        } else {
-            SoundManager.playMiss();
-            setStreak(0);
-            // Shake effect handled by UI state potentially, but for speed we just move on
-        }
 
-        loadNextChallenge();
+            // Add time bonus every 5 correct?
+            if (newScore % 5 === 0) {
+                setTimeLeft(t => Math.min(t + 5, 60));
+            }
+
+            setTimeout(generateQuestion, 300);
+        } else {
+            // Wrong
+            setFeedback('wrong');
+            SoundManager.playMiss();
+            triggerShake();
+        }
     };
 
-    // Formatting helper
-    const formatPronoun = (pronoun, verbResponse) => {
-        // Simple logic for J' vs Je
-        // This is purely for display relative to the verb if we wanted to show them together
-        // But the prompt shows Pronoun separately usually.
-        // Let's just display the Pronoun string from the array for now.
-        return pronoun;
+    const [isShaking, setIsShaking] = useState(false);
+    const triggerShake = () => {
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 500);
     };
 
     return (
         <GameLayout
             title="Conjugation Blitz"
+            subtitle="Race against the clock to conjugate verbs!"
             onBack={() => navigate('/')}
         >
-            <div className="max-w-2xl mx-auto min-h-[60vh] flex flex-col">
+            <div className="max-w-xl mx-auto flex flex-col gap-6 min-h-[60vh]">
 
-                {status === 'menu' && (
-                    <Card className="flex flex-col items-center p-12 text-center space-y-8 my-auto">
-                        <div className="h-24 w-24 bg-amber-500 rounded-full flex items-center justify-center shadow-lg shadow-amber-500/20">
-                            <Zap size={48} className="text-white fill-white" />
-                        </div>
-                        <div>
-                            <h2 className="text-3xl font-bold text-white mb-2">Ready for the Blitz?</h2>
-                            <p className="text-slate-400">Conjugate as many verbs as you can in 60 seconds.</p>
-                        </div>
-                        <Button size="lg" onClick={startGame} className="w-48 text-lg font-bold">
-                            START GAME
-                        </Button>
+                {status === 'waiting' && (
+                    <Card className="p-8 text-center space-y-6">
+                        <Zap size={64} className="mx-auto text-yellow-400" />
+                        <h2 className="text-2xl font-bold text-white">Ready for the challenge?</h2>
+                        <p className="text-slate-400">Conjugate as many verbs as possible in 60 seconds.</p>
+                        <Button onClick={startGame} className="w-full py-4 text-lg">Start Blitz</Button>
                     </Card>
-                )}
-
-                {status === 'playing' && currentChallenge && (
-                    <div className="flex flex-col items-center justify-center flex-grow gap-8">
-
-                        {/* HUD */}
-                        <div className="flex w-full justify-between items-center text-white text-xl font-bold px-4">
-                            <div className="flex items-center gap-2 text-amber-400">
-                                <Timer />
-                                <span>{timeLeft}s</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-indigo-400">
-                                <Trophy />
-                                <span>{score}</span>
-                            </div>
-                        </div>
-
-                        {/* Card */}
-                        <motion.div
-                            key={currentChallenge.verb.infinitive + currentChallenge.pronoun} // Forced re-render anime
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="w-full"
-                        >
-                            <Card className="p-10 text-center relative overflow-hidden">
-                                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-amber-500 to-red-500" />
-
-                                <div className="text-slate-400 uppercase tracking-widest text-sm font-bold mb-6">
-                                    {currentChallenge.tense.label}
-                                </div>
-
-                                <div className="flex flex-col gap-4 mb-8">
-                                    <h3 className="text-4xl font-black text-white">
-                                        {currentChallenge.verb.infinitive}
-                                    </h3>
-                                    <p className="text-slate-500 italic">{currentChallenge.verb.translation}</p>
-                                </div>
-
-                                <div className="flex items-end justify-center gap-4 text-3xl font-bold text-white mb-8">
-                                    <span className="text-slate-400 pb-1">{currentChallenge.pronoun}</span>
-                                    <div className="border-b-4 border-white/20 min-w-[200px] pb-1">
-                                        <input
-                                            ref={inputRef}
-                                            type="text"
-                                            value={userInput}
-                                            onChange={(e) => setUserInput(e.target.value)}
-                                            className="bg-transparent text-center w-full outline-none text-indigo-300 placeholder-indigo-300/30"
-                                            placeholder="..."
-                                            autoFocus
-                                            spellCheck={false}
-                                            autoComplete="off"
-                                        />
-                                    </div>
-                                </div>
-
-                                <Button onClick={handleSubmit} className="w-full py-4 text-lg">
-                                    Submit (Enter)
-                                </Button>
-                            </Card>
-                        </motion.div>
-
-                        {/* Streak Indicator */}
-                        {streak > 1 && (
-                            <motion.div
-                                initial={{ y: 20, opacity: 0 }}
-                                animate={{ y: 0, opacity: 1 }}
-                                className="text-amber-500 font-bold bg-amber-500/10 px-4 py-2 rounded-full border border-amber-500/20"
-                            >
-                                🔥 {streak} Streak! (+{Math.min(streak, 5)}s bonus)
-                            </motion.div>
-                        )}
-                    </div>
                 )}
 
                 {status === 'finished' && (
-                    <Card className="flex flex-col items-center p-8 text-center space-y-6 my-auto max-h-[80vh] overflow-hidden">
-                        <div className="shrink-0 text-center">
-                            <h2 className="text-3xl font-bold text-white mb-2">Time's Up!</h2>
-                            <p className="text-slate-400">Final Score: <span className="text-indigo-400 text-2xl font-bold">{score}</span></p>
-                        </div>
-
-                        <div className="w-full bg-slate-800/50 rounded-xl p-4 overflow-y-auto pr-2 custom-scrollbar flex-grow">
-                            <h4 className="text-sm uppercase tracking-wider text-slate-500 mb-4 sticky top-0 bg-slate-900/90 py-2">Mistakes Review</h4>
-                            <div className="space-y-3">
-                                {results.filter(r => !r.isCorrect).length === 0 ? (
-                                    <p className="text-green-400 py-4">Perfect game! No mistakes.</p>
-                                ) : (
-                                    results.filter(r => !r.isCorrect).map((res, idx) => (
-                                        <div key={idx} className="flex justify-between items-center border-b border-slate-700/50 pb-2 text-sm">
-                                            <div className="text-left">
-                                                <div className="text-slate-300 font-bold">
-                                                    {res.challenge.pronoun} {res.challenge.verb.infinitive}
-                                                </div>
-                                                <div className="text-xs text-slate-500">{res.challenge.tense.label}</div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-red-400 line-through decoration-red-500/50">{res.userAnswer || '(empty)'}</div>
-                                                <div className="text-green-400 font-bold">{res.challenge.answer}</div>
-                                            </div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="flex gap-4 w-full pt-4 shrink-0">
-                            <Button variant="ghost" className="flex-1" onClick={() => navigate('/')}>Exit</Button>
-                            <Button className="flex-1" onClick={startGame}>Play Again</Button>
+                    <Card className="p-8 text-center space-y-6 animate-fade-in">
+                        <h2 className="text-3xl font-bold text-white">Time's Up!</h2>
+                        <div className="text-6xl font-black text-indigo-400">{score}</div>
+                        <p className="text-slate-400">Verbs Conjugated</p>
+                        <div className="flex gap-4">
+                            <Button variant="ghost" onClick={() => navigate('/')}>Back</Button>
+                            <Button onClick={startGame}>Play Again</Button>
                         </div>
                     </Card>
                 )}
 
-                {/* Hidden submit for the form behavior if needed inside playing status */}
-                {status === 'playing' && (
-                    <form onSubmit={handleSubmit} className="hidden" />
+                {status === 'playing' && currentVerb && (
+                    <div className="space-y-6">
+                        {/* HUD */}
+                        <div className="flex justify-between items-center bg-slate-800/50 p-4 rounded-2xl border border-white/10">
+                            <div className="flex items-center gap-2 text-yellow-400">
+                                <Zap size={20} />
+                                <span className="font-bold text-xl">{score}</span>
+                            </div>
+                            <div className={`flex items-center gap-2 font-mono text-xl font-bold ${timeLeft < 10 ? 'text-red-400 animate-pulse' : 'text-slate-300'}`}>
+                                <Timer size={20} />
+                                {timeLeft}s
+                            </div>
+                        </div>
+
+                        {/* Question Card */}
+                        <Card className={`p-8 text-center border-2 transition-colors ${
+                            feedback === 'correct' ? 'border-green-500 bg-green-500/10' :
+                            feedback === 'wrong' ? 'border-red-500 bg-red-500/10' :
+                            'border-indigo-500/30'
+                        } ${isShaking ? 'animate-shake' : ''}`}>
+
+                            <div className="space-y-2 mb-8">
+                                <div className="text-sm uppercase tracking-widest text-slate-500 font-bold">
+                                    {currentVerb.infinitive} • {currentVerb.tense}
+                                </div>
+                                <div className="text-4xl font-black text-white">
+                                    {currentVerb.pronoun}
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleSubmit}>
+                                <input
+                                    ref={inputRef}
+                                    type="text"
+                                    value={input}
+                                    onChange={(e) => setInput(e.target.value)}
+                                    className="w-full bg-slate-950/50 border-b-4 border-slate-700 text-center text-3xl font-bold p-4 focus:outline-none focus:border-indigo-500 text-white rounded-lg transition-colors placeholder:text-slate-700"
+                                    placeholder="..."
+                                    autoFocus
+                                    autoComplete="off"
+                                    autoCorrect="off"
+                                    autoCapitalize="off"
+                                />
+                            </form>
+
+                        </Card>
+
+                        <p className="text-center text-slate-500 text-sm">Press Enter to submit</p>
+                    </div>
                 )}
 
             </div>

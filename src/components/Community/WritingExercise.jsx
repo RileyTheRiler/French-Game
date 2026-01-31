@@ -19,8 +19,11 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
         if (initialPromptId) {
             const prompt = WRITING_PROMPTS.find(p => p.id === initialPromptId);
             if (prompt) {
-                setSelectedPrompt(prompt);
-                setView('write');
+                const timer = setTimeout(() => {
+                    setSelectedPrompt(prompt);
+                    setView('write');
+                }, 0);
+                return () => clearTimeout(timer);
             }
         }
     }, [initialPromptId, WRITING_PROMPTS]);

@@ -20,10 +20,6 @@ const ErrorSpottingGame = () => {
     const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
     const MAX_QUESTIONS = 5;
 
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
-
     const loadNextPuzzle = () => {
         const newPuzzle = generateErrorSpotting(1);
         if (newPuzzle) {
@@ -34,6 +30,11 @@ const ErrorSpottingGame = () => {
             setStatus('finished');
         }
     };
+
+    useEffect(() => {
+        const timer = setTimeout(() => loadNextPuzzle(), 0);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleWordClick = (word, index) => {
         if (status !== 'playing') return;

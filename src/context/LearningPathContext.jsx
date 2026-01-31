@@ -73,7 +73,8 @@ export const LearningPathProvider = ({ children }) => {
             };
 
             const profile = computeSkillProfile(progressData, vocabulary);
-            setSkillProfile(profile);
+            const timer = setTimeout(() => setSkillProfile(profile), 0);
+            return () => clearTimeout(timer);
         }
     }, [vocabulary, categoryStats, dailyStats, errorPatterns, weakWords]);
 
@@ -82,7 +83,8 @@ export const LearningPathProvider = ({ children }) => {
         if (skillProfile) {
             const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
             const newInsights = generateInsights(weeklyData, skillProfile);
-            setInsights(newInsights);
+            const timer = setTimeout(() => setInsights(newInsights), 0);
+            return () => clearTimeout(timer);
         }
     }, [skillProfile, getWeeklySummary]);
 
@@ -90,7 +92,8 @@ export const LearningPathProvider = ({ children }) => {
     useEffect(() => {
         if (skillProfile && vocabulary && vocabulary.length > 0) {
             const queue = getPersonalizedQueue(skillProfile, vocabulary, 30);
-            setContentQueue(queue);
+            const timer = setTimeout(() => setContentQueue(queue), 0);
+            return () => clearTimeout(timer);
         }
     }, [skillProfile, vocabulary]);
 
@@ -112,7 +115,8 @@ export const LearningPathProvider = ({ children }) => {
     // Update learning style based on behavior
     useEffect(() => {
         const style = detectLearningStyle(behaviorData);
-        setLearningStyle(style);
+        const timer = setTimeout(() => setLearningStyle(style), 0);
+        return () => clearTimeout(timer);
     }, [behaviorData]);
 
     // Get the next batch of personalized content

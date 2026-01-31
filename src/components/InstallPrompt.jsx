@@ -11,8 +11,8 @@ const InstallPrompt = () => {
     useEffect(() => {
         // Check if already installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
-            setIsInstalled(true);
-            return;
+            const timer = setTimeout(() => setIsInstalled(true), 0);
+            return () => clearTimeout(timer);
         }
 
         // Check if user dismissed the prompt recently
