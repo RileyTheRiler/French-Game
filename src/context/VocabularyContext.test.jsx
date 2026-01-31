@@ -4,13 +4,17 @@ import React, { useState, useEffect } from 'react';
 import { VocabularyProvider, useVocabulary } from './VocabularyContext';
 import { ProgressProvider } from './ProgressContext';
 
+const mocks = vi.hoisted(() => ({
+    addXP: vi.fn()
+}));
+
 // Mock ProgressContext to avoid complex dependencies
 vi.mock('./ProgressContext', async () => {
     const actual = await vi.importActual('./ProgressContext');
     return {
         ...actual,
         useProgress: () => ({
-            addXP: vi.fn(),
+            addXP: mocks.addXP,
         }),
         ProgressProvider: ({ children }) => <div>{children}</div>
     };
@@ -99,5 +103,49 @@ describe('VocabularyContext Performance', () => {
         // Should re-render because state changed
         expect(renderSpy).toHaveBeenCalledTimes(2);
         expect(screen.getByText('Vocabulary Size: 3')).toBeInTheDocument();
+    });
+
+    it('should debounce localStorage writes', () => {
+        vi.useFakeTimers();
+        const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+
+        let addWordFn;
+        const ConsumerExposer = ({ getAddWord }) => {
+            const { addCustomWord } = useVocabulary();
+            useEffect(() => {
+                getAddWord(addCustomWord);
+            }, [addCustomWord, getAddWord]);
+            return null;
+        };
+
+        render(
+            <VocabularyProvider>
+                <ConsumerExposer getAddWord={(fn) => addWordFn = fn} />
+            </VocabularyProvider>
+        );
+
+        // Run initial effect timers (mount write)
+        act(() => {
+            vi.runAllTimers();
+        });
+        setItemSpy.mockClear();
+
+        act(() => {
+            addWordFn({ french: 'Pomme', english: 'Apple' });
+        });
+
+        // Verify NO immediate write
+        expect(setItemSpy).not.toHaveBeenCalled();
+
+        // Advance timers
+        act(() => {
+            vi.advanceTimersByTime(1000);
+        });
+
+        // Verify write happened
+        expect(setItemSpy).toHaveBeenCalledWith('frenchApp_vocab', expect.stringContaining('Pomme'));
+
+        vi.useRealTimers();
+        setItemSpy.mockRestore();
     });
 });
