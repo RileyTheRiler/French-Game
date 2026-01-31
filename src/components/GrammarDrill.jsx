@@ -106,16 +106,15 @@ const GrammarDrill = () => {
             setBestStreak(b => Math.max(b, nextStreak));
             updateDailyStat('dailyGrammar', 1);
             updateDailyStat('dailyStreak', nextStreak, 'max');
-        } else {
-            SoundManager.playFailure();
-            setStreak(0);
+
             const difficultyBoost = 1 + (difficulty - 2) * 0.12;
             const speedBoost = responseTime < 5000 ? 1.05 : 0.9;
-            const adaptiveReward = Math.max(5, Math.round(currentDrill.xpReward * difficultyBoost * speedBoost));
+            const adaptiveReward = Math.max(5, Math.round((currentDrill.xpReward || 10) * difficultyBoost * speedBoost));
             setSessionPoints(prev => prev + adaptiveReward);
             addXP(adaptiveReward);
         } else {
             SoundManager.playFailure();
+            setStreak(0);
             setSessionPoints(prev => Math.max(0, prev - 5));
         }
     };

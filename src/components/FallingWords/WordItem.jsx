@@ -16,8 +16,8 @@ const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }
         const remainingDelay = Math.max(0, (hintDelay * 1000) - elapsed);
 
         if (remainingDelay === 0) {
-            setShowHint(true);
-            return;
+            const timer = setTimeout(() => setShowHint(true), 0);
+            return () => clearTimeout(timer);
         }
 
         const timer = setTimeout(() => {

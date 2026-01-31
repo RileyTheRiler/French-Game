@@ -203,7 +203,8 @@ const DailyMix = () => {
 
     useEffect(() => {
         if (vocabulary.length > 0 && sessionQueue.length === 0) {
-            generateSession();
+            const timer = setTimeout(() => generateSession(), 0);
+            return () => clearTimeout(timer);
         }
     }, [vocabulary]);
 

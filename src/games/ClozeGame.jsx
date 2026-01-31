@@ -1,51 +1,50 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Check, X, ArrowRight, RotateCcw } from 'lucide-react';
+import { Clock, HelpCircle, Check, X, AlertTriangle, ArrowRight } from 'lucide-react';
+import { useVocabulary } from '../context/VocabularyContext';
 import { useProgress } from '../context/ProgressContext';
+import { generateCloze } from '../systems/ExerciseGenerator';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import SoundManager from '../utils/SoundManager';
-import { generateCloze } from '../systems/ExerciseGenerator';
 import confetti from 'canvas-confetti';
 
 const ClozeGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
     const [puzzle, setPuzzle] = useState(null);
-    const [selectedOption, setSelectedOption] = useState(null);
-    const [status, setStatus] = useState('playing'); // 'playing', 'correct', 'wrong', 'finished'
+    const [status, setStatus] = useState('playing'); // playing, correct, wrong
     const [score, setScore] = useState(0);
-    const [questionCount, setQuestionCount] = useState(0);
-    const MAX_QUESTIONS = 5;
-
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
+    const [streak, setStreak] = useState(0);
 
     const loadNextPuzzle = () => {
         const newPuzzle = generateCloze(1); // Default to level 1 for now
         if (newPuzzle) {
             setPuzzle(newPuzzle);
-            setSelectedOption(null);
             setStatus('playing');
         } else {
-            // Fallback or error state if generator fails
-            setStatus('finished');
+            // Handle no puzzles available
         }
     };
 
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            loadNextPuzzle();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, []);
+
     const handleOptionClick = (option) => {
         if (status !== 'playing') return;
-
-        setSelectedOption(option);
 
         if (option === puzzle.answer) {
             setStatus('correct');
             SoundManager.playSuccess();
             setScore(s => s + 1);
-            addXP(10);
+            setStreak(s => s + 1);
+            addXP(10 + (streak * 2));
             confetti({
                 particleCount: 50,
                 spread: 60,
@@ -54,115 +53,79 @@ const ClozeGame = () => {
         } else {
             setStatus('wrong');
             SoundManager.playMiss();
+            setStreak(0);
         }
     };
 
     const handleNext = () => {
-        if (questionCount >= MAX_QUESTIONS - 1) {
-            setStatus('finished');
-        } else {
-            setQuestionCount(c => c + 1);
-            loadNextPuzzle();
-        }
+        loadNextPuzzle();
     };
-
-    if (status === 'finished') {
-        return (
-            <GameLayout title="Fill in the Blank" onBack={() => navigate('/')}>
-                <Card className="max-w-md mx-auto text-center p-8">
-                    <h2 className="text-3xl font-bold text-white mb-4">Practice Complete!</h2>
-                    <p className="text-slate-400 mb-8">You got {score} out of {MAX_QUESTIONS} correct.</p>
-                    <div className="flex justify-center gap-4">
-                        <Button onClick={() => navigate('/')} variant="ghost">BACK</Button>
-                        <Button onClick={() => window.location.reload()}>PLAY AGAIN</Button>
-                    </div>
-                </Card>
-            </GameLayout>
-        );
-    }
 
     if (!puzzle) return <div>Loading...</div>;
 
-    // Split question into parts to highlight the blank
-    const parts = puzzle.question.split('_____');
+    const parts = puzzle.sentence.split('_____');
 
     return (
         <GameLayout
             title="Fill in the Blank"
-            subtitle="Choose the correct word to complete the sentence."
+            subtitle="Complete the sentence with the correct word."
             onBack={() => navigate('/')}
         >
-            <div className="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[60vh] gap-8">
 
                 {/* Sentence Display */}
-                <Card className="w-full mb-8 p-10 text-center relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-indigo-500/5 group-hover:bg-indigo-500/10 transition-colors" />
-
-                    <h3 className="text-3xl md:text-4xl font-bold text-white leading-relaxed relative z-10">
+                <Card className="w-full p-8 text-center bg-slate-800/80 border-slate-700">
+                    <p className="text-2xl md:text-3xl font-medium leading-relaxed">
                         {parts[0]}
-                        <motion.span
-                            className={`
-                                inline-block px-4 py-2 mx-1 rounded-xl border-b-4 min-w-[100px] align-bottom
-                                ${status === 'correct' ? 'bg-green-500/20 border-green-500 text-green-300' : ''}
-                                ${status === 'wrong' ? 'bg-red-500/20 border-red-500 text-red-300' : ''}
-                                ${status === 'playing' ? 'bg-white/10 border-white/30 text-transparent' : ''}
-                            `}
-                            animate={status === 'correct' ? { scale: [1, 1.1, 1] } : {}}
-                        >
-                            {status === 'playing' ? '?' : selectedOption}
-                        </motion.span>
+                        <span className={`inline-block border-b-4 px-2 min-w-[100px] transition-colors ${
+                            status === 'correct' ? 'border-green-500 text-green-400' :
+                            status === 'wrong' ? 'border-red-500 text-red-400' :
+                            'border-indigo-500 text-transparent'
+                        }`}>
+                            {status === 'playing' ? '_____' : puzzle.answer}
+                        </span>
                         {parts[1]}
-                    </h3>
-
-                    <p className="mt-6 text-slate-400 text-lg font-medium italic">
-                        "{puzzle.translation}"
                     </p>
+                    <p className="mt-4 text-slate-400 italic text-lg">"{puzzle.translation}"</p>
                 </Card>
 
                 {/* Options Grid */}
                 <div className="grid grid-cols-2 gap-4 w-full">
-                    {puzzle.options.map((option, idx) => {
-                        let variant = "default";
-                        if (status !== 'playing') {
-                            if (option === puzzle.answer) variant = "correct";
-                            else if (option === selectedOption) variant = "wrong";
-                            else variant = "dimmed";
-                        }
-
-                        return (
-                            <motion.button
-                                key={idx}
-                                whileHover={status === 'playing' ? { scale: 1.02, y: -2 } : {}}
-                                whileTap={status === 'playing' ? { scale: 0.98 } : {}}
-                                onClick={() => handleOptionClick(option)}
-                                disabled={status !== 'playing'}
-                                className={`
-                                    p-6 rounded-2xl text-xl font-bold transition-all shadow-lg border-b-4
-                                    ${variant === 'default' ? 'bg-white text-slate-800 border-slate-300 hover:bg-indigo-50 hover:border-indigo-300' : ''}
-                                    ${variant === 'correct' ? 'bg-green-500 text-white border-green-700' : ''}
-                                    ${variant === 'wrong' ? 'bg-red-500 text-white border-red-700' : ''}
-                                    ${variant === 'dimmed' ? 'bg-slate-800/50 text-slate-500 border-transparent opacity-50' : ''}
-                                `}
-                            >
-                                {option}
-                            </motion.button>
-                        );
-                    })}
+                    {puzzle.options.map((option, idx) => (
+                        <motion.button
+                            key={idx}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => handleOptionClick(option)}
+                            disabled={status !== 'playing'}
+                            className={`
+                                p-6 rounded-2xl text-xl font-bold transition-all border-2
+                                ${status === 'playing'
+                                    ? 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-indigo-500/50'
+                                    : option === puzzle.answer
+                                        ? 'bg-green-500/20 border-green-500 text-green-400'
+                                        : 'opacity-50 border-transparent bg-slate-900/50'
+                                }
+                            `}
+                        >
+                            {option}
+                        </motion.button>
+                    ))}
                 </div>
 
-                {/* Feedback / Next Button */}
+                {/* Next Button */}
                 <AnimatePresence>
                     {status !== 'playing' && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="mt-8 w-full"
+                            className="w-full"
                         >
                             <Button
                                 onClick={handleNext}
-                                className={`w-full py-4 text-xl rounded-2xl shadow-xl ${status === 'correct' ? 'bg-green-500 hover:bg-green-600' : 'bg-slate-700 hover:bg-slate-600'}`}
+                                className={`w-full py-4 text-lg ${status === 'correct' ? 'bg-green-600 hover:bg-green-500' : 'bg-slate-700 hover:bg-slate-600'}`}
                             >
-                                {status === 'correct' ? 'Excellent! Next' : 'Continue'} <ArrowRight className="ml-2" />
+                                {status === 'correct' ? 'Continue' : 'Try Another'} <ArrowRight className="ml-2" />
                             </Button>
                         </motion.div>
                     )}

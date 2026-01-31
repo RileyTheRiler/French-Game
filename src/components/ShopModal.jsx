@@ -16,7 +16,8 @@ const ShopModal = ({ onClose }) => {
     useEffect(() => {
         const today = new Date().toDateString();
         const selection = getDailyShopSelection(today);
-        setShopData(selection);
+        const timer = setTimeout(() => setShopData(selection), 0);
+        return () => clearTimeout(timer);
     }, []);
 
     const formatNumber = (num) => {
