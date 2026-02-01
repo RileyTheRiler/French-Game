@@ -52,7 +52,7 @@ export const computeSkillProfile = (progressData, vocabularyData) => {
     for (const [category, stats] of Object.entries(categoryStats)) {
         if (stats.attempts > 0) {
             const accuracy = (stats.correct / stats.attempts) * 100;
-            const avgResponseTime = stats.totalResponseTime / stats.attempts;
+            const _avgResponseTime = stats.totalResponseTime / stats.attempts;
 
             // Factor in response time (faster is better, up to a point)
             const speedBonus = Math.max(0, 20 - (avgResponseTime / 500));

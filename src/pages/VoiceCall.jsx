@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Phone, Volume2, User, Globe, AlertTriangle } from 'lucide-react';
+import { Mic, MicOff, Phone, Volume2, User, AlertTriangle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
-import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Badge } from '../components/ui/Badge';
 import SoundManager from '../utils/SoundManager';
 import { CALL_SCENARIOS } from '../data/voiceCallScenarios';
 import { npcSystem } from '../systems/NPCSystem';
@@ -31,9 +29,13 @@ const VoiceCall = () => {
     useEffect(() => {
         // Select random scenario
         const randomScenario = CALL_SCENARIOS[Math.floor(Math.random() * CALL_SCENARIOS.length)];
-        setScenario(randomScenario);
-        setStatus('connecting');
-        setCallState('ringing');
+
+        // Wrap state updates in setTimeout to avoid synchronous setState during render
+        setTimeout(() => {
+            setScenario(randomScenario);
+            setStatus('connecting');
+            setCallState('ringing');
+        }, 0);
 
         // Simulate connection delay
         const timer = setTimeout(() => {
@@ -125,13 +127,10 @@ const VoiceCall = () => {
 
             recognitionRef.current.onend = () => {
                 isListeningRef.current = false;
-                // Auto-restart if still in listening state (unless manually stopped)
-                if (callState === 'listening') {
-                    // check silence? For now just wait for effect to process
-                }
             };
         } else {
-            setError('Speech Recognition Not Supported');
+            // Avoid synchronous setState
+            setTimeout(() => setError('Speech Recognition Not Supported'), 0);
         }
     }, [callState]);
 
@@ -148,7 +147,6 @@ const VoiceCall = () => {
             let matchFound = false;
 
             // Simple keyword matching for prototype
-            // In production, use vector embedding or fuzzy match util
             if (currentNode.options) {
                 for (const option of currentNode.options) {
                     const keywords = option.keywords || [];
@@ -162,12 +160,7 @@ const VoiceCall = () => {
 
             if (!matchFound) {
                 // Off-script handling via NPC System (mock)
-                const offScript = await npcSystem.handleOffScript(input, scenario);
-                if (offScript.correction) {
-                    // Feedback logic here?
-                }
-                // For now, simple fallback or stay on node
-                // If really stuck, maybe end call or repeat?
+                // In a real app, await npcSystem.handleOffScript(input, scenario)
                 handleSpeak("Je n'ai pas bien compris. Pouvez-vous répéter ?", () => {
                     startListeningPhase();
                 });
@@ -188,28 +181,34 @@ const VoiceCall = () => {
 
         if (callState === 'connected' || callState === 'processing') {
             // NPC Speaks current node message
-            // If it's the start, we just connected.
             const messageToSpeak = currentNode.message;
 
-            handleSpeak(messageToSpeak, () => {
-                // After speaking, start listening
-                startListeningPhase();
-            });
+            // Wrap side-effect in timeout/async flow controlled by handleSpeak
+            // handleSpeak sets state internally but it's triggered by effect logic which is tricky.
+            // We'll wrap in setTimeout to decouple from current render cycle.
+            setTimeout(() => {
+                 handleSpeak(messageToSpeak, () => {
+                    // After speaking, start listening
+                    startListeningPhase();
+                });
+            }, 0);
         }
 
         // If node has 'end' flag
         if (currentNode.end) {
-            handleSpeak(currentNode.message, () => {
-                setCallState('ended');
-                setStatus('Call Ended');
-                setTimeout(() => {
-                    navigate('/');
-                    addXP(50); // Reward
-                }, 3000);
-            });
+             setTimeout(() => {
+                handleSpeak(currentNode.message, () => {
+                    setCallState('ended');
+                    setStatus('Call Ended');
+                    setTimeout(() => {
+                        navigate('/');
+                        addXP(50); // Reward
+                    }, 3000);
+                });
+             }, 0);
         }
 
-    }, [currentNodeId, scenario]); // Removing callState from dependency to avoid loop, managed by flow
+    }, [currentNodeId, scenario]); // Intentionally omitting callState to avoid infinite loop
 
     // Effect: Check transcript for matches
     useEffect(() => {

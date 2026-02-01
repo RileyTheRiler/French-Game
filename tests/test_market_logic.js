@@ -21,7 +21,7 @@ const seededRandom = (seed) => {
 };
 
 // Test consistency
-const date1 = "Mon Jan 01 2024";
+const _date1 = "Mon Jan 01 2024";
 const rng1 = seededRandom(12345);
 const val1 = rng1();
 

@@ -1,5 +1,6 @@
 import { SENTENCE_TEMPLATES, SEMANTIC_PAIRS } from '../data/sentenceTemplates';
-import { vocabularyList, getVocabularyByCategory } from '../data/vocabulary';
+import { vocabularyList } from '../data/vocabulary';
+// import { getVocabularyByCategory } from '../data/vocabulary'; // Commented out to fix unused var
 
 /**
  * Utility to get a random item from an array

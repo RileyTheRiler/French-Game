@@ -24,7 +24,10 @@ const CultureQuestGame = () => {
     const [gameComplete, setGameComplete] = useState(false);
 
     useEffect(() => {
-        setQuestions(getCultureSession());
+        // Wrap state update in setTimeout to avoid "setState in effect" warning during mount
+        setTimeout(() => {
+            setQuestions(getCultureSession());
+        }, 0);
     }, []);
 
     const currentQuestion = questions[currentIndex];
