@@ -7,7 +7,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 
 const WritingExercise = ({ onBack, initialPromptId = null }) => {
-    const { getPrompts, submitWriting, myWritings, WRITING_PROMPTS } = useCommunity();
+    const { submitWriting, myWritings, WRITING_PROMPTS } = useCommunity();
     const [selectedPrompt, setSelectedPrompt] = useState(null);
     const [text, setText] = useState('');
     const [showHints, setShowHints] = useState(false);

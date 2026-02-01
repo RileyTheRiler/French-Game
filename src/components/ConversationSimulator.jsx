@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Send, User, Bot, Lightbulb } from 'lucide-react';
+import { MessageCircle, Send, User, Bot, Lightbulb, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from './layout/GameLayout';
@@ -12,12 +12,12 @@ import { npcSystem } from '../systems/NPCSystem';
 import { getDifficultyConfig } from './ui/DifficultyDial';
 
 import { SCENARIOS } from '../data/conversationScenarios';
-import { findBestMatch, isFuzzyMatch } from '../utils/textMatching';
+import { findBestMatch } from '../utils/textMatching';
 
 const ConversationSimulator = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-    const { addXP, globalDifficulty, difficultySettings } = useProgress();
+    const { addXP, addCoins, globalDifficulty, difficultySettings } = useProgress();
 
     const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
     const messagesEndRef = useRef(null);
@@ -27,6 +27,8 @@ const ConversationSimulator = () => {
     const [currentNodeId, setCurrentNodeId] = useState('start');
     const [history, setHistory] = useState([]);
     const [gameOver, setGameOver] = useState(false);
+    const [outcome, setOutcome] = useState(null); // 'success' | 'fail'
+    const [sessionReward, setSessionReward] = useState(null);
 
     // Hybrid Input State
     const [userInputValue, setUserInputValue] = useState("");
@@ -89,17 +91,24 @@ const ConversationSimulator = () => {
         setActiveScenario(scenario);
         setCurrentNodeId('start');
         setGameOver(false);
+        setOutcome(null);
+        setSessionReward(null);
         setShowOptions(false);
         setFeedbackModal(null);
-        // data/conversationScenarios uses 'initialMessage' and 'initialSpeaker' at root, not inside 'start' node sometimes?
-        // Let's check the data structure. Data uses root initialMessage.
-        // But nodes also have messages. Let's make sure we handle both.
-        // The data file structure: scenario.initialMessage exists. scenario.nodes.start has options only (usually).
-        // Let's check a sample from the view_file history.
-        // id: 'cafe_basic', initialMessage: "...", nodes: { start: { options: [...] } }
-
-        // So we push the initial message.
         setHistory([{ text: scenario.initialMessage, speaker: scenario.initialSpeaker, isUser: false }]);
+    };
+
+    const grantRewards = (success) => {
+        if (success) {
+            const reward = {
+                xp: activeScenario.xpReward || 50,
+                coins: Math.floor((activeScenario.xpReward || 50) * 0.5)
+            };
+            setSessionReward(reward);
+            // addXP and addCoins are called in proceedToNode logic usually, or here to be safe
+            // The proceedToNode called addXP already. Let's add coins here.
+            addCoins(reward.coins);
+        }
     };
 
     const proceedToNode = (nextNodeId, scenario) => {
@@ -224,22 +233,7 @@ const ConversationSimulator = () => {
             proceedToNode(option.nextNode, activeScenario);
         };
 
-        // SCHOLAR MODE / LEARNING MOMENT
-        // If we have feedback (usually for wrong answers, or specific "good but not great" answers)
-        // AND we are in Scholar mode OR it's a critical error (isCorrect === false)
-        // We show the feedback.
-
-        // Actually, casual users might want to know why they failed too.
-        // But Scholar users get specific feedback even if they get it "right" but maybe "rude"?
-        // The data has `isCorrect` and `feedback`.
-
         if (option.feedback) {
-            // If we are in Scholar mode, OR if the answer was actually wrong/rude.
-            // We'll show feedback for everything in Scholar mode if it exists.
-            // In Casual mode, we might only show it if it led to failure? 
-            // Let's show it always if it exists, but maybe style it differently?
-            // Implementation Plan said: "Scholar Mode: Should pause and show the specific feedback string... before proceeding."
-
             if (learnerType === 'scholar' || !option.isCorrect) {
                 setFeedbackModal({
                     text: option.feedback,
@@ -261,6 +255,8 @@ const ConversationSimulator = () => {
         setHistory([]);
         setShowOptions(false);
         setFeedbackModal(null);
+        setOutcome(null);
+        setSessionReward(null);
     };
 
     // Scenario Selection Screen

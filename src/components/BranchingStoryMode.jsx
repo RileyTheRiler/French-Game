@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Book, ChevronLeft, Award, Lock, BookOpen, Play, Pause,
-    RotateCcw, Trophy, Star, Volume2, Check, X, ChevronRight,
+    Lock, RotateCcw, Trophy, Star, Volume2, Check, X, ChevronRight,
     Sparkles, Map
 } from 'lucide-react';
-import { BRANCHING_STORIES, getStoryById } from '../data/branchingStories';
+import { BRANCHING_STORIES } from '../data/branchingStories';
 import { useProgress } from '../context/ProgressContext';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
@@ -115,6 +114,7 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
         if (onSaveProgress && currentNode?.type !== 'ending') {
             onSaveProgress(story.id, { currentNode: currentNodeId, history });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentNodeId, history]);
 
     const handleChoice = (choice) => {
@@ -450,7 +450,7 @@ const BranchingStoryMode = () => {
         setCurrentStory(story);
     };
 
-    const handleSaveProgress = (storyId, progress) => {
+    const handleSaveProgress = useCallback((storyId, progress) => {
         updateStats({
             branchingStoriesProgress: {
                 ...storyProgress,
@@ -460,7 +460,7 @@ const BranchingStoryMode = () => {
                 }
             }
         });
-    };
+    }, [updateStats, storyProgress]);
 
     const handleCompleteStory = (xp, endingId) => {
         addXP(xp);
