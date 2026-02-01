@@ -19,7 +19,9 @@ const sizes = {
     icon: "h-10 w-10 p-0 grid place-items-center",
 };
 
-export const Button = ({
+// Bolt Optimization: Wrapped in React.memo to prevent unnecessary re-renders.
+// This is a high-traffic component (598+ usages).
+export const Button = React.memo(({
     children,
     variant = 'default',
     size = 'md',
@@ -48,4 +50,6 @@ export const Button = ({
             {children}
         </motion.button>
     );
-};
+});
+
+Button.displayName = 'Button';

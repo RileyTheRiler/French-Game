@@ -1,37 +1,27 @@
-<<<<<<< HEAD
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, Send, User, Bot, Lightbulb } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { AnimatePresence } from 'framer-motion';
+import { MessageCircle, Send, User, Bot, Lightbulb, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useProgress } from '../context/ProgressContext';
-=======
-import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { MessageCircle, Send, User, Bot, Award } from 'lucide-react';
-import { useProgress } from '../context/ProgressContext';
-import { SCENARIOS } from '../data/conversationScenarios';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 import { GameLayout } from './layout/GameLayout';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import SoundManager from '../utils/SoundManager';
 import { npcSystem } from '../systems/NPCSystem';
-<<<<<<< HEAD
 import { getDifficultyConfig } from './ui/DifficultyDial';
+import { calculateRewards } from '../utils/rewardSystem';
 
 import { SCENARIOS } from '../data/conversationScenarios';
-import { findBestMatch, isFuzzyMatch } from '../utils/textMatching';
-=======
-import { calculateRewards } from '../utils/rewardSystem';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+import { findBestMatch } from '../utils/textMatching';
+
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 
 const ConversationSimulator = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
-<<<<<<< HEAD
-    const { addXP, globalDifficulty, difficultySettings } = useProgress();
+    const { addXP, addCoins, globalDifficulty, difficultySettings } = useProgress();
 
     const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
     const messagesEndRef = useRef(null);
@@ -41,6 +31,8 @@ const ConversationSimulator = () => {
     const [currentNodeId, setCurrentNodeId] = useState('start');
     const [history, setHistory] = useState([]);
     const [gameOver, setGameOver] = useState(false);
+    const [outcome, setOutcome] = useState(null);
+    const [sessionReward, setSessionReward] = useState(null);
 
     // Hybrid Input State
     const [userInputValue, setUserInputValue] = useState("");
@@ -69,23 +61,28 @@ const ConversationSimulator = () => {
     useEffect(() => {
         if (!activeScenario || gameOver || feedbackModal) return;
 
-        // Reset input state
-        setUserInputValue("");
-        setShowLegacyOptions(false);
+        // Reset input state - wrapped in timeout to avoid sync state update in effect
+        const timer = setTimeout(() => {
+            setUserInputValue("");
+            setShowLegacyOptions(false);
+            // Hide options initially
+            setShowOptions(false);
+        }, 0);
 
         // Clear any existing timer
         if (optionsTimerRef.current) {
             clearTimeout(optionsTimerRef.current);
         }
 
-        // Hide options initially
-        setShowOptions(false);
-
-        // Show options after delay (unless delay is 0 or challenge mode or scholar mode which might want instant but harder?)
-        // Actually Scholar mode implies "Challenge Mode" (no hints), but maybe we just want to hide options for a bit?
-        // Let's stick to the settings.
+        // Show options after delay
         if (hintDelay === 0) {
-            setShowOptions(true);
+            // If delay is 0, we still want to respect the initial hide above, so we set it back to true in the next tick or after a tiny delay?
+            // Or just set it here if we want instant?
+            // If we set it here synchronously, it overrides the 'false' in the timeout? No, timeout runs later.
+            // Let's put this in a timeout too.
+            optionsTimerRef.current = setTimeout(() => {
+                setShowOptions(true);
+            }, 50); // Small delay to ensure reset happens first
         } else {
             optionsTimerRef.current = setTimeout(() => {
                 setShowOptions(true);
@@ -93,77 +90,9 @@ const ConversationSimulator = () => {
         }
 
         return () => {
+            clearTimeout(timer);
             if (optionsTimerRef.current) {
                 clearTimeout(optionsTimerRef.current);
-=======
-    const { addXP, addCoins, updateDailyStat, incrementStat } = useProgress();
-
-    const [activeScenario, setActiveScenario] = useState(null);
-    const [currentNodeId, setCurrentNodeId] = useState('start');
-    const [history, setHistory] = useState([]);
-    const [gameOver, setGameOver] = useState(false);
-    const [stepsTaken, setStepsTaken] = useState(0);
-    const [mistakes, setMistakes] = useState(0);
-    const [sessionReward, setSessionReward] = useState(null);
-    const [outcome, setOutcome] = useState(null);
-
-    const messagesEndRef = useRef(null);
-
-    useEffect(() => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [history]);
-
-    const startScenario = (scenario) => {
-        setActiveScenario(scenario);
-        setCurrentNodeId('start');
-        setHistory([{
-            text: scenario.initialMessage,
-            speaker: scenario.initialSpeaker,
-            isUser: false
-        }]);
-        setGameOver(false);
-        setStepsTaken(0);
-        setMistakes(0);
-        setSessionReward(null);
-        setOutcome(null);
-    };
-
-    const grantRewards = (success) => {
-        if (!activeScenario) return;
-        const reward = calculateRewards('conversation', {
-            baseXp: activeScenario.xpReward,
-            difficulty: activeScenario.difficulty,
-            mistakes,
-            steps: stepsTaken,
-            success
-        });
-        setSessionReward(reward);
-        if (success) {
-            addXP(reward.xp);
-            addCoins(reward.coins);
-            updateDailyStat('dailyConversations', 1);
-            incrementStat('conversationsCompleted', 1);
-        }
-    };
-
-    const handleOptionClick = (option) => {
-        if (!activeScenario || gameOver) return;
-        SoundManager.playPop();
-        setHistory(prev => [...prev, { text: option.text, isUser: true }]);
-        setStepsTaken(prev => prev + 1);
-        if (!option.isCorrect) setMistakes(prev => prev + 1);
-
-        const nextNode = activeScenario.nodes[option.nextNode];
-        if (nextNode) {
-            if (activeScenario.npcId) {
-                npcSystem.interact(activeScenario.npcId, option.text).then(response => {
-                    if (response.text) {
-                        setHistory(prev => [...prev, { text: response.text, isUser: false, speaker: nextNode.speaker }]);
-                    }
-                });
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
             }
         };
     }, [currentNodeId, activeScenario, gameOver, hintDelay, feedbackModal]);
@@ -174,18 +103,28 @@ const ConversationSimulator = () => {
         setGameOver(false);
         setShowOptions(false);
         setFeedbackModal(null);
-        // data/conversationScenarios uses 'initialMessage' and 'initialSpeaker' at root, not inside 'start' node sometimes?
-        // Let's check the data structure. Data uses root initialMessage.
-        // But nodes also have messages. Let's make sure we handle both.
-        // The data file structure: scenario.initialMessage exists. scenario.nodes.start has options only (usually).
-        // Let's check a sample from the view_file history.
-        // id: 'cafe_basic', initialMessage: "...", nodes: { start: { options: [...] } }
-
-        // So we push the initial message.
+        setSessionReward(null);
+        setOutcome(null);
         setHistory([{ text: scenario.initialMessage, speaker: scenario.initialSpeaker, isUser: false }]);
     };
 
-    const proceedToNode = (nextNodeId, scenario) => {
+    const grantRewards = useCallback((success) => {
+        if (!activeScenario) return;
+        const reward = calculateRewards('conversation', {
+            baseXp: activeScenario.xpReward,
+            difficulty: activeScenario.difficulty,
+            mistakes: 0,
+            steps: history.length,
+            success
+        });
+        setSessionReward(reward);
+        if (success) {
+            // XP is added in proceedToNode currently, but we can add coins here
+            if (addCoins) addCoins(reward.coins);
+        }
+    }, [activeScenario, history.length, addCoins]);
+
+    const proceedToNode = useCallback((nextNodeId, scenario) => {
         const nextNode = scenario.nodes[nextNodeId];
         if (nextNode) {
             setTimeout(() => {
@@ -197,16 +136,10 @@ const ConversationSimulator = () => {
                     const success = !!nextNode.success;
                     setOutcome(success ? 'success' : 'fail');
                     setGameOver(true);
-<<<<<<< HEAD
                     if (nextNode.success) {
                         addXP(scenario.xpReward);
                         SoundManager.playLevelUp();
                         setHistory(prev => [...prev, { text: `🎉 Scenario Complete! +${scenario.xpReward} XP`, isSystem: true }]);
-=======
-                    if (success) {
-                        SoundManager.playLevelUp();
-                        setHistory(prev => [...prev, { text: `🎉 Scenario Complete!`, isSystem: true }]);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                     } else {
                         SoundManager.playMiss();
                         setHistory(prev => [...prev, { text: "Scenario failed. Try again!", isSystem: true }]);
@@ -217,11 +150,8 @@ const ConversationSimulator = () => {
                 }
             }, 600);
         }
-    };
+    }, [addXP, grantRewards]);
 
-    /**
-     * Handle user typing a response
-     */
     const handleTypedSubmit = () => {
         if (!userInputValue.trim()) return;
 
@@ -229,10 +159,7 @@ const ConversationSimulator = () => {
         const matchResult = findBestMatch(userInputValue, currentNode.options);
 
         const handleProgression = (option, wasFuzzyMatch = false) => {
-            // Add user response to history (use actual typed input if fuzzy match)
             setHistory(prev => [...prev, { text: wasFuzzyMatch ? userInputValue : option.text, isUser: true }]);
-
-            // Allow NPC to react to what was actually typed if possible, otherwise option text
             if (activeScenario.npcId) {
                 npcSystem.interact(activeScenario.npcId, wasFuzzyMatch ? userInputValue : option.text).then(response => {
                     console.log("NPC Thought:", response.text);
@@ -242,7 +169,6 @@ const ConversationSimulator = () => {
         };
 
         if (matchResult && matchResult.score > 0.4) {
-            // Good match found
             SoundManager.playPop();
             const { option } = matchResult;
 
@@ -259,17 +185,14 @@ const ConversationSimulator = () => {
                 handleProgression(option, true);
             }
         } else {
-            // No clear match found - use NPCSystem for open-ended handling
             const offScriptResponse = npcSystem.handleOffScript(
                 userInputValue,
                 activeScenario,
                 currentNode.options
             );
 
-            // Add user message to history
             setHistory(prev => [...prev, { text: userInputValue, isUser: true }]);
 
-            // Add NPC response
             setTimeout(() => {
                 setHistory(prev => [...prev, {
                     text: offScriptResponse.text,
@@ -278,7 +201,6 @@ const ConversationSimulator = () => {
                     isRepair: true
                 }]);
 
-                // Show correction/learning moment if grammar error detected
                 if (offScriptResponse.correction) {
                     SoundManager.playPop();
                     setFeedbackModal({
@@ -290,8 +212,6 @@ const ConversationSimulator = () => {
                 } else if (!offScriptResponse.understood) {
                     SoundManager.playMiss();
                 }
-
-                // Show options as hint
                 setShowLegacyOptions(true);
             }, 600);
         }
@@ -299,12 +219,9 @@ const ConversationSimulator = () => {
 
     const handleOptionClick = (option) => {
         SoundManager.playPop();
-
-        // Add user response to history
         setHistory(prev => [...prev, { text: option.text, isUser: true }]);
 
         const handleProgression = () => {
-            // AI Interaction Side Effect
             if (activeScenario.npcId) {
                 npcSystem.interact(activeScenario.npcId, option.text).then(response => {
                     console.log("NPC Thought:", response.text);
@@ -313,22 +230,7 @@ const ConversationSimulator = () => {
             proceedToNode(option.nextNode, activeScenario);
         };
 
-        // SCHOLAR MODE / LEARNING MOMENT
-        // If we have feedback (usually for wrong answers, or specific "good but not great" answers)
-        // AND we are in Scholar mode OR it's a critical error (isCorrect === false)
-        // We show the feedback.
-
-        // Actually, casual users might want to know why they failed too.
-        // But Scholar users get specific feedback even if they get it "right" but maybe "rude"?
-        // The data has `isCorrect` and `feedback`.
-
         if (option.feedback) {
-            // If we are in Scholar mode, OR if the answer was actually wrong/rude.
-            // We'll show feedback for everything in Scholar mode if it exists.
-            // In Casual mode, we might only show it if it led to failure? 
-            // Let's show it always if it exists, but maybe style it differently?
-            // Implementation Plan said: "Scholar Mode: Should pause and show the specific feedback string... before proceeding."
-
             if (learnerType === 'scholar' || !option.isCorrect) {
                 setFeedbackModal({
                     text: option.feedback,
@@ -348,18 +250,12 @@ const ConversationSimulator = () => {
     const reset = () => {
         setActiveScenario(null);
         setHistory([]);
-<<<<<<< HEAD
         setShowOptions(false);
         setFeedbackModal(null);
-=======
-        setGameOver(false);
-        setCurrentNodeId('start');
         setSessionReward(null);
         setOutcome(null);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     };
 
-    // Scenario Selection Screen
     if (!activeScenario) {
         return (
             <GameLayout
@@ -417,7 +313,6 @@ const ConversationSimulator = () => {
             )}
         >
             <div className="flex flex-col h-[calc(100vh-180px)] max-w-3xl mx-auto">
-                {/* Chat Area */}
                 <Card className="flex-1 overflow-y-auto mb-4 p-6 space-y-6 bg-slate-950/40 border-white/10">
                     {history.map((msg, idx) => (
                         <motion.div
@@ -453,7 +348,6 @@ const ConversationSimulator = () => {
                     <div ref={messagesEndRef} />
                 </Card>
 
-                {/* Input Area */}
                 <div className="min-h-[160px] space-y-3">
                     {sessionReward && (
                         <div className={`p-3 rounded-xl border ${outcome === 'success' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200' : 'bg-red-500/10 border-red-500/30 text-red-200'}`}>
@@ -477,7 +371,6 @@ const ConversationSimulator = () => {
                         <div className="grid gap-3">
                             <AnimatePresence mode="wait">
                                 {!showOptions && !challengeMode ? (
-                                    /* Thinking prompt - shown while waiting for hint delay */
                                     <motion.div
                                         key="thinking"
                                         initial={{ opacity: 0, y: 10 }}
@@ -491,9 +384,7 @@ const ConversationSimulator = () => {
                                         </span>
                                     </motion.div>
                                 ) : showOptions ? (
-                                    /* Hybrid Input Mode */
                                     <div className="space-y-4">
-                                        {/* Typed Input Field */}
                                         <motion.div
                                             initial={{ opacity: 0, y: 10 }}
                                             animate={{ opacity: 1, y: 0 }}
@@ -520,8 +411,6 @@ const ConversationSimulator = () => {
                                                 <Send size={18} />
                                             </Button>
                                         </motion.div>
-
-                                        {/* Fallback Options (can be toggled or shown after failed attempts) */}
                                         <div className="flex justify-center">
                                             <button
                                                 onClick={() => setShowLegacyOptions(!showLegacyOptions)}
@@ -530,7 +419,6 @@ const ConversationSimulator = () => {
                                                 {showLegacyOptions ? "Hide Options" : "Show Options (I'm stuck)"}
                                             </button>
                                         </div>
-
                                         {showLegacyOptions && (
                                             <motion.div
                                                 initial={{ opacity: 0, height: 0 }}
@@ -558,7 +446,6 @@ const ConversationSimulator = () => {
                     )}
                 </div>
             </div>
-            {/* Feedback Modal for Scholar Mode */}
             <AnimatePresence>
                 {feedbackModal && (
                     <motion.div
@@ -576,12 +463,10 @@ const ConversationSimulator = () => {
                             onClick={e => e.stopPropagation()}
                         >
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-500" />
-
                             <div className="flex flex-col items-center text-center space-y-4">
                                 <div className={`p-4 rounded-full ${feedbackModal.isCorrect ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
                                     <Lightbulb size={32} />
                                 </div>
-
                                 <div>
                                     <h3 className="text-xl font-bold text-white mb-2">
                                         {feedbackModal.isCorrect ? 'Correct, but...' : 'Learning Moment'}
@@ -590,7 +475,6 @@ const ConversationSimulator = () => {
                                         {feedbackModal.text}
                                     </p>
                                 </div>
-
                                 <Button
                                     onClick={feedbackModal.onDismiss}
                                     className="w-full mt-2"
