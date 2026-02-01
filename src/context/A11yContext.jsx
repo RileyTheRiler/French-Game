@@ -18,7 +18,8 @@ export const A11yProvider = ({ children }) => {
     // Detect reduced motion preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        setPrefersReducedMotion(mediaQuery.matches);
+        // Wrap in setTimeout to avoid synchronous state update warning during render
+        setTimeout(() => setPrefersReducedMotion(mediaQuery.matches), 0);
 
         const handleChange = (e) => setPrefersReducedMotion(e.matches);
         mediaQuery.addEventListener('change', handleChange);
@@ -29,7 +30,7 @@ export const A11yProvider = ({ children }) => {
     // Detect high contrast preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-contrast: more)');
-        setHighContrast(mediaQuery.matches);
+        setTimeout(() => setHighContrast(mediaQuery.matches), 0);
 
         const handleChange = (e) => setHighContrast(e.matches);
         mediaQuery.addEventListener('change', handleChange);

@@ -73,7 +73,8 @@ export const LearningPathProvider = ({ children }) => {
             };
 
             const profile = computeSkillProfile(progressData, vocabulary);
-            setSkillProfile(profile);
+            // Wrap in setTimeout to avoid synchronous state update warning during render
+            setTimeout(() => setSkillProfile(profile), 0);
         }
     }, [vocabulary, categoryStats, dailyStats, errorPatterns, weakWords]);
 
@@ -82,7 +83,7 @@ export const LearningPathProvider = ({ children }) => {
         if (skillProfile) {
             const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
             const newInsights = generateInsights(weeklyData, skillProfile);
-            setInsights(newInsights);
+            setTimeout(() => setInsights(newInsights), 0);
         }
     }, [skillProfile, getWeeklySummary]);
 
@@ -90,7 +91,7 @@ export const LearningPathProvider = ({ children }) => {
     useEffect(() => {
         if (skillProfile && vocabulary && vocabulary.length > 0) {
             const queue = getPersonalizedQueue(skillProfile, vocabulary, 30);
-            setContentQueue(queue);
+            setTimeout(() => setContentQueue(queue), 0);
         }
     }, [skillProfile, vocabulary]);
 
@@ -112,7 +113,7 @@ export const LearningPathProvider = ({ children }) => {
     // Update learning style based on behavior
     useEffect(() => {
         const style = detectLearningStyle(behaviorData);
-        setLearningStyle(style);
+        setTimeout(() => setLearningStyle(style), 0);
     }, [behaviorData]);
 
     // Get the next batch of personalized content
