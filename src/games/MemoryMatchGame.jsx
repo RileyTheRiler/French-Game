@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Trophy, RotateCcw, Sparkles } from 'lucide-react';
+import { Trophy, RotateCcw, Sparkles } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -22,9 +23,10 @@ const MemoryMatchGame = () => {
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
+    // eslint-disable-next-line no-unused-vars
     const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
-    const startNewGame = () => {
+    const startNewGame = useCallback(() => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
@@ -54,9 +56,9 @@ const MemoryMatchGame = () => {
         setTurns(0);
         setGameComplete(false);
         setDisabled(false);
-    };
+    }, [difficulty, getWeightedPracticeWords]);
 
-    const handleWin = () => {
+    const handleWin = useCallback(() => {
         setGameComplete(true);
         SoundManager.playLevelUp();
         confetti({
@@ -68,29 +70,15 @@ const MemoryMatchGame = () => {
         // XP Calculation: Base 20 - turns penalty? Or fix 20?
         // Let's give nice XP.
         addXP(30);
-    };
+    }, [addXP]);
 
     // Initialize Game
     useEffect(() => {
-        startNewGame();
-    }, []);
-
-    const handleClick = (id) => {
-        if (disabled || gameComplete) return;
-        if (flipped.includes(id) || solved.includes(id)) return;
-
-        if (flipped.length === 0) {
-            setFlipped([id]);
-            const card = cards.find(c => c.id === id);
-            if (card.type === 'french') speak(card.content);
-            SoundManager.playClick();
-        } else {
-            setFlipped(prev => [...prev, id]);
-            setDisabled(true);
-            setTurns(t => t + 1);
-            checkForMatch(id);
-        }
-    };
+        const timer = setTimeout(() => {
+            startNewGame();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [startNewGame]);
 
     const checkForMatch = (currentId) => {
         const firstId = flipped[0];
@@ -114,12 +102,33 @@ const MemoryMatchGame = () => {
         }
     };
 
+    const handleClick = (id) => {
+        if (disabled || gameComplete) return;
+        if (flipped.includes(id) || solved.includes(id)) return;
+
+        if (flipped.length === 0) {
+            setFlipped([id]);
+            const card = cards.find(c => c.id === id);
+            if (card.type === 'french') speak(card.content);
+            SoundManager.playClick();
+        } else {
+            setFlipped(prev => [...prev, id]);
+            setDisabled(true);
+            setTurns(t => t + 1);
+            checkForMatch(id);
+        }
+    };
+
     // Check Win Condition
     useEffect(() => {
         if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
+            // Wrap in timeout to avoid sync state update in effect
+            const timer = setTimeout(() => {
+                handleWin();
+            }, 0);
+            return () => clearTimeout(timer);
         }
-    }, [solved]);
+    }, [solved, cards.length, handleWin]);
 
     return (
         <GameLayout

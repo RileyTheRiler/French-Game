@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import { MessageCircle, Send, User, Bot, Lightbulb, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useProgress } from '../context/ProgressContext';
@@ -13,7 +13,10 @@ import { getDifficultyConfig } from './ui/DifficultyDial';
 import { calculateRewards } from '../utils/rewardSystem';
 
 import { SCENARIOS } from '../data/conversationScenarios';
-import { findBestMatch, isFuzzyMatch } from '../utils/textMatching';
+import { findBestMatch } from '../utils/textMatching';
+
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 
 const ConversationSimulator = () => {
     const navigate = useNavigate();
@@ -58,21 +61,28 @@ const ConversationSimulator = () => {
     useEffect(() => {
         if (!activeScenario || gameOver || feedbackModal) return;
 
-        // Reset input state
-        setUserInputValue("");
-        setShowLegacyOptions(false);
+        // Reset input state - wrapped in timeout to avoid sync state update in effect
+        const timer = setTimeout(() => {
+            setUserInputValue("");
+            setShowLegacyOptions(false);
+            // Hide options initially
+            setShowOptions(false);
+        }, 0);
 
         // Clear any existing timer
         if (optionsTimerRef.current) {
             clearTimeout(optionsTimerRef.current);
         }
 
-        // Hide options initially
-        setShowOptions(false);
-
         // Show options after delay
         if (hintDelay === 0) {
-            setShowOptions(true);
+            // If delay is 0, we still want to respect the initial hide above, so we set it back to true in the next tick or after a tiny delay?
+            // Or just set it here if we want instant?
+            // If we set it here synchronously, it overrides the 'false' in the timeout? No, timeout runs later.
+            // Let's put this in a timeout too.
+            optionsTimerRef.current = setTimeout(() => {
+                setShowOptions(true);
+            }, 50); // Small delay to ensure reset happens first
         } else {
             optionsTimerRef.current = setTimeout(() => {
                 setShowOptions(true);
@@ -80,6 +90,7 @@ const ConversationSimulator = () => {
         }
 
         return () => {
+            clearTimeout(timer);
             if (optionsTimerRef.current) {
                 clearTimeout(optionsTimerRef.current);
             }
@@ -97,7 +108,7 @@ const ConversationSimulator = () => {
         setHistory([{ text: scenario.initialMessage, speaker: scenario.initialSpeaker, isUser: false }]);
     };
 
-    const grantRewards = (success) => {
+    const grantRewards = useCallback((success) => {
         if (!activeScenario) return;
         const reward = calculateRewards('conversation', {
             baseXp: activeScenario.xpReward,
@@ -111,9 +122,9 @@ const ConversationSimulator = () => {
             // XP is added in proceedToNode currently, but we can add coins here
             if (addCoins) addCoins(reward.coins);
         }
-    };
+    }, [activeScenario, history.length, addCoins]);
 
-    const proceedToNode = (nextNodeId, scenario) => {
+    const proceedToNode = useCallback((nextNodeId, scenario) => {
         const nextNode = scenario.nodes[nextNodeId];
         if (nextNode) {
             setTimeout(() => {
@@ -139,7 +150,7 @@ const ConversationSimulator = () => {
                 }
             }, 600);
         }
-    };
+    }, [addXP, grantRewards]);
 
     const handleTypedSubmit = () => {
         if (!userInputValue.trim()) return;
