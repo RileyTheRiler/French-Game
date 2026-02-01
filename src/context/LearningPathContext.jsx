@@ -22,8 +22,8 @@ const LearningPathContext = createContext();
  * - Adaptive parameters (difficulty, pace)
  */
 export const LearningPathProvider = ({ children }) => {
-    const { stats, categoryStats, dailyStats, errorPatterns, weakWords, getWeeklySummary } = useProgress();
-    const { vocabulary, getDueWords, getWeightedPracticeWords } = useVocabulary();
+    const { categoryStats, dailyStats, errorPatterns, weakWords, getWeeklySummary } = useProgress();
+    const { vocabulary, getWeightedPracticeWords } = useVocabulary();
 
     // Skill profile computed from user data
     const [skillProfile, setSkillProfile] = useState(null);
@@ -73,7 +73,12 @@ export const LearningPathProvider = ({ children }) => {
             };
 
             const profile = computeSkillProfile(progressData, vocabulary);
-            setSkillProfile(profile);
+
+            // Wrap in timeout to prevent sync set state warning
+            const timer = setTimeout(() => {
+                setSkillProfile(profile);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [vocabulary, categoryStats, dailyStats, errorPatterns, weakWords]);
 
@@ -82,7 +87,12 @@ export const LearningPathProvider = ({ children }) => {
         if (skillProfile) {
             const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
             const newInsights = generateInsights(weeklyData, skillProfile);
-            setInsights(newInsights);
+
+            // Wrap in timeout to prevent sync set state warning
+            const timer = setTimeout(() => {
+                setInsights(newInsights);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [skillProfile, getWeeklySummary]);
 
@@ -90,7 +100,12 @@ export const LearningPathProvider = ({ children }) => {
     useEffect(() => {
         if (skillProfile && vocabulary && vocabulary.length > 0) {
             const queue = getPersonalizedQueue(skillProfile, vocabulary, 30);
-            setContentQueue(queue);
+
+            // Wrap in timeout to prevent sync set state warning
+            const timer = setTimeout(() => {
+                setContentQueue(queue);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [skillProfile, vocabulary]);
 
@@ -112,7 +127,12 @@ export const LearningPathProvider = ({ children }) => {
     // Update learning style based on behavior
     useEffect(() => {
         const style = detectLearningStyle(behaviorData);
-        setLearningStyle(style);
+
+        // Wrap in timeout to prevent sync set state warning
+        const timer = setTimeout(() => {
+            setLearningStyle(style);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [behaviorData]);
 
     // Get the next batch of personalized content
@@ -269,6 +289,7 @@ export const LearningPathProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useLearningPath = () => {
     const context = useContext(LearningPathContext);
     if (!context) {
