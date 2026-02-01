@@ -2,10 +2,10 @@ import React, { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { formatRelativeTime } from '../../utils/time';
 
-<<<<<<< HEAD
-const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }) => {
+const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8, mastery, lastSeen }) => {
     // Only show hint after hintDelay seconds have passed since spawn
     const [showHint, setShowHint] = useState(false);
+    const tooltip = `Lvl ${mastery || 1} • Last seen ${formatRelativeTime(lastSeen)}`;
 
     useEffect(() => {
         if (!hint || hintDelay === 0) {
@@ -13,10 +13,16 @@ const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }
             return;
         }
 
-        const elapsed = Date.now() - spawnTime;
+        if (hint.startsWith('[')) {
+             setShowHint(true);
+             return;
+        }
+
+        const spawnTimestamp = spawnTime || Date.now();
+        const elapsed = Date.now() - spawnTimestamp;
         const remainingDelay = Math.max(0, (hintDelay * 1000) - elapsed);
 
-        if (remainingDelay === 0) {
+        if (remainingDelay <= 0) {
             setShowHint(true);
             return;
         }
@@ -28,10 +34,6 @@ const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }
         return () => clearTimeout(timer);
     }, [hint, spawnTime, hintDelay]);
 
-=======
-const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
-    const tooltip = `Lvl ${mastery || 1} • Last seen ${formatRelativeTime(lastSeen)}`;
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     return (
         <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -49,7 +51,7 @@ const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
         >
             <span className="relative z-10 flex flex-col items-center">
                 {/* Scholar Mode Metadata */}
-                {hint && hint.startsWith('[') && (
+                {showHint && hint && hint.startsWith('[') && (
                     <span className="text-[10px] uppercase tracking-widest text-indigo-300 mb-1 font-bold opacity-80">
                         {hint.replace(/[\[\]]/g, '')}
                     </span>
@@ -63,7 +65,7 @@ const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
                     animate={{ scale: 1, opacity: 1 }}
                     className="absolute -top-3 -right-3 bg-yellow-400 text-slate-900 text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-slate-900"
                 >
-                    ?
+                    {hint}
                 </motion.div>
             )}
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl pointer-events-none" />
@@ -72,4 +74,3 @@ const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
 });
 
 export default WordItem;
-

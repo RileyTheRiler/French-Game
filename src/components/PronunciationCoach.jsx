@@ -11,44 +11,32 @@ import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
-<<<<<<< HEAD
 import AudioVisualizer from './Pronunciation/AudioVisualizer';
 import MouthShapeVisualizer from './Pronunciation/MouthShapeVisualizer';
 import MinimalPairDrill from './Pronunciation/MinimalPairDrill';
 import RhythmTrainer from './Pronunciation/RhythmTrainer';
 import ShadowingDrill from './Pronunciation/ShadowingDrill';
 import { analyzePronunciation, getPhonemeHints } from '../services/PronunciationAnalyzer';
-=======
 import { calculateRewards } from '../utils/rewardSystem';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const PronunciationCoach = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
     const { vocabulary } = useVocabulary();
-<<<<<<< HEAD
-    const { addXP, markWordStrength } = useProgress(); // Check if markWordStrength exists in ProgressContext
+    const { addXP, addCoins, updateDailyStat, incrementStat, stats, offlineAudio, markWordStrength } = useProgress();
 
-    // Mode state: 'practice', 'minimal-pairs', 'rhythm'
+    // Mode state: 'practice', 'minimal-pairs', 'rhythm', 'shadowing'
     const [mode, setMode] = useState('practice');
 
     // Detailed analysis from PronunciationAnalyzer
     const [detailedAnalysis, setDetailedAnalysis] = useState(null);
-=======
-    const { addXP, addCoins, updateDailyStat, incrementStat } = useProgress();
-    const { addXP, addCoins, offlineAudio } = useProgress();
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [status, setStatus] = useState('idle'); // 'idle', 'listening', 'checking', 'success', 'fail'
-<<<<<<< HEAD
     const [lastScore, setLastScore] = useState(0);
-=======
-    const [accuracy, setAccuracy] = useState(null);
     const [phonemeFeedback, setPhonemeFeedback] = useState([]);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     const [sessionComplete, setSessionComplete] = useState(false);
     const [totalXP, setTotalXP] = useState(0);
     const [successCount, setSuccessCount] = useState(0);
@@ -61,9 +49,6 @@ const PronunciationCoach = () => {
 
     // Recognition
     const recognitionRef = useRef(null);
-
-    // Practice items
-    const { stats } = useProgress();
 
     // Practice items: Prioritize weak words
     const wordsToPractice = useMemo(() => {
@@ -164,31 +149,18 @@ const PronunciationCoach = () => {
         }
     };
 
-    // Simple heuristic scoring (0-100)
-    const calculateScore = (target, spoken) => {
-        if (!spoken) return 0;
-        target = target.toLowerCase().trim();
-        spoken = spoken.toLowerCase().trim();
-
-        if (target === spoken) return 100;
-        if (spoken.includes(target) || target.includes(spoken)) return 85;
-
-        // Very basic character overlap for now (can be improved with Levenshtein)
-        let matches = 0;
-        for (let i = 0; i < Math.min(target.length, spoken.length); i++) {
-            if (target[i] === spoken[i]) matches++;
-        }
-        return Math.floor((matches / Math.max(target.length, spoken.length)) * 100);
-    };
-
     const checkPronunciation = (heard) => {
         setStatus('checking');
-<<<<<<< HEAD
+        setAttempts(prev => prev + 1);
 
         // Use the advanced PronunciationAnalyzer
         const analysis = analyzePronunciation(currentWord, heard);
         setDetailedAnalysis(analysis);
         setLastScore(analysis.score);
+
+        // Also get simple phoneme feedback for visual fallback
+        const { feedback } = scorePronunciation(currentWord.french, heard);
+        setPhonemeFeedback(feedback);
 
         // Update stats
         if (markWordStrength) {
@@ -196,32 +168,18 @@ const PronunciationCoach = () => {
         }
 
         setTimeout(() => {
-            if (analysis.score >= 80) {
+            if (analysis.score >= 70) {
                 setStatus('success');
                 SoundManager.playSuccess();
-                const xpGain = analysis.score === 100 ? 20 : 10;
+                const xpGain = analysis.score >= 90 ? 20 : 10;
                 setTotalXP(prev => prev + xpGain);
-=======
-        const target = currentWord.french.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
-        const spoken = heard.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
-        setAttempts(prev => prev + 1);
-        const { accuracy: score, feedback } = scorePronunciation(currentWord.french, heard);
-        setAccuracy(score);
-        setPhonemeFeedback(feedback);
-
-        setTimeout(() => {
-            if (score >= 70) {
-                setStatus('success');
-                SoundManager.playSuccess();
-                setTotalXP(prev => prev + 20);
+                addXP(xpGain);
+                addCoins(5);
                 setSuccessCount(prev => {
                     const next = prev + 1;
                     updateDailyStat('dailyStreak', next, 'max');
                     return next;
                 });
-                addXP(20);
-                addCoins(5);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
             } else {
                 setStatus('fail');
                 SoundManager.playMiss();
@@ -236,6 +194,7 @@ const PronunciationCoach = () => {
             setTranscript('');
             setLastScore(0);
             setDetailedAnalysis(null);
+            setPhonemeFeedback([]);
         } else {
             const reward = calculateRewards('pronunciation', {
                 successes: successCount,
@@ -415,8 +374,7 @@ const PronunciationCoach = () => {
                             {isListening ? <MicOff size={40} /> : <Mic size={40} />}
                         </Button>
 
-<<<<<<< HEAD
-                        <div className="mt-8 h-24 flex flex-col items-center justify-center w-full">
+                        <div className="mt-8 min-h-[100px] flex flex-col items-center justify-center w-full">
                             <AnimatePresence mode="wait">
                                 {status === 'idle' && (
                                     <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-slate-500">
@@ -425,7 +383,7 @@ const PronunciationCoach = () => {
                                 )}
                                 {status === 'listening' && (
                                     <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-indigo-400 font-bold text-xl animate-pulse">
-                                        Listening...
+                                        Listening... Parlez maintenant !
                                     </motion.p>
                                 )}
                                 {status === 'checking' && (
@@ -454,17 +412,18 @@ const PronunciationCoach = () => {
                                         </div>
 
                                         {/* Phoneme Breakdown */}
-                                        {detailedAnalysis?.phonemeBreakdown && detailedAnalysis.phonemeBreakdown.length > 0 && (
+                                        {(detailedAnalysis?.phonemeBreakdown?.length > 0 || phonemeFeedback.length > 0) && (
                                             <div className="w-full max-w-md mb-4 p-3 bg-slate-800/50 rounded-xl border border-white/5">
                                                 <div className="text-xs text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
                                                     <Lightbulb size={12} /> Phoneme Analysis
                                                 </div>
                                                 <div className="flex flex-wrap gap-1 justify-center">
-                                                    {detailedAnalysis.phonemeBreakdown.map((p, i) => (
+                                                    {(detailedAnalysis?.phonemeBreakdown || phonemeFeedback).map((p, i) => (
                                                         <span
                                                             key={i}
-                                                            className={`px-2 py-1 rounded font-mono text-sm ${p.accuracy === 'correct' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                                p.accuracy === 'partial' ? 'bg-amber-500/20 text-amber-400' :
+                                                            className={`px-2 py-1 rounded font-mono text-sm ${
+                                                                (p.accuracy === 'correct' || p.status === 'match') ? 'bg-emerald-500/20 text-emerald-400' :
+                                                                (p.accuracy === 'partial' || p.status === 'close') ? 'bg-amber-500/20 text-amber-400' :
                                                                     'bg-red-500/20 text-red-400'
                                                                 }`}
                                                         >
@@ -496,59 +455,6 @@ const PronunciationCoach = () => {
                                 )}
                             </AnimatePresence>
                         </div>
-=======
-                    <div className="mt-12 h-28 flex flex-col items-center justify-center w-full">
-                        <AnimatePresence mode="wait">
-                            {status === 'listening' && (
-                                <motion.p key="listen" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-indigo-400 font-bold text-xl animate-pulse">
-                                    Listening... Parlez maintenant !
-                                </motion.p>
-                            )}
-                            {status === 'checking' && (
-                                <motion.p key="check" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-slate-400 font-bold text-xl">
-                                    Analyzing your pronunciation...
-                                </motion.p>
-                            )}
-                            {status === 'success' && (
-                                <motion.div key="success" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center">
-                                    <p className="text-emerald-400 font-bold text-2xl flex items-center gap-2">
-                                        <Check size={24} /> Great! "{transcript}"
-                                    </p>
-                                    <p className="text-sm text-emerald-200 mt-2">+20 XP • +5 coins</p>
-                                    <Button className="mt-4" onClick={handleNext}>Next Word</Button>
-                                </motion.div>
-                            )}
-                            {status === 'fail' && (
-                                <motion.div key="fail" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center">
-                                    <p className="text-red-400 font-bold text-xl flex items-center gap-2">
-                                        <X size={24} /> Hear: "{transcript || '...'}"
-                                    </p>
-                                    <Button variant="ghost" className="mt-2 text-slate-400" onClick={() => setStatus('idle')}>Try Again</Button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {phonemeFeedback.length > 0 && (
-                            <div className="mt-4 w-full">
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-sm text-slate-400">Per-phoneme feedback</p>
-                                    <span className="text-xs text-indigo-300 font-bold">{accuracy}% accuracy</span>
-                                </div>
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                    {phonemeFeedback.map((item, idx) => (
-                                        <span
-                                            key={`${item.phoneme}-${idx}`}
-                                            className={`px-3 py-1 rounded-full text-sm font-semibold ${item.status === 'match' ? 'bg-emerald-500/20 text-emerald-300' :
-                                                item.status === 'close' ? 'bg-amber-500/20 text-amber-300' :
-                                                    'bg-red-500/20 text-red-300'}`}
-                                        >
-                                            {item.phoneme}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                     </div>
                 </Card>
 

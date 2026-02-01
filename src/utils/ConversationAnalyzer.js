@@ -96,7 +96,7 @@ const TOPIC_KEYWORDS = {
  */
 export function analyzeConversation(messages, prompt) {
     const userMessages = messages.filter(m => m.isUser);
-    const npcMessages = messages.filter(m => !m.isUser && !m.isSystem);
+    const _npcMessages = messages.filter(m => !m.isUser && !m.isSystem);
 
     // Calculate metrics
     const fluencyMetrics = calculateFluency(userMessages);

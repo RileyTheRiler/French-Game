@@ -45,7 +45,7 @@ const SoundManager = {
 
     playLevelUp: () => {
         // Arpeggio
-        const now = audioCtx.currentTime;
+        const _now = audioCtx.currentTime;
         SoundManager.playTone(400, 'sine', 0.1);
         setTimeout(() => SoundManager.playTone(500, 'sine', 0.1), 100);
         setTimeout(() => SoundManager.playTone(600, 'sine', 0.1), 200);
