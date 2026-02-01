@@ -26,51 +26,12 @@ const VoiceCall = () => {
 
     const currentNode = scenario.nodes[currentNodeId];
 
-    // Effect: Handle Node Transitions
-    useEffect(() => {
-        if (!currentNode) return;
-
-        // If node has 'end' flag
-        if (currentNode.end) {
-            handleSpeak(currentNode.message, () => {
-                setCallState('ended');
-                setStatus('Call Ended');
-                setTimeout(() => {
-                    navigate('/'); // Go back to menu after delay
-                    if (currentNode.success) addXP(scenario.xpReward);
-                }, 3000);
-            });
-            return;
-        }
-
-        // Normal node: NPC speaks first (if message exists)
-        // Note: 'start' node might not have a message if it's the very beginning, 
-        // usually scenario.initialMessage is for the beginning.
-
-        const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
-
-        if (messageToSpeak) {
-            setStatus('Speaking...');
-            handleSpeak(messageToSpeak, () => {
-                // After speaking, start listening
-                startListeningPhase();
-            });
-        } else {
-            // No message (rare), just listen
-            startListeningPhase();
-        }
-
-    }, [currentNodeId, scenario]);
-
+    // Functions defined before useEffect to avoid hoisting issues
     const handleSpeak = (text, onEnd) => {
         setCallState('npc_speaking');
         setIsNpcSpeaking(true);
         setStatus('Speaking...');
 
-        // Simulating speech end for visualizer since web speech API doesn't have reliable 'onend' callback for TTS in all browsers or wrapper
-        // We use a rough estimation of time: 100ms per character?
-        // OR better: speak() function in utils/audio is fire and forget. 
-        // For a hack, let's assume average reading speed.
         speak(text);
 
         const duration = Math.max(2000, text.length * 80);
@@ -86,18 +47,6 @@ const VoiceCall = () => {
         resetTranscript();
         startListening();
     };
-
-    // Effect: Check transcript for matches
-    useEffect(() => {
-        if (callState !== 'listening' || !transcript) return;
-
-        // Debounce slightly to wait for user to finish sentence
-        const timer = setTimeout(() => {
-            handleProcessInput(transcript);
-        }, 1500);
-
-        return () => clearTimeout(timer);
-    }, [transcript, callState]);
 
     const handleProcessInput = (input) => {
         stopListening();
@@ -128,6 +77,51 @@ const VoiceCall = () => {
         }
     };
 
+    // Effect: Handle Node Transitions
+    useEffect(() => {
+        if (!currentNode) return;
+
+        // If node has 'end' flag
+        if (currentNode.end) {
+            handleSpeak(currentNode.message, () => {
+                setCallState('ended');
+                setStatus('Call Ended');
+                setTimeout(() => {
+                    navigate('/'); // Go back to menu after delay
+                    if (currentNode.success) addXP(scenario.xpReward);
+                }, 3000);
+            });
+            return;
+        }
+
+        const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
+
+        if (messageToSpeak) {
+            setStatus('Speaking...');
+            handleSpeak(messageToSpeak, () => {
+                // After speaking, start listening
+                startListeningPhase();
+            });
+        } else {
+            // No message (rare), just listen
+            startListeningPhase();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentNodeId, scenario]);
+
+    // Effect: Check transcript for matches
+    useEffect(() => {
+        if (callState !== 'listening' || !transcript) return;
+
+        // Debounce slightly to wait for user to finish sentence
+        const timer = setTimeout(() => {
+            handleProcessInput(transcript);
+        }, 1500);
+
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [transcript, callState]);
+
     const handleToggleMic = () => {
         if (isListening) {
             stopListening();
@@ -140,17 +134,6 @@ const VoiceCall = () => {
         stopListening();
         navigate('/');
     };
-
-    // Initial Connection Simulation
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            // Start the interaction
-            // Trigger the effect by ensuring ID is set (already 'start') 
-            // but we need to trigger the initial message logic.
-            // We can force a re-eval or just rely on mount.
-        }, 1000);
-        return () => clearTimeout(timer);
-    }, []);
 
     return (
         <CallScreen
