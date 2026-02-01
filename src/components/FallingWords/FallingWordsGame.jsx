@@ -1,13 +1,7 @@
-<<<<<<< HEAD
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-=======
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Volume2 } from 'lucide-react';
+import { Mic, Volume2, Ghost, Swords, Clock, TrendingUp } from 'lucide-react';
 import { useVocabulary } from '../../context/VocabularyContext';
 import { useProgress } from '../../context/ProgressContext';
 import WordItem from './WordItem';
@@ -16,15 +10,11 @@ import { Badge } from '../ui/Badge';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { GameLayout } from '../layout/GameLayout';
-<<<<<<< HEAD
-import { Ghost, Swords, Clock, TrendingUp } from 'lucide-react';
 import { getDifficultyConfig } from '../ui/DifficultyDial';
-=======
 import { calculateRewards } from '../../utils/rewardSystem';
 import DifficultySlider from '../ui/DifficultySlider';
 import { playWordAudio } from '../../utils/audio';
 import { scorePronunciation } from '../../utils/phonetics';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const GAME_WIDTH_PERCENT = 90;
 const INITIAL_FALL_SPEED = 0.05;
@@ -34,16 +24,14 @@ const INITIAL_SPAWN_INTERVAL = 2000;
 const MIN_SPAWN_INTERVAL = 800;
 const TICK_RATE_MS = 16;
 const FALL_SPEED_INCREMENT = 0.05;
-<<<<<<< HEAD
 
 // Time Attack Constants
 const INITIAL_TIME_SECONDS = 90;
 const TIME_BONUS_PER_WORD = 5;
-const MAX_TIME_CAP = 120; // Don't let them bank too much time
+const MAX_TIME_CAP = 120;
 
 const GHOST_STORAGE_KEY = 'frenchApp_fw_ghost';
-=======
-const INITIAL_LIVES = 3;
+
 const DIFFICULTY_BANDS = {
     1: { speed: 0.8, spawn: 1.2, score: 0.8, hintBias: 1.2 },
     2: { speed: 0.95, spawn: 1.05, score: 0.95, hintBias: 1.1 },
@@ -51,7 +39,6 @@ const DIFFICULTY_BANDS = {
     4: { speed: 1.15, spawn: 0.9, score: 1.15, hintBias: 0.85 },
     5: { speed: 1.35, spawn: 0.8, score: 1.3, hintBias: 0.7 }
 };
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const FallingWordsGame = () => {
     const navigate = useNavigate();
@@ -63,18 +50,24 @@ const FallingWordsGame = () => {
 
     const onExit = () => navigate('/');
 
-    const { getDueWords, updateWordProgress, CATEGORIES } = useVocabulary();
-    const { stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+    const { getPracticeQueue, updateWordProgress, markWordSeen, getDueWords, getWeightedPracticeWords, vocabulary, CATEGORIES } = useVocabulary();
+    const {
+        stats,
+        addXP,
+        addCoins,
+        updateDailyStat,
+        incrementStat,
+        recordCategoryPerformance,
+        setModeDifficulty,
+        logWordAttempt,
+        globalDifficulty,
+        difficultySettings,
+        offlineAudio
+    } = useProgress();
+
     const difficultySetting = stats?.difficultySettings?.fallingWords || 3;
     const [difficulty, setDifficulty] = useState(difficultySetting);
     const difficultyRef = useRef(difficultySetting);
-    const { getDueWords, updateWordProgress } = useVocabulary();
-    const { addXP, addCoins, updateDailyStat, incrementStat } = useProgress();
-    const { offlineAudio } = useProgress();
-    const { getPracticeQueue, updateWordProgress, markWordSeen } = useVocabulary();
-    const { getDueWords, updateWordProgress, getWeightedPracticeWords, vocabulary } = useVocabulary();
-    const { logWordAttempt, globalDifficulty, difficultySettings } = useProgress();
-
     const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
 
     // Game State (Visual)
@@ -102,14 +95,11 @@ const FallingWordsGame = () => {
     const [isShaking, setIsShaking] = useState(false);
     const [level, setLevel] = useState(1);
     const [showLevelUp, setShowLevelUp] = useState(false);
-<<<<<<< HEAD
-    const [addedTime, setAddedTime] = useState(null); // For UI popup "+5s"
-=======
+    const [addedTime, setAddedTime] = useState(null);
     const [wordsCaught, setWordsCaught] = useState(0);
     const [sessionReward, setSessionReward] = useState(null);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
-    // Game Logic State (Refs for loop availability)
+    // Game Logic State
     const activeWordsRef = useRef([]);
     const [renderedWords, setRenderedWords] = useState([]);
 
@@ -122,32 +112,28 @@ const FallingWordsGame = () => {
     const validWords = useRef([]);
     const isPlayingRef = useRef(false);
     const isZenModeRef = useRef(false);
-<<<<<<< HEAD
-    const timeLeftRef = useRef(INITIAL_TIME_SECONDS); // Ref for precise timing logic
-=======
+    const timeLeftRef = useRef(INITIAL_TIME_SECONDS);
     const bandRef = useRef(DIFFICULTY_BANDS[difficultySetting] || DIFFICULTY_BANDS[3]);
+    const listenModeRef = useRef(false);
+    const recognitionRef = useRef(null);
+    const lastHeardWordRef = useRef(null);
+
     const categoryPerformance = useMemo(() => stats?.categoryPerformance || {}, [stats?.categoryPerformance]);
     const performanceSummaryRef = useRef({
         averageAccuracy: 1,
         averageResponse: 2000,
         lowestCategory: null
     });
-    const listenModeRef = useRef(false);
-    const recognitionRef = useRef(null);
-    const lastHeardWordRef = useRef(null);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
-    // Dynamic difficulty refs
     const currentFallSpeedRef = useRef(INITIAL_FALL_SPEED);
     const currentSpawnIntervalRef = useRef(INITIAL_SPAWN_INTERVAL);
     const rewardGrantedRef = useRef(false);
 
-    // Ghost Refs
-    const recordingRef = useRef([]); // [{ time: ms, score: int }]
+    const recordingRef = useRef([]);
     const ghostDataRef = useRef([]);
     const isGhostModeRef = useRef(false);
 
-    // Sync Ref with State
+    // Sync Refs with State
     useEffect(() => {
         isZenModeRef.current = isZenMode;
         if (isZenMode) {
@@ -160,113 +146,13 @@ const FallingWordsGame = () => {
     }, [isZenMode]);
 
     useEffect(() => {
-<<<<<<< HEAD
         isGhostModeRef.current = isGhostMode;
     }, [isGhostMode]);
 
-    // Opponent Simulation (Rivals Mode)
     useEffect(() => {
-        if (!isRivalsMode || gameOver) return;
-
-        const interval = setInterval(() => {
-            // Randomly increase opponent score
-            // Logic: Base rate + random bursts to simulate combos
-            const chance = Math.random();
-            if (chance > 0.3) { // 70% chance to score
-                const gain = Math.floor(Math.random() * 30) + 10;
-                setOpponentScore(prev => prev + gain);
-            }
-        }, 1000); // Check every second
-
-        return () => clearInterval(interval);
-    }, [isRivalsMode, gameOver]);
-=======
         listenModeRef.current = listenMode;
     }, [listenMode]);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
-    // Initialize
-    useEffect(() => {
-        // Check for existing ghost data
-        const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
-        if (savedGhost) {
-            setHasGhostData(true);
-        }
-
-        try {
-            const words = getPracticeQueue('fallingWords', 40);
-            const weighted = getWeightedPracticeWords ? getWeightedPracticeWords(40) : getDueWords();
-            const words = weighted && weighted.length ? weighted : getDueWords();
-            if (!words || words.length === 0) {
-                console.warn("No words available!");
-                validWords.current = vocabulary || [];
-            } else {
-                validWords.current = words;
-            }
-        } catch (e) {
-            console.error("Error fetching words:", e);
-            validWords.current = vocabulary || [];
-        }
-
-        // Init Audio
-        SoundManager.init();
-
-        startGame();
-
-        return () => {
-            isPlayingRef.current = false;
-            if (requestRef.current) cancelAnimationFrame(requestRef.current);
-        };
-    }, [getPracticeQueue]);
-
-    useEffect(() => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
-
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.lang = 'fr-FR';
-        recognitionRef.current.interimResults = false;
-        recognitionRef.current.maxAlternatives = 1;
-
-        recognitionRef.current.onresult = (event) => {
-            const heard = event.results[0][0].transcript;
-            const target = lastHeardWordRef.current;
-            if (target) {
-                const { accuracy } = scorePronunciation(target.french, heard);
-                setShadowFeedback({ heard, accuracy, target });
-            }
-            setIsShadowing(false);
-        };
-        recognitionRef.current.onerror = () => setIsShadowing(false);
-        recognitionRef.current.onend = () => setIsShadowing(false);
-    }, []);
-
-<<<<<<< HEAD
-    const startGame = () => {
-        isPlayingRef.current = true;
-
-        // Prepare Ghost Data if mode is active
-        if (isGhostModeRef.current) {
-            const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
-            ghostDataRef.current = savedGhost ? JSON.parse(savedGhost) : [];
-        } else {
-            ghostDataRef.current = [];
-        }
-
-        // Reset Recording
-        recordingRef.current = [{ time: 0, score: 0 }];
-
-        const now = performance.now();
-        lastTimeRef.current = now;
-        startTimeRef.current = now;
-
-        if (!isZenModeRef.current) {
-            timeLeftRef.current = INITIAL_TIME_SECONDS;
-            setTimeLeft(INITIAL_TIME_SECONDS);
-        }
-
-        requestRef.current = requestAnimationFrame(gameLoop);
-=======
     useEffect(() => {
         difficultyRef.current = difficulty;
         bandRef.current = DIFFICULTY_BANDS[difficulty] || DIFFICULTY_BANDS[3];
@@ -301,6 +187,71 @@ const FallingWordsGame = () => {
         performanceSummaryRef.current = performanceSummary;
     }, [performanceSummary]);
 
+    // Opponent Simulation (Rivals Mode)
+    useEffect(() => {
+        if (!isRivalsMode || gameOver) return;
+        const interval = setInterval(() => {
+            if (Math.random() > 0.3) {
+                const gain = Math.floor(Math.random() * 30) + 10;
+                setOpponentScore(prev => prev + gain);
+            }
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [isRivalsMode, gameOver]);
+
+    // Initialize Game
+    useEffect(() => {
+        const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
+        if (savedGhost) setHasGhostData(true);
+
+        try {
+            const words = getPracticeQueue('fallingWords', 40);
+            const weighted = getWeightedPracticeWords ? getWeightedPracticeWords(40) : getDueWords();
+            const finalWords = (words && words.length) ? words : ((weighted && weighted.length) ? weighted : (vocabulary || []));
+
+            if (!finalWords || finalWords.length === 0) {
+                console.warn("No words available!");
+                validWords.current = [];
+            } else {
+                validWords.current = finalWords;
+            }
+        } catch (e) {
+            console.error("Error fetching words:", e);
+            validWords.current = vocabulary || [];
+        }
+
+        SoundManager.init();
+        startGame();
+
+        return () => {
+            isPlayingRef.current = false;
+            if (requestRef.current) cancelAnimationFrame(requestRef.current);
+        };
+    }, [getPracticeQueue, getWeightedPracticeWords, getDueWords, vocabulary]);
+
+    // Init Speech Recognition
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.lang = 'fr-FR';
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.maxAlternatives = 1;
+
+        recognitionRef.current.onresult = (event) => {
+            const heard = event.results[0][0].transcript;
+            const target = lastHeardWordRef.current;
+            if (target) {
+                const { accuracy } = scorePronunciation(target.french, heard);
+                setShadowFeedback({ heard, accuracy, target });
+            }
+            setIsShadowing(false);
+        };
+        recognitionRef.current.onerror = () => setIsShadowing(false);
+        recognitionRef.current.onend = () => setIsShadowing(false);
+    }, []);
+
     const getCategoryAccuracy = (category) => {
         if (!categoryPerformance[category]) return 0.85;
         const perf = categoryPerformance[category];
@@ -310,7 +261,29 @@ const FallingWordsGame = () => {
     const getCategoryResponse = (category) => {
         const perf = categoryPerformance[category];
         return perf?.averageResponseTime || performanceSummary.averageResponse || 2000;
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+    };
+
+    const startGame = () => {
+        isPlayingRef.current = true;
+
+        if (isGhostModeRef.current) {
+            const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
+            ghostDataRef.current = savedGhost ? JSON.parse(savedGhost) : [];
+        } else {
+            ghostDataRef.current = [];
+        }
+
+        recordingRef.current = [{ time: 0, score: 0 }];
+        const now = performance.now();
+        lastTimeRef.current = now;
+        startTimeRef.current = now;
+
+        if (!isZenModeRef.current) {
+            timeLeftRef.current = INITIAL_TIME_SECONDS;
+            setTimeLeft(INITIAL_TIME_SECONDS);
+        }
+
+        requestRef.current = requestAnimationFrame(gameLoop);
     };
 
     const spawnWord = () => {
@@ -330,16 +303,14 @@ const FallingWordsGame = () => {
             x: randomX,
             y: -10,
             isMatched: false,
-<<<<<<< HEAD
-            spawnTime: performance.now()
-=======
+            spawnTime: now,
             spawnedAt: now,
             categoryAccuracy: getCategoryAccuracy(randomWord.category),
-            categoryResponse: getCategoryResponse(randomWord.category)
-            target: randomWord
+            categoryResponse: getCategoryResponse(randomWord.category),
+            target: randomWord,
             mastery: randomWord.level,
             lastSeen: randomWord.lastSeen,
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+            gender: randomWord.gender
         };
 
         markWordSeen(randomWord.id);
@@ -357,7 +328,7 @@ const FallingWordsGame = () => {
 
         for (let i = 0; i < 12; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const velocity = 50 + Math.random() * 100; // px/s
+            const velocity = 50 + Math.random() * 100;
             const tx = Math.cos(angle) * velocity + 'px';
             const ty = Math.sin(angle) * velocity + 'px';
 
@@ -372,7 +343,6 @@ const FallingWordsGame = () => {
         }
 
         setParticles(prev => [...prev, ...newParticles]);
-
         setTimeout(() => {
             setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
         }, 1000);
@@ -385,7 +355,7 @@ const FallingWordsGame = () => {
             score,
             maxCombo,
             wordsCaught,
-            livesRemaining: lives,
+            livesRemaining: 1, // Simplified as lives removed
             zenMode: isZenModeRef.current
         });
         setSessionReward(reward);
@@ -393,7 +363,7 @@ const FallingWordsGame = () => {
         addCoins(reward.coins);
         updateDailyStat('dailyStreak', maxCombo, 'max');
         incrementStat('gamesPlayed', 1);
-    }, [addCoins, addXP, incrementStat, lives, maxCombo, score, updateDailyStat, wordsCaught]);
+    }, [addCoins, addXP, incrementStat, maxCombo, score, updateDailyStat, wordsCaught]);
 
     const triggerShake = () => {
         setIsShaking(true);
@@ -406,24 +376,19 @@ const FallingWordsGame = () => {
         const perf = performanceSummaryRef.current;
         const deltaTime = time - lastTimeRef.current;
         lastTimeRef.current = time;
-
         const timeElapsed = time - startTimeRef.current;
 
-        // Timer Logic
         if (!isZenModeRef.current && !gameOver) {
             timeLeftRef.current -= (deltaTime / 1000);
             if (timeLeftRef.current <= 0) {
                 timeLeftRef.current = 0;
                 setTimeLeft(0);
                 endGame(parseInt(document.getElementById('current-score-hidden')?.innerText || '0'));
-                return; // Stop loop
+                return;
             }
-            // Update UI State periodically (every frame is too much for React state sometimes, but 60FPS is fine for simple number)
-            // But we can just set it:
             setTimeLeft(Math.ceil(timeLeftRef.current));
         }
 
-        // Ghost Playback Logic
         if (isGhostModeRef.current && ghostDataRef.current.length > 0) {
             const latestEvent = ghostDataRef.current.findLast(e => e.time <= timeElapsed);
             if (latestEvent) {
@@ -445,33 +410,27 @@ const FallingWordsGame = () => {
         }
 
         const flowMultiplier = 1 + (combo * 0.05);
-<<<<<<< HEAD
-        const difficultyMultiplier = (globalDifficulty / 50) || 1.0; // Scale speed by difficulty (0.5x to 2.0x roughly)
-
-        const effectiveSpeed = currentFallSpeedRef.current * flowMultiplier * difficultyMultiplier;
-
-        currentFallSpeedRef.current = Math.min(effectiveSpeed, MAX_FALL_SPEED * 1.5);
-
-        const baseInterval = (INITIAL_SPAWN_INTERVAL - (INITIAL_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * difficultyProgress);
-        currentSpawnIntervalRef.current = (baseInterval / difficultyMultiplier) / (1 + (combo * 0.1));
-=======
         const band = bandRef.current;
+
+        // Combined multiplier logic
         const performanceSpeedMod = perf.averageAccuracy < 0.8 ? 0.92 : 1.05;
         const responseSpeedMod = perf.averageResponse > 3500 ? 0.9 : 1.05;
-
         const baseSpeed = INITIAL_FALL_SPEED * (band?.speed || 1);
         const dynamicScale = 1 + difficultyProgress * (band?.speed || 1);
+        const difficultyMultiplier = (globalDifficulty / 50) || 1.0;
+
         currentFallSpeedRef.current = Math.min(
-            baseSpeed * dynamicScale * flowMultiplier * performanceSpeedMod * responseSpeedMod,
+            baseSpeed * dynamicScale * flowMultiplier * performanceSpeedMod * responseSpeedMod * difficultyMultiplier,
             MAX_FALL_SPEED * 1.5
         );
 
         const spawnTension = perf.averageAccuracy < 0.75 ? 1.15 : 0.95;
+        const baseInterval = (INITIAL_SPAWN_INTERVAL - (INITIAL_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * difficultyProgress);
+
         currentSpawnIntervalRef.current = Math.max(
-            (INITIAL_SPAWN_INTERVAL - (INITIAL_SPAWN_INTERVAL - MIN_SPAWN_INTERVAL) * difficultyProgress) * (band?.spawn || 1) * spawnTension / (1 + (combo * 0.1)),
+            (baseInterval / difficultyMultiplier) * (band?.spawn || 1) * spawnTension / (1 + (combo * 0.1)),
             MIN_SPAWN_INTERVAL * 0.75
         );
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
         spawnTimerRef.current += deltaTime;
         if (spawnTimerRef.current > currentSpawnIntervalRef.current) {
@@ -491,17 +450,13 @@ const FallingWordsGame = () => {
             const newY = word.y + (wordSpeed * (deltaTime / TICK_RATE_MS));
 
             if (newY > 100) {
-<<<<<<< HEAD
                 mistakes++;
-=======
-                if (!isZenModeRef.current) livesLost++;
                 updateWordProgress(word.wordId, false);
                 recordCategoryPerformance(word.category, {
                     success: false,
                     responseTime: time - word.spawnedAt,
                     mode: 'fallingWords'
                 });
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                 updateWordProgress(word.wordId, 'again');
                 logWordAttempt(word.category || 'General', false, performance.now() - word.spawnTime);
             } else {
@@ -515,9 +470,6 @@ const FallingWordsGame = () => {
         if (mistakes > 0) {
             triggerShake();
             SoundManager.playMiss();
-            // Break combo but don't reset it completely? Or reset?
-            // "Positive" usually means you keep some progress, but for combo mechanics, resetting is standard feedback.
-            // Let's reset combo for now as it's the only penalty.
             setCombo(0);
         }
 
@@ -532,7 +484,6 @@ const FallingWordsGame = () => {
         setGameOver(true);
         SoundManager.playGameOver();
 
-        // Save Ghost Data (only if not zen mode and score > 0)
         if (!isZenModeRef.current && finalScore > 0) {
             localStorage.setItem(GHOST_STORAGE_KEY, JSON.stringify(recordingRef.current));
             setHasGhostData(true);
@@ -567,33 +518,27 @@ const FallingWordsGame = () => {
             const accuracyBoost = categoryAccuracy < 0.75 ? 1.2 : 1;
             const speedBoost = responseTime < 2200 ? 1.1 : 0.95;
             const comboMultiplier = 1 + (combo * 0.1);
-<<<<<<< HEAD
+
+            // Score Calculation
+            const bandScore = bandRef.current?.score || 1;
+            const totalMultiplier = comboMultiplier * bandScore * accuracyBoost * speedBoost;
 
             // Add Time (Bonus)
             if (!isZenModeRef.current) {
                 const bonus = TIME_BONUS_PER_WORD;
                 timeLeftRef.current = Math.min(timeLeftRef.current + bonus, MAX_TIME_CAP);
                 setTimeLeft(Math.ceil(timeLeftRef.current));
-
-                // Show visual feedback
                 setAddedTime(`+${bonus}s`);
                 setTimeout(() => setAddedTime(null), 1000);
             }
 
-            // Score Update & Recording
             setScore(s => {
-                const newScore = Math.floor(s + (10 * comboMultiplier));
-                // Record event
+                const newScore = Math.floor(s + (12 * totalMultiplier));
                 const timeElapsed = performance.now() - startTimeRef.current;
                 recordingRef.current.push({ time: timeElapsed, score: newScore });
                 return newScore;
             });
 
-=======
-            const bandScore = bandRef.current?.score || 1;
-            const totalMultiplier = comboMultiplier * bandScore * accuracyBoost * speedBoost;
-            setScore(s => Math.floor(s + (12 * totalMultiplier)));
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
             setCombo(c => {
                 const newCombo = c + 1;
                 if (newCombo > maxCombo) setMaxCombo(newCombo);
@@ -672,6 +617,7 @@ const FallingWordsGame = () => {
             name: CATEGORIES?.[strugglingCategory]?.name || strugglingCategory
         };
     }, [renderedWords, performanceSummary, difficulty, CATEGORIES]);
+
     useEffect(() => {
         const handleKeyDown = (event) => {
             if (event.key === 'Escape') {
@@ -683,7 +629,6 @@ const FallingWordsGame = () => {
                 restartGame();
             }
         };
-
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [gameOver, onExit]);
@@ -695,48 +640,42 @@ const FallingWordsGame = () => {
             onBack={onExit}
             headerRight={
                 <div className="flex items-center gap-4">
-<<<<<<< HEAD
-                    {/* Rivals Score */}
+                    {!isRivalsMode && (
+                        <div className="hidden md:block w-52">
+                            <DifficultySlider
+                                value={difficulty}
+                                onChange={setDifficulty}
+                                label="Game Pace"
+                            />
+                        </div>
+                    )}
                     {isRivalsMode && (
                         <Badge variant="destructive" className="text-lg py-1 px-4 animate-pulse gap-2 border-red-500/50 text-red-100">
                             <Swords size={16} /> {opponentScore}
                         </Badge>
                     )}
-
-                    {/* Ghost Score Indicator */}
                     {isGhostMode && (
                         <Badge variant="outline" className="text-lg py-1 px-4 border-cyan-500/50 text-cyan-400 gap-2">
                             <Ghost size={16} /> {ghostScore}
                         </Badge>
                     )}
-
-=======
-                    <div className="hidden md:block w-52">
-                        <DifficultySlider
-                            value={difficulty}
-                            onChange={setDifficulty}
-                            label="Game Pace"
-                        />
-                    </div>
-                    <Badge variant="outline" className="text-xs py-1 px-3">
-                        Avg Acc: {Math.round((performanceSummary.averageAccuracy || 1) * 100)}%
-                    </Badge>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+                    {!isRivalsMode && (
+                        <Badge variant="outline" className="text-xs py-1 px-3">
+                            Avg Acc: {Math.round((performanceSummary.averageAccuracy || 1) * 100)}%
+                        </Badge>
+                    )}
                     <Badge variant="primary" className="text-lg py-1 px-4">
                         <TrendingUp size={16} className="mr-2 text-indigo-300" />
                         {score}
                         <span id="current-score-hidden" className="hidden">{score}</span>
                     </Badge>
 
-                    {/* Timer Display */}
                     {!isZenMode && (
                         <div className="relative">
                             <Badge variant={timeLeft <= 10 ? "destructive" : "secondary"} className={`text-lg py-1 px-4 w-24 justify-center font-mono ${timeLeft <= 10 ? 'animate-pulse' : ''}`}>
                                 <Clock size={16} className="mr-2 opacity-50" />
                                 {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
                             </Badge>
-
-                            {/* Time Bonus Popup */}
                             <AnimatePresence>
                                 {addedTime && (
                                     <motion.div
@@ -752,7 +691,6 @@ const FallingWordsGame = () => {
                         </div>
                     )}
 
-                    {/* Ghost Toggle - disabled in Rivals mode */}
                     {!isRivalsMode && (
                         <Button
                             variant={isGhostMode ? "default" : "outline"}
@@ -789,8 +727,6 @@ const FallingWordsGame = () => {
             }
         >
             <div className={`relative w-full h-[calc(100vh-160px)] overflow-hidden rounded-3xl glass-panel ${isShaking ? 'shake' : ''}`}>
-
-                {/* Level Up Overlay */}
                 <AnimatePresence>
                     {showLevelUp && (
                         <motion.div
@@ -806,7 +742,6 @@ const FallingWordsGame = () => {
                     )}
                 </AnimatePresence>
 
-                {/* Combo Display */}
                 {combo > 1 && (
                     <motion.div
                         initial={{ opacity: 0, x: -20 }}
@@ -819,7 +754,6 @@ const FallingWordsGame = () => {
                     </motion.div>
                 )}
 
-                {/* Game Area */}
                 <div className="w-full h-full relative">
                     {renderedWords.map(word => (
                         <WordItem
@@ -828,20 +762,16 @@ const FallingWordsGame = () => {
                             x={word.x}
                             y={word.y}
                             isMatched={false}
-<<<<<<< HEAD
+                            mastery={word.mastery}
+                            lastSeen={word.lastSeen}
                             hint={
                                 difficultySettings?.learnerType === 'scholar'
                                     ? `[${word.gender || word.category || '?'}]`
                                     : (difficultyConfig.showInitial ? word.text.charAt(0) : null)
                             }
-=======
-                            mastery={word.mastery}
-                            lastSeen={word.lastSeen}
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                         />
                     ))}
 
-                    {/* Particles */}
                     {particles.map(p => (
                         <div
                             key={p.id}
@@ -860,7 +790,6 @@ const FallingWordsGame = () => {
                     ))}
                 </div>
 
-                {/* Input Area */}
                 <div className="absolute bottom-12 left-1/2 transform -translate-x-1/2 w-full max-w-lg px-4">
                     <Card className="p-4 bg-slate-950/80 border-white/20 space-y-3">
                         <input
@@ -880,6 +809,8 @@ const FallingWordsGame = () => {
                                 <div className="mt-1 text-slate-200 font-semibold">
                                     {hintData.masked} · {hintData.translation}
                                 </div>
+                            </div>
+                        )}
                         <div className="flex items-center justify-center gap-3">
                             <Button
                                 variant={isShadowing ? "success" : "outline"}
@@ -909,7 +840,6 @@ const FallingWordsGame = () => {
                 </div>
             </div>
 
-            {/* Game Over Modal */}
             <AnimatePresence>
                 {gameOver && (
                     <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md flex items-center justify-center z-50" role="dialog" aria-modal="true" aria-label="Game over">
