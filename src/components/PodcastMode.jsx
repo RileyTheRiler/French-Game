@@ -78,6 +78,22 @@ const PodcastMode = () => {
         setXpEarned(0);
     }, [sessionType, selectedCategory]);
 
+    // Finish session
+    const finishSession = () => {
+        setIsPlaying(false);
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+
+        // Calculate XP (2 XP per item listened)
+        const earned = playlist.length * 2;
+        setXpEarned(earned);
+        addXP(earned);
+        incrementStat('podcastSessionsCompleted');
+
+        setSessionComplete(true);
+    };
+
     // Play current item
     const playCurrentItem = useCallback(() => {
         if (!currentItem || !audioRef.current) return;
@@ -139,21 +155,6 @@ const PodcastMode = () => {
         }
     };
 
-    // Finish session
-    const finishSession = () => {
-        setIsPlaying(false);
-        if (audioRef.current) {
-            audioRef.current.pause();
-        }
-
-        // Calculate XP (2 XP per item listened)
-        const earned = playlist.length * 2;
-        setXpEarned(earned);
-        addXP(earned);
-        incrementStat('podcastSessionsCompleted');
-
-        setSessionComplete(true);
-    };
 
     // Session selection screen
     if (!sessionStarted) {

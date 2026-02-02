@@ -7,7 +7,16 @@ import { monitorSystem } from '../../systems/MonitorSystem';
 const SentenceBuilderGame = ({ onExit }) => {
     const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
     const [selectedWords, setSelectedWords] = useState([]);
-    const [availableWords, setAvailableWords] = useState([]);
+
+    // Initialize availableWords lazily to avoid useEffect state update
+    const [availableWords, setAvailableWords] = useState(() => {
+        const initialScenario = SCENARIOS[0];
+        if (initialScenario) {
+            return [...initialScenario.words].sort(() => Math.random() - 0.5);
+        }
+        return [];
+    });
+
     const [feedback, setFeedback] = useState(null);
     const [monitorMessage, setMonitorMessage] = useState(null);
     const [monitorTipId, setMonitorTipId] = useState(null);
@@ -15,16 +24,17 @@ const SentenceBuilderGame = ({ onExit }) => {
 
     const scenario = SCENARIOS[currentScenarioIndex];
 
-    useEffect(() => {
-        if (scenario) {
-            // Shuffle words for the word bank
-            setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
+    const loadScenario = (index) => {
+        const nextScenario = SCENARIOS[index];
+        if (nextScenario) {
+            setCurrentScenarioIndex(index);
+            setAvailableWords([...nextScenario.words].sort(() => Math.random() - 0.5));
             setSelectedWords([]);
             setFeedback(null);
             setMonitorMessage(null);
             setMonitorTipId(null);
         }
-    }, [currentScenarioIndex, scenario]);
+    };
 
     const handleWordClick = (word, idx) => {
         setSelectedWords(prev => [...prev, word]);
@@ -60,9 +70,9 @@ const SentenceBuilderGame = ({ onExit }) => {
 
     const nextLevel = () => {
         if (currentScenarioIndex < SCENARIOS.length - 1) {
-            setCurrentScenarioIndex(curr => curr + 1);
+            loadScenario(currentScenarioIndex + 1);
         } else {
-            setCurrentScenarioIndex(0);
+            loadScenario(0);
         }
     };
 

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo } from
 import { motion, AnimatePresence } from 'framer-motion';
 import { Award, X, Check, AlertCircle, Info } from 'lucide-react';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ToastContext = createContext();
 
 let toastId = 0;
@@ -139,6 +140,7 @@ const Toast = ({ toast, onClose }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useToast = () => {
     const context = useContext(ToastContext);
     if (!context) {

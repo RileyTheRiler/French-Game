@@ -13,6 +13,7 @@ import { Card } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
 import SoundManager from '../utils/SoundManager';
 import { GameLayout } from './layout/GameLayout';
+import { speak } from '../utils/audio';
 
 const ArticleCard = ({ article, isNew, onClick }) => (
     <motion.div

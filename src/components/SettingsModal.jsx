@@ -22,17 +22,29 @@ const SettingsModal = ({ onClose }) => {
         stats,
         updateStats,
         globalDifficulty,
-        setGlobalDifficulty
+        setGlobalDifficulty,
+        offlineAudio,
+        toggleOfflineAudio
     } = useProgress();
-    const { resetVocabulary } = useVocabulary();
+    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
     const { user, signIn, signUp, signOut, loading, error } = useAuth();
     const { exportData, importData, status, lastSyncedAt, syncing } = useSync();
     const [confirmReset, setConfirmReset] = React.useState(false);
     const [authMode, setAuthMode] = React.useState('signin');
     const [form, setForm] = React.useState({ email: '', password: '' });
     const [importError, setImportError] = React.useState('');
+    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
     const dialogRef = useRef(null);
     const closeButtonRef = useRef(null);
+
+    const handleOfflineAudio = async () => {
+        if (!offlineAudio) {
+            setIsCachingAudio(true);
+            await downloadAudioOnce();
+            setIsCachingAudio(false);
+        }
+        toggleOfflineAudio();
+    };
 
     useEffect(() => {
         if (closeButtonRef.current) {

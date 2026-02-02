@@ -34,24 +34,6 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
     const [isActive, setIsActive] = useState(false);
     const [gameOver, setGameOver] = useState(false);
 
-    useEffect(() => {
-        if (!isActive || gameOver) return;
-        const timer = setInterval(() => {
-            setTimeLeft(prev => {
-                if (prev <= 1) {
-                    setGameOver(true);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-        return () => clearInterval(timer);
-    }, [isActive, gameOver]);
-
-    useEffect(() => {
-        nextQuestion();
-    }, []);
-
     const nextQuestion = () => {
         if (vocabulary.length < 4) return;
         const target = vocabulary[Math.floor(Math.random() * vocabulary.length)];
@@ -75,6 +57,24 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
             SoundManager.playMiss();
         }
     };
+
+    useEffect(() => {
+        if (!isActive || gameOver) return;
+        const timer = setInterval(() => {
+            setTimeLeft(prev => {
+                if (prev <= 1) {
+                    setGameOver(true);
+                    return 0;
+                }
+                return prev - 1;
+            });
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [isActive, gameOver]);
+
+    useEffect(() => {
+        nextQuestion();
+    }, []);
 
     if (!isActive && !gameOver) {
         return (
@@ -201,6 +201,27 @@ const DailyMix = () => {
         preloadAudioForWords(weightedWords);
     };
 
+    const finishSession = () => {
+        SoundManager.playLevelUp();
+        triggerConfetti();
+        addXP(totalXP + bonusXP);
+        addCoins(25);
+        incrementDailyMixStreak();
+        setSessionComplete(true);
+    };
+
+    const handleNext = () => {
+        if (currentIndex < sessionQueue.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+            setIsAnswered(false);
+            setIsCorrect(false);
+            setSelectedOption(null);
+            setIsRevealed(false);
+        } else {
+            finishSession();
+        }
+    };
+
     useEffect(() => {
         if (vocabulary.length > 0 && sessionQueue.length === 0) {
             generateSession();
@@ -282,27 +303,6 @@ const DailyMix = () => {
     const handleSpeedRoundComplete = (xpEarned) => {
         setBonusXP(xpEarned);
         handleNext();
-    };
-
-    const handleNext = () => {
-        if (currentIndex < sessionQueue.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-            setIsAnswered(false);
-            setIsCorrect(false);
-            setSelectedOption(null);
-            setIsRevealed(false);
-        } else {
-            finishSession();
-        }
-    };
-
-    const finishSession = () => {
-        SoundManager.playLevelUp();
-        triggerConfetti();
-        addXP(totalXP + bonusXP);
-        addCoins(25);
-        incrementDailyMixStreak();
-        setSessionComplete(true);
     };
 
     if (!sessionQueue.length) return <LoadingState message="Preparing your Daily Mix..." />;

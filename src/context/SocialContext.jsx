@@ -36,29 +36,28 @@ export const SocialProvider = ({ children }) => {
         return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
     });
 
-    const [activeChallenge, setActiveChallenge] = useState({
+    const [activeChallenge, setActiveChallenge] = useState(() => ({
         id: 'chal_weekly_xp',
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
-    });
+    }));
 
-    // Compute total current progress
-    useEffect(() => {
-        const userContribution = Math.max(0, stats.xp - userCoopStartXp);
-        const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
+    // Compute total current progress derived from state
+    const userContribution = Math.max(0, stats.xp - userCoopStartXp);
+    const challengeTotal = Math.min(activeChallenge.target, userContribution + friendsProgress);
+    const challengeIsCompleted = challengeTotal >= activeChallenge.target;
 
-        setActiveChallenge(prev => ({
-            ...prev,
-            current: total,
-            isCompleted: total >= prev.target
-        }));
-    }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
+    const derivedActiveChallenge = {
+        ...activeChallenge,
+        current: challengeTotal,
+        isCompleted: challengeIsCompleted
+    };
 
     const claimCoopReward = useCallback(() => {
-        if (!activeChallenge.isCompleted) return;
+        if (!challengeIsCompleted) return;
 
         // Award bonus
         addXP(500); // Bonus XP
@@ -78,7 +77,7 @@ export const SocialProvider = ({ children }) => {
         setFriendsProgress(0);
 
         return 500; // Return reward amount
-    }, [activeChallenge.isCompleted, stats.xp, addXP]);
+    }, [challengeIsCompleted, stats.xp, addXP]);
 
     // Persist to local storage
     useEffect(() => {
@@ -173,7 +172,7 @@ export const SocialProvider = ({ children }) => {
         coopGroup,
         createCoopGroup,
         leaveCoopGroup,
-        activeChallenge,
+        activeChallenge: derivedActiveChallenge,
         claimCoopReward
     };
 

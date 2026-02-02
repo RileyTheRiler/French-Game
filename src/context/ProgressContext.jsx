@@ -353,7 +353,7 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
+    }, [stats, showAchievement]);
 
     // Check achievements when relevant stats change
     useEffect(() => {
@@ -1001,4 +1001,5 @@ export const ProgressProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useProgress = () => useContext(ProgressContext);

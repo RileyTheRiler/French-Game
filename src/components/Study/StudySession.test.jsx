@@ -18,6 +18,21 @@ vi.mock('../../utils/InteractionEffects', () => ({
     triggerConfetti: vi.fn(),
 }));
 
+vi.mock('../../context/ProgressContext', () => ({
+    useProgress: () => ({
+        addXP: vi.fn(),
+        addCoins: vi.fn(),
+        updateDailyStat: vi.fn(),
+    }),
+}));
+
+vi.mock('../../context/ToastContext', () => ({
+    useToast: () => ({
+        showToast: vi.fn(),
+        showSuccess: vi.fn(),
+    }),
+}));
+
 const mockVocabulary = {
     getDueWords: vi.fn(),
     updateWordProgress: vi.fn(),
@@ -27,6 +42,7 @@ const mockVocabulary = {
     ],
     playWordAudio: vi.fn(),
     preloadAudioForWords: vi.fn(),
+    markWordSeen: vi.fn(),
     CATEGORIES: { 'Greetings': { name: 'Greetings' }, 'Animals': { name: 'Animals' } }
 };
 

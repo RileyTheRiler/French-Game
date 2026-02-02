@@ -89,6 +89,38 @@ const PronunciationCoach = () => {
         return true;
     };
 
+    const checkPronunciation = (heard) => {
+        setStatus('checking');
+        setAttempts(prev => prev + 1);
+
+        // Use the advanced PronunciationAnalyzer
+        const analysis = analyzePronunciation(currentWord, heard);
+        setDetailedAnalysis(analysis);
+        setLastScore(analysis.score);
+
+        // Update stats
+        if (markWordStrength) {
+            markWordStrength(currentWord.id, analysis.score);
+        }
+
+        setTimeout(() => {
+            if (analysis.score >= 80) {
+                setStatus('success');
+                SoundManager.playSuccess();
+                const xpGain = analysis.score === 100 ? 20 : 10;
+                setTotalXP(prev => prev + xpGain);
+                setSuccessCount(prev => {
+                    const next = prev + 1;
+                    updateDailyStat && updateDailyStat('dailyStreak', next, 'max');
+                    return next;
+                });
+            } else {
+                setStatus('fail');
+                SoundManager.playMiss();
+            }
+        }, 600);
+    };
+
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
@@ -146,38 +178,6 @@ const PronunciationCoach = () => {
         if (recognitionRef.current && isListening) {
             recognitionRef.current.stop();
         }
-    };
-
-    const checkPronunciation = (heard) => {
-        setStatus('checking');
-        setAttempts(prev => prev + 1);
-
-        // Use the advanced PronunciationAnalyzer
-        const analysis = analyzePronunciation(currentWord, heard);
-        setDetailedAnalysis(analysis);
-        setLastScore(analysis.score);
-
-        // Update stats
-        if (markWordStrength) {
-            markWordStrength(currentWord.id, analysis.score);
-        }
-
-        setTimeout(() => {
-            if (analysis.score >= 80) {
-                setStatus('success');
-                SoundManager.playSuccess();
-                const xpGain = analysis.score === 100 ? 20 : 10;
-                setTotalXP(prev => prev + xpGain);
-                setSuccessCount(prev => {
-                    const next = prev + 1;
-                    updateDailyStat && updateDailyStat('dailyStreak', next, 'max');
-                    return next;
-                });
-            } else {
-                setStatus('fail');
-                SoundManager.playMiss();
-            }
-        }, 600);
     };
 
     const handleNext = () => {
