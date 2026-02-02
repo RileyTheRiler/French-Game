@@ -84,35 +84,40 @@ const VoiceCall = () => {
     useEffect(() => {
         if (!currentNode) return;
 
-        // If node has 'end' flag
-        if (currentNode.end) {
-            handleSpeak(currentNode.message, () => {
-                setCallState('ended');
-                setStatus('Call Ended');
-                setTimeout(() => {
-                    navigate('/'); // Go back to menu after delay
-                    if (currentNode.success) addXP(scenario.xpReward);
-                }, 3000);
-            });
-            return;
-        }
+        const executeNodeLogic = () => {
+            // If node has 'end' flag
+            if (currentNode.end) {
+                handleSpeak(currentNode.message, () => {
+                    setCallState('ended');
+                    setStatus('Call Ended');
+                    setTimeout(() => {
+                        navigate('/'); // Go back to menu after delay
+                        if (currentNode.success) addXP(scenario.xpReward);
+                    }, 3000);
+                });
+                return;
+            }
 
-        // Normal node: NPC speaks first (if message exists)
-        // Note: 'start' node might not have a message if it's the very beginning,
-        // usually scenario.initialMessage is for the beginning.
+            // Normal node: NPC speaks first (if message exists)
+            // Note: 'start' node might not have a message if it's the very beginning,
+            // usually scenario.initialMessage is for the beginning.
 
-        const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
+            const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
 
-        if (messageToSpeak) {
-            setStatus('Speaking...');
-            handleSpeak(messageToSpeak, () => {
-                // After speaking, start listening
+            if (messageToSpeak) {
+                setStatus('Speaking...');
+                handleSpeak(messageToSpeak, () => {
+                    // After speaking, start listening
+                    startListeningPhase();
+                });
+            } else {
+                // No message (rare), just listen
                 startListeningPhase();
-            });
-        } else {
-            // No message (rare), just listen
-            startListeningPhase();
-        }
+            }
+        };
+
+        const timer = setTimeout(executeNodeLogic, 0);
+        return () => clearTimeout(timer);
 
     }, [currentNodeId, scenario]); // eslint-disable-line react-hooks/exhaustive-deps
 
