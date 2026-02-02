@@ -2,15 +2,20 @@ import React, { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { formatRelativeTime } from '../../utils/time';
 
-<<<<<<< HEAD
-const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }) => {
-    // Only show hint after hintDelay seconds have passed since spawn
+const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8, mastery, lastSeen }) => {
+    // HEAD Logic
     const [showHint, setShowHint] = useState(false);
 
     useEffect(() => {
         if (!hint || hintDelay === 0) {
             setShowHint(!!hint && hintDelay === 0);
             return;
+        }
+
+        // Safety check if spawnTime is missing
+        if (!spawnTime) {
+             setShowHint(true);
+             return;
         }
 
         const elapsed = Date.now() - spawnTime;
@@ -28,10 +33,9 @@ const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }
         return () => clearTimeout(timer);
     }, [hint, spawnTime, hintDelay]);
 
-=======
-const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
+    // Other Branch Logic
     const tooltip = `Lvl ${mastery || 1} • Last seen ${formatRelativeTime(lastSeen)}`;
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+
     return (
         <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -63,7 +67,7 @@ const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
                     animate={{ scale: 1, opacity: 1 }}
                     className="absolute -top-3 -right-3 bg-yellow-400 text-slate-900 text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-slate-900"
                 >
-                    ?
+                    {typeof hint === 'string' && hint.length === 1 ? hint : '?'}
                 </motion.div>
             )}
             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl pointer-events-none" />
@@ -72,4 +76,3 @@ const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
 });
 
 export default WordItem;
-

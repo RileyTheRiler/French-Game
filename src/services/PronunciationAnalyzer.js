@@ -150,7 +150,7 @@ const parsePhonemes = (ipa) => {
 const normalizeText = (text) => {
     if (!text) return '';
     return text.toLowerCase()
-        .replace(/[.,!?;:'"()\-]/g, '')
+        .replace(/[.,!?;:'"()-]/g, '')
         .trim();
 };
 
@@ -235,7 +235,7 @@ export const analyzePronunciation = (targetWord, spokenText) => {
     );
 
     // Generate feedback
-    const feedback = generateFeedback(overallScore, problemAreas, targetWord);
+    const feedback = generateFeedback(overallScore, problemAreas);
 
     return {
         score: overallScore,
@@ -326,7 +326,7 @@ const generatePhonemeBreakdown = (target, spoken) => {
 /**
  * Generate personalized feedback based on analysis
  */
-const generateFeedback = (score, problemAreas, targetWord) => {
+const generateFeedback = (score, problemAreas) => {
     const feedback = {
         summary: '',
         encouragement: '',

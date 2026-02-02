@@ -5,23 +5,6 @@ import DifficultyDial from './ui/DifficultyDial';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { warmVoiceCache } from '../utils/audio';
-
-const SettingsModal = ({ onClose }) => {
-    const { audioEnabled, toggleAudio, offlineAudio, toggleOfflineAudio, resetProgress } = useProgress();
-    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
-    const [confirmReset, setConfirmReset] = React.useState(false);
-    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
-
-    const handleOfflineAudio = async () => {
-        const next = !offlineAudio;
-        toggleOfflineAudio();
-        if (!offlineAudio && next) {
-            setIsCachingAudio(true);
-            warmVoiceCache();
-            await downloadAudioOnce();
-            setIsCachingAudio(false);
-        }
-    };
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
 
@@ -153,17 +136,20 @@ const SettingsModal = ({ onClose }) => {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 gap-3" role="radiogroup" aria-label="Learner Focus Type">
                             <button
                                 onClick={() => updateDifficultySettings({ learnerType: 'casual', challengeMode: false })}
                                 className={`p-3 rounded-xl border transition-all text-left relative overflow-hidden ${difficultySettings?.learnerType === 'casual'
                                     ? 'border-indigo-500 bg-indigo-500/20'
                                     : 'border-white/10 bg-slate-800/50 hover:bg-slate-800'
                                     }`}
+                                role="radio"
+                                aria-checked={difficultySettings?.learnerType === 'casual'}
+                                aria-describedby="casual-desc"
                             >
                                 <div className="relative z-10">
                                     <span className="block font-bold text-sm mb-1 text-indigo-200">Casual Explorer</span>
-                                    <span className="block text-xs text-slate-400 leading-snug">
+                                    <span id="casual-desc" className="block text-xs text-slate-400 leading-snug">
                                         Fun, forgiving, and gamified. Focus on engagement.
                                     </span>
                                 </div>
@@ -180,10 +166,13 @@ const SettingsModal = ({ onClose }) => {
                                     ? 'border-indigo-500 bg-indigo-500/20'
                                     : 'border-white/10 bg-slate-800/50 hover:bg-slate-800'
                                     }`}
+                                role="radio"
+                                aria-checked={difficultySettings?.learnerType === 'scholar'}
+                                aria-describedby="scholar-desc"
                             >
                                 <div className="relative z-10">
                                     <span className="block font-bold text-sm mb-1 text-indigo-200">Serious Scholar</span>
-                                    <span className="block text-xs text-slate-400 leading-snug">
+                                    <span id="scholar-desc" className="block text-xs text-slate-400 leading-snug">
                                         Strict feedback, detailed grammar, less fluff.
                                     </span>
                                 </div>
@@ -336,6 +325,11 @@ const SettingsModal = ({ onClose }) => {
                         >
                             <motion.div
                                 animate={{ x: offlineAudio ? 26 : 2 }}
+                                className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
+                            />
+                        </button>
+                    </div>
+
                     {/* Privacy & Portability */}
                     <div className="glass-panel p-4 border border-emerald-500/20 bg-emerald-500/5 space-y-3">
                         <div className="flex items-center gap-3">
