@@ -183,22 +183,23 @@ export const isPassingGrade = (grade) => normalizeGrade(grade) >= 3;
 export const sortByReviewPriority = (words) => {
     const now = Date.now();
 
-    return [...words].sort((a, b) => {
-        const aState = a.srs || getInitialState();
-        const bState = b.srs || getInitialState();
-
-        const aRetention = calculateRetentionProbability(aState);
-        const bRetention = calculateRetentionProbability(bState);
-
-        const aOverdue = (now - aState.dueDate) / DAY_MS;
-        const bOverdue = (now - bState.dueDate) / DAY_MS;
+    // Schwartzian transform: pre-calculate priorities to avoid re-computing
+    // expensive retention probabilities during sort comparison.
+    // Complexity reduces from O(N log N * C) to O(N * C + N log N)
+    const withPriority = words.map(word => {
+        const state = word.srs || getInitialState();
+        const retention = calculateRetentionProbability(state);
+        const overdue = (now - state.dueDate) / DAY_MS;
 
         // Priority score: low retention + overdue = high priority
-        const aPriority = (1 - aRetention) + Math.max(0, aOverdue * 0.1);
-        const bPriority = (1 - bRetention) + Math.max(0, bOverdue * 0.1);
+        const priority = (1 - retention) + Math.max(0, overdue * 0.1);
 
-        return bPriority - aPriority;
+        return { word, priority };
     });
+
+    withPriority.sort((a, b) => b.priority - a.priority);
+
+    return withPriority.map(item => item.word);
 };
 
 // =============================================================================
@@ -285,6 +286,7 @@ export const getConceptInitialState = () => ({
  * @param {object} options - Optional settings
  * @returns {object} The new state
  */
+// eslint-disable-next-line no-unused-vars
 export const calculateConceptNextReview = (previousState, grade, options = {}) => {
     grade = clampGrade(grade);
     let { interval, repetition, ef, attempts, correct, masteryLevel } =
