@@ -13,3 +13,8 @@
 **Vulnerability:** `dangerouslySetInnerHTML` was used in `SentenceBuilder.jsx` to render bold text (`**text**`) within feedback messages. The implementation used a simple regex replacement which failed to sanitize the remaining text, leaving it vulnerable to XSS if the input contained malicious HTML.
 **Learning:** Using `dangerouslySetInnerHTML` for simple formatting (like bolding) is overkill and risky. Even with regex replacement for the "safe" parts, the "unsafe" parts remain exposed.
 **Prevention:** Avoid `dangerouslySetInnerHTML`. Use a parsing function that splits the string into tokens and renders them as an array of React elements (e.g., `<span>` and `<strong>`). This ensures all content is properly escaped by React by default.
+
+## 2024-05-24 - Timing Attacks in Client-Side Crypto
+**Vulnerability:** Password verification used strict equality `===` on hex strings, potentially allowing timing attacks. The file also contained duplicate function declarations, causing syntax errors in tests.
+**Learning:** Security primitives must be robust (timing-safe) and code quality impacts security availability (broken tests mask issues).
+**Prevention:** Use `constantTimeEqual` for hash comparisons. Ensure CI runs tests to catch syntax errors from bad merges or copy-pastes.
