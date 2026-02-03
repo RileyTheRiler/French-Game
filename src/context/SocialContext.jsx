@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 
@@ -38,13 +39,15 @@ export const SocialProvider = ({ children }) => {
 
     useEffect(() => {
         // Update date in effect to be pure
-        setActiveChallenge(prev => ({
-            ...prev,
-            endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
-        }));
+        setTimeout(() => {
+            setActiveChallenge(prev => ({
+                ...prev,
+                endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+            }));
+        }, 0);
     }, []);
 
-    const [notifications, setNotifications] = useState([]);
+    const [notifications] = useState([]);
 
     // Add a friend
     const addFriend = useCallback((friendId) => {

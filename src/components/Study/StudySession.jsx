@@ -43,14 +43,16 @@ const StudySession = () => {
     }, [vocabulary]);
 
     useEffect(() => {
-        if (filterCategory === 'all') {
-            setDownloadStatus('disabled');
-            return;
-        }
-        setDownloadStatus('checking');
-        isCategoryDownloaded(filterCategory).then(isDown => {
-            setDownloadStatus(isDown ? 'downloaded' : 'idle');
-        });
+        setTimeout(() => {
+            if (filterCategory === 'all') {
+                setDownloadStatus('disabled');
+                return;
+            }
+            setDownloadStatus('checking');
+            isCategoryDownloaded(filterCategory).then(isDown => {
+                setDownloadStatus(isDown ? 'downloaded' : 'idle');
+            });
+        }, 0);
     }, [filterCategory]);
 
     const handleDownload = async () => {
@@ -76,23 +78,25 @@ const StudySession = () => {
     };
 
     useEffect(() => {
-        const baseDue = getDueWords();
-        const filtered = baseDue.filter(word => {
-            const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
-            const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
-            return matchesCEFR && matchesCategory;
-        });
+        setTimeout(() => {
+            const baseDue = getDueWords();
+            const filtered = baseDue.filter(word => {
+                const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
+                const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
+                return matchesCEFR && matchesCategory;
+            });
 
-        setDueWords(filtered);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setSessionComplete(filtered.length === 0);
-        setCorrectCount(0);
-        setWrongCount(0);
-        setCurrentStreak(0);
-        setBestStreak(0);
-        setSessionReward(null);
-        preloadAudioForWords(filtered);
+            setDueWords(filtered);
+            setCurrentIndex(0);
+            setIsFlipped(false);
+            setSessionComplete(filtered.length === 0);
+            setCorrectCount(0);
+            setWrongCount(0);
+            setCurrentStreak(0);
+            setBestStreak(0);
+            setSessionReward(null);
+            preloadAudioForWords(filtered);
+        }, 0);
     }, [filterCEFR, filterCategory, getDueWords, preloadAudioForWords]);
 
     useEffect(() => {

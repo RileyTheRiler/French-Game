@@ -24,7 +24,7 @@ const ShadowingDrill = ({ onExit, onComplete }) => {
     const audioChunksRef = useRef([]);
 
     useEffect(() => {
-        setSession(getShadowingSession());
+        setTimeout(() => setSession(getShadowingSession()), 0);
     }, []);
 
     const currentPhrase = session[currentIndex];

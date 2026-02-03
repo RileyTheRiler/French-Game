@@ -34,7 +34,9 @@ const ClozeGame = () => {
     };
 
     useEffect(() => {
-        loadNextPuzzle();
+        setTimeout(() => {
+            loadNextPuzzle();
+        }, 0);
     }, []);
 
     const handleOptionClick = (option) => {

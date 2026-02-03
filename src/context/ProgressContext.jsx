@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { calculateLevel, getLevelProgress } from '../utils/gamificationUtils';
 import { ACHIEVEMENTS } from '../data/achievements';
@@ -355,7 +356,7 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
+    }, [stats, showAchievement]);
 
     useEffect(() => {
         const timer = setTimeout(() => {

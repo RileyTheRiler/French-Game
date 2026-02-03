@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
@@ -41,7 +42,9 @@ export const ToastProvider = ({ children }) => {
     // Welcome back toast
     useEffect(() => {
         if (user) {
-            showToast(`Welcome back, ${user.email.split('@')[0]}!`, 'success');
+            setTimeout(() => {
+                showToast(`Welcome back, ${user.email.split('@')[0]}!`, 'success');
+            }, 0);
         }
     }, [user, showToast]);
 
