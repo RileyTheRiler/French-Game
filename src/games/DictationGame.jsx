@@ -19,13 +19,11 @@ const DictationGame = () => {
     const [status, setStatus] = useState('playing'); // playing, checking, success, error
     const [diff, setDiff] = useState(null);
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+    // eslint-disable-next-line no-unused-vars
+    const isFirstRun = useRef(true);
 
     // Filter useful accents for the toolbar
     const ACCENTS = ['é', 'è', 'ê', 'ë', 'à', 'â', 'ç', 'î', 'ï', 'ô', 'ù', 'û'];
-
-    useEffect(() => {
-        loadNewSentence();
-    }, []);
 
     const loadNewSentence = () => {
         // Simple random selection for now
@@ -37,6 +35,15 @@ const DictationGame = () => {
         // Clean speech synthesis queue
         window.speechSynthesis.cancel();
     };
+
+    useEffect(() => {
+        if (isFirstRun.current) {
+            setTimeout(() => {
+                loadNewSentence();
+            }, 0);
+            isFirstRun.current = false;
+        }
+    }, []);
 
     const playAudio = (rate = 1.0) => {
         if (!currentSentence || isPlayingAudio) return;
