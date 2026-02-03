@@ -618,13 +618,13 @@ const MainMenu = () => {
                 <Button variant="ghost" size="sm" onClick={() => setShowSocial(true)} className="rounded-full h-12 w-12 p-0">
                     <Users size={20} className="text-violet-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowDictionary(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowDictionary(true)} className="rounded-full h-12 w-12 p-0" aria-label="Dictionary">
                     <Book size={20} className="text-blue-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)} className="rounded-full h-12 w-12 p-0" aria-label="Settings">
                     <Settings size={20} className="text-slate-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowShop(true)} className="rounded-full h-12 w-12 p-0 relative">
+                <Button variant="ghost" size="sm" onClick={() => setShowShop(true)} className="rounded-full h-12 w-12 p-0 relative" aria-label="Shop">
                     <ShoppingBag size={20} className="text-amber-400" />
                     {stats.coins > 0 && (
                         <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
