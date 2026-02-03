@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, Volume1, ArrowRight, RefreshCw, Check, X, AlertCircle } from 'lucide-react';
+import { Volume2, Volume1, ArrowRight, RefreshCw, Check, AlertCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -23,10 +23,6 @@ const DictationGame = () => {
     // Filter useful accents for the toolbar
     const ACCENTS = ['é', 'è', 'ê', 'ë', 'à', 'â', 'ç', 'î', 'ï', 'ô', 'ù', 'û'];
 
-    useEffect(() => {
-        loadNewSentence();
-    }, []);
-
     const loadNewSentence = () => {
         // Simple random selection for now
         const randomSentence = DICTATION_SENTENCES[Math.floor(Math.random() * DICTATION_SENTENCES.length)];
@@ -37,6 +33,10 @@ const DictationGame = () => {
         // Clean speech synthesis queue
         window.speechSynthesis.cancel();
     };
+
+    useEffect(() => {
+        loadNewSentence();
+    }, []);
 
     const playAudio = (rate = 1.0) => {
         if (!currentSentence || isPlayingAudio) return;

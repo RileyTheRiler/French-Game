@@ -17,12 +17,15 @@ const SentenceBuilderGame = ({ onExit }) => {
 
     useEffect(() => {
         if (scenario) {
-            // Shuffle words for the word bank
-            setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
-            setSelectedWords([]);
-            setFeedback(null);
-            setMonitorMessage(null);
-            setMonitorTipId(null);
+            const timer = setTimeout(() => {
+                // Shuffle words for the word bank
+                setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
+                setSelectedWords([]);
+                setFeedback(null);
+                setMonitorMessage(null);
+                setMonitorTipId(null);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [currentScenarioIndex, scenario]);
 
