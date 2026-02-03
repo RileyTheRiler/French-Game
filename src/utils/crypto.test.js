@@ -1,8 +1,16 @@
 
 import { describe, it, expect } from 'vitest';
-import { hashPassword, verifyPassword } from './crypto';
+import { hashPassword, verifyPassword, constantTimeEqual } from './crypto';
 
 describe('Crypto Utils', () => {
+    it('should correctly compare strings using constantTimeEqual', () => {
+        expect(constantTimeEqual('hello', 'hello')).toBe(true);
+        expect(constantTimeEqual('hello', 'world')).toBe(false);
+        expect(constantTimeEqual('hello', 'hell')).toBe(false);
+        expect(constantTimeEqual('', '')).toBe(true);
+        expect(constantTimeEqual('a', 'b')).toBe(false);
+    });
+
     it('should hash a password and return a salt:hash string', async () => {
         const password = 'mySecretPassword';
         const hashedPassword = await hashPassword(password);
