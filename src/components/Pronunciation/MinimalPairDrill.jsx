@@ -40,25 +40,6 @@ const MinimalPairDrill = ({ onComplete, onExit }) => {
     const targetWord = currentItem ? (currentItem.targetIdx === 0 ? currentItem.pair.word1 : currentItem.pair.word2) : '';
     const otherWord = currentItem ? (currentItem.targetIdx === 0 ? currentItem.pair.word2 : currentItem.pair.word1) : '';
 
-    useEffect(() => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.lang = 'fr-FR';
-            recognitionRef.current.interimResults = false;
-            recognitionRef.current.maxAlternatives = 1;
-
-            recognitionRef.current.onstart = () => setIsListening(true);
-            recognitionRef.current.onend = () => setIsListening(false);
-
-            recognitionRef.current.onresult = (event) => {
-                const result = event.results[0][0].transcript.toLowerCase().trim();
-                setTranscript(result);
-                handleCheck(result);
-            };
-        }
-    }, [currentItem]); // Re-bind if needed, or just once.
-
     const handleCheck = (spoken) => {
         if (!currentItem) return;
 
@@ -82,6 +63,25 @@ const MinimalPairDrill = ({ onComplete, onExit }) => {
             SoundManager.playMiss();
         }
     };
+
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.lang = 'fr-FR';
+            recognitionRef.current.interimResults = false;
+            recognitionRef.current.maxAlternatives = 1;
+
+            recognitionRef.current.onstart = () => setIsListening(true);
+            recognitionRef.current.onend = () => setIsListening(false);
+
+            recognitionRef.current.onresult = (event) => {
+                const result = event.results[0][0].transcript.toLowerCase().trim();
+                setTranscript(result);
+                handleCheck(result);
+            };
+        }
+    }, [currentItem]); // Re-bind if needed, or just once.
 
     const startListening = () => {
         setStatus('listening');

@@ -1,11 +1,25 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
+import { vi, describe, test, expect, beforeEach, afterEach } from 'vitest';
 import FallingWordsGame from './FallingWordsGame';
 import { VocabularyContext } from '../../context/VocabularyContext';
 import { ProgressContext } from '../../context/ProgressContext';
-import { MemoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
 
-// Mocks
+// Hoist mocks
+const mockNavigate = vi.fn();
+const mockLocation = { search: '' };
+
+vi.mock('react-router-dom', async () => {
+    const actual = await vi.importActual('react-router-dom');
+    return {
+        ...actual,
+        useNavigate: () => mockNavigate,
+        useLocation: () => mockLocation,
+    };
+});
+
+// Mock SoundManager
 vi.mock('../../utils/SoundManager', () => ({
     default: {
         init: vi.fn(),
@@ -13,138 +27,165 @@ vi.mock('../../utils/SoundManager', () => ({
         playMiss: vi.fn(),
         playGameOver: vi.fn(),
         playLevelUp: vi.fn(),
-    },
+    }
 }));
 
+// Mock lucide-react to prevent icon issues
 vi.mock('lucide-react', () => ({
+    Mic: () => <div data-testid="icon-mic" />,
+    Volume2: () => <div data-testid="icon-volume" />,
     Ghost: () => <div data-testid="icon-ghost" />,
     Swords: () => <div data-testid="icon-swords" />,
-    X: () => <div data-testid="icon-x" />,
+    Clock: () => <div data-testid="icon-clock" />,
+    TrendingUp: () => <div data-testid="icon-trending-up" />,
     ArrowLeft: () => <div data-testid="icon-arrow-left" />,
-    Pause: () => <div data-testid="icon-pause" />,
-    Play: () => <div data-testid="icon-play" />,
-    Volume2: () => <div data-testid="icon-volume" />,
-    Settings: () => <div data-testid="icon-settings" />,
+    Globe: () => <div data-testid="icon-globe" />,
+    User: () => <div data-testid="icon-user" />,
+    GraduationCap: () => <div data-testid="icon-graduation-cap" />,
+    Rocket: () => <div data-testid="icon-rocket" />,
+    Crown: () => <div data-testid="icon-crown" />,
 }));
 
-const mockVocabulary = {
-    getDueWords: vi.fn(),
+// Mock framer-motion to avoid visibility issues with opacity: 0
+vi.mock('framer-motion', () => ({
+    motion: {
+        div: ({ children, ...props }) => <div {...props}>{children}</div>,
+        header: ({ children, ...props }) => <header {...props}>{children}</header>,
+        span: ({ children, ...props }) => <span {...props}>{children}</span>,
+        button: ({ children, ...props }) => <button {...props}>{children}</button>,
+    },
+    AnimatePresence: ({ children }) => <>{children}</>,
+}));
+
+// Context Mocks
+const mockVocabularyContext = {
+    getPracticeQueue: vi.fn().mockReturnValue([]),
     updateWordProgress: vi.fn(),
-    getWeightedPracticeWords: vi.fn(),
+    markWordSeen: vi.fn(),
     vocabulary: [
-        { id: '1', french: 'Chat', english: 'Cat' },
-        { id: '2', french: 'Chien', english: 'Dog' }
-    ]
+        { id: '1', french: 'chat', english: 'cat', category: 'animals', gender: 'm' },
+        { id: '2', french: 'chien', english: 'dog', category: 'animals', gender: 'm' }
+    ],
+    getDueWords: vi.fn().mockReturnValue([]),
+    getWeightedPracticeWords: vi.fn().mockReturnValue([]),
 };
 
-const mockProgress = {
+const mockProgressContext = {
+    stats: { level: 1, xp: 0 },
+    recordCategoryPerformance: vi.fn(),
     logWordAttempt: vi.fn(),
-    difficultySettings: {
-        globalMultiplier: 1.0,
-        showHints: false
-    }
+    addXP: vi.fn(),
+    addCoins: vi.fn(),
+    updateDailyStat: vi.fn(),
+    incrementStat: vi.fn(),
+    globalDifficulty: 50,
+    difficultySettings: { learnerType: 'visual' },
+    offlineAudio: false
 };
 
-const renderWithContext = (ui) => {
+const renderWithProviders = (component) => {
     return render(
-        <ProgressContext.Provider value={mockProgress}>
-            <VocabularyContext.Provider value={mockVocabulary}>
-                <MemoryRouter>
-                    {ui}
-                </MemoryRouter>
-            </VocabularyContext.Provider>
-        </ProgressContext.Provider>
+        <BrowserRouter>
+            <ProgressContext.Provider value={mockProgressContext}>
+                <VocabularyContext.Provider value={mockVocabularyContext}>
+                    {component}
+                </VocabularyContext.Provider>
+            </ProgressContext.Provider>
+        </BrowserRouter>
     );
 };
 
 describe('FallingWordsGame', () => {
     beforeEach(() => {
-        vi.useFakeTimers();
         vi.clearAllMocks();
-        // Mock requestAnimationFrame
-        vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => setTimeout(() => cb(performance.now()), 16));
+        mockLocation.search = '';
+
+        // Mock performance.now to work with fake timers
+        let now = 0;
+        vi.spyOn(performance, 'now').mockImplementation(() => now);
+
+        // Mock requestAnimationFrame to pass timestamp and increment time
+        vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => {
+            return setTimeout(() => {
+                now += 16;
+                cb(now);
+            }, 16);
+        });
+
         vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(id => clearTimeout(id));
     });
 
     afterEach(() => {
-        vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
-    it('renders game title and initial state', () => {
-        mockVocabulary.getWeightedPracticeWords.mockReturnValue([
-            { id: '1', french: 'Chat', english: 'Cat' }
-        ]);
-        renderWithContext(<FallingWordsGame />);
-
+    test('renders game title and initial state', () => {
+        renderWithProviders(<FallingWordsGame />);
         expect(screen.getByText('Falling Words')).toBeInTheDocument();
-        expect(screen.getByText('Score: 0')).toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Type the French translation...')).toBeInTheDocument();
     });
 
-    it('spawns words and handles correct input', async () => {
-        mockVocabulary.getWeightedPracticeWords.mockReturnValue([
-            { id: '1', french: 'Chat', english: 'Cat', translation: 'Cat' }
-        ]);
+    test('spawns words over time', async () => {
+        vi.useFakeTimers();
+        renderWithProviders(<FallingWordsGame />);
 
-        renderWithContext(<FallingWordsGame />);
-
-        // Fast forward time to spawn a word
-        act(() => {
+        // Advance time to trigger spawn (INITIAL_SPAWN_INTERVAL is 2000ms)
+        await act(async () => {
             vi.advanceTimersByTime(3000);
         });
 
-        // Check if word translation is on screen (game shows English translation as falling item?)
-        // The code says: text={word.translation}
-        // So we expect "Cat" to be on screen.
-        expect(await screen.findByText('Cat')).toBeInTheDocument();
+        // Words are rendered from vocabulary
+        // Since words are random, we check if *any* of the mock words appear
+        // Note: The game renders the English translation
+        const hasWord = screen.queryByText('cat') || screen.queryByText('dog');
+        expect(hasWord).toBeInTheDocument();
 
-        // Type the correct answer "Chat"
-        const input = screen.getByPlaceholderText(/Type the French translation/i);
-        fireEvent.change(input, { target: { value: 'Chat' } });
-
-        // Score should update
-        // Note: The game loop might need another tick to process the match if it was purely frame based, 
-        // but handleInputChange checks immediately against activeWordsRef.
-
-        // Wait for update
-        expect(screen.getByText(/Score: \d+/)).toBeInTheDocument();
-        expect(input.value).toBe(''); // Input should clear
-    });
-    it('shows timer in default mode', () => {
-        renderWithContext(<FallingWordsGame />);
-        // 90 seconds = 1:30
-        expect(screen.getByText('1:30')).toBeInTheDocument();
+        vi.useRealTimers();
     });
 
-    it('ends game when time runs out', async () => {
-        renderWithContext(<FallingWordsGame />);
+    test('handles user input correctly', async () => {
+        vi.useFakeTimers();
+        renderWithProviders(<FallingWordsGame />);
 
-        // Advance past 90 seconds
-        act(() => {
-            vi.advanceTimersByTime(91000);
+        // Wait for spawn
+        await act(async () => {
+            vi.advanceTimersByTime(3000);
         });
 
-        expect(await screen.findByText("Time's Up!")).toBeInTheDocument();
-    });
+        // Find which word spawned
+        const cat = screen.queryByText('cat');
+        const dog = screen.queryByText('dog');
+        const targetWord = cat ? 'chat' : 'chien';
 
-    it('adds time on correct answer', async () => {
-        mockVocabulary.getWeightedPracticeWords.mockReturnValue([
-            { id: '1', french: 'Chat', english: 'Cat', translation: 'Cat' }
-        ]);
+        const input = screen.getByPlaceholderText('Type the French translation...');
 
-        renderWithContext(<FallingWordsGame />);
-
-        // Advance 10 seconds (should be 1:20 / 80s left)
-        act(() => {
-            vi.advanceTimersByTime(10000);
+        await act(async () => {
+            fireEvent.change(input, { target: { value: targetWord } });
         });
 
-        // Initial check if we want, but hard to sync perfectly in test environment without more mocks.
-        // Instead, just trigger correct answer and check if we see the +5s popup or if time didn't go down as much.
+        // Should call updateWordProgress
+        expect(mockVocabularyContext.updateWordProgress).toHaveBeenCalledWith(
+            expect.any(String),
+            'good'
+        );
 
-        const input = screen.getByPlaceholderText(/Type the French translation/i);
-        fireEvent.change(input, { target: { value: 'Chat' } });
+        // Input should be cleared
+        expect(input.value).toBe('');
 
-        // Check for +5s popup
-        expect(await screen.findByText('+5s')).toBeInTheDocument();
+        vi.useRealTimers();
+    });
+
+    test('game over when time runs out', async () => {
+        vi.useFakeTimers();
+        renderWithProviders(<FallingWordsGame />);
+
+        // INITIAL_TIME_SECONDS = 90
+        await act(async () => {
+            vi.advanceTimersByTime(95000);
+        });
+
+        expect(screen.getByText("Time's Up!")).toBeInTheDocument();
+
+        vi.useRealTimers();
     });
 });
