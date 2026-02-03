@@ -27,6 +27,7 @@ export const LiveRegion = ({
  * Hook to announce messages to screen readers
  * @returns {Function} announce function
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAnnounce = () => {
     const { announce } = useA11y();
     return announce;

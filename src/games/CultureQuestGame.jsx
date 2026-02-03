@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, BookOpen, Star, CheckCircle, XCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
@@ -24,7 +25,7 @@ const CultureQuestGame = () => {
     const [gameComplete, setGameComplete] = useState(false);
 
     useEffect(() => {
-        setQuestions(getCultureSession());
+        setTimeout(() => setQuestions(getCultureSession()), 0);
     }, []);
 
     const currentQuestion = questions[currentIndex];

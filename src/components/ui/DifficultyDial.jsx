@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Globe, User, GraduationCap, Rocket, Crown } from 'lucide-react';

@@ -9,7 +9,7 @@ const WeeklyGoalTracker = ({ compact = false }) => {
     const { weeklyGoal, isWeeklyGoalMet } = useProgress();
 
     const sessionsPerWeek = weeklyGoal?.sessionsPerWeek || 3;
-    const sessionsThisWeek = weeklyGoal?.sessionsThisWeek || [];
+    const sessionsThisWeek = useMemo(() => weeklyGoal?.sessionsThisWeek || [], [weeklyGoal?.sessionsThisWeek]);
     const sessionsCompleted = sessionsThisWeek.length;
     const goalMet = isWeeklyGoalMet();
 

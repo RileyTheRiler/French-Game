@@ -29,14 +29,15 @@ const PROSODY_DRILLS = [
 const ProsodyLab = () => {
     const [selectedDrill, setSelectedDrill] = useState(PROSODY_DRILLS[0]);
     const [isRecording, setIsRecording] = useState(false);
-    const mediaStreamRef = useRef(null);
-    const audioContextRef = useRef(null);
+    const [mediaStream, setMediaStream] = useState(null);
+    const [audioContext, setAudioContext] = useState(null);
 
     const startRecording = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            mediaStreamRef.current = stream;
-            audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            setMediaStream(stream);
+            setAudioContext(ctx);
             setIsRecording(true);
         } catch (err) {
             console.error("Error accessing microphone:", err);
@@ -46,13 +47,13 @@ const ProsodyLab = () => {
 
     const stopRecording = () => {
         setIsRecording(false);
-        if (mediaStreamRef.current) {
-            mediaStreamRef.current.getTracks().forEach(track => track.stop());
-            mediaStreamRef.current = null;
+        if (mediaStream) {
+            mediaStream.getTracks().forEach(track => track.stop());
+            setMediaStream(null);
         }
-        if (audioContextRef.current) {
-            audioContextRef.current.close();
-            audioContextRef.current = null;
+        if (audioContext) {
+            audioContext.close();
+            setAudioContext(null);
         }
     };
 
@@ -112,8 +113,8 @@ const ProsodyLab = () => {
                             {isRecording ? (
                                 <AudioVisualizer
                                     isListening={isRecording}
-                                    audioContext={audioContextRef.current}
-                                    mediaStream={mediaStreamRef.current}
+                                    audioContext={audioContext}
+                                    mediaStream={mediaStream}
                                 />
                             ) : (
                                 <div className="text-slate-500 text-sm">Tap mic to see your voice rhythm</div>

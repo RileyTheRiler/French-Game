@@ -37,12 +37,6 @@ const SlangExplorer = () => {
         return matchesSearch && matchesCategory;
     });
 
-    const startQuiz = (category = null) => {
-        setMode('quiz');
-        setStreak(0);
-        nextQuestion(category);
-    };
-
     const nextQuestion = (category) => {
         const pool = category
             ? SLANG_DATA.filter(i => i.category === category)
@@ -61,6 +55,12 @@ const SlangExplorer = () => {
 
         const options = [...wrongOptions, randomItem.standard].sort(() => 0.5 - Math.random());
         setQuizOptions(options);
+    };
+
+    const startQuiz = (category = null) => {
+        setMode('quiz');
+        setStreak(0);
+        nextQuestion(category);
     };
 
     const handleAnswer = (selectedOption) => {

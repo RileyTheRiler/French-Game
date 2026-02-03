@@ -1,264 +1,191 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
-import { NATIVE_SPEAKERS, generateResponse, detectErrors, CONVERSATION_STARTERS } from '../data/nativeSpeakers';
+import { NATIVE_SPEAKERS } from '../data/nativeSpeakers';
 
-const MessagingContext = createContext();
-
-const MESSAGING_STORAGE_KEY = 'frenchApp_messaging';
+export const MessagingContext = createContext();
 
 export const MessagingProvider = ({ children }) => {
-    const { addXP, unlockAchievement } = useProgress();
+    const { addXP, achievements, unlockAchievement } = useProgress();
 
-    // All conversations
-    const [conversations, setConversations] = useState(() => {
-        const stored = localStorage.getItem(MESSAGING_STORAGE_KEY);
-        return stored ? JSON.parse(stored).conversations || {} : {};
-    });
-
-    // Connected partners (unlocked for chat)
-    const [connectedPartners, setConnectedPartners] = useState(() => {
-        const stored = localStorage.getItem(MESSAGING_STORAGE_KEY);
-        return stored ? JSON.parse(stored).connectedPartners || [] : [];
-    });
-
-    // Messaging stats
+    // Stats for messaging feature
     const [messagingStats, setMessagingStats] = useState(() => {
-        const stored = localStorage.getItem(MESSAGING_STORAGE_KEY);
-        return stored ? JSON.parse(stored).messagingStats || {
+        const saved = localStorage.getItem('frenchApp_messagingStats');
+        return saved ? JSON.parse(saved) : {
             totalMessages: 0,
-            partnersConnected: 0,
-            conversationsStarted: 0
-        } : {
-            totalMessages: 0,
-            partnersConnected: 0,
-            conversationsStarted: 0
+            conversationsStarted: 0,
+            repliesReceived: 0,
+            vocabularyUsed: []
         };
     });
 
-    // Active typing indicator
-    const [typingPartner, setTypingPartner] = useState(null);
+    const [conversations, setConversations] = useState(() => {
+        const saved = localStorage.getItem('frenchApp_conversations');
+        return saved ? JSON.parse(saved) : {};
+    });
 
-    // Persist to localStorage
+    // Save to local storage
     useEffect(() => {
-        localStorage.setItem(MESSAGING_STORAGE_KEY, JSON.stringify({
-            conversations,
-            connectedPartners,
-            messagingStats
-        }));
-    }, [conversations, connectedPartners, messagingStats]);
+        localStorage.setItem('frenchApp_messagingStats', JSON.stringify(messagingStats));
+    }, [messagingStats]);
 
-    // Get all available partners
-    const getAvailablePartners = useCallback(() => {
-        return NATIVE_SPEAKERS.map(speaker => ({
-            ...speaker,
-            isConnected: connectedPartners.includes(speaker.id),
-            hasUnread: conversations[speaker.id]?.some(m => !m.read && m.senderId === speaker.id)
-        }));
-    }, [connectedPartners, conversations]);
-
-    // Connect with a partner
-    const connectWithPartner = useCallback((partnerId) => {
-        if (connectedPartners.includes(partnerId)) return;
-
-        setConnectedPartners(prev => [...prev, partnerId]);
-
-        setMessagingStats(prev => ({
-            ...prev,
-            partnersConnected: prev.partnersConnected + 1
-        }));
-
-        // First partner achievement
-        if (connectedPartners.length === 0) {
-            unlockAchievement?.('first_penpal');
-            addXP(20);
-        }
-
-        // Start with a greeting from the partner
-        const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
-        if (partner) {
-            const greeting = partner.responsePatterns.greeting[
-                Math.floor(Math.random() * partner.responsePatterns.greeting.length)
-            ];
-
-            setConversations(prev => ({
-                ...prev,
-                [partnerId]: [{
-                    id: `msg_${Date.now()}`,
-                    senderId: partnerId,
-                    senderName: partner.name,
-                    text: greeting,
-                    timestamp: Date.now(),
-                    read: false
-                }]
-            }));
-
-            setMessagingStats(prev => ({
-                ...prev,
-                conversationsStarted: prev.conversationsStarted + 1
-            }));
-        }
-    }, [connectedPartners, addXP, unlockAchievement]);
-
-    // Send a message
-    const sendMessage = useCallback((partnerId, text) => {
-        const userMessage = {
-            id: `msg_${Date.now()}`,
-            senderId: 'user',
-            senderName: 'You',
-            text,
-            timestamp: Date.now(),
-            read: true
-        };
-
-        setConversations(prev => ({
-            ...prev,
-            [partnerId]: [...(prev[partnerId] || []), userMessage]
-        }));
-
-        setMessagingStats(prev => ({
-            ...prev,
-            totalMessages: prev.totalMessages + 1
-        }));
-
-        // Award XP for messaging
-        addXP(2);
-
-        // Check for milestone achievements
-        if (messagingStats.totalMessages === 49) { // 50th message
-            unlockAchievement?.('native_connection');
-        }
-
-        // Simulate partner response
-        simulatePartnerResponse(partnerId, text);
-    }, [addXP, unlockAchievement, messagingStats.totalMessages]);
+    useEffect(() => {
+        localStorage.setItem('frenchApp_conversations', JSON.stringify(conversations));
+    }, [conversations]);
 
     // Simulate partner typing and response
     const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
         const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
         if (!partner) return;
 
-        // Show typing indicator
-        setTypingPartner(partnerId);
+        // Simple logic to pick a response based on keywords or random
+        // In a real app, this would be an AI or backend call
+        // For now, we cycle through some generic responses or specific ones
 
-        // Simulate typing delay based on partner's typing speed
-        const baseDelay = partner.typingSpeed || 1500;
-        const randomDelay = baseDelay + Math.random() * 1000;
+        const randomDelay = Math.random() * 3000 + 2000; // 2-5 seconds
 
         setTimeout(() => {
-            setTypingPartner(null);
+            setConversations(prev => {
+                const conv = prev[partnerId] || { messages: [], unread: 0 };
+                const newMessage = {
+                    id: Date.now(),
+                    sender: 'partner',
+                    text: "C'est intéressant ! Dis-moi en plus.", // Placeholder response
+                    timestamp: Date.now()
+                };
 
-            // Generate response
-            const responseText = generateResponse(partner, userMessage);
+                return {
+                    ...prev,
+                    [partnerId]: {
+                        ...conv,
+                        messages: [...conv.messages, newMessage],
+                        unread: conv.unread + 1,
+                        lastMessage: newMessage,
+                        updatedAt: Date.now()
+                    }
+                };
+            });
 
-            // Check for errors in user's message and possibly correct them
-            const errors = detectErrors(userMessage);
-            let finalResponse = responseText;
-
-            if (errors.length > 0 && Math.random() > 0.5) {
-                // Sometimes add a correction
-                const error = errors[0];
-                const correctionPrefix = partner.responsePatterns.correction[
-                    Math.floor(Math.random() * partner.responsePatterns.correction.length)
-                ].replace('{correction}', error.suggestion);
-                finalResponse = correctionPrefix + "\n\n" + responseText;
-            }
-
-            const partnerMessage = {
-                id: `msg_${Date.now()}`,
-                senderId: partnerId,
-                senderName: partner.name,
-                text: finalResponse,
-                timestamp: Date.now(),
-                read: false,
-                correction: errors.length > 0 ? errors[0] : null
-            };
-
-            setConversations(prev => ({
+            setMessagingStats(prev => ({
                 ...prev,
-                [partnerId]: [...(prev[partnerId] || []), partnerMessage]
+                repliesReceived: prev.repliesReceived + 1
             }));
+
+            // Sound or notification trigger could go here
+
         }, randomDelay);
     }, []);
 
-    // Mark messages as read
-    const markAsRead = useCallback((partnerId) => {
-        setConversations(prev => ({
+    const startConversation = useCallback((partnerId) => {
+        setConversations(prev => {
+            if (prev[partnerId]) return prev; // Already exists
+
+            const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
+            const initialMessage = {
+                id: Date.now(),
+                sender: 'partner',
+                text: partner.introMessage,
+                timestamp: Date.now()
+            };
+
+            return {
+                ...prev,
+                [partnerId]: {
+                    id: partnerId,
+                    partner,
+                    messages: [initialMessage],
+                    unread: 1,
+                    lastMessage: initialMessage,
+                    updatedAt: Date.now()
+                }
+            };
+        });
+
+        setMessagingStats(prev => ({
             ...prev,
-            [partnerId]: (prev[partnerId] || []).map(msg => ({
-                ...msg,
-                read: true
-            }))
+            conversationsStarted: prev.conversationsStarted + 1
         }));
     }, []);
 
-    // Get conversation with a partner
-    const getConversation = useCallback((partnerId) => {
-        return conversations[partnerId] || [];
-    }, [conversations]);
+    const sendMessage = useCallback((partnerId, text) => {
+        const newMessage = {
+            id: Date.now(),
+            sender: 'user',
+            text,
+            timestamp: Date.now()
+        };
 
-    // Get unread count
-    const getUnreadCount = useCallback(() => {
-        let count = 0;
-        Object.values(conversations).forEach(conv => {
-            count += conv.filter(m => !m.read && m.senderId !== 'user').length;
+        setConversations(prev => {
+            const conv = prev[partnerId];
+            if (!conv) return prev;
+
+            return {
+                ...prev,
+                [partnerId]: {
+                    ...conv,
+                    messages: [...conv.messages, newMessage],
+                    lastMessage: newMessage,
+                    updatedAt: Date.now()
+                }
+            };
         });
-        return count;
-    }, [conversations]);
 
-    // Get suggested replies based on conversation context
-    const getSuggestedReplies = useCallback((partnerId) => {
-        const conversation = conversations[partnerId] || [];
-        const lastMessage = conversation[conversation.length - 1];
+        setMessagingStats(prev => ({
+            ...prev,
+            totalMessages: prev.totalMessages + 1
+        }));
 
-        if (!lastMessage || lastMessage.senderId === 'user') {
-            return [
-                "Bonjour ! Comment ça va ?",
-                "Salut ! Quoi de neuf ?",
-                "Je suis content(e) de te parler !"
-            ];
+        // XP Reward for practice
+        addXP(5);
+
+        // Check achievements?
+        if (messagingStats.totalMessages + 1 >= 10) {
+            // unlockAchievement('social_butterfly'); // Example
         }
 
-        const text = lastMessage.text.toLowerCase();
+        // Simulate partner response
+        simulatePartnerResponse(partnerId, text);
+    }, [addXP, messagingStats.totalMessages, simulatePartnerResponse]);
 
-        // Response suggestions based on context
-        if (text.includes('comment') && text.includes('va')) {
-            return [
-                "Ça va bien, merci ! Et toi ?",
-                "Je vais très bien !",
-                "Pas mal, et toi ?"
-            ];
-        }
+    // Mark messages as read
+    const markAsRead = useCallback((partnerId) => {
+        setConversations(prev => {
+            const conv = prev[partnerId];
+            if (!conv || conv.unread === 0) return prev;
 
-        if (text.includes('quoi de neuf') || text.includes('?')) {
-            return [
-                "Rien de spécial, je pratique mon français.",
-                "J'apprends de nouveaux mots !",
-                "Je lis un livre en français."
-            ];
-        }
+            return {
+                ...prev,
+                [partnerId]: {
+                    ...conv,
+                    unread: 0
+                }
+            };
+        });
+    }, []);
 
-        // Default suggestions
-        return [
-            "C'est intéressant !",
-            "Je comprends, merci !",
-            "Tu peux m'expliquer plus ?"
-        ];
-    }, [conversations]);
+    const deleteConversation = useCallback((partnerId) => {
+        setConversations(prev => {
+            const newConversations = { ...prev };
+            delete newConversations[partnerId];
+            return newConversations;
+        });
+    }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         conversations,
-        connectedPartners,
         messagingStats,
-        typingPartner,
-        getAvailablePartners,
-        connectWithPartner,
+        startConversation,
         sendMessage,
         markAsRead,
-        getConversation,
-        getUnreadCount,
-        getSuggestedReplies,
-        NATIVE_SPEAKERS
-    };
+        deleteConversation
+    }), [
+        conversations,
+        messagingStats,
+        startConversation,
+        sendMessage,
+        markAsRead,
+        deleteConversation
+    ]);
 
     return (
         <MessagingContext.Provider value={value}>
@@ -274,3 +201,5 @@ export const useMessaging = () => {
     }
     return context;
 };
+
+export default MessagingContext;
