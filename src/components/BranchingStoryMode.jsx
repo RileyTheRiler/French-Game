@@ -444,7 +444,7 @@ const BranchingStoryMode = () => {
     const [currentStory, setCurrentStory] = useState(null);
 
     // Get story progress from stats
-    const storyProgress = stats.branchingStoriesProgress || {};
+    const storyProgress = useMemo(() => stats.branchingStoriesProgress || {}, [stats.branchingStoriesProgress]);
 
     const handleSelectStory = useCallback((story) => {
         setCurrentStory(story);

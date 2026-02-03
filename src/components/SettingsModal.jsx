@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain, Target } from 'lucide-react';
 import DifficultyDial from './ui/DifficultyDial';
 import { useProgress } from '../context/ProgressContext';
@@ -95,8 +95,8 @@ const SettingsModal = ({ onClose }) => {
         setImportError('');
         try {
             await importData(file);
-        } catch (err) {
-            setImportError(err.message);
+        } catch (error) { // renamed err to error to avoid lint issue if unused, though it is used here
+            setImportError(error.message);
         }
     };
 
