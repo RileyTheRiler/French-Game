@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Book, ChevronLeft, Award, Lock, BookOpen, Play, Pause,
@@ -115,7 +115,7 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
         if (onSaveProgress && currentNode?.type !== 'ending') {
             onSaveProgress(story.id, { currentNode: currentNodeId, history });
         }
-    }, [currentNodeId, history]);
+    }, [currentNodeId, history, onSaveProgress, story.id, currentNode?.type]);
 
     const handleChoice = (choice) => {
         SoundManager.playPop();
@@ -444,13 +444,13 @@ const BranchingStoryMode = () => {
     const [currentStory, setCurrentStory] = useState(null);
 
     // Get story progress from stats
-    const storyProgress = stats.branchingStoriesProgress || {};
+    const storyProgress = useMemo(() => stats.branchingStoriesProgress || {}, [stats.branchingStoriesProgress]);
 
-    const handleSelectStory = (story) => {
+    const handleSelectStory = useCallback((story) => {
         setCurrentStory(story);
-    };
+    }, []);
 
-    const handleSaveProgress = (storyId, progress) => {
+    const handleSaveProgress = useCallback((storyId, progress) => {
         updateStats({
             branchingStoriesProgress: {
                 ...storyProgress,
@@ -460,14 +460,14 @@ const BranchingStoryMode = () => {
                 }
             }
         });
-    };
+    }, [storyProgress, updateStats]);
 
-    const handleCompleteStory = (xp, endingId) => {
+    const handleCompleteStory = useCallback((xp, endingId) => {
         addXP(xp);
 
         // Track ending
-        const existingEndings = storyProgress[currentStory.id]?.endings || [];
-        if (!existingEndings.includes(endingId)) {
+        const existingEndings = storyProgress[currentStory?.id]?.endings || [];
+        if (!existingEndings.includes(endingId) && currentStory) {
             updateStats({
                 branchingStoriesProgress: {
                     ...storyProgress,
@@ -480,7 +480,7 @@ const BranchingStoryMode = () => {
                 }
             });
         }
-    };
+    }, [addXP, currentStory, storyProgress, updateStats]);
 
     if (currentStory) {
         return (

@@ -18,7 +18,9 @@ import { formatRelativeTime } from '../utils/time';
 const FlashcardMode = ({ mode = 'standard' }) => {
     const { deckId } = useParams();
     const navigate = useNavigate();
-    const onExit = () => navigate('/');
+
+    // Memoize onExit to stabilize dependencies
+    const onExit = useCallback(() => navigate('/'), [navigate]);
 
     const {
         updateWordProgress, vocabulary, getWeightedPracticeWords, getDeckWords, customDecks,
@@ -112,7 +114,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         if (currentWord) {
             markWordSeen(currentWord.id);
         }
-    }, [currentWord?.id, markWordSeen]);
+    }, [currentWord, markWordSeen]); // Added currentWord to deps
 
     useEffect(() => {
         cardStartRef.current = performance.now();
@@ -120,17 +122,16 @@ const FlashcardMode = ({ mode = 'standard' }) => {
 
     const shouldShowHint = useMemo(() => {
         if (!currentWord) return false;
-        // Simple hint logic
         return difficulty <= 2;
     }, [currentWord, difficulty]);
 
-    const finishSession = (metrics) => {
+    const finishSession = useCallback((metrics) => {
         const reward = calculateRewards('flashcards', metrics);
         setSessionReward(reward);
         addXP(reward.xp);
         addCoins(reward.coins);
         setSessionComplete(true);
-    };
+    }, [addXP, addCoins]);
 
     const handleFlip = useCallback(() => {
         setIsFlipped(prev => !prev);
@@ -144,7 +145,6 @@ const FlashcardMode = ({ mode = 'standard' }) => {
 
         const isCorrect = grade === 'good' || grade === 'easy' || grade === true;
 
-        // Calculate new stats
         const nextCorrect = isCorrect ? correctCount + 1 : correctCount;
         const nextWrong = isCorrect ? wrongCount : wrongCount + 1;
         const nextStreak = isCorrect ? currentStreak + 1 : 0;
@@ -173,7 +173,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
                 bestStreak: nextBestStreak
             });
         }
-    }, [currentCardIndex, currentWord, queue.length, updateWordProgress, logWordAttempt, correctCount, wrongCount, currentStreak, bestStreak, updateDailyStat]);
+    }, [currentCardIndex, currentWord, queue.length, updateWordProgress, logWordAttempt, correctCount, wrongCount, currentStreak, bestStreak, updateDailyStat, finishSession]);
 
     useEffect(() => {
         if (containerRef.current) {
