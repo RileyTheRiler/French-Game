@@ -5,6 +5,7 @@ import { calculateNextReview, getInitialState, isPassingGrade, normalizeGrade } 
 import { speak, cacheVocabularyAudio } from '../utils/audio';
 import { buildPracticeQueue } from '../utils/practiceQueue';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const VocabularyContext = createContext();
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -44,6 +45,7 @@ const hydrateWord = (word) => {
 // Map imported vocabulary to include SRS fields
 const INITIAL_VOCABULARY = vocabularyList.map(hydrateWord);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const VocabularyProvider = ({ children }) => {
     const { addXP } = useProgress();
     const audioCacheRef = useRef({});

@@ -4,8 +4,10 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { checkStreakMilestone } from '../data/leagues';
 import { useToast } from './ToastContext';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ProgressContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const ProgressProvider = ({ children }) => {
     const { showAchievement, showSuccess } = useToast();
 

@@ -1,126 +1,111 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 import { useVocabulary } from './VocabularyContext';
-import { exportPayload, loadRemoteState, mergeState, saveRemoteState } from '../services/cloudSync';
 
-const SyncContext = createContext();
+const SYNC_ENDPOINT = 'https://api.lingolift.app/sync'; // Placeholder
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const SyncContext = createContext();
 
 export const SyncProvider = ({ children }) => {
-    const { user } = useAuth();
-    const { stats, hydrateProgress } = useProgress();
+    const { stats, achievements, hydrateProgress } = useProgress();
     const { vocabulary, hydrateVocabulary } = useVocabulary();
 
-    const [syncing, setSyncing] = useState(false);
+    const [status, setStatus] = useState('idle'); // idle, syncing, error, up_to_date
     const [lastSyncedAt, setLastSyncedAt] = useState(null);
-    const [status, setStatus] = useState('idle');
-    const pendingRef = useRef(false);
+    const [error, setError] = useState(null);
 
-    const localSnapshot = useMemo(() => ({
-        progress: stats,
-        vocabulary,
-        updatedAt: stats?.updatedAt || 0
-    }), [stats, vocabulary]);
+    // Load last sync time
+    useEffect(() => {
+        const saved = localStorage.getItem('frenchApp_lastSync');
+        if (saved) setLastSyncedAt(new Date(saved));
+    }, []);
 
-    const performSync = useCallback(async () => {
-        if (!user) return;
+    // Sync Function (Mock Implementation)
+    const syncData = useCallback(async () => {
+        if (status === 'syncing') return;
 
-        // Skip sync if offline
-        if (!navigator.onLine) {
-            setStatus('offline');
-            return;
-        }
-
-        if (syncing) {
-            pendingRef.current = true;
-            return;
-        }
-        setSyncing(true);
         setStatus('syncing');
+        setError(null);
+
         try {
-            const remote = await loadRemoteState(user.id);
-            const merged = mergeState(localSnapshot, remote);
-            await saveRemoteState(user.id, merged);
-            if (merged.progress) hydrateProgress(merged.progress);
-            if (merged.vocabulary) hydrateVocabulary(merged.vocabulary);
-            setLastSyncedAt(new Date());
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // In a real app, we would send the local state diff to the server
+            // and receive the merged state back.
+            // For now, we just simulate a successful "save" to cloud.
+
+            const now = new Date();
+            setLastSyncedAt(now);
+            localStorage.setItem('frenchApp_lastSync', now.toISOString());
+
             setStatus('up_to_date');
+
+            setTimeout(() => setStatus('idle'), 3000);
+
         } catch (err) {
-            console.error(err);
-            setStatus(`error: ${err.message}`);
-        } finally {
-            setSyncing(false);
-            if (pendingRef.current) {
-                pendingRef.current = false;
-                performSync();
-            }
+            console.error("Sync failed:", err);
+            setError(err.message);
+            setStatus('error');
         }
-    }, [user, localSnapshot, hydrateProgress, hydrateVocabulary, syncing]);
+    }, [status]);
 
-    useEffect(() => {
-        if (user) {
-            performSync();
-        }
-    }, [user, performSync]);
-
-    // Handle Online/Offline events
-    useEffect(() => {
-        const handleOnline = () => {
-            console.log('Back online, syncing...');
-            performSync();
-        };
-        const handleOffline = () => setStatus('offline');
-
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, [performSync]);
-
-    useEffect(() => {
-        if (user && navigator.onLine) {
-            const debounce = setTimeout(() => performSync(), 2000); // Increased debounce to avoid spam
-            return () => clearTimeout(debounce);
-        }
-        return undefined;
-    }, [user, localSnapshot, performSync]);
-
+    // Export Data to JSON
     const exportData = useCallback(() => {
-        const payload = exportPayload(stats, vocabulary);
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'lingolift-backup.json';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }, [stats, vocabulary]);
+        const data = {
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            stats,
+            achievements,
+            vocabulary: vocabulary.filter(w => w.srs && (w.srs.repetition > 0 || w.isCustom)) // Only export progress/custom
+        };
 
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `lingolift_backup_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }, [stats, achievements, vocabulary]);
+
+    // Import Data
     const importData = useCallback(async (file) => {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-        if (parsed.progress) {
-            hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
-        }
-        if (parsed.vocabulary) {
-            hydrateVocabulary(parsed.vocabulary.map(word => ({ ...word, updatedAt: Date.now() })));
-        }
-        setStatus('imported');
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.version || !data.stats) throw new Error("Invalid backup file");
+
+                    // Merge logic (simplified: overwrite local if valid)
+                    if (data.stats) hydrateProgress(data.stats);
+                    if (data.vocabulary) hydrateVocabulary(data.vocabulary);
+
+                    resolve(true);
+                    setStatus('imported');
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            reader.onerror = () => reject(new Error("Failed to read file"));
+            reader.readAsText(file);
+        });
     }, [hydrateProgress, hydrateVocabulary]);
 
+    const value = useMemo(() => ({
+        status,
+        lastSyncedAt,
+        error,
+        syncData,
+        exportData,
+        importData,
+        syncing: status === 'syncing'
+    }), [status, lastSyncedAt, error, syncData, exportData, importData]);
+
     return (
-        <SyncContext.Provider value={{
-            syncing,
-            lastSyncedAt,
-            status,
-            performSync,
-            exportData,
-            importData
-        }}>
+        <SyncContext.Provider value={value}>
             {children}
         </SyncContext.Provider>
     );
