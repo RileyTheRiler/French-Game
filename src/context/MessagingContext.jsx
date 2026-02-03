@@ -47,6 +47,54 @@ export const MessagingProvider = ({ children }) => {
         }));
     }, [conversations, connectedPartners, messagingStats]);
 
+    // Simulate partner typing and response
+    const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
+        const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
+        if (!partner) return;
+
+        // Show typing indicator
+        setTypingPartner(partnerId);
+
+        // Simulate typing delay based on partner's typing speed
+        const baseDelay = partner.typingSpeed || 1500;
+        const randomDelay = baseDelay + Math.random() * 1000;
+
+        setTimeout(() => {
+            setTypingPartner(null);
+
+            // Generate response
+            const responseText = generateResponse(partner, userMessage);
+
+            // Check for errors in user's message and possibly correct them
+            const errors = detectErrors(userMessage);
+            let finalResponse = responseText;
+
+            if (errors.length > 0 && Math.random() > 0.5) {
+                // Sometimes add a correction
+                const error = errors[0];
+                const correctionPrefix = partner.responsePatterns.correction[
+                    Math.floor(Math.random() * partner.responsePatterns.correction.length)
+                ].replace('{correction}', error.suggestion);
+                finalResponse = correctionPrefix + "\n\n" + responseText;
+            }
+
+            const partnerMessage = {
+                id: `msg_${Date.now()}`,
+                senderId: partnerId,
+                senderName: partner.name,
+                text: finalResponse,
+                timestamp: Date.now(),
+                read: false,
+                correction: errors.length > 0 ? errors[0] : null
+            };
+
+            setConversations(prev => ({
+                ...prev,
+                [partnerId]: [...(prev[partnerId] || []), partnerMessage]
+            }));
+        }, randomDelay);
+    }, []);
+
     // Get all available partners
     const getAvailablePartners = useCallback(() => {
         return NATIVE_SPEAKERS.map(speaker => ({
@@ -130,55 +178,7 @@ export const MessagingProvider = ({ children }) => {
 
         // Simulate partner response
         simulatePartnerResponse(partnerId, text);
-    }, [addXP, unlockAchievement, messagingStats.totalMessages]);
-
-    // Simulate partner typing and response
-    const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
-        const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
-        if (!partner) return;
-
-        // Show typing indicator
-        setTypingPartner(partnerId);
-
-        // Simulate typing delay based on partner's typing speed
-        const baseDelay = partner.typingSpeed || 1500;
-        const randomDelay = baseDelay + Math.random() * 1000;
-
-        setTimeout(() => {
-            setTypingPartner(null);
-
-            // Generate response
-            const responseText = generateResponse(partner, userMessage);
-
-            // Check for errors in user's message and possibly correct them
-            const errors = detectErrors(userMessage);
-            let finalResponse = responseText;
-
-            if (errors.length > 0 && Math.random() > 0.5) {
-                // Sometimes add a correction
-                const error = errors[0];
-                const correctionPrefix = partner.responsePatterns.correction[
-                    Math.floor(Math.random() * partner.responsePatterns.correction.length)
-                ].replace('{correction}', error.suggestion);
-                finalResponse = correctionPrefix + "\n\n" + responseText;
-            }
-
-            const partnerMessage = {
-                id: `msg_${Date.now()}`,
-                senderId: partnerId,
-                senderName: partner.name,
-                text: finalResponse,
-                timestamp: Date.now(),
-                read: false,
-                correction: errors.length > 0 ? errors[0] : null
-            };
-
-            setConversations(prev => ({
-                ...prev,
-                [partnerId]: [...(prev[partnerId] || []), partnerMessage]
-            }));
-        }, randomDelay);
-    }, []);
+    }, [addXP, unlockAchievement, messagingStats.totalMessages, simulatePartnerResponse]);
 
     // Mark messages as read
     const markAsRead = useCallback((partnerId) => {

@@ -22,12 +22,8 @@ const MemoryMatchGame = () => {
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
+    // eslint-disable-next-line no-unused-vars
     const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
-
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
 
     const startNewGame = () => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
@@ -60,6 +56,13 @@ const MemoryMatchGame = () => {
         setGameComplete(false);
         setDisabled(false);
     };
+
+    // Initialize Game
+    useEffect(() => {
+        startNewGame();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
 
     const handleClick = (id) => {
         if (disabled || gameComplete) return;
@@ -100,13 +103,6 @@ const MemoryMatchGame = () => {
         }
     };
 
-    // Check Win Condition
-    useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
-        }
-    }, [solved]);
-
     const handleWin = () => {
         setGameComplete(true);
         SoundManager.playLevelUp();
@@ -120,6 +116,14 @@ const MemoryMatchGame = () => {
         // Let's give nice XP.
         addXP(30);
     };
+
+    // Check Win Condition
+    useEffect(() => {
+        if (cards.length > 0 && solved.length === cards.length) {
+            handleWin();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [solved]);
 
     return (
         <GameLayout
