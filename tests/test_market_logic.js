@@ -1,45 +1,25 @@
 import { getDailyShopSelection } from '../src/utils/market.js';
-import { SHOP_ITEMS } from '../src/data/shopItems.js';
+import { describe, it, expect } from 'vitest';
 
-// Mock SHOP_ITEMS for the test since we can't easily import ES modules via node without setup
-// Actually, since the file uses "export const", we need package.json type:module or rename to .mjs
-// Let's just mock the logic to verify the algorithm, or try to run it if the environment supports it.
+describe('Market Logic', () => {
+    it('generates consistent shop selection for the same date', () => {
+        const date1 = 'Mon Jan 01 2024';
+        const selection1 = getDailyShopSelection(date1);
+        const selection2 = getDailyShopSelection(date1);
 
-// We will just replicate the logic to test the algorithm here since environment might be fickle.
-const seededRandom = (seed) => {
-    const mask = 0xffffffff;
-    let m_w = (123456789 + seed) & mask;
-    let m_z = (987654321 - seed) & mask;
+        // Same date should yield exact same items
+        expect(selection1.consumables).toEqual(selection2.consumables);
+        expect(selection1.cosmetics).toEqual(selection2.cosmetics);
+    });
 
-    return () => {
-        m_z = (36969 * (m_z & 65535) + (m_z >> 16)) & mask;
-        m_w = (18000 * (m_w & 65535) + (m_w >> 16)) & mask;
-        let result = ((m_z << 16) + (m_w & 65535)) >>> 0;
-        result /= 4294967296;
-        return result;
-    };
-};
+    it('generates different shop selection for different dates', () => {
+        const date1 = 'Mon Jan 01 2024';
+        const date2 = 'Tue Jan 02 2024';
+        const selection1 = getDailyShopSelection(date1);
+        const selection2 = getDailyShopSelection(date2);
 
-// Test consistency
-const date1 = "Mon Jan 01 2024";
-const rng1 = seededRandom(12345);
-const val1 = rng1();
-
-const rng2 = seededRandom(12345);
-const val2 = rng2();
-
-if (val1 === val2) {
-    console.log("PASS: RNG is deterministic.");
-} else {
-    console.error("FAIL: RNG is not deterministic.");
-}
-
-// Test differentiation
-const rng3 = seededRandom(67890);
-if (rng3() !== val1) {
-    console.log("PASS: Different seeds produce different results.");
-} else {
-    console.error("FAIL: different seeds produced same result (unlikely but possible, or bug).");
-}
-
-console.log("Market logic verification complete.");
+        // Different dates should likely yield different cosmetics (randomized)
+        // Note: There's a tiny chance of collision, but highly unlikely with seeded RNG and shuffle
+        expect(selection1.cosmetics).not.toEqual(selection2.cosmetics);
+    });
+});

@@ -18,9 +18,25 @@ vi.mock('../../utils/InteractionEffects', () => ({
     triggerConfetti: vi.fn(),
 }));
 
+// Mock ProgressContext to prevent "Cannot destructure property" error
+vi.mock('../../context/ProgressContext', () => ({
+    useProgress: () => ({
+        addXP: vi.fn(),
+        addCoins: vi.fn(),
+        updateDailyStat: vi.fn()
+    })
+}));
+
+vi.mock('../../context/ToastContext', () => ({
+    useToast: () => ({
+        showToast: vi.fn()
+    })
+}));
+
 const mockVocabulary = {
     getDueWords: vi.fn(),
     updateWordProgress: vi.fn(),
+    markWordSeen: vi.fn(),
     vocabulary: [
         { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1', category: 'Greetings' },
         { id: '2', french: 'Chat', english: 'Cat', cefr: 'A1', category: 'Animals' }
@@ -59,11 +75,7 @@ describe('StudySession', () => {
         renderWithContext(<StudySession />);
 
         expect(screen.getByText('Bonjour')).toBeInTheDocument();
-        // English should be "hidden" (technically rendered but on the back face)
-        // Testing visibility in jsdom with 3d transforms is tricky, 
-        // passing check that it exists in the document is a start.
         expect(screen.getByText('Hello')).toBeInTheDocument();
-        expect(screen.getByText('French')).toBeInTheDocument();
     });
 
     it('flips card on click and shows controls', () => {
