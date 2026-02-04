@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Volume2, Volume1, ArrowRight, RefreshCw, Check, X, AlertCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -23,10 +23,6 @@ const DictationGame = () => {
     // Filter useful accents for the toolbar
     const ACCENTS = ['é', 'è', 'ê', 'ë', 'à', 'â', 'ç', 'î', 'ï', 'ô', 'ù', 'û'];
 
-    useEffect(() => {
-        loadNewSentence();
-    }, []);
-
     const loadNewSentence = () => {
         // Simple random selection for now
         const randomSentence = DICTATION_SENTENCES[Math.floor(Math.random() * DICTATION_SENTENCES.length)];
@@ -37,6 +33,12 @@ const DictationGame = () => {
         // Clean speech synthesis queue
         window.speechSynthesis.cancel();
     };
+
+    useEffect(() => {
+        // Delay to avoid synchronous state update warning on mount
+        const timer = setTimeout(() => loadNewSentence(), 0);
+        return () => clearTimeout(timer);
+    }, []);
 
     const playAudio = (rate = 1.0) => {
         if (!currentSentence || isPlayingAudio) return;
@@ -159,17 +161,11 @@ const DictationGame = () => {
                         />
 
                         {/* Status Icon Overlay */}
-                        <AnimatePresence>
-                            {status === 'success' && (
-                                <motion.div
-                                    initial={{ scale: 0, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="absolute top-4 right-4 bg-green-500 rounded-full p-2 text-white shadow-lg"
-                                >
-                                    <Check size={24} strokeWidth={3} />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                        {status === 'success' && (
+                            <div className="absolute top-4 right-4 bg-green-500 rounded-full p-2 text-white shadow-lg animate-in fade-in zoom-in duration-300">
+                                <Check size={24} strokeWidth={3} />
+                            </div>
+                        )}
                     </div>
 
                     {/* Accent Toolbar */}
