@@ -32,7 +32,9 @@ const ErrorSpottingGame = () => {
     };
 
     useEffect(() => {
-        loadNextPuzzle();
+        setTimeout(() => {
+            loadNextPuzzle();
+        }, 0);
     }, []);
 
     const handleWordClick = (word, index) => {

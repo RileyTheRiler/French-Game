@@ -86,14 +86,16 @@ const VoiceCall = () => {
 
         // If node has 'end' flag
         if (currentNode.end) {
-            handleSpeak(currentNode.message, () => {
-                setCallState('ended');
-                setStatus('Call Ended');
-                setTimeout(() => {
-                    navigate('/'); // Go back to menu after delay
-                    if (currentNode.success) addXP(scenario.xpReward);
-                }, 3000);
-            });
+            setTimeout(() => {
+                handleSpeak(currentNode.message, () => {
+                    setCallState('ended');
+                    setStatus('Call Ended');
+                    setTimeout(() => {
+                        navigate('/'); // Go back to menu after delay
+                        if (currentNode.success) addXP(scenario.xpReward);
+                    }, 3000);
+                });
+            }, 0);
             return;
         }
 
@@ -104,14 +106,18 @@ const VoiceCall = () => {
         const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
 
         if (messageToSpeak) {
-            setStatus('Speaking...');
-            handleSpeak(messageToSpeak, () => {
-                // After speaking, start listening
-                startListeningPhase();
-            });
+            setTimeout(() => {
+                setStatus('Speaking...');
+                handleSpeak(messageToSpeak, () => {
+                    // After speaking, start listening
+                    startListeningPhase();
+                });
+            }, 0);
         } else {
             // No message (rare), just listen
-            startListeningPhase();
+            setTimeout(() => {
+                startListeningPhase();
+            }, 0);
         }
 
     }, [currentNodeId, scenario]);
@@ -143,13 +149,9 @@ const VoiceCall = () => {
 
     // Initial Connection Simulation
     useEffect(() => {
-        const timer = setTimeout(() => {
-            // Start the interaction
-            // Trigger the effect by ensuring ID is set (already 'start') 
-            // but we need to trigger the initial message logic.
-            // We can force a re-eval or just rely on mount.
-        }, 1000);
-        return () => clearTimeout(timer);
+        // Trigger the effect by ensuring ID is set (already 'start')
+        // but we need to trigger the initial message logic.
+        // Forcing a re-evaluation if needed, or simply relying on the effect dependency [currentNodeId, scenario]
     }, []);
 
     return (

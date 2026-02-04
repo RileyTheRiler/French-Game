@@ -150,7 +150,7 @@ const parsePhonemes = (ipa) => {
 const normalizeText = (text) => {
     if (!text) return '';
     return text.toLowerCase()
-        .replace(/[.,!?;:'"()\-]/g, '')
+        .replace(/[.,!?;:'"()\-]/g, '') // eslint-disable-line no-useless-escape
         .trim();
 };
 
