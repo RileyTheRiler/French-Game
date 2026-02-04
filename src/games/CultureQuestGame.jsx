@@ -15,17 +15,13 @@ const CultureQuestGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
 
-    // Game State
-    const [questions, setQuestions] = useState([]);
+    // Game State - Lazy initialization to avoid set-state-in-effect
+    const [questions, setQuestions] = useState(() => getCultureSession());
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
     const [isAnswered, setIsAnswered] = useState(false);
     const [gameComplete, setGameComplete] = useState(false);
-
-    useEffect(() => {
-        setQuestions(getCultureSession());
-    }, []);
 
     const currentQuestion = questions[currentIndex];
 
