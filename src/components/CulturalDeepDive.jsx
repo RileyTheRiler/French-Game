@@ -13,6 +13,8 @@ import { Card } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
 import SoundManager from '../utils/SoundManager';
 import { GameLayout } from './layout/GameLayout';
+import { speak } from '../utils/audio';
+import { Volume2 } from 'lucide-react';
 
 const ArticleCard = ({ article, isNew, onClick }) => (
     <motion.div
@@ -161,7 +163,7 @@ const ArticleViewer = ({ article, onBack, onComplete }) => {
                                 <p className="text-indigo-300 font-medium mb-4 text-emerald-400">{selectedHighlight.english}</p>
                                 <div className="h-px bg-white/5 mb-4" />
                                 <div className="flex gap-2">
-                                    <Button size="sm" variant="ghost" className="flex-1 text-xs" onClick={() => speak(selectedHighlight.french, 'fr-FR', difficultyConfig.audioSpeed)}>
+                                    <Button size="sm" variant="ghost" className="flex-1 text-xs" onClick={() => speak(selectedHighlight.french, 'fr-FR', difficultyConfig?.audioSpeed || 1)}>
                                         <Volume2 size={14} className="mr-2" /> Pronounce
                                     </Button>
                                     <Button size="sm" variant="ghost" className="flex-1 text-xs">
