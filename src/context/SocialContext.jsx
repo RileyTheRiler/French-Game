@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 
 const SocialContext = createContext();
@@ -36,26 +37,23 @@ export const SocialProvider = ({ children }) => {
         return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
     });
 
-    const [activeChallenge, setActiveChallenge] = useState({
+    const [baseChallenge, setBaseChallenge] = useState(() => ({
         id: 'chal_weekly_xp',
         title: 'Team XP Weekly',
         target: 10000,
-        current: 0,
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
-    });
+    }));
 
-    // Compute total current progress
-    useEffect(() => {
+    const activeChallenge = useMemo(() => {
         const userContribution = Math.max(0, stats.xp - userCoopStartXp);
-        const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
-
-        setActiveChallenge(prev => ({
-            ...prev,
+        const total = Math.min(baseChallenge.target, userContribution + friendsProgress);
+        return {
+            ...baseChallenge,
             current: total,
-            isCompleted: total >= prev.target
-        }));
-    }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
+            isCompleted: total >= baseChallenge.target
+        };
+    }, [baseChallenge, stats.xp, userCoopStartXp, friendsProgress]);
 
     const claimCoopReward = useCallback(() => {
         if (!activeChallenge.isCompleted) return;
@@ -65,10 +63,8 @@ export const SocialProvider = ({ children }) => {
         // Could add coins here too if Context supported it
 
         // Reset or generate new challenge (mock logic)
-        setActiveChallenge(prev => ({
+        setBaseChallenge(prev => ({
             ...prev,
-            current: 0,
-            isCompleted: false,
             target: Math.floor(prev.target * 1.2), // Increase difficulty
             title: 'Next Team Challenge'
         }));
@@ -166,7 +162,7 @@ export const SocialProvider = ({ children }) => {
         setUserCoopStartXp(0);
     }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         friends,
         addFriend,
         removeFriend,
@@ -175,7 +171,16 @@ export const SocialProvider = ({ children }) => {
         leaveCoopGroup,
         activeChallenge,
         claimCoopReward
-    };
+    }), [
+        friends,
+        addFriend,
+        removeFriend,
+        coopGroup,
+        createCoopGroup,
+        leaveCoopGroup,
+        activeChallenge,
+        claimCoopReward
+    ]);
 
     return (
         <SocialContext.Provider value={value}>
