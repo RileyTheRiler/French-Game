@@ -26,42 +26,6 @@ const VoiceCall = () => {
 
     const currentNode = scenario.nodes[currentNodeId];
 
-    // Effect: Handle Node Transitions
-    useEffect(() => {
-        if (!currentNode) return;
-
-        // If node has 'end' flag
-        if (currentNode.end) {
-            handleSpeak(currentNode.message, () => {
-                setCallState('ended');
-                setStatus('Call Ended');
-                setTimeout(() => {
-                    navigate('/'); // Go back to menu after delay
-                    if (currentNode.success) addXP(scenario.xpReward);
-                }, 3000);
-            });
-            return;
-        }
-
-        // Normal node: NPC speaks first (if message exists)
-        // Note: 'start' node might not have a message if it's the very beginning, 
-        // usually scenario.initialMessage is for the beginning.
-
-        const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
-
-        if (messageToSpeak) {
-            setStatus('Speaking...');
-            handleSpeak(messageToSpeak, () => {
-                // After speaking, start listening
-                startListeningPhase();
-            });
-        } else {
-            // No message (rare), just listen
-            startListeningPhase();
-        }
-
-    }, [currentNodeId, scenario]);
-
     const handleSpeak = (text, onEnd) => {
         setCallState('npc_speaking');
         setIsNpcSpeaking(true);
@@ -86,18 +50,6 @@ const VoiceCall = () => {
         resetTranscript();
         startListening();
     };
-
-    // Effect: Check transcript for matches
-    useEffect(() => {
-        if (callState !== 'listening' || !transcript) return;
-
-        // Debounce slightly to wait for user to finish sentence
-        const timer = setTimeout(() => {
-            handleProcessInput(transcript);
-        }, 1500);
-
-        return () => clearTimeout(timer);
-    }, [transcript, callState]);
 
     const handleProcessInput = (input) => {
         stopListening();
@@ -128,6 +80,60 @@ const VoiceCall = () => {
         }
     };
 
+    // Effect: Handle Node Transitions
+    useEffect(() => {
+        if (!currentNode) return;
+
+        // If node has 'end' flag
+        if (currentNode.end) {
+            setTimeout(() => {
+                handleSpeak(currentNode.message, () => {
+                    setCallState('ended');
+                    setStatus('Call Ended');
+                    setTimeout(() => {
+                        navigate('/'); // Go back to menu after delay
+                        if (currentNode.success) addXP(scenario.xpReward);
+                    }, 3000);
+                });
+            }, 0);
+            return;
+        }
+
+        // Normal node: NPC speaks first (if message exists)
+        // Note: 'start' node might not have a message if it's the very beginning,
+        // usually scenario.initialMessage is for the beginning.
+
+        const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
+
+        if (messageToSpeak) {
+            setTimeout(() => {
+                setStatus('Speaking...');
+                handleSpeak(messageToSpeak, () => {
+                    // After speaking, start listening
+                    startListeningPhase();
+                });
+            }, 0);
+        } else {
+            // No message (rare), just listen
+            setTimeout(() => {
+                startListeningPhase();
+            }, 0);
+        }
+
+    }, [currentNodeId, scenario]);
+
+    // Effect: Check transcript for matches
+    useEffect(() => {
+        if (callState !== 'listening' || !transcript) return;
+
+        // Debounce slightly to wait for user to finish sentence
+        const timer = setTimeout(() => {
+            handleProcessInput(transcript);
+        }, 1500);
+
+        return () => clearTimeout(timer);
+    }, [transcript, callState]);
+
     const handleToggleMic = () => {
         if (isListening) {
             stopListening();
@@ -143,13 +149,9 @@ const VoiceCall = () => {
 
     // Initial Connection Simulation
     useEffect(() => {
-        const timer = setTimeout(() => {
-            // Start the interaction
-            // Trigger the effect by ensuring ID is set (already 'start') 
-            // but we need to trigger the initial message logic.
-            // We can force a re-eval or just rely on mount.
-        }, 1000);
-        return () => clearTimeout(timer);
+        // Trigger the effect by ensuring ID is set (already 'start')
+        // but we need to trigger the initial message logic.
+        // Forcing a re-evaluation if needed, or simply relying on the effect dependency [currentNodeId, scenario]
     }, []);
 
     return (

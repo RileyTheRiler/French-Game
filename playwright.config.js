@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+/* eslint-disable no-undef */
 
 export default defineConfig({
     testDir: './e2e',

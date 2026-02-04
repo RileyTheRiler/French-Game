@@ -5,3 +5,7 @@
 ## 2024-05-24 - Polymorphic Interactive Components
 **Learning:** Manually converting every clickable `div` to a button is tedious and prone to regression. A centralized solution is better.
 **Action:** Modify core UI components (like `Card`) to be polymorphic. If `onClick` is detected, automatically render a `<button>` with accessibility resets (`text-left`, `appearance-none`) and focus rings. This enforces accessibility by default across the app.
+
+## 2024-05-25 - Centralized Loading State
+**Learning:** Inconsistent loading indicators and disabled states across async actions lead to a fragmented user experience.
+**Action:** Integrate `isLoading` directly into the base `Button` component. This ensures a unified visual style (spinner) and enforces accessibility best practices (`aria-busy`, `disabled` attribute) automatically whenever a loading state is triggered.
