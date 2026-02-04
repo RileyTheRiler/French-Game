@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Globe, BookOpen, Star, CheckCircle, XCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -16,16 +16,12 @@ const CultureQuestGame = () => {
     const { addXP } = useProgress();
 
     // Game State
-    const [questions, setQuestions] = useState([]);
+    const [questions] = useState(() => getCultureSession());
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
     const [isAnswered, setIsAnswered] = useState(false);
     const [gameComplete, setGameComplete] = useState(false);
-
-    useEffect(() => {
-        setQuestions(getCultureSession());
-    }, []);
 
     const currentQuestion = questions[currentIndex];
 
@@ -137,11 +133,7 @@ const CultureQuestGame = () => {
                 {/* Fact Reveal */}
                 <AnimatePresence>
                     {isAnswered && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="bg-indigo-900/30 border border-indigo-500/30 p-6 rounded-2xl"
-                        >
+                        <div className="bg-indigo-900/30 border border-indigo-500/30 p-6 rounded-2xl animate-in fade-in slide-in-from-bottom-4 duration-500">
                             <div className="flex items-start gap-3">
                                 <BookOpen className="text-indigo-400 shrink-0 mt-1" />
                                 <div>
@@ -152,7 +144,7 @@ const CultureQuestGame = () => {
                             <Button onClick={handleNext} className="w-full mt-6 bg-indigo-600 hover:bg-indigo-500">
                                 {currentIndex < questions.length - 1 ? "Next Question" : "Finish Quest"}
                             </Button>
-                        </motion.div>
+                        </div>
                     )}
                 </AnimatePresence>
             </div>

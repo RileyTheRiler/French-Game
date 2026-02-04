@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Check, ArrowRight, RotateCcw, Search } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -20,10 +20,6 @@ const ErrorSpottingGame = () => {
     const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
     const MAX_QUESTIONS = 5;
 
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
-
     const loadNextPuzzle = () => {
         const newPuzzle = generateErrorSpotting(1);
         if (newPuzzle) {
@@ -35,7 +31,13 @@ const ErrorSpottingGame = () => {
         }
     };
 
-    const handleWordClick = (word, index) => {
+    useEffect(() => {
+        // Delay to avoid synchronous state update warning on mount
+        const timer = setTimeout(() => loadNextPuzzle(), 0);
+        return () => clearTimeout(timer);
+    }, []);
+
+    const handleWordClick = (word) => {
         if (status !== 'playing') return;
 
         // Clean punctuation for comparison (simple check)
@@ -107,29 +109,23 @@ const ErrorSpottingGame = () => {
                             const isErrorTarget = word.includes(puzzle.error.target);
 
                             return (
-                                <motion.button
+                                <button
                                     key={idx}
-                                    layout
-                                    whileHover={status === 'playing' ? { scale: 1.1, textShadow: "0 0 8px rgba(255,255,255,0.5)" } : {}}
-                                    whileTap={status === 'playing' ? { scale: 0.95 } : {}}
-                                    onClick={() => handleWordClick(word, idx)}
+                                    onClick={() => handleWordClick(word)}
                                     disabled={status !== 'playing'}
                                     className={`
-                                        rounded-lg px-2 py-1 transition-colors relative
-                                        ${status === 'correct' && isErrorTarget ? 'text-red-400 line-through decoration-4' : 'text-white hover:bg-white/10'}
+                                        rounded-lg px-2 py-1 transition-all duration-200 relative
+                                        ${status === 'playing' ? 'hover:scale-110 hover:bg-white/10 active:scale-95' : ''}
+                                        ${status === 'correct' && isErrorTarget ? 'text-red-400 line-through decoration-4' : 'text-white'}
                                     `}
                                 >
                                     {word}
                                     {status === 'correct' && isErrorTarget && (
-                                        <motion.div
-                                            initial={{ opacity: 0, y: -20 }}
-                                            animate={{ opacity: 1, y: -40 }}
-                                            className="absolute left-0 right-0 text-green-400 font-black text-3xl whitespace-nowrap flex justify-center"
-                                        >
+                                        <div className="absolute left-0 right-0 text-green-400 font-black text-3xl whitespace-nowrap flex justify-center -top-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
                                             {puzzle.error.correction}
-                                        </motion.div>
+                                        </div>
                                     )}
-                                </motion.button>
+                                </button>
                             );
                         })}
                     </div>

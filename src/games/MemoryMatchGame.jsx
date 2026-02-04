@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { Timer, Trophy, RotateCcw, Sparkles } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
@@ -22,12 +22,8 @@ const MemoryMatchGame = () => {
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
-
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
+    // const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
+    const difficulty = 'normal';
 
     const startNewGame = () => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
@@ -60,6 +56,12 @@ const MemoryMatchGame = () => {
         setGameComplete(false);
         setDisabled(false);
     };
+
+    // Initialize Game
+    useEffect(() => {
+        startNewGame();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const handleClick = (id) => {
         if (disabled || gameComplete) return;
@@ -100,13 +102,6 @@ const MemoryMatchGame = () => {
         }
     };
 
-    // Check Win Condition
-    useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
-        }
-    }, [solved]);
-
     const handleWin = () => {
         setGameComplete(true);
         SoundManager.playLevelUp();
@@ -120,6 +115,14 @@ const MemoryMatchGame = () => {
         // Let's give nice XP.
         addXP(30);
     };
+
+    // Check Win Condition
+    useEffect(() => {
+        if (cards.length > 0 && solved.length === cards.length) {
+            handleWin();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [solved]);
 
     return (
         <GameLayout
@@ -148,23 +151,21 @@ const MemoryMatchGame = () => {
                         const isSolved = solved.includes(card.id);
 
                         return (
-                            <motion.button
+                            <div
                                 key={card.id}
-                                className={`
-                                    aspect-[3/4] rounded-xl text-lg font-bold p-2 flex items-center justify-center text-center shadow-lg transition-all relative perspective-1000
-                                `}
                                 onClick={() => handleClick(card.id)}
-                                initial={{ rotateY: 0 }}
-                                animate={{
-                                    rotateY: isFlipped ? 180 : 0,
+                                className={`
+                                    aspect-[3/4] rounded-xl text-lg font-bold p-2 flex items-center justify-center text-center shadow-lg transition-all duration-300 relative cursor-pointer
+                                `}
+                                style={{
+                                    transformStyle: 'preserve-3d',
+                                    transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
                                     scale: isSolved ? 0.95 : 1
                                 }}
-                                transition={{ duration: 0.3 }}
-                                style={{ transformStyle: 'preserve-3d' }}
                             >
                                 {/* Front (Card Back) */}
                                 <div className={`
-                                    absolute inset-0 bg-indigo-600 rounded-xl backface-hidden flex items-center justify-center border-b-4 border-indigo-800
+                                    absolute inset-0 bg-indigo-600 rounded-xl flex items-center justify-center border-b-4 border-indigo-800
                                     ${isSolved ? 'opacity-0' : 'opacity-100'}
                                 `}
                                     style={{ backfaceVisibility: 'hidden' }}>
@@ -173,13 +174,13 @@ const MemoryMatchGame = () => {
 
                                 {/* Back (Content) */}
                                 <div className={`
-                                    absolute inset-0 bg-white rounded-xl backface-hidden flex items-center justify-center p-2 border-b-4 
+                                    absolute inset-0 bg-white rounded-xl flex items-center justify-center p-2 border-b-4
                                     ${isSolved ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-300 text-slate-800'}
                                 `}
                                     style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                                     <span className="break-words">{card.content}</span>
                                 </div>
-                            </motion.button>
+                            </div>
                         );
                     })}
                 </div>
@@ -187,12 +188,8 @@ const MemoryMatchGame = () => {
                 {/* Win State */}
                 <AnimatePresence>
                     {gameComplete && (
-                        <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-                        >
-                            <Card className="p-8 max-w-sm w-full text-center space-y-6 m-4">
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                            <Card className="p-8 max-w-sm w-full text-center space-y-6 m-4 animate-in zoom-in duration-300">
                                 <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto">
                                     <Trophy size={40} className="text-amber-500" />
                                 </div>
@@ -205,7 +202,7 @@ const MemoryMatchGame = () => {
                                     <Button variant="ghost" onClick={() => navigate('/')}>Back to Menu</Button>
                                 </div>
                             </Card>
-                        </motion.div>
+                        </div>
                     )}
                 </AnimatePresence>
 

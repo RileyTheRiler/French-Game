@@ -18,11 +18,16 @@ const SentenceBuilderGame = ({ onExit }) => {
     useEffect(() => {
         if (scenario) {
             // Shuffle words for the word bank
-            setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
-            setSelectedWords([]);
-            setFeedback(null);
-            setMonitorMessage(null);
-            setMonitorTipId(null);
+            const shuffled = [...scenario.words].sort(() => Math.random() - 0.5);
+            // Defer state update to avoid synchronous setState in effect warning
+            const timer = setTimeout(() => {
+                setAvailableWords(shuffled);
+                setSelectedWords([]);
+                setFeedback(null);
+                setMonitorMessage(null);
+                setMonitorTipId(null);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [currentScenarioIndex, scenario]);
 
