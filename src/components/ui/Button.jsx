@@ -1,6 +1,7 @@
 import React from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 const variants = {
@@ -23,16 +24,19 @@ export const Button = ({
     children,
     variant = 'default',
     size = 'md',
+    isLoading,
     className,
     onClick,
     disabled,
     'aria-label': ariaLabel,
     ...props
 }) => {
+    const isDisabled = disabled || isLoading;
+
     return (
         <motion.button
-            whileHover={{ scale: disabled ? 1 : 1.02 }}
-            whileTap={{ scale: disabled ? 1 : 0.98 }}
+            whileHover={{ scale: isDisabled ? 1 : 1.02 }}
+            whileTap={{ scale: isDisabled ? 1 : 0.98 }}
             className={cn(
                 "relative rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 border disabled:opacity-50 disabled:cursor-not-allowed",
                 variants[variant],
@@ -40,11 +44,13 @@ export const Button = ({
                 className
             )}
             onClick={onClick}
-            disabled={disabled}
-            aria-disabled={disabled}
+            disabled={isDisabled}
+            aria-disabled={isDisabled}
+            aria-busy={isLoading}
             aria-label={ariaLabel}
             {...props}
         >
+            {isLoading && <Loader2 className="animate-spin w-4 h-4" />}
             {children}
         </motion.button>
     );
