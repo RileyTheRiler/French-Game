@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain, Target } from 'lucide-react';
 import DifficultyDial from './ui/DifficultyDial';
 import { useProgress } from '../context/ProgressContext';
@@ -7,6 +7,7 @@ import { useVocabulary } from '../context/VocabularyContext';
 import { warmVoiceCache } from '../utils/audio';
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
+import { Button } from './ui/Button';
 
 const SettingsModal = ({ onClose }) => {
     const {
@@ -282,13 +283,14 @@ const SettingsModal = ({ onClose }) => {
                                     />
                                 </div>
                                 {error && <p className="text-xs text-red-400">{error}</p>}
-                                <button
+                                <Button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-sm transition disabled:opacity-70"
+                                    isLoading={loading}
+                                    className="w-full"
                                 >
                                     {loading ? 'Working…' : authMode === 'signin' ? 'Sign In' : 'Create Account'}
-                                </button>
+                                </Button>
                             </form>
                         )}
                     </div>
