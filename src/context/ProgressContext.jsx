@@ -6,119 +6,119 @@ import { useToast } from './ToastContext';
 
 const ProgressContext = createContext();
 
+const DEFAULT_STATS = {
+    xp: 0,
+    seasonalXp: 0,
+    streak: 0,
+    coins: 50,
+    inventory: {},
+    doubleXpUntil: null,
+    lastLoginDate: null,
+    highScore: 0,
+    wordsLearned: 0,
+    storiesCompleted: 0,
+    conversationsCompleted: 0,
+    perfectQuizzes: 0,
+    unlockedAchievements: [],
+    onboardingComplete: false,
+    placementComplete: false,
+    placementResult: null,
+    onboardingRewarded: false,
+    targetCefr: 'B1',
+    categoryPerformance: {},
+    weeklyGoal: {
+        sessions: 5,
+        minutes: 120,
+        sessionsPerWeek: 3,
+        currentWeekStart: null,
+        sessionsThisWeek: [],
+        lastWeekCompleted: false
+    },
+    difficultySettings: {
+        fallingWords: 3,
+        flashcards: 2,
+        grammar: 2,
+        globalMultiplier: 1.0,
+        showHints: true,
+        practiceModeNoPenalty: false,
+        challengeMode: false,
+        hintDelay: 8,
+        freeFormInput: false,
+        learnerType: 'casual'
+    },
+    categoryStats: {},
+    userGoals: {
+        targetCEFR: "A1",
+        weeklyXP: 1000,
+        weeklyWords: 20
+    },
+    dailyStats: {},
+    errorPatterns: {},
+    reviewQueue: [],
+    dailyMixStreak: 0,
+    lastDailyMixDate: null,
+    weakWords: {},
+    conceptMastery: {},
+    dailyXPGoal: 50,
+    conversationHistory: [],
+    conversationStats: {
+        totalSessions: 0,
+        avgAccuracy: 0,
+        avgFluency: 0
+    },
+    learningProfile: {
+        preferAudio: null,
+        preferStructured: null,
+        preferPressure: null,
+        preferGrammar: null,
+        preferDaily: null,
+        completed: false,
+        completedAt: null
+    },
+    globalDifficulty: 25,
+    focusModeStats: {
+        grammarHour: { completed: 0, totalTime: 0 },
+        listeningLab: { completed: 0, totalTime: 0 },
+        vocabSprint: { completed: 0, totalTime: 0 }
+    },
+    branchingStoriesProgress: {},
+    readingRoomProgress: {},
+    shadowingProgress: {},
+    cultureArticlesRead: [],
+    userLessonsCreated: 0,
+    speedRoundEnabled: true,
+    preferredPlaybackSpeed: 1.0,
+    podcastSessionsCompleted: 0,
+    writingPadSessions: 0,
+    patternDrillsCompleted: 0,
+    regionProgress: {},
+    mediaProgress: {},
+    cognitiveStats: {
+        flowMultiplier: 1.0,
+        lastResponseTimes: [],
+        recentMisses: 0,
+        fatigueLevel: 0,
+        sessionStartTime: null,
+        smartBreakSuggested: false
+    },
+    dreamGoals: {
+        thinkingInFrench: null,
+        dreamingInFrench: null,
+        firstJokeUnderstood: null,
+        firstSongUnderstood: null
+    },
+    memoryPalace: {
+        rooms: {},
+        unlockedRooms: ['kitchen']
+    },
+    survivalBest: {},
+    seasonEndsAt: null,
+    seasonId: null,
+    lastWeeklyRecap: null
+};
+
 export const ProgressProvider = ({ children }) => {
     const { showAchievement, showSuccess } = useToast();
-
-    const defaultStats = useMemo(() => ({
-        xp: 0,
-        seasonalXp: 0,
-        streak: 0,
-        coins: 50,
-        inventory: {},
-        doubleXpUntil: null,
-        lastLoginDate: null,
-        highScore: 0,
-        wordsLearned: 0,
-        storiesCompleted: 0,
-        conversationsCompleted: 0,
-        perfectQuizzes: 0,
-        unlockedAchievements: [],
-        onboardingComplete: false,
-        placementComplete: false,
-        placementResult: null,
-        onboardingRewarded: false,
-        targetCefr: 'B1',
-        categoryPerformance: {},
-        weeklyGoal: {
-            sessions: 5,
-            minutes: 120,
-            sessionsPerWeek: 3,
-            currentWeekStart: null,
-            sessionsThisWeek: [],
-            lastWeekCompleted: false
-        },
-        difficultySettings: {
-            fallingWords: 3,
-            flashcards: 2,
-            grammar: 2,
-            globalMultiplier: 1.0,
-            showHints: true,
-            practiceModeNoPenalty: false,
-            challengeMode: false,
-            hintDelay: 8,
-            freeFormInput: false,
-            learnerType: 'casual'
-        },
-        categoryStats: {},
-        userGoals: {
-            targetCEFR: "A1",
-            weeklyXP: 1000,
-            weeklyWords: 20
-        },
-        dailyStats: {},
-        errorPatterns: {},
-        reviewQueue: [],
-        dailyMixStreak: 0,
-        lastDailyMixDate: null,
-        weakWords: {},
-        conceptMastery: {},
-        dailyXPGoal: 50,
-        conversationHistory: [],
-        conversationStats: {
-            totalSessions: 0,
-            avgAccuracy: 0,
-            avgFluency: 0
-        },
-        learningProfile: {
-            preferAudio: null,
-            preferStructured: null,
-            preferPressure: null,
-            preferGrammar: null,
-            preferDaily: null,
-            completed: false,
-            completedAt: null
-        },
-        globalDifficulty: 25,
-        focusModeStats: {
-            grammarHour: { completed: 0, totalTime: 0 },
-            listeningLab: { completed: 0, totalTime: 0 },
-            vocabSprint: { completed: 0, totalTime: 0 }
-        },
-        branchingStoriesProgress: {},
-        readingRoomProgress: {},
-        shadowingProgress: {},
-        cultureArticlesRead: [],
-        userLessonsCreated: 0,
-        speedRoundEnabled: true,
-        preferredPlaybackSpeed: 1.0,
-        podcastSessionsCompleted: 0,
-        writingPadSessions: 0,
-        patternDrillsCompleted: 0,
-        regionProgress: {},
-        mediaProgress: {},
-        cognitiveStats: {
-            flowMultiplier: 1.0,
-            lastResponseTimes: [],
-            recentMisses: 0,
-            fatigueLevel: 0,
-            sessionStartTime: null,
-            smartBreakSuggested: false
-        },
-        dreamGoals: {
-            thinkingInFrench: null,
-            dreamingInFrench: null,
-            firstJokeUnderstood: null,
-            firstSongUnderstood: null
-        },
-        memoryPalace: {
-            rooms: {},
-            unlockedRooms: ['kitchen']
-        },
-        survivalBest: {},
-        seasonEndsAt: null,
-        seasonId: null,
-        lastWeeklyRecap: null
-    }), []);
 
     const [stats, setStats] = useState(() => {
         try {
@@ -126,24 +126,24 @@ export const ProgressProvider = ({ children }) => {
             if (saved) {
                 const parsed = JSON.parse(saved);
                 return {
-                    ...defaultStats,
+                    ...DEFAULT_STATS,
                     ...parsed,
-                    inventory: { ...defaultStats.inventory, ...(parsed.inventory || {}) },
-                    weeklyGoal: { ...defaultStats.weeklyGoal, ...(parsed.weeklyGoal || {}) },
-                    categoryPerformance: parsed.categoryPerformance || defaultStats.categoryPerformance,
-                    difficultySettings: { ...defaultStats.difficultySettings, ...(parsed.difficultySettings || {}) },
+                    inventory: { ...DEFAULT_STATS.inventory, ...(parsed.inventory || {}) },
+                    weeklyGoal: { ...DEFAULT_STATS.weeklyGoal, ...(parsed.weeklyGoal || {}) },
+                    categoryPerformance: parsed.categoryPerformance || DEFAULT_STATS.categoryPerformance,
+                    difficultySettings: { ...DEFAULT_STATS.difficultySettings, ...(parsed.difficultySettings || {}) },
                     dailyStats: parsed.dailyStats || {},
                     errorPatterns: parsed.errorPatterns || {},
                     lastWeeklyRecap: parsed.lastWeeklyRecap || null,
-                    cognitiveStats: { ...defaultStats.cognitiveStats, ...(parsed.cognitiveStats || {}) },
-                    dreamGoals: { ...defaultStats.dreamGoals, ...(parsed.dreamGoals || {}) },
-                    memoryPalace: { ...defaultStats.memoryPalace, ...(parsed.memoryPalace || {}) }
+                    cognitiveStats: { ...DEFAULT_STATS.cognitiveStats, ...(parsed.cognitiveStats || {}) },
+                    dreamGoals: { ...DEFAULT_STATS.dreamGoals, ...(parsed.dreamGoals || {}) },
+                    memoryPalace: { ...DEFAULT_STATS.memoryPalace, ...(parsed.memoryPalace || {}) }
                 };
             }
         } catch (e) {
             console.error("Failed to parse saved progress", e);
         }
-        return defaultStats;
+        return DEFAULT_STATS;
     });
 
     useEffect(() => {
@@ -355,9 +355,6 @@ export const ProgressProvider = ({ children }) => {
         return [];
     }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
 
-    // Check achievements when relevant stats change
-    }, [stats.xp, stats.unlockedAchievements, stats.dailyStats, stats.streak, stats.wordsLearned, showAchievement]);
-
     useEffect(() => {
         const timer = setTimeout(() => {
             checkAchievements();
@@ -486,41 +483,10 @@ export const ProgressProvider = ({ children }) => {
         });
     }, []);
 
-    const [audioEnabled, setAudioEnabled] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_audio');
-        return saved !== null ? JSON.parse(saved) : true;
-    });
-    const [offlineAudio, setOfflineAudio] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_offlineAudio');
-        return saved !== null ? JSON.parse(saved) : false;
-    });
-    const [reducedMotion, setReducedMotion] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_reducedMotion');
-        return saved !== null ? JSON.parse(saved) : false;
-    });
-    const [colorTheme, setColorTheme] = useState(() => {
-        return localStorage.getItem('frenchApp_colorTheme') || 'midnight';
-    });
-
-    useEffect(() => { localStorage.setItem('frenchApp_audio', JSON.stringify(audioEnabled)); }, [audioEnabled]);
-    useEffect(() => { localStorage.setItem('frenchApp_offlineAudio', JSON.stringify(offlineAudio)); }, [offlineAudio]);
-    useEffect(() => {
-        localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
-        document.body.classList.toggle('reduced-motion', reducedMotion);
-    }, [reducedMotion]);
-    useEffect(() => {
-        localStorage.setItem('frenchApp_colorTheme', colorTheme);
-        document.body.dataset.theme = colorTheme;
-    }, [colorTheme]);
-
-    const toggleAudio = useCallback(() => setAudioEnabled(prev => !prev), []);
-    const toggleOfflineAudio = useCallback(() => setOfflineAudio(prev => !prev), []);
-    const toggleReducedMotion = useCallback(() => setReducedMotion(prev => !prev), []);
-    const switchColorTheme = useCallback((theme) => setColorTheme(theme), []);
 
     const resetProgress = useCallback(() => {
-        setStats({ ...defaultStats });
-    }, [defaultStats]);
+        setStats({ ...DEFAULT_STATS });
+    }, []);
 
     const setTargetCefr = useCallback((level = 'B1') => {
         setStats(prev => ({ ...prev, targetCefr: level }));
@@ -955,7 +921,6 @@ export const ProgressProvider = ({ children }) => {
                 ...prev.cognitiveStats,
                 ...updates
             },
-            cognitiveStats: { ...prev.cognitiveStats, ...updates },
             updatedAt: Date.now()
         }));
     }, []);
@@ -967,12 +932,10 @@ export const ProgressProvider = ({ children }) => {
                 ...prev.dreamGoals,
                 [goalId]: Date.now()
             },
-            dreamGoals: { ...prev.dreamGoals, [goalId]: Date.now() },
             updatedAt: Date.now()
         }));
     }, []);
 
-    const updateMemoryPalaceRoom = useCallback((roomId, items) => {
     const updateMemoryPalaceRoom = useCallback((roomId, data) => {
         setStats(prev => ({
             ...prev,
