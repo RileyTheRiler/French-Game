@@ -18,7 +18,8 @@ import { formatRelativeTime } from '../utils/time';
 const FlashcardMode = ({ mode = 'standard' }) => {
     const { deckId } = useParams();
     const navigate = useNavigate();
-    const onExit = () => navigate('/');
+    // Wrap onExit in useCallback to stabilize dependency
+    const onExit = useCallback(() => navigate('/'), [navigate]);
 
     const {
         updateWordProgress, vocabulary, getWeightedPracticeWords, getDeckWords, customDecks,
@@ -112,7 +113,7 @@ const FlashcardMode = ({ mode = 'standard' }) => {
         if (currentWord) {
             markWordSeen(currentWord.id);
         }
-    }, [currentWord?.id, markWordSeen]);
+    }, [currentWord, markWordSeen]);
 
     useEffect(() => {
         cardStartRef.current = performance.now();
