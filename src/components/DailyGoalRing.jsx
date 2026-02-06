@@ -26,13 +26,18 @@ const DailyGoalRing = () => {
     // Celebrate when goal is reached
     useEffect(() => {
         if (isComplete && !hasAnimated) {
-            setJustCompleted(true);
-            triggerConfetti(CONFETTI_PRESETS.goal);
-            setHasAnimated(true);
+            const t = setTimeout(() => {
+                setJustCompleted(true);
+                triggerConfetti(CONFETTI_PRESETS.goal);
+                setHasAnimated(true);
+            }, 0);
 
             // Reset justCompleted after animation
             const timer = setTimeout(() => setJustCompleted(false), 2000);
-            return () => clearTimeout(timer);
+            return () => {
+                clearTimeout(t);
+                clearTimeout(timer);
+            };
         }
     }, [isComplete, hasAnimated, triggerConfetti]);
 

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Send, Lightbulb, CheckCircle, Clock, Star, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Send, Lightbulb, CheckCircle, Clock, Star, ChevronRight, Edit3 } from 'lucide-react';
 import { useCommunity } from '../../context/CommunityContext';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 
 const WritingExercise = ({ onBack, initialPromptId = null }) => {
-    const { getPrompts, submitWriting, myWritings, WRITING_PROMPTS } = useCommunity();
+    const { submitWriting, myWritings, WRITING_PROMPTS } = useCommunity();
     const [selectedPrompt, setSelectedPrompt] = useState(null);
     const [text, setText] = useState('');
     const [showHints, setShowHints] = useState(false);
@@ -127,6 +127,7 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
 
                 {myWritings.length === 0 ? (
                     <div className="text-center py-12 text-slate-500">
+                        <Edit3 size={48} className="mx-auto mb-4 opacity-30" />
                         <p>You haven't submitted any writings yet.</p>
                         <Button onClick={() => setView('prompts')} className="mt-4">
                             Start Writing

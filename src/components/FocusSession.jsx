@@ -38,7 +38,8 @@ const FocusSession = () => {
     const [isCorrect, setIsCorrect] = useState(false);
     const [selectedOption, setSelectedOption] = useState(null);
     const [score, setScore] = useState(0);
-    const [sessionStartTime] = useState(Date.now());
+    const [sessionStartTime] = useState(() => Date.now());
+    const [finalTime, setFinalTime] = useState(0);
     const [isComplete, setIsComplete] = useState(false);
 
     // Speed Round local state
@@ -154,6 +155,7 @@ const FocusSession = () => {
 
     const finishSession = () => {
         const timeSpent = Date.now() - sessionStartTime;
+        setFinalTime(timeSpent);
         recordFocusModeCompletion(mode, timeSpent);
         addXP(score);
         setIsComplete(true);
@@ -183,7 +185,7 @@ const FocusSession = () => {
                             </div>
                             <div className="glass-panel p-4 text-center">
                                 <div className="text-3xl font-black text-amber-400">
-                                    {Math.floor((Date.now() - sessionStartTime) / 60000)}m
+                                    {Math.floor(finalTime / 60000)}m
                                 </div>
                                 <div className="text-xs text-slate-400 uppercase font-bold">Time Spent</div>
                             </div>
@@ -366,7 +368,7 @@ const SpeedRoundController = ({ vocabulary, onAnswer }) => {
     }, [vocabulary]);
 
     useEffect(() => {
-        nextQuestion();
+        setTimeout(() => nextQuestion(), 0);
     }, [nextQuestion]);
 
     const handleVote = (answer) => {

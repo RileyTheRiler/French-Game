@@ -61,27 +61,26 @@ const ConversationSimulator = () => {
     useEffect(() => {
         if (!activeScenario || gameOver || feedbackModal) return;
 
-        // Reset input state
-        setUserInputValue("");
-        setShowLegacyOptions(false);
+        // Defer state updates to avoid synchronous setState warnings
+        const timer = setTimeout(() => {
+            // Reset input state
+            setUserInputValue("");
+            setShowLegacyOptions(false);
 
-        // Clear any existing timer
-        if (optionsTimerRef.current) {
-            clearTimeout(optionsTimerRef.current);
-        }
+            // Hide options initially
+            setShowOptions(false);
 
-        // Hide options initially
-        setShowOptions(false);
-
-        if (hintDelay === 0) {
-            setShowOptions(true);
-        } else {
-            optionsTimerRef.current = setTimeout(() => {
+            if (hintDelay === 0) {
                 setShowOptions(true);
-            }, hintDelay * 1000);
-        }
+            } else {
+                optionsTimerRef.current = setTimeout(() => {
+                    setShowOptions(true);
+                }, hintDelay * 1000);
+            }
+        }, 0);
 
         return () => {
+            clearTimeout(timer);
             if (optionsTimerRef.current) {
                 clearTimeout(optionsTimerRef.current);
             }

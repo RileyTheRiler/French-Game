@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
-    Award, TrendingUp, BookOpen, Target, MessageCircle,
+    TrendingUp, BookOpen, Target, MessageCircle,
     CheckCircle, AlertCircle, Lightbulb, ArrowRight, RotateCcw,
     Sparkles, Zap
 } from 'lucide-react';

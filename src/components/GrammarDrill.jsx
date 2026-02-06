@@ -19,7 +19,7 @@ const GrammarDrill = () => {
     const difficultySetting = stats?.difficultySettings?.grammar || 2;
     const [difficulty, setDifficulty] = useState(difficultySetting);
     const [sessionPoints, setSessionPoints] = useState(0);
-    const questionStartRef = useRef(performance.now());
+    const questionStartRef = useRef(0);
 
     const [drills, setDrills] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);

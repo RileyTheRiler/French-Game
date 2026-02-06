@@ -114,7 +114,7 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
         if (onSaveProgress && currentNode?.type !== 'ending') {
             onSaveProgress(story.id, { currentNode: currentNodeId, history });
         }
-    }, [currentNodeId, history]);
+    }, [currentNodeId, history, onSaveProgress, story.id, currentNode?.type]);
 
     const handleChoice = (choice) => {
         SoundManager.playPop();
