@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { cn } from '../../utils/cn';
 
-export const Card = ({ children, className, hover = false, ...props }) => {
+export const Card = memo(({ children, className, hover = false, ...props }) => {
     const isInteractive = !!props.onClick;
     const Component = isInteractive ? motion.button : motion.div;
 
@@ -23,18 +23,18 @@ export const Card = ({ children, className, hover = false, ...props }) => {
             {children}
         </Component>
     );
-};
+});
 
-export const CardHeader = ({ children, className }) => (
+export const CardHeader = memo(({ children, className }) => (
     <div className={cn("mb-4", className)}>{children}</div>
-);
+));
 
-export const CardTitle = ({ children, className }) => (
+export const CardTitle = memo(({ children, className }) => (
     <h3 className={cn("text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400", className)}>
         {children}
     </h3>
-);
+));
 
-export const CardContent = ({ children, className }) => (
+export const CardContent = memo(({ children, className }) => (
     <div className={cn("", className)}>{children}</div>
-);
+));
