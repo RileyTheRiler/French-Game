@@ -13,44 +13,57 @@ export const generateSalt = () => {
 };
 
 export async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await crypto.subtle.importKey('raw', data, { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']);
-  const derivedBits = await crypto.subtle.deriveBits(
-    { ...PBKDF2_CONFIG, salt },
-    key,
-    256
-  );
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const key = await crypto.subtle.importKey(
+        'raw',
+        data,
+        { name: 'PBKDF2' },
+        false,
+        ['deriveBits', 'deriveKey']
+    );
+    const derivedBits = await crypto.subtle.deriveBits(
+        { ...PBKDF2_CONFIG, salt },
+        key,
+        256
+    );
 
-  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
-  const hashHex = Array.from(new Uint8Array(derivedBits)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+    const hashHex = Array.from(new Uint8Array(derivedBits)).map(b => b.toString(16).padStart(2, '0')).join('');
 
-  return `${saltHex}:${hashHex}`;
+    return `${saltHex}:${hashHex}`;
 }
 
 export async function verifyPassword(stored, password) {
-  if (!stored) return false;
-  // Legacy plaintext support - insecure but necessary for backward compatibility until migrated
-  if (!stored.includes(':')) {
-    return stored === password;
-  }
+    if (!stored) return false;
+    // Legacy plaintext support - insecure but necessary for backward compatibility until migrated
+    if (!stored.includes(':')) {
+        return stored === password;
+    }
 
-  const [saltHex, hashHex] = stored.split(':');
-  if (!saltHex || !hashHex) return false;
+    const parts = stored.split(':');
+    if (parts.length !== 2) return false;
+    const [saltHex, hashHex] = parts;
+    if (!saltHex || !hashHex) return false;
 
-  const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    // Validate hex strings
+    if (!/^[0-9a-fA-F]+$/.test(saltHex) || !/^[0-9a-fA-F]+$/.test(hashHex)) {
+        return false;
+    }
 
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const key = await crypto.subtle.importKey('raw', data, { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']);
-  const derivedBits = await crypto.subtle.deriveBits(
-    { ...PBKDF2_CONFIG, salt },
-    key,
-    256
-  );
+    const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
 
-  const derivedHex = Array.from(new Uint8Array(derivedBits)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const key = await crypto.subtle.importKey('raw', data, { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']);
+    const derivedBits = await crypto.subtle.deriveBits(
+        { ...PBKDF2_CONFIG, salt },
+        key,
+        256
+    );
 
-  return derivedHex === hashHex;
+    const derivedHex = Array.from(new Uint8Array(derivedBits)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    return derivedHex === hashHex;
 }
