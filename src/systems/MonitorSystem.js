@@ -19,7 +19,7 @@ export class MonitorSystem {
      * @param {object} context Additional context (e.g., scenario type).
      * @returns {{ message: string, tipId: string | null }} Feedback with optional tip reference.
      */
-    analyze(targetSentence, userSentence, context = {}) {
+    analyze(targetSentence, userSentence) {
         const targetWords = targetSentence.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?]/g, "").split(/\s+/);
         const userWords = userSentence.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()?]/g, "").split(/\s+/);
 
