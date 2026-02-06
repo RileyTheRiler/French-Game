@@ -48,10 +48,6 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
         return () => clearInterval(timer);
     }, [isActive, gameOver]);
 
-    useEffect(() => {
-        nextQuestion();
-    }, []);
-
     const nextQuestion = () => {
         if (vocabulary.length < 4) return;
         const target = vocabulary[Math.floor(Math.random() * vocabulary.length)];
@@ -64,6 +60,10 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
         setCurrentWord(target);
         setOptions([target.english, ...distractors].sort(() => Math.random() - 0.5));
     };
+
+    useEffect(() => {
+        setTimeout(() => nextQuestion(), 0);
+    }, []);
 
     const handleAnswer = (answer) => {
         if (gameOver) return;
@@ -203,7 +203,7 @@ const DailyMix = () => {
 
     useEffect(() => {
         if (vocabulary.length > 0 && sessionQueue.length === 0) {
-            generateSession();
+            setTimeout(() => generateSession(), 0);
         }
     }, [vocabulary]);
 

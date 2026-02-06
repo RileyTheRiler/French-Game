@@ -30,10 +30,12 @@ const DailyChallengeWidget = () => {
     });
 
     useEffect(() => {
-        setChallenges(getTodaysChallenges());
-        const activeTimed = getActiveTimedChallenge();
-        setTimedChallenge(activeTimed);
-        setTimeRemaining(activeTimed.expiresAt - Date.now());
+        setTimeout(() => {
+            setChallenges(getTodaysChallenges());
+            const activeTimed = getActiveTimedChallenge();
+            setTimedChallenge(activeTimed);
+            setTimeRemaining(activeTimed.expiresAt - Date.now());
+        }, 0);
     }, []);
 
     useEffect(() => {

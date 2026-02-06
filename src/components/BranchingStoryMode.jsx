@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Book, ChevronLeft, Award, Lock, BookOpen, Play, Pause,
-    RotateCcw, Trophy, Star, Volume2, Check, X, ChevronRight,
-    Sparkles, Map
+    Trophy, Star, Volume2, Check, X, ChevronRight,
+    Sparkles, Map, Lock, RotateCcw
 } from 'lucide-react';
-import { BRANCHING_STORIES, getStoryById } from '../data/branchingStories';
+import { BRANCHING_STORIES } from '../data/branchingStories';
 import { useProgress } from '../context/ProgressContext';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
@@ -115,7 +114,7 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
         if (onSaveProgress && currentNode?.type !== 'ending') {
             onSaveProgress(story.id, { currentNode: currentNodeId, history });
         }
-    }, [currentNodeId, history]);
+    }, [currentNodeId, history, onSaveProgress, story.id, currentNode?.type]);
 
     const handleChoice = (choice) => {
         SoundManager.playPop();

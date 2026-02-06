@@ -104,13 +104,15 @@ const PlacementQuiz = () => {
 
     useEffect(() => {
         if (showResults && !placementSaved) {
-            applyPlacementResult({
-                xpAward,
-                accuracy,
-                totalQuestions
-            });
-            showSuccess(`Placement saved! Starting XP: ${xpAward}`);
-            setPlacementSaved(true);
+            setTimeout(() => {
+                applyPlacementResult({
+                    xpAward,
+                    accuracy,
+                    totalQuestions
+                });
+                showSuccess(`Placement saved! Starting XP: ${xpAward}`);
+                setPlacementSaved(true);
+            }, 0);
         }
     }, [applyPlacementResult, showResults, placementSaved, xpAward, accuracy, totalQuestions, showSuccess]);
 
