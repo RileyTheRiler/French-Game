@@ -4,6 +4,21 @@ import StudySession from './StudySession';
 import { VocabularyContext } from '../../context/VocabularyContext';
 import { MemoryRouter } from 'react-router-dom';
 
+// Mock contexts
+vi.mock('../../context/ProgressContext', () => ({
+    useProgress: () => ({
+        addXP: vi.fn(),
+        addCoins: vi.fn(),
+        updateDailyStat: vi.fn(),
+    }),
+}));
+
+vi.mock('../../context/ToastContext', () => ({
+    useToast: () => ({
+        showToast: vi.fn(),
+    }),
+}));
+
 // Mocks
 vi.mock('../../utils/SoundManager', () => ({
     default: {
@@ -21,6 +36,7 @@ vi.mock('../../utils/InteractionEffects', () => ({
 const mockVocabulary = {
     getDueWords: vi.fn(),
     updateWordProgress: vi.fn(),
+    markWordSeen: vi.fn(),
     vocabulary: [
         { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1', category: 'Greetings' },
         { id: '2', french: 'Chat', english: 'Cat', cefr: 'A1', category: 'Animals' }
