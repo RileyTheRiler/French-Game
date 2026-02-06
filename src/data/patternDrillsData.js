@@ -125,7 +125,7 @@ export function generateConjugationExercise(verbInfinitive = null, tense = null,
  * @param {number} difficulty - Global difficulty value (0-100)
  * @returns {Object} Exercise data
  */
-export function generateAgreementExercise(difficulty = 25) {
+export function generateAgreementExercise() {
     const noun = NOUNS_FOR_AGREEMENT[Math.floor(Math.random() * NOUNS_FOR_AGREEMENT.length)];
     const adjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
 
@@ -160,7 +160,7 @@ export function generateAgreementExercise(difficulty = 25) {
  * @param {number} difficulty - Global difficulty value (0-100)
  * @returns {Object} Exercise data
  */
-export function generatePatternCompletionExercise(difficulty = 25) {
+export function generatePatternCompletionExercise() {
     // Pick a regular -er or -ir verb
     const regularVerbs = VERB_DATA.filter(v => v.group === 1 || v.group === 2);
     const verb = regularVerbs[Math.floor(Math.random() * regularVerbs.length)];

@@ -128,7 +128,7 @@ export const GRAMMAR_RULES = {
          * @param {Object} context - Additional context (e.g., target sentence, word metadata)
          * @returns {GrammarError|null}
          */
-        check: (userInput, context = {}) => {
+        check: (userInput) => {
             const words = userInput.toLowerCase().split(/\s+/);
 
             for (let i = 0; i < words.length - 1; i++) {
@@ -193,7 +193,7 @@ export const GRAMMAR_RULES = {
         conceptId: 'avoir_expressions',
         title: 'Age Uses "Avoir" Not "Être"',
 
-        check: (userInput, context = {}) => {
+        check: (userInput) => {
             const pattern = /je\s+suis\s+(\d+)\s*ans?/i;
             const match = userInput.match(pattern);
 
@@ -233,12 +233,9 @@ export const GRAMMAR_RULES = {
         conceptId: 'politeness',
         title: 'Polite Requests: "Je voudrais" vs "Je veux"',
 
-        check: (userInput, context = {}) => {
+        check: (userInput) => {
             // Only flag in service contexts (ordering, requesting)
-            const isServiceContext = context.scenario?.includes('cafe') ||
-                context.scenario?.includes('restaurant') ||
-                context.scenario?.includes('shop') ||
-                /commander|s'il vous plaît|un café|une baguette/i.test(userInput);
+            const isServiceContext = /commander|s'il vous plaît|un café|une baguette/i.test(userInput);
 
             if (isServiceContext && /\bje\s+veux\b/i.test(userInput)) {
                 return {
@@ -276,7 +273,7 @@ export const GRAMMAR_RULES = {
         conceptId: 'negation',
         title: 'Negation: ne...pas',
 
-        check: (userInput, context = {}) => {
+        check: (userInput) => {
             // Check for "pas" without "ne" (informal but okay) - only flag in Scholar mode
             // Check for incorrect placement like "Je pas comprends"
 
@@ -323,7 +320,7 @@ export const GRAMMAR_RULES = {
         conceptId: 'adjective_agreement',
         title: 'Adjective Gender/Number Agreement',
 
-        check: (userInput, context = {}) => {
+        check: (userInput) => {
             // Common patterns: masculine adj + feminine noun
             const patterns = [
                 { pattern: /\b(un|le)\s+(petit|grand|bon|mauvais|nouveau)\s+(maison|table|femme|fille|voiture)\b/i, gender: 'feminine' },
@@ -373,11 +370,11 @@ export const GRAMMAR_RULES = {
  * @param {Object} context - Additional context
  * @returns {GrammarError[]} Array of detected errors
  */
-export const checkGrammar = (userInput, context = {}) => {
+export const checkGrammar = (userInput) => {
     const errors = [];
 
     for (const rule of Object.values(GRAMMAR_RULES)) {
-        const error = rule.check(userInput, context);
+        const error = rule.check(userInput);
         if (error) {
             errors.push(error);
         }

@@ -54,7 +54,7 @@ const VoiceCall = () => {
         };
 
         // If node has 'end' flag
-        if (currentNode.end) {
+        if (currentNode && currentNode.end) {
             handleSpeak(currentNode.message, () => {
                 setTimeout(() => {
                     setCallState('ended');

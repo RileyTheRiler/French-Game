@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
 // Confetti particle component
+// eslint-disable-next-line no-unused-vars
 const Particle = ({ style, color }) => (
     <div
         className="absolute pointer-events-none"
@@ -10,7 +11,7 @@ const Particle = ({ style, color }) => (
             backgroundColor: color,
             width: '10px',
             height: '10px',
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            borderRadius: '50%',
         }}
     />
 );
@@ -78,7 +79,7 @@ const ConfettiEffect = ({
                         className="w-3 h-3"
                         style={{
                             backgroundColor: particle.color,
-                            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                            borderRadius: '50%',
                             transform: `scale(${particle.scale})`,
                         }}
                     />
