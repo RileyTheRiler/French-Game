@@ -45,7 +45,7 @@ const LEARNING_STYLES = {
  * @returns {Object} Skill profile
  */
 export const computeSkillProfile = (progressData, vocabularyData) => {
-    const { categoryStats = {}, errorPatterns = {}, dailyStats = {}, weakWords = {} } = progressData;
+    const { categoryStats = {}, dailyStats = {} } = progressData;
 
     // Calculate category strengths (0-100)
     const categoryStrengths = {};
@@ -270,7 +270,7 @@ const shuffleWithinClusters = (items, clusterSize) => {
  * @returns {Object} Difficulty adjustment parameters
  */
 export const getDifficultyAdjustment = (recentPerformance) => {
-    const { accuracy = 0.7, avgResponseTime = 3000, streakLength = 0 } = recentPerformance;
+    const { accuracy = 0.7, streakLength = 0 } = recentPerformance;
 
     let multiplier = 1.0;
     let timerAdjustment = 0;

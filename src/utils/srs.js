@@ -285,7 +285,7 @@ export const getConceptInitialState = () => ({
  * @param {object} options - Optional settings
  * @returns {object} The new state
  */
-export const calculateConceptNextReview = (previousState, grade, options = {}) => {
+export const calculateConceptNextReview = (previousState, grade) => {
     grade = clampGrade(grade);
     let { interval, repetition, ef, attempts, correct, masteryLevel } =
         previousState || getConceptInitialState();

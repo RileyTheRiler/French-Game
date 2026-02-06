@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, BookOpen, Star, CheckCircle, XCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
@@ -16,16 +17,12 @@ const CultureQuestGame = () => {
     const { addXP } = useProgress();
 
     // Game State
-    const [questions, setQuestions] = useState([]);
+    const [questions] = useState(() => getCultureSession());
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
     const [isAnswered, setIsAnswered] = useState(false);
     const [gameComplete, setGameComplete] = useState(false);
-
-    useEffect(() => {
-        setQuestions(getCultureSession());
-    }, []);
 
     const currentQuestion = questions[currentIndex];
 

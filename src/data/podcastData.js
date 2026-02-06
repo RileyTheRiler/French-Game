@@ -75,7 +75,7 @@ export function generatePodcastPlaylist(options = {}) {
     // Build playlist
     const playlist = [];
 
-    selected.forEach((vocab, index) => {
+    selected.forEach((vocab) => {
         // Add the word
         playlist.push({
             id: `${vocab.id}-word`,

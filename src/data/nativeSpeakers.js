@@ -203,7 +203,7 @@ export const NATIVE_SPEAKERS = [
 ];
 
 // Response generation helpers
-export const generateResponse = (speaker, userMessage, context = {}) => {
+export const generateResponse = (speaker, userMessage) => {
     const patterns = speaker.responsePatterns;
     const lowerMsg = userMessage.toLowerCase();
 
