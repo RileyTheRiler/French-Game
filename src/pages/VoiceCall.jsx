@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SCENARIOS } from '../data/conversationScenarios';
 import CallScreen from '../components/VoiceCall/CallScreen';
@@ -6,7 +6,6 @@ import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import { speak } from '../utils/audio';
 import { findBestMatch } from '../utils/textMatching';
 import { useProgress } from '../context/ProgressContext';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const VoiceCall = () => {
     const navigate = useNavigate();
@@ -14,7 +13,7 @@ const VoiceCall = () => {
 
     // Select a random scenario for now, or could pass via location state
     // Defaulting to Restaurant for demo
-    const [scenario, setScenario] = useState(SCENARIOS.find(s => s.id === 'restaurant_dinner'));
+    const [scenario] = useState(SCENARIOS.find(s => s.id === 'restaurant_dinner'));
     const [currentNodeId, setCurrentNodeId] = useState('start');
     const [status, setStatus] = useState('Connecting...');
     const [isNpcSpeaking, setIsNpcSpeaking] = useState(false);
@@ -25,6 +24,27 @@ const VoiceCall = () => {
     const [callState, setCallState] = useState('connecting');
 
     const currentNode = scenario.nodes[currentNodeId];
+
+    const handleSpeak = useCallback((text, onEnd) => {
+        setCallState('npc_speaking');
+        setIsNpcSpeaking(true);
+        setStatus('Speaking...');
+
+        speak(text);
+
+        const duration = Math.max(2000, text.length * 80);
+        setTimeout(() => {
+            setIsNpcSpeaking(false);
+            if (onEnd) onEnd();
+        }, duration);
+    }, []);
+
+    const startListeningPhase = useCallback(() => {
+        setCallState('listening');
+        setStatus('Listening...');
+        resetTranscript();
+        startListening();
+    }, [resetTranscript, startListening]);
 
     // Effect: Handle Node Transitions
     useEffect(() => {
@@ -44,9 +64,6 @@ const VoiceCall = () => {
         }
 
         // Normal node: NPC speaks first (if message exists)
-        // Note: 'start' node might not have a message if it's the very beginning, 
-        // usually scenario.initialMessage is for the beginning.
-
         const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
 
         if (messageToSpeak) {
@@ -60,46 +77,9 @@ const VoiceCall = () => {
             startListeningPhase();
         }
 
-    }, [currentNodeId, scenario]);
+    }, [currentNodeId, scenario, currentNode, handleSpeak, startListeningPhase, navigate, addXP]);
 
-    const handleSpeak = (text, onEnd) => {
-        setCallState('npc_speaking');
-        setIsNpcSpeaking(true);
-        setStatus('Speaking...');
-
-        // Simulating speech end for visualizer since web speech API doesn't have reliable 'onend' callback for TTS in all browsers or wrapper
-        // We use a rough estimation of time: 100ms per character?
-        // OR better: speak() function in utils/audio is fire and forget. 
-        // For a hack, let's assume average reading speed.
-        speak(text);
-
-        const duration = Math.max(2000, text.length * 80);
-        setTimeout(() => {
-            setIsNpcSpeaking(false);
-            if (onEnd) onEnd();
-        }, duration);
-    };
-
-    const startListeningPhase = () => {
-        setCallState('listening');
-        setStatus('Listening...');
-        resetTranscript();
-        startListening();
-    };
-
-    // Effect: Check transcript for matches
-    useEffect(() => {
-        if (callState !== 'listening' || !transcript) return;
-
-        // Debounce slightly to wait for user to finish sentence
-        const timer = setTimeout(() => {
-            handleProcessInput(transcript);
-        }, 1500);
-
-        return () => clearTimeout(timer);
-    }, [transcript, callState]);
-
-    const handleProcessInput = (input) => {
+    const handleProcessInput = useCallback((input) => {
         stopListening();
         setCallState('processing');
         setStatus('Processing...');
@@ -126,7 +106,19 @@ const VoiceCall = () => {
                 startListeningPhase();
             });
         }
-    };
+    }, [currentNode, handleSpeak, startListeningPhase, stopListening]);
+
+    // Effect: Check transcript for matches
+    useEffect(() => {
+        if (callState !== 'listening' || !transcript) return;
+
+        // Debounce slightly to wait for user to finish sentence
+        const timer = setTimeout(() => {
+            handleProcessInput(transcript);
+        }, 1500);
+
+        return () => clearTimeout(timer);
+    }, [transcript, callState, handleProcessInput]);
 
     const handleToggleMic = () => {
         if (isListening) {
@@ -144,10 +136,7 @@ const VoiceCall = () => {
     // Initial Connection Simulation
     useEffect(() => {
         const timer = setTimeout(() => {
-            // Start the interaction
-            // Trigger the effect by ensuring ID is set (already 'start') 
-            // but we need to trigger the initial message logic.
-            // We can force a re-eval or just rely on mount.
+            // Trigger initial logic via mount
         }, 1000);
         return () => clearTimeout(timer);
     }, []);
