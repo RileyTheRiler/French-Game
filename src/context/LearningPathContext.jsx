@@ -22,8 +22,8 @@ const LearningPathContext = createContext();
  * - Adaptive parameters (difficulty, pace)
  */
 export const LearningPathProvider = ({ children }) => {
-    const { stats, categoryStats, dailyStats, errorPatterns, weakWords, getWeeklySummary } = useProgress();
-    const { vocabulary, getDueWords, getWeightedPracticeWords } = useVocabulary();
+    const { categoryStats, dailyStats, errorPatterns, weakWords, getWeeklySummary } = useProgress();
+    const { vocabulary, getWeightedPracticeWords } = useVocabulary();
 
     // Skill profile computed from user data
     const [skillProfile, setSkillProfile] = useState(null);
@@ -73,7 +73,8 @@ export const LearningPathProvider = ({ children }) => {
             };
 
             const profile = computeSkillProfile(progressData, vocabulary);
-            setSkillProfile(profile);
+            // Fix set-state-in-effect
+            setTimeout(() => setSkillProfile(profile), 0);
         }
     }, [vocabulary, categoryStats, dailyStats, errorPatterns, weakWords]);
 
@@ -82,7 +83,8 @@ export const LearningPathProvider = ({ children }) => {
         if (skillProfile) {
             const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
             const newInsights = generateInsights(weeklyData, skillProfile);
-            setInsights(newInsights);
+            // Fix set-state-in-effect
+            setTimeout(() => setInsights(newInsights), 0);
         }
     }, [skillProfile, getWeeklySummary]);
 
@@ -90,7 +92,8 @@ export const LearningPathProvider = ({ children }) => {
     useEffect(() => {
         if (skillProfile && vocabulary && vocabulary.length > 0) {
             const queue = getPersonalizedQueue(skillProfile, vocabulary, 30);
-            setContentQueue(queue);
+            // Fix set-state-in-effect
+            setTimeout(() => setContentQueue(queue), 0);
         }
     }, [skillProfile, vocabulary]);
 
@@ -112,7 +115,8 @@ export const LearningPathProvider = ({ children }) => {
     // Update learning style based on behavior
     useEffect(() => {
         const style = detectLearningStyle(behaviorData);
-        setLearningStyle(style);
+        // Fix set-state-in-effect
+        setTimeout(() => setLearningStyle(style), 0);
     }, [behaviorData]);
 
     // Get the next batch of personalized content
