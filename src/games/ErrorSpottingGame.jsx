@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, Check, ArrowRight, RotateCcw, Search } from 'lucide-react';
@@ -20,11 +20,7 @@ const ErrorSpottingGame = () => {
     const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
     const MAX_QUESTIONS = 5;
 
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
-
-    const loadNextPuzzle = () => {
+    const loadNextPuzzle = useCallback(() => {
         const newPuzzle = generateErrorSpotting(1);
         if (newPuzzle) {
             setPuzzle(newPuzzle);
@@ -33,7 +29,11 @@ const ErrorSpottingGame = () => {
         } else {
             setStatus('finished');
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        loadNextPuzzle();
+    }, [loadNextPuzzle]);
 
     const handleWordClick = (word, index) => {
         if (status !== 'playing') return;

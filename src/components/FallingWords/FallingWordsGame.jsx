@@ -151,6 +151,32 @@ const FallingWordsGame = ({ initialTime = INITIAL_TIME_SECONDS }) => {
         return () => clearInterval(interval);
     }, [isRivalsMode, gameOver]);
 
+    const startGame = useCallback(() => {
+        isPlayingRef.current = true;
+
+        // Prepare Ghost Data if mode is active
+        if (isGhostModeRef.current) {
+            const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
+            ghostDataRef.current = savedGhost ? JSON.parse(savedGhost) : [];
+        } else {
+            ghostDataRef.current = [];
+        }
+
+        // Reset Recording
+        recordingRef.current = [{ time: 0, score: 0 }];
+
+        const now = performance.now();
+        lastTimeRef.current = now;
+        startTimeRef.current = now;
+
+        if (!isZenModeRef.current) {
+            timeLeftRef.current = INITIAL_TIME_SECONDS;
+            setTimeLeft(INITIAL_TIME_SECONDS);
+        }
+
+        requestRef.current = requestAnimationFrame(gameLoop);
+    }, []);
+
     // Initialize
     useEffect(() => {
         // Check for existing ghost data
@@ -184,7 +210,7 @@ const FallingWordsGame = ({ initialTime = INITIAL_TIME_SECONDS }) => {
             isPlayingRef.current = false;
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
-    }, [getPracticeQueue, getDueWords, getWeightedPracticeWords, vocabulary]);
+    }, [getPracticeQueue, getDueWords, getWeightedPracticeWords, vocabulary, startGame]);
 
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -207,32 +233,6 @@ const FallingWordsGame = ({ initialTime = INITIAL_TIME_SECONDS }) => {
         recognitionRef.current.onerror = () => setIsShadowing(false);
         recognitionRef.current.onend = () => setIsShadowing(false);
     }, []);
-
-    const startGame = () => {
-        isPlayingRef.current = true;
-
-        // Prepare Ghost Data if mode is active
-        if (isGhostModeRef.current) {
-            const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
-            ghostDataRef.current = savedGhost ? JSON.parse(savedGhost) : [];
-        } else {
-            ghostDataRef.current = [];
-        }
-
-        // Reset Recording
-        recordingRef.current = [{ time: 0, score: 0 }];
-
-        const now = performance.now();
-        lastTimeRef.current = now;
-        startTimeRef.current = now;
-
-        if (!isZenModeRef.current) {
-            timeLeftRef.current = INITIAL_TIME_SECONDS;
-            setTimeLeft(INITIAL_TIME_SECONDS);
-        }
-
-        requestRef.current = requestAnimationFrame(gameLoop);
-    };
 
     const spawnWord = () => {
         if (validWords.current.length === 0) return;
