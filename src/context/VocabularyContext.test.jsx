@@ -4,13 +4,16 @@ import React, { useState, useEffect } from 'react';
 import { VocabularyProvider, useVocabulary } from './VocabularyContext';
 import { ProgressProvider } from './ProgressContext';
 
+// Hoist mock function
+const mockAddXP = vi.fn();
+
 // Mock ProgressContext to avoid complex dependencies
 vi.mock('./ProgressContext', async () => {
     const actual = await vi.importActual('./ProgressContext');
     return {
         ...actual,
         useProgress: () => ({
-            addXP: vi.fn(),
+            addXP: mockAddXP,
         }),
         ProgressProvider: ({ children }) => <div>{children}</div>
     };
