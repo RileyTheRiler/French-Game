@@ -33,7 +33,20 @@ export default [
       'src/components/Pronunciation/**/*.jsx',
       'src/components/RealWorld/**/*.jsx',
       'src/components/SRSReviewQueue.jsx',
-      'src/components/PronunciationCoach.jsx'
+      'src/components/PronunciationCoach.jsx',
+      'src/components/FocusSession.jsx',
+      'src/components/GrammarDrill.jsx',
+      'src/components/GrammarModal.jsx',
+      'src/components/InstallPrompt.jsx',
+      'src/components/ListenRepeatLab.jsx',
+      'src/components/MemoryPalace.jsx',
+      'src/components/DictionaryModal.jsx',
+      'src/components/LeaderboardModal.jsx',
+      'src/components/Community/WritingExercise.jsx',
+      'src/components/DailyChallengeWidget.jsx',
+      'src/components/DailyGoalRing.jsx',
+      'src/components/DailyMix.jsx',
+      'src/components/ConversationSimulator.jsx'
     ]
   },
   {
