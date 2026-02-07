@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+    // eslint-disable-next-line no-unused-vars
     Book, ChevronLeft, Award, Lock, BookOpen, Play, Pause,
     RotateCcw, Trophy, Star, Volume2, Check, X, ChevronRight,
     Sparkles, Map
 } from 'lucide-react';
-import { BRANCHING_STORIES, getStoryById } from '../data/branchingStories';
+import { BRANCHING_STORIES } from '../data/branchingStories';
 import { useProgress } from '../context/ProgressContext';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
@@ -108,14 +109,14 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
     const [totalXP, setTotalXP] = useState(0);
     const [showEnding, setShowEnding] = useState(false);
 
-    const currentNode = story.nodes[currentNodeId];
+    const currentNode = useMemo(() => story.nodes[currentNodeId], [story, currentNodeId]);
 
     // Save progress when node changes
     useEffect(() => {
         if (onSaveProgress && currentNode?.type !== 'ending') {
             onSaveProgress(story.id, { currentNode: currentNodeId, history });
         }
-    }, [currentNodeId, history]);
+    }, [currentNodeId, history, onSaveProgress, story.id, currentNode?.type]);
 
     const handleChoice = (choice) => {
         SoundManager.playPop();

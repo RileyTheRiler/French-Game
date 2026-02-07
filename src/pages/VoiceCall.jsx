@@ -1,91 +1,116 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { SCENARIOS } from '../data/conversationScenarios';
-import CallScreen from '../components/VoiceCall/CallScreen';
-import useSpeechRecognition from '../hooks/useSpeechRecognition';
-import { speak } from '../utils/audio';
-import { findBestMatch } from '../utils/textMatching';
-import { useProgress } from '../context/ProgressContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Mic, MicOff, Phone, User } from 'lucide-react';
+import { useProgress } from '../context/ProgressContext';
+import { GameLayout } from '../components/layout/GameLayout';
+import { Button } from '../components/ui/Button';
+import useSpeechRecognition from '../hooks/useSpeechRecognition';
+import { analyzeResponse } from '../utils/ConversationAnalyzer';
+import { getScenario } from '../systems/NPCSystem';
 
 const VoiceCall = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
+    const { startListening, stopListening, isListening, transcript, resetTranscript } = useSpeechRecognition();
 
-    // Select a random scenario for now, or could pass via location state
-    // Defaulting to Restaurant for demo
-    const [scenario, setScenario] = useState(SCENARIOS.find(s => s.id === 'restaurant_dinner'));
-    const [currentNodeId, setCurrentNodeId] = useState('start');
     const [status, setStatus] = useState('Connecting...');
+    const [callState, setCallState] = useState('connecting'); // connecting, npc_speaking, listening, processing, ended
+    const [scenario] = useState(getScenario('cafe_order'));
+    const [currentNodeId, setCurrentNodeId] = useState('start');
     const [isNpcSpeaking, setIsNpcSpeaking] = useState(false);
 
-    const { isListening, transcript, startListening, stopListening, resetTranscript } = useSpeechRecognition('fr-FR');
-
-    // State machine for call flow: 'connecting' -> 'npc_speaking' -> 'listening' -> 'processing' -> 'ended'
-    const [callState, setCallState] = useState('connecting');
-
+    // Get current node
     const currentNode = scenario.nodes[currentNodeId];
 
-    // Effect: Handle Node Transitions
-    useEffect(() => {
-        if (!currentNode) return;
-
-        // If node has 'end' flag
-        if (currentNode.end) {
-            handleSpeak(currentNode.message, () => {
-                setCallState('ended');
-                setStatus('Call Ended');
-                setTimeout(() => {
-                    navigate('/'); // Go back to menu after delay
-                    if (currentNode.success) addXP(scenario.xpReward);
-                }, 3000);
-            });
-            return;
-        }
-
-        // Normal node: NPC speaks first (if message exists)
-        // Note: 'start' node might not have a message if it's the very beginning, 
-        // usually scenario.initialMessage is for the beginning.
-
-        const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
-
-        if (messageToSpeak) {
-            setStatus('Speaking...');
-            handleSpeak(messageToSpeak, () => {
-                // After speaking, start listening
-                startListeningPhase();
-            });
-        } else {
-            // No message (rare), just listen
-            startListeningPhase();
-        }
-
-    }, [currentNodeId, scenario]);
-
-    const handleSpeak = (text, onEnd) => {
+    const handleSpeak = useCallback((text, onEnd) => {
         setCallState('npc_speaking');
         setIsNpcSpeaking(true);
         setStatus('Speaking...');
 
-        // Simulating speech end for visualizer since web speech API doesn't have reliable 'onend' callback for TTS in all browsers or wrapper
-        // We use a rough estimation of time: 100ms per character?
-        // OR better: speak() function in utils/audio is fire and forget. 
-        // For a hack, let's assume average reading speed.
-        speak(text);
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'fr-FR';
+        utterance.rate = 1.0;
 
-        const duration = Math.max(2000, text.length * 80);
-        setTimeout(() => {
+        utterance.onend = () => {
             setIsNpcSpeaking(false);
             if (onEnd) onEnd();
-        }, duration);
-    };
+        };
 
-    const startListeningPhase = () => {
+        window.speechSynthesis.speak(utterance);
+
+        // Fallback for long text or if onend doesn't fire (browser quirk safety)
+        const duration = (text.split(' ').length / 2) * 1000 + 1000;
+        setTimeout(() => {
+            if (window.speechSynthesis.speaking) {
+                // Let it finish naturally
+            } else {
+                // Force state update if event missed
+                setIsNpcSpeaking(false);
+                if (onEnd) onEnd(); // We don't check callState here strictly to ensure progress
+            }
+        }, duration);
+    }, []);
+
+    const startListeningPhase = useCallback(() => {
         setCallState('listening');
         setStatus('Listening...');
         resetTranscript();
         startListening();
-    };
+    }, [resetTranscript, startListening]);
+
+    const handleProcessInput = useCallback((input) => {
+        stopListening();
+        setCallState('processing');
+        setStatus('Thinking...');
+
+        // Analyze input against expected options
+        const analysis = analyzeResponse(input, currentNode);
+
+        // eslint-disable-next-line no-unused-vars
+        const userMessage = { sender: 'user', text: input };
+
+        if (analysis.isMatch) {
+            addXP(10);
+            setCurrentNodeId(analysis.nextNodeId);
+        } else {
+            // Retry logic or hint? For now, stay on node or go to fallback
+            // Simple retry loop for MVP
+            handleSpeak("Je n'ai pas compris. Pouvez-vous répéter ?", () => {
+                startListeningPhase();
+            });
+        }
+    }, [currentNode, stopListening, addXP, handleSpeak, startListeningPhase]);
+
+    // Main Conversation Flow Effect
+    useEffect(() => {
+        if (!scenario || !currentNode) return;
+
+        // If it's a new node (or start), NPC speaks
+        // Wait a moment for "connection"
+        const delay = callState === 'connecting' ? 1500 : 500;
+
+        const timer = setTimeout(() => {
+            // If node has 'end' flag
+            if (currentNode.end) {
+                handleSpeak(currentNode.message, () => {
+                    setCallState('ended');
+                    setStatus('Call Ended');
+                    setTimeout(() => {
+                        navigate('/');
+                    }, 2000);
+                });
+                return;
+            }
+
+            handleSpeak(currentNode.message, () => {
+                // After speaking, start listening
+                startListeningPhase();
+            });
+        }, delay);
+
+        return () => clearTimeout(timer);
+    }, [currentNodeId, scenario, currentNode, handleSpeak, startListeningPhase, callState, navigate]);
 
     // Effect: Check transcript for matches
     useEffect(() => {
@@ -97,71 +122,90 @@ const VoiceCall = () => {
         }, 1500);
 
         return () => clearTimeout(timer);
-    }, [transcript, callState]);
-
-    const handleProcessInput = (input) => {
-        stopListening();
-        setCallState('processing');
-        setStatus('Processing...');
-
-        const match = findBestMatch(input, currentNode.options);
-
-        if (match && match.score > 0.4) {
-            const option = match.option;
-
-            if (option.isCorrect) {
-                setStatus('Correct!');
-                setTimeout(() => {
-                    setCurrentNodeId(option.nextNode);
-                }, 1000);
-            } else {
-                // Feedback then retry
-                handleSpeak(option.feedback || "Je ne comprends pas.", () => {
-                    startListeningPhase();
-                });
-            }
-        } else {
-            // No match found
-            handleSpeak("Pardon ? Pouvez-vous répéter ?", () => {
-                startListeningPhase();
-            });
-        }
-    };
+    }, [transcript, callState, handleProcessInput]);
 
     const handleToggleMic = () => {
         if (isListening) {
             stopListening();
         } else {
-            startListeningPhase();
+            startListening();
         }
     };
 
-    const handleEndCall = () => {
+    const handleHangup = () => {
+        window.speechSynthesis.cancel();
         stopListening();
         navigate('/');
     };
 
-    // Initial Connection Simulation
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            // Start the interaction
-            // Trigger the effect by ensuring ID is set (already 'start') 
-            // but we need to trigger the initial message logic.
-            // We can force a re-eval or just rely on mount.
-        }, 1000);
-        return () => clearTimeout(timer);
-    }, []);
-
     return (
-        <CallScreen
-            npcName={scenario.initialSpeaker}
-            isNpcSpeaking={isNpcSpeaking}
-            isUserListening={isListening}
-            transcript={transcript}
-            status={status}
-            onEndCall={handleEndCall}
-            onToggleMic={handleToggleMic}
-        />
+        <GameLayout
+            title="Voice Call"
+            onBack={handleHangup}
+            className="bg-slate-900"
+        >
+            <div className="max-w-md mx-auto h-[80vh] flex flex-col justify-between p-4">
+
+                {/* Caller Info */}
+                <div className="flex flex-col items-center gap-4 mt-8">
+                    <div className="w-32 h-32 rounded-full bg-slate-800 flex items-center justify-center border-4 border-slate-700 shadow-2xl relative overflow-hidden">
+                        {scenario?.npcAvatar ? (
+                            <img src={scenario.npcAvatar} alt="NPC" className="w-full h-full object-cover" />
+                        ) : (
+                            <User size={64} className="text-slate-500" />
+                        )}
+
+                        {/* Speaking Wave Animation */}
+                        {isNpcSpeaking && (
+                            <div className="absolute inset-0 bg-indigo-500/20 animate-pulse rounded-full" />
+                        )}
+                    </div>
+
+                    <div className="text-center">
+                        <h2 className="text-2xl font-bold text-white">{scenario?.npcName || 'Unknown Caller'}</h2>
+                        <p className={`text-sm font-medium ${callState === 'ended' ? 'text-red-400' : 'text-emerald-400'}`}>
+                            {status}
+                        </p>
+                    </div>
+                </div>
+
+                {/* Live Transcript / Feedback */}
+                <div className="flex-1 flex flex-col justify-center items-center p-4">
+                    <AnimatePresence mode="wait">
+                        {transcript && (
+                            <motion.div
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -20 }}
+                                className="text-center"
+                            >
+                                <p className="text-slate-400 text-sm mb-2">You said:</p>
+                                <p className="text-white text-xl font-medium">"{transcript}"</p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
+
+                {/* Controls */}
+                <div className="flex justify-center gap-6 mb-8">
+                    <Button
+                        onClick={handleToggleMic}
+                        className={`h-16 w-16 rounded-full flex items-center justify-center transition-all ${isListening ? 'bg-white text-slate-900' : 'bg-slate-800 text-white'}`}
+                        disabled={callState !== 'listening'}
+                    >
+                        {isListening ? <MicOff size={24} /> : <Mic size={24} />}
+                    </Button>
+
+                    <Button
+                        onClick={handleHangup}
+                        className="h-16 w-16 rounded-full flex items-center justify-center bg-red-500 text-white hover:bg-red-600 shadow-lg shadow-red-500/30"
+                    >
+                        <Phone size={28} className="rotate-[135deg]" />
+                    </Button>
+                </div>
+
+            </div>
+        </GameLayout>
     );
 };
 

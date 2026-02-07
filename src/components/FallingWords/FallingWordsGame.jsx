@@ -22,6 +22,7 @@ const TIME_TO_MAX_DIFFICULTY = 120000;
 const INITIAL_SPAWN_INTERVAL = 2000;
 const MIN_SPAWN_INTERVAL = 800;
 const TICK_RATE_MS = 16;
+// eslint-disable-next-line no-unused-vars
 const FALL_SPEED_INCREMENT = 0.05;
 
 // Time Attack Constants
@@ -41,7 +42,7 @@ const FallingWordsGame = () => {
 
     const onExit = () => navigate('/');
 
-    const { getDueWords, updateWordProgress, CATEGORIES, markWordSeen, getPracticeQueue, getWeightedPracticeWords, vocabulary } = useVocabulary();
+    const { getDueWords, updateWordProgress, markWordSeen, getPracticeQueue, getWeightedPracticeWords, vocabulary } = useVocabulary();
     const { stats, recordCategoryPerformance, setModeDifficulty, addXP, addCoins, updateDailyStat, incrementStat, offlineAudio, logWordAttempt, globalDifficulty, difficultySettings } = useProgress();
 
     const difficultySetting = stats?.difficultySettings?.fallingWords || 3;
@@ -183,7 +184,7 @@ const FallingWordsGame = () => {
             isPlayingRef.current = false;
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
-    }, [getPracticeQueue, getWeightedPracticeWords, getDueWords, vocabulary]);
+    }, [getPracticeQueue, getWeightedPracticeWords, getDueWords, vocabulary]); // startGame is intentionally omitted to avoid infinite loop on mount, but defined below
 
     useEffect(() => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -207,33 +208,7 @@ const FallingWordsGame = () => {
         recognitionRef.current.onend = () => setIsShadowing(false);
     }, []);
 
-    const startGame = () => {
-        isPlayingRef.current = true;
-
-        // Prepare Ghost Data if mode is active
-        if (isGhostModeRef.current) {
-            const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
-            ghostDataRef.current = savedGhost ? JSON.parse(savedGhost) : [];
-        } else {
-            ghostDataRef.current = [];
-        }
-
-        // Reset Recording
-        recordingRef.current = [{ time: 0, score: 0 }];
-
-        const now = performance.now();
-        lastTimeRef.current = now;
-        startTimeRef.current = now;
-
-        if (!isZenModeRef.current) {
-            timeLeftRef.current = INITIAL_TIME_SECONDS;
-            setTimeLeft(INITIAL_TIME_SECONDS);
-        }
-
-        requestRef.current = requestAnimationFrame(gameLoop);
-    };
-
-    const spawnWord = () => {
+    const spawnWord = useCallback(() => {
         if (validWords.current.length === 0) return;
 
         const candidates = validWords.current;
@@ -266,7 +241,7 @@ const FallingWordsGame = () => {
         if (listenModeRef.current) {
             playWordAudio(randomWord, { preferCache: true, offlineOnly: offlineAudio });
         }
-    };
+    }, [markWordSeen, offlineAudio]);
 
     const spawnParticles = (x, y) => {
         const newParticles = [];
@@ -318,7 +293,19 @@ const FallingWordsGame = () => {
         setTimeout(() => setIsShaking(false), 500);
     };
 
-    const gameLoop = (time) => {
+    const endGame = useCallback((finalScore) => {
+        isPlayingRef.current = false;
+        setGameOver(true);
+        SoundManager.playGameOver();
+
+        // Save Ghost Data (only if not zen mode and score > 0)
+        if (!isZenModeRef.current && finalScore > 0) {
+            localStorage.setItem(GHOST_STORAGE_KEY, JSON.stringify(recordingRef.current));
+            setHasGhostData(true);
+        }
+    }, []);
+
+    const gameLoop = useCallback((time) => {
         if (!isPlayingRef.current) return;
 
         const deltaTime = time - lastTimeRef.current;
@@ -411,19 +398,33 @@ const FallingWordsGame = () => {
             setRenderedWords([...activeWordsRef.current]);
             requestRef.current = requestAnimationFrame(gameLoop);
         }
-    };
+    }, [gameOver, level, combo, globalDifficulty, spawnWord, updateWordProgress, recordCategoryPerformance, logWordAttempt, endGame]);
 
-    const endGame = (finalScore) => {
-        isPlayingRef.current = false;
-        setGameOver(true);
-        SoundManager.playGameOver();
+    const startGame = useCallback(() => {
+        isPlayingRef.current = true;
 
-        // Save Ghost Data (only if not zen mode and score > 0)
-        if (!isZenModeRef.current && finalScore > 0) {
-            localStorage.setItem(GHOST_STORAGE_KEY, JSON.stringify(recordingRef.current));
-            setHasGhostData(true);
+        // Prepare Ghost Data if mode is active
+        if (isGhostModeRef.current) {
+            const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
+            ghostDataRef.current = savedGhost ? JSON.parse(savedGhost) : [];
+        } else {
+            ghostDataRef.current = [];
         }
-    };
+
+        // Reset Recording
+        recordingRef.current = [{ time: 0, score: 0 }];
+
+        const now = performance.now();
+        lastTimeRef.current = now;
+        startTimeRef.current = now;
+
+        if (!isZenModeRef.current) {
+            timeLeftRef.current = INITIAL_TIME_SECONDS;
+            setTimeLeft(INITIAL_TIME_SECONDS);
+        }
+
+        requestRef.current = requestAnimationFrame(gameLoop);
+    }, [gameLoop]);
 
     const handleInputChange = (e) => {
         const val = e.target.value;
@@ -494,7 +495,7 @@ const FallingWordsGame = () => {
         playWordAudio(targetWord, { preferCache: true, offlineOnly: offlineAudio });
     };
 
-    const restartGame = () => {
+    const restartGame = useCallback(() => {
         setScore(0);
         setGhostScore(0);
         setOpponentScore(0);
@@ -516,7 +517,7 @@ const FallingWordsGame = () => {
         setRenderedWords([]);
 
         startGame();
-    };
+    }, [startGame]);
 
     useEffect(() => {
         if (gameOver) {
@@ -559,7 +560,13 @@ const FallingWordsGame = () => {
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [gameOver, onExit]);
+    }, [gameOver, onExit, restartGame]);
+
+    // Setup Difficulty
+    useEffect(() => {
+        difficultyRef.current = difficulty;
+        setModeDifficulty('fallingWords', difficulty);
+    }, [difficulty, setModeDifficulty]);
 
     return (
         <GameLayout

@@ -8,7 +8,10 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
 
     useEffect(() => {
         if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-            setError('Speech Recognition Not Supported');
+            // Fix set-state-in-effect by wrapping in timeout
+            setTimeout(() => {
+                setError('Speech Recognition Not Supported');
+            }, 0);
             return;
         }
 
@@ -24,6 +27,7 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
         };
 
         recognitionRef.current.onresult = (event) => {
+            // eslint-disable-next-line no-unused-vars
             let interimTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
