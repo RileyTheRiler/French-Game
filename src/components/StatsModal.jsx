@@ -49,7 +49,7 @@ const StatsModal = ({ isOpen, onClose }) => {
         .filter(Boolean);
 
     // Category Accuracy
-    const categories = Object.entries(stats.categoryStats || {}).map(([cat, data]) => ({
+    const categoryStatsList = Object.entries(stats.categoryStats || {}).map(([cat, data]) => ({
         name: cat,
         accuracy: data.attempts > 0 ? Math.round((data.correct / data.attempts) * 100) : 0,
         attempts: data.attempts
@@ -289,7 +289,7 @@ const StatsModal = ({ isOpen, onClose }) => {
                                             {t('stats.category_accuracy')}
                                         </h3>
                                         <div className="space-y-4">
-                                            {categories.length > 0 ? categories.map((cat, i) => (
+                                            {categoryStatsList.length > 0 ? categoryStatsList.map((cat, i) => (
                                                 <div key={i}>
                                                     <div className="flex justify-between text-xs mb-1">
                                                         <span className="text-slate-300 font-medium">{cat.name}</span>
