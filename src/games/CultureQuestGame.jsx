@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, BookOpen, Star, CheckCircle, XCircle } from 'lucide-react';
+import { Globe, BookOpen, CheckCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -24,7 +24,11 @@ const CultureQuestGame = () => {
     const [gameComplete, setGameComplete] = useState(false);
 
     useEffect(() => {
-        setQuestions(getCultureSession());
+        // Fix set-state-in-effect by wrapping in timeout
+        const timer = setTimeout(() => {
+            setQuestions(getCultureSession());
+        }, 0);
+        return () => clearTimeout(timer);
     }, []);
 
     const currentQuestion = questions[currentIndex];

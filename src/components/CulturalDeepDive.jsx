@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Globe, BookOpen, ChevronLeft, Award, Star,
-    Zap, Info, Share2, Sparkles, Map, Heart
+    Globe, BookOpen, ChevronLeft, Volume2, Sparkles, Heart
 } from 'lucide-react';
 import { CULTURE_ARTICLES } from '../data/cultureData';
 import { useProgress } from '../context/ProgressContext';
@@ -13,6 +12,7 @@ import { Card } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
 import SoundManager from '../utils/SoundManager';
 import { GameLayout } from './layout/GameLayout';
+import { speak } from '../utils/audio';
 
 const ArticleCard = ({ article, isNew, onClick }) => (
     <motion.div

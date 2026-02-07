@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Trophy, RotateCcw, Sparkles } from 'lucide-react';
+import { Trophy, RotateCcw } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -9,27 +9,20 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import SoundManager from '../utils/SoundManager';
 import confetti from 'canvas-confetti';
-import { speak } from '../utils/audio';
 
 const MemoryMatchGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
     const { getWeightedPracticeWords } = useVocabulary();
 
+    const [difficulty] = useState('normal'); // easy, normal, hard
     const [cards, setCards] = useState([]);
     const [flipped, setFlipped] = useState([]);
     const [solved, setSolved] = useState([]);
     const [disabled, setDisabled] = useState(false);
-    const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
-
-    const startNewGame = () => {
+    const startNewGame = useCallback(() => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
@@ -39,16 +32,16 @@ const MemoryMatchGame = () => {
             newCards.push({
                 id: `fr-${word.id}`,
                 wordId: word.id,
-                content: word.french,
-                type: 'french',
-                wordObj: word
+                text: word.french,
+                type: 'fr',
+                pairId: word.id
             });
             newCards.push({
                 id: `en-${word.id}`,
                 wordId: word.id,
-                content: word.english,
-                type: 'english',
-                wordObj: word
+                text: word.english,
+                type: 'en',
+                pairId: word.id
             });
         });
 
@@ -56,58 +49,50 @@ const MemoryMatchGame = () => {
         setCards(newCards.sort(() => Math.random() - 0.5));
         setFlipped([]);
         setSolved([]);
-        setTurns(0);
         setGameComplete(false);
         setDisabled(false);
-    };
+    }, [difficulty, getWeightedPracticeWords]);
+
+    // Initialize Game
+    useEffect(() => {
+        // Fix set state in effect
+        const timer = setTimeout(() => {
+            startNewGame();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [startNewGame]);
 
     const handleClick = (id) => {
         if (disabled || gameComplete) return;
         if (flipped.includes(id) || solved.includes(id)) return;
 
-        if (flipped.length === 0) {
-            setFlipped([id]);
-            const card = cards.find(c => c.id === id);
-            if (card.type === 'french') speak(card.content);
-            SoundManager.playClick();
-        } else {
-            setFlipped(prev => [...prev, id]);
+        // SoundManager.playFlip(); // Optional
+        const newFlipped = [...flipped, id];
+        setFlipped(newFlipped);
+
+        if (newFlipped.length === 2) {
             setDisabled(true);
-            setTurns(t => t + 1);
-            checkForMatch(id);
-        }
-    };
+            const [firstId, secondId] = newFlipped;
+            const firstCard = cards.find(c => c.id === firstId);
+            const secondCard = cards.find(c => c.id === secondId);
 
-    const checkForMatch = (currentId) => {
-        const firstId = flipped[0];
-        const secondId = currentId;
-        const firstCard = cards.find(c => c.id === firstId);
-        const secondCard = cards.find(c => c.id === secondId);
-
-        if (firstCard.wordId === secondCard.wordId) {
-            // Match
-            SoundManager.playMatch();
-            setSolved(prev => [...prev, firstId, secondId]);
-            setFlipped([]);
-            setDisabled(false);
-        } else {
-            // No Match
-            SoundManager.playClick(); // or a soft fail sound
-            setTimeout(() => {
+            if (firstCard.pairId === secondCard.pairId) {
+                // Match
+                setSolved(prev => [...prev, firstId, secondId]);
                 setFlipped([]);
                 setDisabled(false);
-            }, 1000);
+                SoundManager.playMatch();
+            } else {
+                // No Match
+                setTimeout(() => {
+                    setFlipped([]);
+                    setDisabled(false);
+                }, 1000);
+            }
         }
     };
 
-    // Check Win Condition
-    useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
-        }
-    }, [solved]);
-
-    const handleWin = () => {
+    const handleWin = useCallback(() => {
         setGameComplete(true);
         SoundManager.playLevelUp();
         confetti({
@@ -115,94 +100,90 @@ const MemoryMatchGame = () => {
             spread: 70,
             origin: { y: 0.6 }
         });
-
-        // XP Calculation: Base 20 - turns penalty? Or fix 20? 
-        // Let's give nice XP.
         addXP(30);
-    };
+    }, [addXP]);
+
+    useEffect(() => {
+        if (cards.length > 0 && solved.length === cards.length) {
+            // Fix set state in effect
+            const timer = setTimeout(() => {
+                handleWin();
+            }, 0);
+            return () => clearTimeout(timer);
+        }
+    }, [solved, cards.length, handleWin]);
 
     return (
         <GameLayout
             title="Memory Match"
-            subtitle="Match French words with their meanings"
+            subtitle="Find the matching French and English pairs."
             onBack={() => navigate('/')}
         >
-            <div className="max-w-4xl mx-auto flex flex-col items-center gap-6 min-h-[60vh]">
-
-                {/* HUD */}
-                <div className="flex justify-between w-full max-w-md bg-slate-800/50 rounded-xl p-4 border border-white/5">
-                    <div className="flex items-center gap-2 text-indigo-300">
-                        <RotateCcw size={20} />
-                        <span className="font-bold text-xl">{turns} Turns</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-amber-300">
-                        <Trophy size={20} />
-                        <span className="font-bold text-xl">{solved.length / 2} / {cards.length / 2} Pairs</span>
-                    </div>
-                </div>
+            <div className="max-w-4xl mx-auto flex flex-col items-center">
 
                 {/* Grid */}
-                <div className={`grid gap-4 w-full max-w-2xl ${difficulty === 'hard' ? 'grid-cols-4' : 'grid-cols-3 md:grid-cols-4'}`}>
-                    {cards.map(card => {
-                        const isFlipped = flipped.includes(card.id) || solved.includes(card.id);
-                        const isSolved = solved.includes(card.id);
+                <div className="grid grid-cols-3 md:grid-cols-4 gap-4 w-full mb-8">
+                    <AnimatePresence>
+                        {cards.map(card => {
+                            const isFlipped = flipped.includes(card.id) || solved.includes(card.id);
+                            const isSolved = solved.includes(card.id);
 
-                        return (
-                            <motion.button
-                                key={card.id}
-                                className={`
-                                    aspect-[3/4] rounded-xl text-lg font-bold p-2 flex items-center justify-center text-center shadow-lg transition-all relative perspective-1000
-                                `}
-                                onClick={() => handleClick(card.id)}
-                                initial={{ rotateY: 0 }}
-                                animate={{
-                                    rotateY: isFlipped ? 180 : 0,
-                                    scale: isSolved ? 0.95 : 1
-                                }}
-                                transition={{ duration: 0.3 }}
-                                style={{ transformStyle: 'preserve-3d' }}
-                            >
-                                {/* Front (Card Back) */}
-                                <div className={`
-                                    absolute inset-0 bg-indigo-600 rounded-xl backface-hidden flex items-center justify-center border-b-4 border-indigo-800
-                                    ${isSolved ? 'opacity-0' : 'opacity-100'}
-                                `}
-                                    style={{ backfaceVisibility: 'hidden' }}>
-                                    <Sparkles className="text-indigo-400/50" size={32} />
-                                </div>
+                            return (
+                                <motion.div
+                                    key={card.id}
+                                    initial={{ scale: 0.8, opacity: 0 }}
+                                    animate={{ scale: 1, opacity: 1 }}
+                                    exit={{ scale: 0, opacity: 0 }}
+                                    layout
+                                >
+                                    <button
+                                        onClick={() => handleClick(card.id)}
+                                        className={`
+                                            w-full aspect-[4/3] rounded-2xl text-lg font-bold shadow-lg transition-all transform hover:scale-105 active:scale-95 perspective-1000 relative
+                                            ${isSolved ? 'invisible' : ''}
+                                        `}
+                                    >
+                                        <div className={`
+                                            w-full h-full flex items-center justify-center rounded-2xl absolute inset-0 backface-hidden transition-all duration-300
+                                            ${isFlipped ? 'bg-indigo-600 text-white rotate-y-0' : 'bg-slate-800 text-transparent rotate-y-180'}
+                                        `}
+                                        style={{ transform: isFlipped ? 'rotateY(0deg)' : 'rotateY(180deg)' }}
+                                        >
+                                            {/* Front (Content) */}
+                                            {isFlipped && <span>{card.text}</span>}
+                                        </div>
 
-                                {/* Back (Content) */}
-                                <div className={`
-                                    absolute inset-0 bg-white rounded-xl backface-hidden flex items-center justify-center p-2 border-b-4 
-                                    ${isSolved ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-300 text-slate-800'}
-                                `}
-                                    style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-                                    <span className="break-words">{card.content}</span>
-                                </div>
-                            </motion.button>
-                        );
-                    })}
+                                        <div className={`
+                                            w-full h-full flex items-center justify-center rounded-2xl bg-slate-800 border-2 border-slate-700 absolute inset-0 backface-hidden transition-all duration-300
+                                        `}
+                                        style={{ transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+                                        >
+                                            {/* Back (Pattern) */}
+                                            <div className="w-8 h-8 rounded-full bg-slate-700/50" />
+                                        </div>
+                                    </button>
+                                </motion.div>
+                            );
+                        })}
+                    </AnimatePresence>
                 </div>
 
-                {/* Win State */}
+                {/* Game Over State */}
                 <AnimatePresence>
                     {gameComplete && (
                         <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
+                            initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+                            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4"
                         >
-                            <Card className="p-8 max-w-sm w-full text-center space-y-6 m-4">
-                                <div className="w-20 h-20 bg-amber-500/20 rounded-full flex items-center justify-center mx-auto">
-                                    <Trophy size={40} className="text-amber-500" />
-                                </div>
-                                <div>
-                                    <h2 className="text-3xl font-bold text-white mb-2">Well Done!</h2>
-                                    <p className="text-slate-400">You matched all pairs in {turns} turns.</p>
-                                </div>
-                                <div className="flex flex-col gap-3">
-                                    <Button onClick={startNewGame} className="w-full py-4 text-lg">Play Again</Button>
-                                    <Button variant="ghost" onClick={() => navigate('/')}>Back to Menu</Button>
+                            <Card className="max-w-md w-full text-center p-8 bg-slate-900 border-indigo-500/30">
+                                <Trophy className="w-20 h-20 text-yellow-400 mx-auto mb-4" />
+                                <h2 className="text-3xl font-bold text-white mb-2">Memory Master!</h2>
+                                <p className="text-slate-400 mb-8">You matched all the pairs.</p>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Button onClick={() => navigate('/')} variant="ghost">Menu</Button>
+                                    <Button onClick={startNewGame}>Play Again <RotateCcw className="ml-2 w-4 h-4" /></Button>
                                 </div>
                             </Card>
                         </motion.div>
