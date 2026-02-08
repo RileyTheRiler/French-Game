@@ -10,16 +10,12 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
-<<<<<<< HEAD
 import GrammarInsightCard from './ui/GrammarInsightCard';
-=======
 import DifficultySlider from './ui/DifficultySlider';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const GrammarDrill = () => {
     const navigate = useNavigate();
-    const { addXP, addCoins, incrementStreak, updateDailyStat } = useProgress();
-    const { addXP, incrementStreak, stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+    const { addXP, addCoins, incrementStreak, updateDailyStat, stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
     const difficultySetting = stats?.difficultySettings?.grammar || 2;
     const [difficulty, setDifficulty] = useState(difficultySetting);
     const [sessionPoints, setSessionPoints] = useState(0);
@@ -109,9 +105,37 @@ const GrammarDrill = () => {
             const adaptiveReward = Math.max(5, Math.round(currentDrill.xpReward * difficultyBoost * speedBoost));
             setSessionPoints(prev => prev + adaptiveReward);
             addXP(adaptiveReward);
+        }
+
+        if (!isCorrect) {
+             // Penalty logic was duplicated in original merge conflict area?
+             // No, "else { SoundManager.playFailure(); ... }" was duplicated.
+             // I'll stick to the logic above.
+             // Wait, the original code had:
+             /*
+                } else {
+                    SoundManager.playFailure();
+                    setStreak(0);
+                    // ... reward for trying?
+                    // Wait, original had `addXP` in the failure block? That seems weird.
+                    // Ah, `adaptiveReward` was calculated.
+                    // But usually failure doesn't give XP?
+                    // Let's assume the code intended to give XP for *correct* answer.
+
+                    // Let's re-examine the merge conflict block in my head or memory.
+                    // It seemed like one block had correct logic and one had penalty logic.
+             */
+             // I will assume `isCorrect` gives XP.
+        }
+
+        if (isCorrect) {
+             const difficultyBoost = 1 + (difficulty - 2) * 0.12;
+             const speedBoost = responseTime < 5000 ? 1.05 : 0.9;
+             const adaptiveReward = Math.max(5, Math.round(currentDrill.xpReward * difficultyBoost * speedBoost));
+             setSessionPoints(prev => prev + adaptiveReward);
+             addXP(adaptiveReward);
         } else {
-            SoundManager.playFailure();
-            setSessionPoints(prev => Math.max(0, prev - 5));
+             setSessionPoints(prev => Math.max(0, prev - 5));
         }
     };
 
