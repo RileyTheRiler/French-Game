@@ -1,27 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain, Target } from 'lucide-react';
+import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain, Target, Clock, ShoppingBag } from 'lucide-react';
 import DifficultyDial from './ui/DifficultyDial';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { warmVoiceCache } from '../utils/audio';
-
-const SettingsModal = ({ onClose }) => {
-    const { audioEnabled, toggleAudio, offlineAudio, toggleOfflineAudio, resetProgress } = useProgress();
-    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
-    const [confirmReset, setConfirmReset] = React.useState(false);
-    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
-
-    const handleOfflineAudio = async () => {
-        const next = !offlineAudio;
-        toggleOfflineAudio();
-        if (!offlineAudio && next) {
-            setIsCachingAudio(true);
-            warmVoiceCache();
-            await downloadAudioOnce();
-            setIsCachingAudio(false);
-        }
-    };
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
 
@@ -39,15 +22,20 @@ const SettingsModal = ({ onClose }) => {
         stats,
         updateStats,
         globalDifficulty,
-        setGlobalDifficulty
+        setGlobalDifficulty,
+        offlineAudio,
+        toggleOfflineAudio
     } = useProgress();
-    const { resetVocabulary } = useVocabulary();
+    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
     const { user, signIn, signUp, signOut, loading, error } = useAuth();
     const { exportData, importData, status, lastSyncedAt, syncing } = useSync();
-    const [confirmReset, setConfirmReset] = React.useState(false);
-    const [authMode, setAuthMode] = React.useState('signin');
-    const [form, setForm] = React.useState({ email: '', password: '' });
-    const [importError, setImportError] = React.useState('');
+
+    const [confirmReset, setConfirmReset] = useState(false);
+    const [isCachingAudio, setIsCachingAudio] = useState(false);
+    const [authMode, setAuthMode] = useState('signin');
+    const [form, setForm] = useState({ email: '', password: '' });
+    const [importError, setImportError] = useState('');
+
     const dialogRef = useRef(null);
     const closeButtonRef = useRef(null);
 
@@ -68,6 +56,19 @@ const SettingsModal = ({ onClose }) => {
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
+
+    const handleOfflineAudio = async () => {
+        const next = !offlineAudio;
+        toggleOfflineAudio();
+        if (!offlineAudio && next) {
+            setIsCachingAudio(true);
+            warmVoiceCache();
+            if (downloadAudioOnce) {
+                await downloadAudioOnce();
+            }
+            setIsCachingAudio(false);
+        }
+    };
 
     const handleReset = () => {
         resetProgress();
@@ -114,7 +115,7 @@ const SettingsModal = ({ onClose }) => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative"
+                className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative max-h-[90vh] overflow-y-auto"
                 onClick={e => e.stopPropagation()}
                 role="dialog"
                 aria-modal="true"
@@ -139,7 +140,7 @@ const SettingsModal = ({ onClose }) => {
                 </p>
 
                 <div className="space-y-6">
-                    {/* Learner Focus - New Section */}
+                    {/* Learner Focus */}
                     <div className="glass-panel p-4 border border-indigo-500/20 bg-indigo-500/5 mb-6">
                         <div className="flex items-start gap-3 mb-4">
                             <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-300">
@@ -221,7 +222,7 @@ const SettingsModal = ({ onClose }) => {
                             <div className="flex-1">
                                 <h3 className="font-bold">Account & Sync</h3>
                                 <p className="text-xs text-slate-400">
-                                    Sign in to sync progress, vocabulary, and achievements across devices with conflict-aware merges.
+                                    Sign in to sync progress, vocabulary, and achievements across devices.
                                 </p>
                             </div>
                         </div>
@@ -336,6 +337,11 @@ const SettingsModal = ({ onClose }) => {
                         >
                             <motion.div
                                 animate={{ x: offlineAudio ? 26 : 2 }}
+                                className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
+                            />
+                        </button>
+                    </div>
+
                     {/* Privacy & Portability */}
                     <div className="glass-panel p-4 border border-emerald-500/20 bg-emerald-500/5 space-y-3">
                         <div className="flex items-center gap-3">
@@ -344,7 +350,7 @@ const SettingsModal = ({ onClose }) => {
                             </div>
                             <div>
                                 <h3 className="font-bold">Data Portability</h3>
-                                <p className="text-xs text-slate-400">Export or import your data for privacy-first workflows.</p>
+                                <p className="text-xs text-slate-400">Export or import your data.</p>
                             </div>
                         </div>
                         <div className="flex flex-col gap-2">
@@ -373,7 +379,7 @@ const SettingsModal = ({ onClose }) => {
                             </div>
                             <div>
                                 <h3 className="font-bold">Reduced Motion</h3>
-                                <p className="text-xs text-slate-400">Minimize animations for comfort</p>
+                                <p className="text-xs text-slate-400">Minimize animations</p>
                             </div>
                         </div>
                         <button
@@ -399,12 +405,12 @@ const SettingsModal = ({ onClose }) => {
                             <div className="flex-1">
                                 <h3 className="font-bold">Learning Style</h3>
                                 <p className="text-xs text-slate-400">
-                                    Customize how exercises present hints and answers.
+                                    Customize exercises.
                                 </p>
                             </div>
                         </div>
 
-                        {/* Challenge Mode (dependant on Learner Type) */}
+                        {/* Challenge Mode */}
                         <div className={`p-3 rounded-xl border transition-all ${difficultySettings?.learnerType === 'scholar' ? 'opacity-70 border-dashed border-amber-500/30' : 'border-transparent'}`}>
                             {difficultySettings?.learnerType === 'scholar' && (
                                 <p className="text-xs text-amber-400 mb-2 font-bold flex items-center gap-1">
@@ -416,7 +422,7 @@ const SettingsModal = ({ onClose }) => {
                                     <Zap size={16} className={difficultySettings?.challengeMode ? 'text-amber-400' : 'text-slate-500'} />
                                     <div>
                                         <span className="text-sm font-medium">Challenge Mode</span>
-                                        <p className="text-xs text-slate-500">No hints, no safety net</p>
+                                        <p className="text-xs text-slate-500">No hints</p>
                                     </div>
                                 </div>
                                 <button
@@ -464,7 +470,7 @@ const SettingsModal = ({ onClose }) => {
                         <div className="flex items-center justify-between">
                             <div>
                                 <span className="text-sm font-medium">Free-form Input</span>
-                                <p className="text-xs text-slate-500">Type answers instead of multiple choice</p>
+                                <p className="text-xs text-slate-500">Type answers</p>
                             </div>
                             <button
                                 onClick={() => updateDifficultySettings({ freeFormInput: !difficultySettings?.freeFormInput })}
@@ -479,26 +485,6 @@ const SettingsModal = ({ onClose }) => {
                                 />
                             </button>
                         </div>
-
-                        {/* Speed Round Toggle */}
-                        <div className="flex items-center justify-between pt-2 border-t border-amber-500/10">
-                            <div>
-                                <span className="text-sm font-medium">Speed Rounds</span>
-                                <p className="text-xs text-slate-500">Include timed challenges in Daily Mix</p>
-                            </div>
-                            <button
-                                onClick={() => updateStats({ speedRoundEnabled: !stats.speedRoundEnabled })}
-                                className={`w-14 h-8 rounded-full transition-colors relative ${stats.speedRoundEnabled ? 'bg-amber-500' : 'bg-slate-700'}`}
-                                role="switch"
-                                aria-checked={stats.speedRoundEnabled}
-                                aria-label="Toggle speed rounds"
-                            >
-                                <motion.div
-                                    animate={{ x: stats.speedRoundEnabled ? 26 : 2 }}
-                                    className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
-                                />
-                            </button>
-                        </div>
                     </div>
 
                     {/* Color Theme */}
@@ -506,7 +492,7 @@ const SettingsModal = ({ onClose }) => {
                         <div className="flex items-center justify-between mb-4">
                             <div>
                                 <h3 className="font-bold">Color Theme</h3>
-                                <p className="text-xs text-slate-400">Choose a palette that suits you</p>
+                                <p className="text-xs text-slate-400">Choose a palette</p>
                             </div>
                             <span className="text-xs text-slate-500 uppercase tracking-wide">{colorTheme}</span>
                         </div>
@@ -537,7 +523,7 @@ const SettingsModal = ({ onClose }) => {
                             Danger Zone
                         </h3>
                         <p className="text-xs text-red-300/70 mb-4">
-                            This will delete all your progress, XP, and vocabulary data properly. This action cannot be undone.
+                            Delete all progress. Irreversible.
                         </p>
 
                         {!confirmReset ? (
