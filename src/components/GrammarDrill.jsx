@@ -10,11 +10,7 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
-<<<<<<< HEAD
 import GrammarInsightCard from './ui/GrammarInsightCard';
-=======
-import DifficultySlider from './ui/DifficultySlider';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const GrammarDrill = () => {
     const navigate = useNavigate();

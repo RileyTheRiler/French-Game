@@ -34,6 +34,19 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
     const [isActive, setIsActive] = useState(false);
     const [gameOver, setGameOver] = useState(false);
 
+    const nextQuestion = () => {
+        if (vocabulary.length < 4) return;
+        const target = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+        const distractors = vocabulary
+            .filter(w => w.id !== target.id)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 3)
+            .map(w => w.english);
+
+        setCurrentWord(target);
+        setOptions([target.english, ...distractors].sort(() => Math.random() - 0.5));
+    };
+
     useEffect(() => {
         if (!isActive || gameOver) return;
         const timer = setInterval(() => {
@@ -51,19 +64,6 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
     useEffect(() => {
         nextQuestion();
     }, []);
-
-    const nextQuestion = () => {
-        if (vocabulary.length < 4) return;
-        const target = vocabulary[Math.floor(Math.random() * vocabulary.length)];
-        const distractors = vocabulary
-            .filter(w => w.id !== target.id)
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 3)
-            .map(w => w.english);
-
-        setCurrentWord(target);
-        setOptions([target.english, ...distractors].sort(() => Math.random() - 0.5));
-    };
 
     const handleAnswer = (answer) => {
         if (gameOver) return;
@@ -209,6 +209,15 @@ const DailyMix = () => {
 
     const currentChallenge = sessionQueue[currentIndex];
 
+    const finishSession = () => {
+        SoundManager.playLevelUp();
+        triggerConfetti();
+        addXP(totalXP + bonusXP);
+        addCoins(25);
+        incrementDailyMixStreak();
+        setSessionComplete(true);
+    };
+
     const handleAnswer = (answer) => {
         if (isAnswered || !currentChallenge) return;
         const isRight = answer === currentChallenge.word.english;
@@ -294,15 +303,6 @@ const DailyMix = () => {
         } else {
             finishSession();
         }
-    };
-
-    const finishSession = () => {
-        SoundManager.playLevelUp();
-        triggerConfetti();
-        addXP(totalXP + bonusXP);
-        addCoins(25);
-        incrementDailyMixStreak();
-        setSessionComplete(true);
     };
 
     if (!sessionQueue.length) return <LoadingState message="Preparing your Daily Mix..." />;
