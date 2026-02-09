@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { Mic, Volume2, Ghost, Swords, Clock, TrendingUp } from 'lucide-react';
 import { useVocabulary } from '../../context/VocabularyContext';
 import { useProgress } from '../../context/ProgressContext';
