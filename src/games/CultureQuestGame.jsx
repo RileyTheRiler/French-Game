@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, BookOpen, CheckCircle } from 'lucide-react';
@@ -16,7 +16,7 @@ const CultureQuestGame = () => {
     const { addXP } = useProgress();
 
     // Game State
-    const [questions, setQuestions] = useState(() => getCultureSession()); // Initialize lazily
+    const [questions] = useState(() => getCultureSession()); // Initialize lazily
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);

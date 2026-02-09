@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ArrowRight } from 'lucide-react';
@@ -20,7 +20,7 @@ const ErrorSpottingGame = () => {
     const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
     const MAX_QUESTIONS = 5;
 
-    const loadNextPuzzle = () => {
+    const loadNextPuzzle = useCallback(() => {
         const newPuzzle = generateErrorSpotting(1);
         if (newPuzzle) {
             setPuzzle(newPuzzle);
@@ -29,11 +29,15 @@ const ErrorSpottingGame = () => {
         } else {
             setStatus('finished');
         }
-    };
+    }, []);
 
     useEffect(() => {
-        loadNextPuzzle();
-    }, []);
+        // Use setTimeout to avoid synchronous state update warning during mount
+        const timer = setTimeout(() => {
+            loadNextPuzzle();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [loadNextPuzzle]);
 
     const handleWordClick = (word) => {
         if (status !== 'playing') return;
@@ -104,7 +108,7 @@ const ErrorSpottingGame = () => {
                 <Card className="w-full mb-8 p-12 text-center relative overflow-visible">
                     <div className="flex flex-wrap justify-center gap-3 text-3xl md:text-4xl font-bold leading-relaxed">
                         {words.map((word, idx) => {
-                            const isErrorTarget = word.includes(puzzle.error.target);
+                            const isErrorTarget = puzzle && word.includes(puzzle.error.target);
 
                             return (
                                 <motion.button
