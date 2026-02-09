@@ -55,7 +55,7 @@ const getSeasonCountdown = (timestamp) => {
 };
 
 const LeaderboardModal = ({ onClose }) => {
-    const { stats, level } = useProgress();
+    const { stats, level, getWeeklySummary } = useProgress();
     const { friends } = useSocial();
     const [tab, setTab] = useState('weekly');
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -70,6 +70,9 @@ const LeaderboardModal = ({ onClose }) => {
             window.removeEventListener('offline', handleOffline);
         };
     }, []);
+
+    // Helper for seasonal check
+    const isSeasonal = stats?.seasonEndsAt && Date.now() < stats.seasonEndsAt;
 
     // Determine data based on tab
     let baseData = [];

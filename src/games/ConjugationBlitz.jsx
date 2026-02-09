@@ -1,68 +1,54 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Zap, Trophy, RotateCcw, ArrowRight, X } from 'lucide-react';
+import { Zap, Trophy, Timer, ArrowRight, RotateCcw } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import SoundManager from '../utils/SoundManager';
-import { VERB_DATA, PRONOUNS, TENSES } from '../data/verbData';
+import { generateConjugationChallenge } from '../systems/ExerciseGenerator';
 import confetti from 'canvas-confetti';
 
 const ConjugationBlitz = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
-
-    // Game State
     const [status, setStatus] = useState('menu'); // menu, playing, finished
+    const [score, setScore] = useState(0);
+    const [streak, setStreak] = useState(0);
     const [timeLeft, setTimeLeft] = useState(60);
     const [currentChallenge, setCurrentChallenge] = useState(null);
     const [userInput, setUserInput] = useState('');
-    const [score, setScore] = useState(0);
-    const [streak, setStreak] = useState(0);
-    const [results, setResults] = useState([]); // Array of { challenge, input, correct }
+    const [results, setResults] = useState([]);
 
     const inputRef = useRef(null);
     const timerRef = useRef(null);
 
-    // Helpers
-    const getRandomChallenge = () => {
-        const verb = VERB_DATA[Math.floor(Math.random() * VERB_DATA.length)];
-        const tense = TENSES[Math.floor(Math.random() * TENSES.length)];
-        const pronoun = PRONOUNS[Math.floor(Math.random() * PRONOUNS.length)];
-
-        // Handle special case for 'je' before vowel/mute h? (j'aime)
-        // For simplicity in data, we stored full "je ..." or "j'..."? 
-        // Wait, data stored just "aime". Code needs to handle pronoun display?
-        // Actually, let's look at my data structure.
-        // Data: { present: { je: 'aime' ... } }
-        // So I need to construct the prompt carefully.
-
-        return {
-            verb,
-            tense,
-            pronoun,
-            answer: verb.conjugations[tense.id][pronoun]
-        };
+    const loadNextChallenge = () => {
+        const challenge = generateConjugationChallenge(); // { verb, tense, pronoun, answer }
+        setCurrentChallenge(challenge);
+        setUserInput('');
     };
 
     const startGame = () => {
         setScore(0);
         setStreak(0);
-        setResults([]);
         setTimeLeft(60);
+        setResults([]);
         setStatus('playing');
         loadNextChallenge();
     };
 
-    const loadNextChallenge = () => {
-        setCurrentChallenge(getRandomChallenge());
-        setUserInput('');
-        if (inputRef.current) inputRef.current.focus();
+    const endGame = () => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
     };
 
-    // Timer Logic
     useEffect(() => {
         if (status === 'playing') {
             timerRef.current = setInterval(() => {
@@ -76,22 +62,19 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
+    }, [status]); // endGame dependency removed by hoisting or stable ref? No, better to make endGame stable.
 
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
+    // But since endGame is used in useEffect, we need to handle it.
+    // However, defining endGame outside or hoisting it?
+    // Let's check where it's defined.
+    // It was defined BELOW the useEffect in the previous code.
+    // I moved it ABOVE the useEffect in this write_file call.
 
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        checkAnswer();
-    };
+    useEffect(() => {
+        if (status === 'playing' && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [currentChallenge, status]);
 
     const checkAnswer = () => {
         const normalizedInput = userInput.trim().toLowerCase();
@@ -123,6 +106,11 @@ const ConjugationBlitz = () => {
         }
 
         loadNextChallenge();
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        checkAnswer();
     };
 
     // Formatting helper
