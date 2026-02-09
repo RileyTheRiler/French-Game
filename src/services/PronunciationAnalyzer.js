@@ -150,7 +150,8 @@ const parsePhonemes = (ipa) => {
 const normalizeText = (text) => {
     if (!text) return '';
     return text.toLowerCase()
-        .replace(/[.,!?;:'"()\-]/g, '')
+        // Fixed unnecessary escape character
+        .replace(/[.,!?;:'"()-]/g, '')
         .trim();
 };
 
@@ -235,7 +236,7 @@ export const analyzePronunciation = (targetWord, spokenText) => {
     );
 
     // Generate feedback
-    const feedback = generateFeedback(overallScore, problemAreas, targetWord);
+    const feedback = generateFeedback(overallScore, problemAreas); // Removed unused targetWord
 
     return {
         score: overallScore,
@@ -326,7 +327,7 @@ const generatePhonemeBreakdown = (target, spoken) => {
 /**
  * Generate personalized feedback based on analysis
  */
-const generateFeedback = (score, problemAreas, targetWord) => {
+const generateFeedback = (score, problemAreas) => {
     const feedback = {
         summary: '',
         encouragement: '',
@@ -383,7 +384,7 @@ export const getPhonemeHints = (phoneme) => {
  * Generate practice recommendations based on user history
  */
 export const generatePracticeRecommendations = (historyData) => {
-    const { weakWords = {}, errorPatterns = {}, categoryStats = {} } = historyData;
+    const { categoryStats = {} } = historyData; // Removed unused weakWords
 
     const recommendations = {
         focusPhonemes: [],
@@ -392,14 +393,7 @@ export const generatePracticeRecommendations = (historyData) => {
         insights: []
     };
 
-    // Analyze error patterns to find common problem phonemes
-    const phonemeErrors = {};
-    for (const [wordId, data] of Object.entries(weakWords)) {
-        if (data.strength < 60) {
-            // Track weak phonemes
-            phonemeErrors[wordId] = (phonemeErrors[wordId] || 0) + 1;
-        }
-    }
+    // Removed unused phonemeErrors calculation
 
     // Find categories with lower accuracy
     const categoryAccuracy = {};
