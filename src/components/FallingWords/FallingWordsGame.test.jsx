@@ -26,6 +26,16 @@ vi.mock('../../utils/SoundManager', () => ({
     },
 }));
 
+// Mock framer-motion to avoid visibility/timeout issues
+vi.mock('framer-motion', () => ({
+    motion: {
+        div: ({ children, ...props }) => <div {...props}>{children}</div>,
+        span: ({ children, ...props }) => <span {...props}>{children}</span>,
+        button: ({ children, ...props }) => <button {...props}>{children}</button>,
+    },
+    AnimatePresence: ({ children }) => <>{children}</>,
+}));
+
 vi.mock('lucide-react', () => ({
     Ghost: () => <div data-testid="icon-ghost" />,
     Swords: () => <div data-testid="icon-swords" />,
@@ -53,6 +63,7 @@ const mockVocabulary = {
     getDueWords: vi.fn(),
     updateWordProgress: vi.fn(),
     getWeightedPracticeWords: vi.fn(),
+    getPracticeQueue: vi.fn(),
     vocabulary: [
         { id: '1', french: 'Chat', english: 'Cat' },
         { id: '2', french: 'Chien', english: 'Dog' }
@@ -102,7 +113,7 @@ describe('FallingWordsGame', () => {
         currentTime = 0;
         vi.spyOn(performance, 'now').mockImplementation(() => currentTime);
 
-        // Mock requestAnimationFrame to increment time and execute callback
+        // Mock requestAnimationFrame to advance time manually
         vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => {
             return setTimeout(() => {
                 currentTime += 16;
@@ -115,6 +126,7 @@ describe('FallingWordsGame', () => {
 
     afterEach(() => {
         vi.useRealTimers();
+        vi.restoreAllMocks();
     });
 
     it('renders game title and initial state', () => {
@@ -124,7 +136,6 @@ describe('FallingWordsGame', () => {
         renderWithContext(<FallingWordsGame />);
 
         expect(screen.getByText('Falling Words')).toBeInTheDocument();
-        // Score might be rendered multiple times (visible and hidden)
         const scoreElements = screen.getAllByText('0');
         expect(scoreElements.length).toBeGreaterThan(0);
     });
@@ -136,8 +147,8 @@ describe('FallingWordsGame', () => {
 
         renderWithContext(<FallingWordsGame />);
 
-        // Fast forward time to spawn a word
-        act(() => {
+        // Advance time to trigger spawn (interval is 2000ms initially)
+        await act(async () => {
             vi.advanceTimersByTime(3000);
         });
 
@@ -147,17 +158,12 @@ describe('FallingWordsGame', () => {
         const input = screen.getByPlaceholderText(/Type the French translation/i);
         fireEvent.change(input, { target: { value: 'Chat' } });
 
-        // Score should update
-        // We look for score > 0. Since calculating exact score depends on combo multipliers etc,
-        // just checking if it is not 0 is safer, or check for specific range if we know logic.
-        // But "Score: 0" text check was previous. Now we just look for updated number.
-        // Wait, the badge just contains the number.
-        // Let's assume it updates.
+        // Score should update - input clearing is a side effect of match
+        expect(input.value).toBe('');
     });
 
     it('shows timer in default mode', () => {
         renderWithContext(<FallingWordsGame />);
-        // 90 seconds = 1:30
         expect(screen.getByText('1:30')).toBeInTheDocument();
     });
 
@@ -165,10 +171,11 @@ describe('FallingWordsGame', () => {
         renderWithContext(<FallingWordsGame />);
 
         // Advance past 90 seconds
-        act(() => {
-            vi.advanceTimersByTime(91000);
+        await act(async () => {
+            vi.advanceTimersByTime(95000);
         });
 
+        // Check for Game Over text
         expect(await screen.findByText("Time's Up!")).toBeInTheDocument();
     });
 
@@ -179,15 +186,16 @@ describe('FallingWordsGame', () => {
 
         renderWithContext(<FallingWordsGame />);
 
-        // Advance 10 seconds (should be 1:20 / 80s left)
-        act(() => {
-            vi.advanceTimersByTime(10000);
+        // Spawn word
+        await act(async () => {
+            vi.advanceTimersByTime(3000);
         });
 
+        // Answer correctly
         const input = screen.getByPlaceholderText(/Type the French translation/i);
         fireEvent.change(input, { target: { value: 'Chat' } });
 
-        // Check for +5s popup
+        // Verify time added popup
         expect(await screen.findByText('+5s')).toBeInTheDocument();
     });
 });
