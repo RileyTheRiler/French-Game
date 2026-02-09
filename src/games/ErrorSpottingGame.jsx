@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Check, ArrowRight, RotateCcw, Search } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -20,10 +20,6 @@ const ErrorSpottingGame = () => {
     const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
     const MAX_QUESTIONS = 5;
 
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
-
     const loadNextPuzzle = () => {
         const newPuzzle = generateErrorSpotting(1);
         if (newPuzzle) {
@@ -35,7 +31,12 @@ const ErrorSpottingGame = () => {
         }
     };
 
-    const handleWordClick = (word, index) => {
+    useEffect(() => {
+        // Use timeout to avoid synchronous state update warning
+        setTimeout(() => loadNextPuzzle(), 0);
+    }, []);
+
+    const handleWordClick = (word) => {
         if (status !== 'playing') return;
 
         // Clean punctuation for comparison (simple check)
@@ -112,7 +113,7 @@ const ErrorSpottingGame = () => {
                                     layout
                                     whileHover={status === 'playing' ? { scale: 1.1, textShadow: "0 0 8px rgba(255,255,255,0.5)" } : {}}
                                     whileTap={status === 'playing' ? { scale: 0.95 } : {}}
-                                    onClick={() => handleWordClick(word, idx)}
+                                    onClick={() => handleWordClick(word)}
                                     disabled={status !== 'playing'}
                                     className={`
                                         rounded-lg px-2 py-1 transition-colors relative
