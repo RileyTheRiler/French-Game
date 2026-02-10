@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StudySession from './StudySession';
 import { VocabularyContext } from '../../context/VocabularyContext';
+import { ProgressContext } from '../../context/ProgressContext';
+import { ToastContext } from '../../context/ToastContext';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mocks
@@ -18,6 +20,16 @@ vi.mock('../../utils/InteractionEffects', () => ({
     triggerConfetti: vi.fn(),
 }));
 
+vi.mock('lucide-react', () => ({
+    ArrowLeft: () => <div data-testid="icon-arrow-left" />,
+    Settings: () => <div data-testid="icon-settings" />,
+    Volume2: () => <div data-testid="icon-volume" />,
+    RotateCw: () => <div data-testid="icon-rotate" />,
+    Check: () => <div data-testid="icon-check" />,
+    X: () => <div data-testid="icon-x" />,
+    Ghost: () => <div data-testid="icon-ghost" />,
+}));
+
 const mockVocabulary = {
     getDueWords: vi.fn(),
     updateWordProgress: vi.fn(),
@@ -27,16 +39,34 @@ const mockVocabulary = {
     ],
     playWordAudio: vi.fn(),
     preloadAudioForWords: vi.fn(),
+    markWordSeen: vi.fn(),
     CATEGORIES: { 'Greetings': { name: 'Greetings' }, 'Animals': { name: 'Animals' } }
+};
+
+const mockProgress = {
+    addXP: vi.fn(),
+    addCoins: vi.fn(),
+    updateDailyStat: vi.fn(),
+    incrementStat: vi.fn(),
+    offlineAudio: false
+};
+
+const mockToast = {
+    showToast: vi.fn(),
+    showSuccess: vi.fn()
 };
 
 const renderWithContext = (ui) => {
     return render(
-        <VocabularyContext.Provider value={mockVocabulary}>
-            <MemoryRouter>
-                {ui}
-            </MemoryRouter>
-        </VocabularyContext.Provider>
+        <ProgressContext.Provider value={mockProgress}>
+            <VocabularyContext.Provider value={mockVocabulary}>
+                <ToastContext.Provider value={mockToast}>
+                    <MemoryRouter>
+                        {ui}
+                    </MemoryRouter>
+                </ToastContext.Provider>
+            </VocabularyContext.Provider>
+        </ProgressContext.Provider>
     );
 };
 
@@ -59,9 +89,6 @@ describe('StudySession', () => {
         renderWithContext(<StudySession />);
 
         expect(screen.getByText('Bonjour')).toBeInTheDocument();
-        // English should be "hidden" (technically rendered but on the back face)
-        // Testing visibility in jsdom with 3d transforms is tricky, 
-        // passing check that it exists in the document is a start.
         expect(screen.getByText('Hello')).toBeInTheDocument();
         expect(screen.getByText('French')).toBeInTheDocument();
     });
