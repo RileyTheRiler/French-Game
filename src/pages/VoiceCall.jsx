@@ -26,41 +26,12 @@ const VoiceCall = () => {
 
     const currentNode = scenario.nodes[currentNodeId];
 
-    // Effect: Handle Node Transitions
-    useEffect(() => {
-        if (!currentNode) return;
-
-        // If node has 'end' flag
-        if (currentNode.end) {
-            handleSpeak(currentNode.message, () => {
-                setCallState('ended');
-                setStatus('Call Ended');
-                setTimeout(() => {
-                    navigate('/'); // Go back to menu after delay
-                    if (currentNode.success) addXP(scenario.xpReward);
-                }, 3000);
-            });
-            return;
-        }
-
-        // Normal node: NPC speaks first (if message exists)
-        // Note: 'start' node might not have a message if it's the very beginning, 
-        // usually scenario.initialMessage is for the beginning.
-
-        const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
-
-        if (messageToSpeak) {
-            setStatus('Speaking...');
-            handleSpeak(messageToSpeak, () => {
-                // After speaking, start listening
-                startListeningPhase();
-            });
-        } else {
-            // No message (rare), just listen
-            startListeningPhase();
-        }
-
-    }, [currentNodeId, scenario]);
+    const startListeningPhase = () => {
+        setCallState('listening');
+        setStatus('Listening...');
+        resetTranscript();
+        startListening();
+    };
 
     const handleSpeak = (text, onEnd) => {
         setCallState('npc_speaking');
@@ -79,25 +50,6 @@ const VoiceCall = () => {
             if (onEnd) onEnd();
         }, duration);
     };
-
-    const startListeningPhase = () => {
-        setCallState('listening');
-        setStatus('Listening...');
-        resetTranscript();
-        startListening();
-    };
-
-    // Effect: Check transcript for matches
-    useEffect(() => {
-        if (callState !== 'listening' || !transcript) return;
-
-        // Debounce slightly to wait for user to finish sentence
-        const timer = setTimeout(() => {
-            handleProcessInput(transcript);
-        }, 1500);
-
-        return () => clearTimeout(timer);
-    }, [transcript, callState]);
 
     const handleProcessInput = (input) => {
         stopListening();
@@ -127,6 +79,65 @@ const VoiceCall = () => {
             });
         }
     };
+
+    // Effect: Handle Node Transitions
+    useEffect(() => {
+        if (!currentNode) return;
+
+        let isMounted = true;
+
+        const processNode = async () => {
+            // If node has 'end' flag
+            if (currentNode.end) {
+                // Wrap handleSpeak in a promise or just call it directly but we need to avoid synchronous state updates loop
+                // Moving handleSpeak logic here or ensuring it's safe
+                handleSpeak(currentNode.message, () => {
+                    if (isMounted) {
+                        setCallState('ended');
+                        setStatus('Call Ended');
+                        setTimeout(() => {
+                            if (isMounted) {
+                                navigate('/'); // Go back to menu after delay
+                                if (currentNode.success) addXP(scenario.xpReward);
+                            }
+                        }, 3000);
+                    }
+                });
+                return;
+            }
+
+            const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
+
+            if (messageToSpeak) {
+                if (isMounted) setStatus('Speaking...');
+                handleSpeak(messageToSpeak, () => {
+                    if (isMounted) startListeningPhase();
+                });
+            } else {
+                if (isMounted) startListeningPhase();
+            }
+        };
+
+        // Use a timeout to break the synchronous chain
+        const timer = setTimeout(processNode, 0);
+
+        return () => {
+            isMounted = false;
+            clearTimeout(timer);
+        };
+    }, [currentNodeId, scenario]);
+
+    // Effect: Check transcript for matches
+    useEffect(() => {
+        if (callState !== 'listening' || !transcript) return;
+
+        // Debounce slightly to wait for user to finish sentence
+        const timer = setTimeout(() => {
+            handleProcessInput(transcript);
+        }, 1500);
+
+        return () => clearTimeout(timer);
+    }, [transcript, callState]);
 
     const handleToggleMic = () => {
         if (isListening) {
