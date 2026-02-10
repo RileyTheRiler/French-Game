@@ -37,7 +37,10 @@ const DictationGame = () => {
     };
 
     useEffect(() => {
-        loadNewSentence();
+        const timer = setTimeout(() => {
+            loadNewSentence();
+        }, 0);
+        return () => clearTimeout(timer);
     }, []);
 
     const playAudio = (rate = 1.0) => {
