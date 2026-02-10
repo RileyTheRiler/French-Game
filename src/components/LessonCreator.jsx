@@ -188,16 +188,16 @@ const LessonCreator = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)}>
+                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)} aria-label="Delete lesson">
                                     <Trash2 size={16} className="text-slate-600 hover:text-red-400" />
                                 </Button>
                                 <Button variant="secondary" size="icon" onClick={() => {
                                     setCurrentLesson(lesson);
                                     setStep(lesson.type === 'deck' ? 'create_deck' : 'create_quiz');
-                                }}>
+                                }} aria-label="Edit lesson">
                                     <Edit3 size={16} />
                                 </Button>
-                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)}>
+                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)} aria-label="Start lesson">
                                     <Play size={16} fill="currentColor" />
                                 </Button>
                             </div>
@@ -224,8 +224,9 @@ const LessonCreator = () => {
                 <Card className="p-6 mb-6 bg-slate-900/60 border-white/10">
                     <div className="space-y-6">
                         <div>
-                            <label className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2 block">Quiz Title</label>
+                            <label htmlFor="quiz-title" className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2 block">Quiz Title</label>
                             <input
+                                id="quiz-title"
                                 type="text"
                                 value={currentLesson.title}
                                 onChange={(e) => setCurrentLesson(prev => ({ ...prev, title: e.target.value }))}
@@ -235,8 +236,9 @@ const LessonCreator = () => {
                         </div>
 
                         <div className="pt-4 border-t border-white/5">
-                            <label className="text-xs font-black uppercase text-indigo-400 tracking-widest mb-4 block">New Question</label>
+                            <label htmlFor="new-question" className="text-xs font-black uppercase text-indigo-400 tracking-widest mb-4 block">New Question</label>
                             <input
+                                id="new-question"
                                 type="text"
                                 value={newQuizItem.question}
                                 onChange={(e) => setNewQuizItem(prev => ({ ...prev, question: e.target.value }))}
@@ -255,6 +257,7 @@ const LessonCreator = () => {
                                                 newOpts[idx] = e.target.value;
                                                 setNewQuizItem(prev => ({ ...prev, options: newOpts }));
                                             }}
+                                            aria-label={`Option ${idx + 1}`}
                                             placeholder={`Option ${idx + 1}`}
                                             className={`w-full bg-slate-950/50 border rounded-xl px-4 py-3 text-white outline-none ${newQuizItem.correctAnswer === opt && opt !== '' ? 'border-emerald-500' : 'border-white/10'}`}
                                         />
@@ -290,9 +293,9 @@ const LessonCreator = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400">
-                                    <X size={18} />
-                                </button>
+                                <Button variant="ghost" size="icon" onClick={() => removeWordFromDeck(item.id)} aria-label="Remove question">
+                                    <X size={18} className="text-slate-600 hover:text-red-400" />
+                                </Button>
                             </div>
                         </Card>
                     ))}
@@ -323,8 +326,9 @@ const LessonCreator = () => {
                 <Card className="p-6 mb-6 bg-slate-900/60 border-white/10">
                     <div className="space-y-4">
                         <div>
-                            <label className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2 block">Lesson Title</label>
+                            <label htmlFor="lesson-title" className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2 block">Lesson Title</label>
                             <input
+                                id="lesson-title"
                                 type="text"
                                 value={currentLesson.title}
                                 onChange={(e) => setCurrentLesson(prev => ({ ...prev, title: e.target.value }))}
@@ -335,8 +339,9 @@ const LessonCreator = () => {
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2 block">French</label>
+                                <label htmlFor="french-word" className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2 block">French</label>
                                 <input
+                                    id="french-word"
                                     type="text"
                                     value={newWord.french}
                                     onChange={(e) => setNewWord(prev => ({ ...prev, french: e.target.value }))}
@@ -345,8 +350,9 @@ const LessonCreator = () => {
                                 />
                             </div>
                             <div>
-                                <label className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2 block">English</label>
+                                <label htmlFor="english-word" className="text-xs font-black uppercase text-slate-500 tracking-widest mb-2 block">English</label>
                                 <input
+                                    id="english-word"
                                     type="text"
                                     value={newWord.english}
                                     onChange={(e) => setNewWord(prev => ({ ...prev, english: e.target.value }))}
@@ -378,9 +384,9 @@ const LessonCreator = () => {
                                     <span className="text-indigo-400">→</span>
                                     <span className="text-slate-400 italic">{item.english}</span>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
-                                    <X size={18} />
-                                </button>
+                                <Button variant="ghost" size="icon" onClick={() => removeWordFromDeck(item.id)} aria-label="Remove word" className="opacity-0 group-hover:opacity-100 transition-all">
+                                    <X size={18} className="text-slate-600 hover:text-red-400" />
+                                </Button>
                             </motion.div>
                         ))}
                     </AnimatePresence>
