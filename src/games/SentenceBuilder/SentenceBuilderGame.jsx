@@ -17,12 +17,18 @@ const SentenceBuilderGame = ({ onExit }) => {
 
     useEffect(() => {
         if (scenario) {
-            // Shuffle words for the word bank
-            setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
-            setSelectedWords([]);
-            setFeedback(null);
-            setMonitorMessage(null);
-            setMonitorTipId(null);
+            // Shuffle words for the word bank - wrap in timeout to avoid sync state update warnings if critical
+            // but pure state update in useEffect based on props/other state change is generally "okay" but can cascade.
+            // Converting to useMemo for initial shuffle would be better if possible, but randomness in render is bad.
+            // We use setTimeout 0 to push it to next tick.
+            const timer = setTimeout(() => {
+                setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
+                setSelectedWords([]);
+                setFeedback(null);
+                setMonitorMessage(null);
+                setMonitorTipId(null);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [currentScenarioIndex, scenario]);
 
