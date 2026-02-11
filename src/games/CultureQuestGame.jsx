@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, BookOpen, Star, CheckCircle, XCircle } from 'lucide-react';
+import { Globe, BookOpen, CheckCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -16,16 +16,20 @@ const CultureQuestGame = () => {
     const { addXP } = useProgress();
 
     // Game State
-    const [questions, setQuestions] = useState([]);
+    // Use lazy initialization to avoid setting state in effect
+    const [questions, setQuestions] = useState(() => getCultureSession());
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
     const [isAnswered, setIsAnswered] = useState(false);
     const [gameComplete, setGameComplete] = useState(false);
 
+    // Refresh questions if empty on mount (fallback)
     useEffect(() => {
-        setQuestions(getCultureSession());
-    }, []);
+        if (!questions || questions.length === 0) {
+            setQuestions(getCultureSession());
+        }
+    }, [questions]);
 
     const currentQuestion = questions[currentIndex];
 

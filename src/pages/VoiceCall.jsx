@@ -40,7 +40,7 @@ const VoiceCall = () => {
     const handleSpeak = useCallback((text, onEnd) => {
         setCallState('npc_speaking');
         setIsNpcSpeaking(true);
-        setStatus('Speaking...');
+        setTimeout(() => setStatus('Speaking...'), 0);
 
         speak(text);
 
@@ -76,15 +76,15 @@ const VoiceCall = () => {
                 }, 1000);
             } else {
                 // Feedback then retry
-                handleSpeak(option.feedback || "Je ne comprends pas.", () => {
-                    startListeningPhase();
-                });
+                setTimeout(() => handleSpeak(option.feedback || "Je ne comprends pas.", () => {
+                    setTimeout(() => startListeningPhase(), 0);
+                }), 0);
             }
         } else {
             // No match found
-            handleSpeak("Pardon ? Pouvez-vous répéter ?", () => {
-                startListeningPhase();
-            });
+            setTimeout(() => handleSpeak("Pardon ? Pouvez-vous répéter ?", () => {
+                setTimeout(() => startListeningPhase(), 0);
+            }), 0);
         }
     }, [stopListening, handleSpeak, startListeningPhase]);
 
@@ -94,28 +94,28 @@ const VoiceCall = () => {
 
         // If node has 'end' flag
         if (currentNode.end) {
-            handleSpeak(currentNode.message, () => {
+            setTimeout(() => handleSpeak(currentNode.message, () => {
                 setCallState('ended');
                 setStatus('Call Ended');
                 setTimeout(() => {
                     navigate('/'); // Go back to menu after delay
                     if (currentNode.success) addXP(scenario.xpReward);
                 }, 3000);
-            });
+            }), 0);
             return;
         }
 
         const messageToSpeak = currentNodeId === 'start' ? scenario.initialMessage : currentNode.message;
 
         if (messageToSpeak) {
-            setStatus('Speaking...');
-            handleSpeak(messageToSpeak, () => {
+            setTimeout(() => setStatus('Speaking...'), 0);
+            setTimeout(() => handleSpeak(messageToSpeak, () => {
                 // After speaking, start listening
-                startListeningPhase();
-            });
+                setTimeout(() => startListeningPhase(), 0);
+            }), 0);
         } else {
             // No message (rare), just listen
-            startListeningPhase();
+            setTimeout(() => startListeningPhase(), 0);
         }
 
     }, [currentNodeId, scenario, currentNode, handleSpeak, startListeningPhase, navigate, addXP]);
@@ -136,7 +136,7 @@ const VoiceCall = () => {
         if (isListening) {
             stopListening();
         } else {
-            startListeningPhase();
+            setTimeout(() => startListeningPhase(), 0);
         }
     };
 

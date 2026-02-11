@@ -119,7 +119,7 @@ const MemoryMatchGame = () => {
             setFlipped(newFlipped);
             setDisabled(true);
             setTurns(t => t + 1);
-            checkForMatch(id, flipped);
+            checkForMatch(id, newFlipped);
         }
     };
 
