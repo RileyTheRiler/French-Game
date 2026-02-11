@@ -7,7 +7,6 @@ import { monitorSystem } from '../../systems/MonitorSystem';
 const SentenceBuilderGame = ({ onExit }) => {
     const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
     const [selectedWords, setSelectedWords] = useState([]);
-    const [availableWords, setAvailableWords] = useState([]);
     const [feedback, setFeedback] = useState(null);
     const [monitorMessage, setMonitorMessage] = useState(null);
     const [monitorTipId, setMonitorTipId] = useState(null);
@@ -15,9 +14,24 @@ const SentenceBuilderGame = ({ onExit }) => {
 
     const scenario = SCENARIOS[currentScenarioIndex];
 
+    // Lazy initialization for availableWords to avoid setState in useEffect
+    const [availableWords, setAvailableWords] = useState(() => {
+        if (scenario) {
+            return [...scenario.words].sort(() => Math.random() - 0.5);
+        }
+        return [];
+    });
+
+    // Update availableWords when scenario changes, but avoid immediate effect loop
+    // Using a key on the component or similar might be cleaner, but we can sync here carefully.
+    // Or we can rely on a different effect.
+    // The previous implementation used useEffect to sync availableWords.
+
+    // Better pattern: Use a key for the component to reset state?
+    // Or just updating state when index changes.
+
     useEffect(() => {
         if (scenario) {
-            // Shuffle words for the word bank
             setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
             setSelectedWords([]);
             setFeedback(null);

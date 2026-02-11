@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Check, ArrowRight, RotateCcw, Search } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -13,16 +13,15 @@ import confetti from 'canvas-confetti';
 const ErrorSpottingGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
-    const [puzzle, setPuzzle] = useState(null);
-    const [status, setStatus] = useState('playing'); // 'playing', 'correct', 'finished'
+
+    // Lazy initialization for puzzle and status
+    const [puzzle, setPuzzle] = useState(() => generateErrorSpotting(1));
+    const [status, setStatus] = useState(() => puzzle ? 'playing' : 'finished');
+
     const [score, setScore] = useState(0);
     const [questionCount, setQuestionCount] = useState(0);
-    const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
+    const [feedback, setFeedback] = useState(null);
     const MAX_QUESTIONS = 5;
-
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
 
     const loadNextPuzzle = () => {
         const newPuzzle = generateErrorSpotting(1);
@@ -35,7 +34,15 @@ const ErrorSpottingGame = () => {
         }
     };
 
-    const handleWordClick = (word, index) => {
+    // Use effect to handle "finished" state if puzzle generation fails (edge case)
+    // Avoid synchronous state update if already correct
+    useEffect(() => {
+        if (!puzzle && status !== 'finished') {
+            setStatus('finished');
+        }
+    }, [puzzle, status]);
+
+    const handleWordClick = (word) => {
         if (status !== 'playing') return;
 
         // Clean punctuation for comparison (simple check)
@@ -112,7 +119,7 @@ const ErrorSpottingGame = () => {
                                     layout
                                     whileHover={status === 'playing' ? { scale: 1.1, textShadow: "0 0 8px rgba(255,255,255,0.5)" } : {}}
                                     whileTap={status === 'playing' ? { scale: 0.95 } : {}}
-                                    onClick={() => handleWordClick(word, idx)}
+                                    onClick={() => handleWordClick(word)}
                                     disabled={status !== 'playing'}
                                     className={`
                                         rounded-lg px-2 py-1 transition-colors relative
