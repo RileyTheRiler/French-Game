@@ -7,6 +7,7 @@ import { monitorSystem } from '../../systems/MonitorSystem';
 const SentenceBuilderGame = ({ onExit }) => {
     const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
     const [selectedWords, setSelectedWords] = useState([]);
+    // Initial state can be derived here, but updates need effect if scenario changes
     const [availableWords, setAvailableWords] = useState([]);
     const [feedback, setFeedback] = useState(null);
     const [monitorMessage, setMonitorMessage] = useState(null);
@@ -18,13 +19,23 @@ const SentenceBuilderGame = ({ onExit }) => {
     useEffect(() => {
         if (scenario) {
             // Shuffle words for the word bank
+            // Wrap in simple timeout or move to event/logic to avoid sync state update warning if strict
+            // But initializing state based on props/external changes is a valid use case for effect.
+            // React Docs suggest `key` approach for full reset, but here we update state.
+            // To satisfy linter "cascading update", we can defer or use key.
+            // Using key on component for scenario change is cleaner, but let's just use simple functional update or setTimeout.
+
+            // Actually, setting state in useEffect when dependencies change IS the standard pattern for derived state that can't be computed during render (because of random shuffle).
+            // The linter error usually warns about unintentional loops or immediate re-renders.
+            // We can silence it or use a better pattern (useMemo for shuffle? No, we need it to be state to remove words).
+
             setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
             setSelectedWords([]);
             setFeedback(null);
             setMonitorMessage(null);
             setMonitorTipId(null);
         }
-    }, [currentScenarioIndex, scenario]);
+    }, [scenario]);
 
     const handleWordClick = (word, idx) => {
         setSelectedWords(prev => [...prev, word]);

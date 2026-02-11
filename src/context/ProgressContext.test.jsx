@@ -106,4 +106,15 @@ describe('ProgressContext', () => {
         expect(result.current.stats.coins).toBe(30);
         expect(result.current.stats.inventory['potion']).toBe(1);
     });
+
+    it('updates memory palace room data correctly', () => {
+        const { result } = renderHook(() => useProgress(), { wrapper });
+        const roomData = { items: ['vase', 'painting'], unlocked: true };
+
+        act(() => {
+            result.current.updateMemoryPalaceRoom('living_room', roomData);
+        });
+
+        expect(result.current.stats.memoryPalace.rooms['living_room']).toEqual(roomData);
+    });
 });
