@@ -14,7 +14,11 @@ const DictationGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
 
-    const [currentSentence, setCurrentSentence] = useState(null);
+    // Use lazy initialization to set initial state
+    const [currentSentence, setCurrentSentence] = useState(() => {
+        return DICTATION_SENTENCES[Math.floor(Math.random() * DICTATION_SENTENCES.length)];
+    });
+
     const [userInput, setUserInput] = useState('');
     const [status, setStatus] = useState('playing'); // playing, checking, success, error
     const [diff, setDiff] = useState(null);
@@ -24,21 +28,17 @@ const DictationGame = () => {
     const ACCENTS = ['é', 'è', 'ê', 'ë', 'à', 'â', 'ç', 'î', 'ï', 'ô', 'ù', 'û'];
 
     const loadNewSentence = () => {
-        // Simple random selection for now
         const randomSentence = DICTATION_SENTENCES[Math.floor(Math.random() * DICTATION_SENTENCES.length)];
         setCurrentSentence(randomSentence);
         setUserInput('');
         setStatus('playing');
         setDiff(null);
-        // Clean speech synthesis queue
         if (window.speechSynthesis) {
             window.speechSynthesis.cancel();
         }
     };
 
-    useEffect(() => {
-        loadNewSentence();
-    }, []);
+    // Removed the useEffect that called loadNewSentence on mount, since we use lazy init now.
 
     const playAudio = (rate = 1.0) => {
         if (!currentSentence || isPlayingAudio) return;
@@ -61,7 +61,9 @@ const DictationGame = () => {
 
     // Ensure voices are loaded (chrome weirdness)
     useEffect(() => {
-        window.speechSynthesis.getVoices();
+        if (window.speechSynthesis) {
+            window.speechSynthesis.getVoices();
+        }
     }, []);
 
     const checkAnswer = () => {

@@ -13,12 +13,18 @@ import confetti from 'canvas-confetti';
 const ErrorSpottingGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
-    const [puzzle, setPuzzle] = useState(null);
-    const [status, setStatus] = useState('playing'); // 'playing', 'correct', 'finished'
+
+    // Lazy initialization
+    const [puzzle, setPuzzle] = useState(() => generateErrorSpotting(1));
+    const [status, setStatus] = useState(() => puzzle ? 'playing' : 'finished');
+
     const [score, setScore] = useState(0);
     const [questionCount, setQuestionCount] = useState(0);
-    const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
+    const [feedback, setFeedback] = useState(null);
     const MAX_QUESTIONS = 5;
+
+    // Use effect only for handling "finished" state if puzzle generation fails initially?
+    // Actually, with lazy init, we don't need the initial useEffect to load.
 
     const loadNextPuzzle = () => {
         const newPuzzle = generateErrorSpotting(1);
@@ -31,9 +37,13 @@ const ErrorSpottingGame = () => {
         }
     };
 
+    // Remove the initial useEffect that called loadNextPuzzle, as we did lazy init.
+    // However, if we wanted to handle the "finished" state if null was returned:
     useEffect(() => {
-        loadNextPuzzle();
-    }, []);
+        if (!puzzle) {
+            setStatus('finished');
+        }
+    }, [puzzle]);
 
     const handleWordClick = (word, index) => {
         if (status !== 'playing') return;
