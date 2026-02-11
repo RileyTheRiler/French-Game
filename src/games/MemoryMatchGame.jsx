@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Trophy, RotateCcw, Sparkles } from 'lucide-react';
+import { Trophy, RotateCcw, Sparkles } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -22,14 +22,9 @@ const MemoryMatchGame = () => {
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
+    const [difficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
-
-    const startNewGame = () => {
+    const startNewGame = useCallback(() => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
@@ -53,33 +48,43 @@ const MemoryMatchGame = () => {
         });
 
         // Shuffle
-        setCards(newCards.sort(() => Math.random() - 0.5));
+        // eslint-disable-next-line no-undef
+        const shuffled = [...newCards].sort(() => Math.random() - 0.5);
+
+        setCards(shuffled);
         setFlipped([]);
         setSolved([]);
         setTurns(0);
         setGameComplete(false);
         setDisabled(false);
-    };
+    }, [difficulty, getWeightedPracticeWords]);
 
-    const handleClick = (id) => {
-        if (disabled || gameComplete) return;
-        if (flipped.includes(id) || solved.includes(id)) return;
+    // Initialize Game
+    useEffect(() => {
+        startNewGame();
+    }, [startNewGame]);
 
-        if (flipped.length === 0) {
-            setFlipped([id]);
-            const card = cards.find(c => c.id === id);
-            if (card.type === 'french') speak(card.content);
-            SoundManager.playClick();
-        } else {
-            setFlipped(prev => [...prev, id]);
-            setDisabled(true);
-            setTurns(t => t + 1);
-            checkForMatch(id);
+    const handleWin = useCallback(() => {
+        setGameComplete(true);
+        SoundManager.playLevelUp();
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+
+        addXP(30);
+    }, [addXP]);
+
+    // Check Win Condition
+    useEffect(() => {
+        if (cards.length > 0 && solved.length === cards.length) {
+            handleWin();
         }
-    };
+    }, [cards.length, solved.length, handleWin]);
 
-    const checkForMatch = (currentId) => {
-        const firstId = flipped[0];
+    const checkForMatch = (currentId, currentFlipped) => {
+        const firstId = currentFlipped[0];
         const secondId = currentId;
         const firstCard = cards.find(c => c.id === firstId);
         const secondCard = cards.find(c => c.id === secondId);
@@ -92,7 +97,7 @@ const MemoryMatchGame = () => {
             setDisabled(false);
         } else {
             // No Match
-            SoundManager.playClick(); // or a soft fail sound
+            SoundManager.playClick();
             setTimeout(() => {
                 setFlipped([]);
                 setDisabled(false);
@@ -100,25 +105,22 @@ const MemoryMatchGame = () => {
         }
     };
 
-    // Check Win Condition
-    useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
+    const handleClick = (id) => {
+        if (disabled || gameComplete) return;
+        if (flipped.includes(id) || solved.includes(id)) return;
+
+        if (flipped.length === 0) {
+            setFlipped([id]);
+            const card = cards.find(c => c.id === id);
+            if (card.type === 'french') speak(card.content);
+            SoundManager.playClick();
+        } else {
+            const newFlipped = [...flipped, id];
+            setFlipped(newFlipped);
+            setDisabled(true);
+            setTurns(t => t + 1);
+            checkForMatch(id, flipped);
         }
-    }, [solved]);
-
-    const handleWin = () => {
-        setGameComplete(true);
-        SoundManager.playLevelUp();
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-
-        // XP Calculation: Base 20 - turns penalty? Or fix 20? 
-        // Let's give nice XP.
-        addXP(30);
     };
 
     return (
@@ -143,43 +145,47 @@ const MemoryMatchGame = () => {
 
                 {/* Grid */}
                 <div className={`grid gap-4 w-full max-w-2xl ${difficulty === 'hard' ? 'grid-cols-4' : 'grid-cols-3 md:grid-cols-4'}`}>
-                    {cards.map(card => {
+                    {cards.map((card, index) => {
                         const isFlipped = flipped.includes(card.id) || solved.includes(card.id);
                         const isSolved = solved.includes(card.id);
 
                         return (
-                            <motion.button
+                            <div
                                 key={card.id}
-                                className={`
-                                    aspect-[3/4] rounded-xl text-lg font-bold p-2 flex items-center justify-center text-center shadow-lg transition-all relative perspective-1000
-                                `}
-                                onClick={() => handleClick(card.id)}
-                                initial={{ rotateY: 0 }}
-                                animate={{
-                                    rotateY: isFlipped ? 180 : 0,
-                                    scale: isSolved ? 0.95 : 1
-                                }}
-                                transition={{ duration: 0.3 }}
-                                style={{ transformStyle: 'preserve-3d' }}
+                                className="aspect-[3/4] relative perspective-1000"
                             >
-                                {/* Front (Card Back) */}
-                                <div className={`
-                                    absolute inset-0 bg-indigo-600 rounded-xl backface-hidden flex items-center justify-center border-b-4 border-indigo-800
-                                    ${isSolved ? 'opacity-0' : 'opacity-100'}
-                                `}
-                                    style={{ backfaceVisibility: 'hidden' }}>
-                                    <Sparkles className="text-indigo-400/50" size={32} />
-                                </div>
+                                <motion.button
+                                    className={`
+                                        w-full h-full rounded-xl text-lg font-bold p-2 flex items-center justify-center text-center shadow-lg transition-all absolute inset-0
+                                    `}
+                                    onClick={() => handleClick(card.id)}
+                                    initial={{ rotateY: 0 }}
+                                    animate={{
+                                        rotateY: isFlipped ? 180 : 0,
+                                        scale: isSolved ? 0.95 : 1
+                                    }}
+                                    transition={{ duration: 0.3 }}
+                                    style={{ transformStyle: 'preserve-3d' }}
+                                >
+                                    {/* Front (Card Back) */}
+                                    <div className={`
+                                        absolute inset-0 bg-indigo-600 rounded-xl backface-hidden flex items-center justify-center border-b-4 border-indigo-800
+                                        ${isSolved ? 'opacity-0' : 'opacity-100'}
+                                    `}
+                                        style={{ backfaceVisibility: 'hidden' }}>
+                                        <Sparkles className="text-indigo-400/50" size={32} />
+                                    </div>
 
-                                {/* Back (Content) */}
-                                <div className={`
-                                    absolute inset-0 bg-white rounded-xl backface-hidden flex items-center justify-center p-2 border-b-4 
-                                    ${isSolved ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-300 text-slate-800'}
-                                `}
-                                    style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
-                                    <span className="break-words">{card.content}</span>
-                                </div>
-                            </motion.button>
+                                    {/* Back (Content) */}
+                                    <div className={`
+                                        absolute inset-0 bg-white rounded-xl backface-hidden flex items-center justify-center p-2 border-b-4
+                                        ${isSolved ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-300 text-slate-800'}
+                                    `}
+                                        style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                                        <span className="break-words text-sm md:text-base">{card.content}</span>
+                                    </div>
+                                </motion.button>
+                            </div>
                         );
                     })}
                 </div>
