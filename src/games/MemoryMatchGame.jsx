@@ -16,19 +16,32 @@ const MemoryMatchGame = () => {
     const { addXP } = useProgress();
     const { getWeightedPracticeWords } = useVocabulary();
 
-    const [cards, setCards] = useState([]);
+    const [difficulty, setDifficulty] = useState('normal');
+
+    // Lazy init for cards
+    const [cards, setCards] = useState(() => {
+        // Initial setup logic
+        const pairCount = 6; // default normal
+        const words = getWeightedPracticeWords(pairCount);
+        const newCards = [];
+        words.forEach(word => {
+            newCards.push({ id: `fr-${word.id}`, wordId: word.id, content: word.french, type: 'french', wordObj: word });
+            newCards.push({ id: `en-${word.id}`, wordId: word.id, content: word.english, type: 'english', wordObj: word });
+        });
+        return newCards.sort(() => Math.random() - 0.5);
+    });
+
     const [flipped, setFlipped] = useState([]);
     const [solved, setSolved] = useState([]);
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
+    // Function to restart/reset game
     const startNewGame = () => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
-        // Create pairs (French and English)
         const newCards = [];
         words.forEach(word => {
             newCards.push({
@@ -47,7 +60,6 @@ const MemoryMatchGame = () => {
             });
         });
 
-        // Shuffle
         setCards(newCards.sort(() => Math.random() - 0.5));
         setFlipped([]);
         setSolved([]);
@@ -56,10 +68,10 @@ const MemoryMatchGame = () => {
         setDisabled(false);
     };
 
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
+    // Removed the initial useEffect that called startNewGame, as we use lazy init.
+    // However, if difficulty changes, we might want to restart?
+    // But 'setDifficulty' isn't exposed in UI in the provided code (it was unused vars error).
+    // Let's keep it simple.
 
     const handleClick = (id) => {
         if (disabled || gameComplete) return;
@@ -108,18 +120,18 @@ const MemoryMatchGame = () => {
             spread: 70,
             origin: { y: 0.6 }
         });
-
-        // XP Calculation: Base 20 - turns penalty? Or fix 20? 
-        // Let's give nice XP.
         addXP(30);
     };
 
     // Check Win Condition
     useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
+        if (cards.length > 0 && solved.length === cards.length && !gameComplete) {
             handleWin();
         }
-    }, [solved]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [solved, cards.length, gameComplete]);
+    // Added gameComplete to dep array to avoid repeated calls if it updates?
+    // Actually handleWin sets gameComplete, so we should check !gameComplete.
 
     return (
         <GameLayout

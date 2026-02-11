@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Check, ArrowRight, RotateCcw, Search } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -14,7 +14,7 @@ const ErrorSpottingGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
 
-    // Lazy initialization
+    // Lazy initialization for puzzle and status
     const [puzzle, setPuzzle] = useState(() => generateErrorSpotting(1));
     const [status, setStatus] = useState(() => puzzle ? 'playing' : 'finished');
 
@@ -22,9 +22,6 @@ const ErrorSpottingGame = () => {
     const [questionCount, setQuestionCount] = useState(0);
     const [feedback, setFeedback] = useState(null);
     const MAX_QUESTIONS = 5;
-
-    // Use effect only for handling "finished" state if puzzle generation fails initially?
-    // Actually, with lazy init, we don't need the initial useEffect to load.
 
     const loadNextPuzzle = () => {
         const newPuzzle = generateErrorSpotting(1);
@@ -37,15 +34,15 @@ const ErrorSpottingGame = () => {
         }
     };
 
-    // Remove the initial useEffect that called loadNextPuzzle, as we did lazy init.
-    // However, if we wanted to handle the "finished" state if null was returned:
+    // Use effect to handle "finished" state if puzzle generation fails (edge case)
+    // Avoid synchronous state update if already correct
     useEffect(() => {
-        if (!puzzle) {
+        if (!puzzle && status !== 'finished') {
             setStatus('finished');
         }
-    }, [puzzle]);
+    }, [puzzle, status]);
 
-    const handleWordClick = (word, index) => {
+    const handleWordClick = (word) => {
         if (status !== 'playing') return;
 
         // Clean punctuation for comparison (simple check)
@@ -122,7 +119,7 @@ const ErrorSpottingGame = () => {
                                     layout
                                     whileHover={status === 'playing' ? { scale: 1.1, textShadow: "0 0 8px rgba(255,255,255,0.5)" } : {}}
                                     whileTap={status === 'playing' ? { scale: 0.95 } : {}}
-                                    onClick={() => handleWordClick(word, idx)}
+                                    onClick={() => handleWordClick(word)}
                                     disabled={status !== 'playing'}
                                     className={`
                                         rounded-lg px-2 py-1 transition-colors relative

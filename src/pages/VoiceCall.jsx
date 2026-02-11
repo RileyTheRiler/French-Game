@@ -26,6 +26,7 @@ const VoiceCall = () => {
 
     const currentNode = scenario.nodes[currentNodeId];
 
+    // Hoisted functions to be used in useEffect
     const handleSpeak = (text, onEnd) => {
         setCallState('npc_speaking');
         setIsNpcSpeaking(true);
@@ -105,7 +106,7 @@ const VoiceCall = () => {
             // No message (rare), just listen
             startListeningPhase();
         }
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentNodeId, scenario]);
 
     // Effect: Check transcript for matches
@@ -118,6 +119,7 @@ const VoiceCall = () => {
         }, 1500);
 
         return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [transcript, callState]);
 
     const handleToggleMic = () => {
