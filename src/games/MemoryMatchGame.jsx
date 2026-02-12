@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, Trophy, RotateCcw, Sparkles } from 'lucide-react';
@@ -22,7 +22,7 @@ const MemoryMatchGame = () => {
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
+    const [difficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
     const startNewGame = useCallback(() => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
@@ -58,7 +58,7 @@ const MemoryMatchGame = () => {
 
     // Initialize Game
     useEffect(() => {
-        startNewGame();
+        setTimeout(() => startNewGame(), 0);
     }, [startNewGame]);
 
     const handleClick = (id) => {

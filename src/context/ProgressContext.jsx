@@ -355,10 +355,6 @@ export const ProgressProvider = ({ children }) => {
         return [];
     }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
 
-    // Check achievements when relevant stats change
-    }, [stats.xp, stats.unlockedAchievements, stats.dailyStats, stats.streak, stats.wordsLearned, showAchievement]);
-
-    useEffect(() => {
         const timer = setTimeout(() => {
             checkAchievements();
         }, 0);
@@ -972,7 +968,6 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
-    const updateMemoryPalaceRoom = useCallback((roomId, items) => {
     const updateMemoryPalaceRoom = useCallback((roomId, data) => {
         setStats(prev => ({
             ...prev,

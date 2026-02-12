@@ -32,10 +32,10 @@ const ErrorSpottingGame = () => {
     };
 
     useEffect(() => {
-        loadNextPuzzle();
+        setTimeout(() => loadNextPuzzle(), 0);
     }, []);
 
-    const handleWordClick = (word, index) => {
+    const handleWordClick = (word) => {
         if (status !== 'playing') return;
 
         // Clean punctuation for comparison (simple check)
