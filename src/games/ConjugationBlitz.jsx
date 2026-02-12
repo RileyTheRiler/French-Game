@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Zap, Trophy, RotateCcw, ArrowRight, X } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Timer, Zap, Trophy } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import SoundManager from '../utils/SoundManager';
 import { VERB_DATA, PRONOUNS, TENSES } from '../data/verbData';
-import confetti from 'canvas-confetti';
 
 const ConjugationBlitz = () => {
     const navigate = useNavigate();
@@ -25,19 +24,16 @@ const ConjugationBlitz = () => {
 
     const inputRef = useRef(null);
     const timerRef = useRef(null);
+    const scoreRef = useRef(0);
+
+    // Sync score ref for useCallback usage
+    useEffect(() => { scoreRef.current = score; }, [score]);
 
     // Helpers
     const getRandomChallenge = () => {
         const verb = VERB_DATA[Math.floor(Math.random() * VERB_DATA.length)];
         const tense = TENSES[Math.floor(Math.random() * TENSES.length)];
         const pronoun = PRONOUNS[Math.floor(Math.random() * PRONOUNS.length)];
-
-        // Handle special case for 'je' before vowel/mute h? (j'aime)
-        // For simplicity in data, we stored full "je ..." or "j'..."? 
-        // Wait, data stored just "aime". Code needs to handle pronoun display?
-        // Actually, let's look at my data structure.
-        // Data: { present: { je: 'aime' ... } }
-        // So I need to construct the prompt carefully.
 
         return {
             verb,
@@ -62,6 +58,16 @@ const ConjugationBlitz = () => {
         if (inputRef.current) inputRef.current.focus();
     };
 
+    const endGame = useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp();
+
+        // Calculate total XP
+        const baseXP = scoreRef.current * 2;
+        addXP(baseXP);
+    }, [addXP]);
+
     // Timer Logic
     useEffect(() => {
         if (status === 'playing') {
@@ -76,17 +82,7 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
-
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
+    }, [status, endGame]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -119,19 +115,9 @@ const ConjugationBlitz = () => {
         } else {
             SoundManager.playMiss();
             setStreak(0);
-            // Shake effect handled by UI state potentially, but for speed we just move on
         }
 
         loadNextChallenge();
-    };
-
-    // Formatting helper
-    const formatPronoun = (pronoun, verbResponse) => {
-        // Simple logic for J' vs Je
-        // This is purely for display relative to the verb if we wanted to show them together
-        // But the prompt shows Pronoun separately usually.
-        // Let's just display the Pronoun string from the array for now.
-        return pronoun;
     };
 
     return (
