@@ -44,4 +44,10 @@ describe('Crypto Utils', () => {
         // 'invalidFormat' !== 'somePassword' => false
         expect(isValid).toBe(false);
     });
+
+    it('should reject invalid hex format in stored hash', async () => {
+        const invalidHex = 'invalid:hex';
+        const isValid = await verifyPassword(invalidHex, 'password');
+        expect(isValid).toBe(false);
+    });
 });
