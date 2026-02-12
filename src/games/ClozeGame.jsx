@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Check, X, ArrowRight, RotateCcw } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -33,7 +33,7 @@ const ClozeGame = () => {
     };
 
     useEffect(() => {
-        loadNextPuzzle();
+        setTimeout(() => loadNextPuzzle(), 0);
     }, []);
 
     const handleOptionClick = (option) => {

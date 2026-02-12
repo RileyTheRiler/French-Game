@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SCENARIOS } from '../data/conversationScenarios';
 import CallScreen from '../components/VoiceCall/CallScreen';
@@ -6,7 +6,6 @@ import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import { speak } from '../utils/audio';
 import { findBestMatch } from '../utils/textMatching';
 import { useProgress } from '../context/ProgressContext';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const VoiceCall = () => {
     const navigate = useNavigate();
