@@ -24,12 +24,7 @@ const MemoryMatchGame = () => {
     const [gameComplete, setGameComplete] = useState(false);
     const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
-
-    const startNewGame = () => {
+    const startNewGame = useCallback(() => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
@@ -59,7 +54,12 @@ const MemoryMatchGame = () => {
         setTurns(0);
         setGameComplete(false);
         setDisabled(false);
-    };
+    }, [difficulty, getWeightedPracticeWords]);
+
+    // Initialize Game
+    useEffect(() => {
+        startNewGame();
+    }, [startNewGame]);
 
     const handleClick = (id) => {
         if (disabled || gameComplete) return;
@@ -100,14 +100,7 @@ const MemoryMatchGame = () => {
         }
     };
 
-    // Check Win Condition
-    useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
-        }
-    }, [solved]);
-
-    const handleWin = () => {
+    const handleWin = useCallback(() => {
         setGameComplete(true);
         SoundManager.playLevelUp();
         confetti({
@@ -119,7 +112,14 @@ const MemoryMatchGame = () => {
         // XP Calculation: Base 20 - turns penalty? Or fix 20? 
         // Let's give nice XP.
         addXP(30);
-    };
+    }, [addXP]);
+
+    // Check Win Condition
+    useEffect(() => {
+        if (cards.length > 0 && solved.length === cards.length) {
+            setTimeout(() => handleWin(), 0);
+        }
+    }, [solved, cards.length, handleWin]);
 
     return (
         <GameLayout
