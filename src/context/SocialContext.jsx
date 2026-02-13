@@ -1,180 +1,115 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import { useProgress } from './ProgressContext';
 
-const SocialContext = createContext();
-
-const MOCK_NPCS = {
-    'PIERRE': { id: 'npc_pierre', name: 'PolyglotPierre', level: 12, country: '🇫🇷', isNPC: true, avatar: '👨‍🎨' },
-    'LISA': { id: 'npc_lisa', name: 'LinguaLisa', level: 10, country: '🇺🇸', isNPC: true, avatar: '👩‍🏫' },
-    'GURU': { id: 'npc_guru', name: 'GrammarGuru', level: 9, country: '🇬🇧', isNPC: true, avatar: '🧐' },
-    'VICTOR': { id: 'npc_victor', name: 'VocabVictor', level: 8, country: '🇨🇦', isNPC: true, avatar: '📚' },
-};
-
-const SOCIAL_STORAGE_KEY = 'frenchApp_social';
+export const SocialContext = createContext();
 
 export const SocialProvider = ({ children }) => {
-    const { stats, addXP } = useProgress();
+    const { user } = useProgress();
 
-    // State
-    const [friends, setFriends] = useState(() => {
-        const stored = localStorage.getItem(SOCIAL_STORAGE_KEY);
-        return stored ? JSON.parse(stored).friends || [] : [];
-    });
+    // Friend System
+    const [friends, setFriends] = useState([
+        { id: 'u2', name: 'Marie', avatar: '👩‍🎨', level: 12, status: 'online', streak: 15 },
+        { id: 'u3', name: 'Jean', avatar: '👨‍🍳', level: 8, status: 'offline', streak: 3 },
+    ]);
 
-    const [coopGroup, setCoopGroup] = useState(() => {
-        const stored = localStorage.getItem(SOCIAL_STORAGE_KEY);
-        return stored ? JSON.parse(stored).coopGroup || null : null;
-    });
+    const [friendRequests, setFriendRequests] = useState([
+        { id: 'u4', name: 'Sophie', avatar: '👩‍🏫', level: 5 }
+    ]);
 
-    const [userCoopStartXp, setUserCoopStartXp] = useState(() => {
-        const stored = localStorage.getItem(SOCIAL_STORAGE_KEY);
-        return stored ? JSON.parse(stored).userCoopStartXp || 0 : 0;
-    });
+    // Leaderboards
+    const [leaderboard, setLeaderboard] = useState([
+        { id: 'u1', name: 'You', xp: 1250, rank: 4, avatar: '👤' },
+        { id: 'u2', name: 'Marie', xp: 2100, rank: 1, avatar: '👩‍🎨' },
+        { id: 'u5', name: 'Pierre', xp: 1850, rank: 2, avatar: '🕵️‍♂️' },
+        { id: 'u6', name: 'Lucie', xp: 1400, rank: 3, avatar: '👩‍🚀' },
+        { id: 'u3', name: 'Jean', xp: 900, rank: 5, avatar: '👨‍🍳' },
+    ]);
 
-    const [friendsProgress, setFriendsProgress] = useState(() => {
-        const stored = localStorage.getItem(SOCIAL_STORAGE_KEY);
-        return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
-    });
-
-    const [activeChallenge, setActiveChallenge] = useState({
-        id: 'chal_weekly_xp',
-        title: 'Team XP Weekly',
+    // Group Challenges
+    const [activeChallenge, setActiveChallenge] = useState(() => ({
+        id: 'c1',
+        title: 'Community Goal: 10k Words',
         target: 10000,
         current: 0,
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
-    });
+    }));
 
-    // Compute total current progress
-    useEffect(() => {
-        const userContribution = Math.max(0, stats.xp - userCoopStartXp);
-        const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
+    const [notifications, setNotifications] = useState([]);
 
-        setActiveChallenge(prev => ({
-            ...prev,
-            current: total,
-            isCompleted: total >= prev.target
-        }));
-    }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
-
-    const claimCoopReward = useCallback(() => {
-        if (!activeChallenge.isCompleted) return;
-
-        // Award bonus
-        addXP(500); // Bonus XP
-        // Could add coins here too if Context supported it
-
-        // Reset or generate new challenge (mock logic)
-        setActiveChallenge(prev => ({
-            ...prev,
-            current: 0,
-            isCompleted: false,
-            target: Math.floor(prev.target * 1.2), // Increase difficulty
-            title: 'Next Team Challenge'
-        }));
-
-        // Reset progress trackers
-        setUserCoopStartXp(stats.xp);
-        setFriendsProgress(0);
-
-        return 500; // Return reward amount
-    }, [activeChallenge.isCompleted, stats.xp, addXP]);
-
-    // Persist to local storage
-    useEffect(() => {
-        localStorage.setItem(SOCIAL_STORAGE_KEY, JSON.stringify({
-            friends,
-            coopGroup,
-            userCoopStartXp,
-            friendsProgress
-        }));
-    }, [friends, coopGroup, userCoopStartXp, friendsProgress]);
-
-    // Simulate friend activity (XP gains)
+    // Simulate real-time updates
     useEffect(() => {
         const interval = setInterval(() => {
-            if (coopGroup) {
-                const randomGain = Math.floor(Math.random() * 50);
-                if (randomGain > 20) { // 60% chance per tick
-                    setFriendsProgress(prev => prev + randomGain);
-                }
-            }
-        }, 10000); // Check every 10s
+            // Randomly update leaderboard
+            setLeaderboard(prev => {
+                const updated = prev.map(user => ({
+                    ...user,
+                    xp: user.xp + (Math.random() > 0.7 ? Math.floor(Math.random() * 50) : 0)
+                }));
+                return updated.sort((a, b) => b.xp - a.xp).map((u, i) => ({ ...u, rank: i + 1 }));
+            });
+
+            // Update community challenge
+            setActiveChallenge(prev => ({
+                ...prev,
+                current: Math.min(prev.target, prev.current + Math.floor(Math.random() * 10))
+            }));
+
+        }, 5000);
 
         return () => clearInterval(interval);
-    }, [coopGroup]);
-
-    const addFriend = useCallback((code) => {
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                const normalizedCode = code.toUpperCase().trim();
-
-                if (friends.some(f => f.id === MOCK_NPCS[normalizedCode]?.id)) {
-                    reject(new Error("Already friends with this user!"));
-                    return;
-                }
-
-                if (MOCK_NPCS[normalizedCode]) {
-                    const newFriend = {
-                        ...MOCK_NPCS[normalizedCode],
-                        addedAt: Date.now(),
-                        xp: Math.floor(Math.random() * 5000),
-                        weeklyXp: Math.floor(Math.random() * 1000)
-                    };
-                    setFriends(prev => [...prev, newFriend]);
-                    resolve(newFriend);
-                } else if (normalizedCode === 'FORCE_ERROR') {
-                    reject(new Error("User not found"));
-                } else {
-                    const newFriend = {
-                        id: `user_${Date.now()}`,
-                        name: `User_${code}`,
-                        level: 1,
-                        country: '🌍',
-                        isNPC: false,
-                        addedAt: Date.now(),
-                        xp: 0,
-                        weeklyXp: 0,
-                        avatar: '👤'
-                    };
-                    setFriends(prev => [...prev, newFriend]);
-                    resolve(newFriend);
-                }
-            }, 800);
-        });
-    }, [friends]);
-
-    const removeFriend = useCallback((friendId) => {
-        setFriends(prev => prev.filter(f => f.id !== friendId));
     }, []);
 
-    const createCoopGroup = useCallback((name) => {
-        const group = {
-            id: `group_${Date.now()}`,
-            name,
-            members: ['You', ...friends.map(f => f.name)],
-            createdAt: Date.now()
-        };
-        setCoopGroup(group);
-        setUserCoopStartXp(stats.xp); // Snapshot current XP as baseline
-        setFriendsProgress(Math.floor(Math.random() * 2000)); // Random starting progress from friends
-    }, [friends, stats.xp]);
+    const sendFriendRequest = (userId) => {
+        // API call would go here
+        console.log(`Sent request to ${userId}`);
+    };
 
-    const leaveCoopGroup = useCallback(() => {
-        setCoopGroup(null);
-        setFriendsProgress(0);
-        setUserCoopStartXp(0);
-    }, []);
+    const acceptFriendRequest = (request) => {
+        setFriends(prev => [...prev, { ...request, status: 'online', streak: 0 }]);
+        setFriendRequests(prev => prev.filter(r => r.id !== request.id));
+        addNotification(`You are now friends with ${request.name}!`);
+    };
+
+    const rejectFriendRequest = (requestId) => {
+        setFriendRequests(prev => prev.filter(r => r.id !== requestId));
+    };
+
+    const challengeFriend = (friendId) => {
+        addNotification(`Challenge sent to ${friends.find(f => f.id === friendId)?.name}!`);
+    };
+
+    const joinCommunityChallenge = () => {
+        if (!user) return;
+        setActiveChallenge(prev => ({
+            ...prev,
+            participants: [...prev.participants, user.id]
+        }));
+    };
+
+    const addNotification = (message) => {
+        const id = Date.now();
+        setNotifications(prev => [...prev, { id, message, read: false, time: new Date() }]);
+        // Auto-dismiss toast logic if we wanted it here, but we store it for the panel
+    };
+
+    const markNotificationsRead = () => {
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    };
 
     const value = {
         friends,
-        addFriend,
-        removeFriend,
-        coopGroup,
-        createCoopGroup,
-        leaveCoopGroup,
+        friendRequests,
+        leaderboard,
         activeChallenge,
-        claimCoopReward
+        notifications,
+        sendFriendRequest,
+        acceptFriendRequest,
+        rejectFriendRequest,
+        challengeFriend,
+        joinCommunityChallenge,
+        markNotificationsRead
     };
 
     return (
@@ -184,10 +119,4 @@ export const SocialProvider = ({ children }) => {
     );
 };
 
-export const useSocial = () => {
-    const context = useContext(SocialContext);
-    if (!context) {
-        throw new Error('useSocial must be used within a SocialProvider');
-    }
-    return context;
-};
+export const useSocial = () => useContext(SocialContext);

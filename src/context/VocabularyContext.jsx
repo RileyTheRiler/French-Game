@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import { useProgress } from './ProgressContext';
 import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
 import { calculateNextReview, getInitialState, isPassingGrade, normalizeGrade } from '../utils/srs';

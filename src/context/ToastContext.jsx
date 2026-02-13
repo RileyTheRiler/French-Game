@@ -1,141 +1,97 @@
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable no-unused-vars */
 import { motion, AnimatePresence } from 'framer-motion';
-import { Award, X, Check, AlertCircle, Info } from 'lucide-react';
+import { X, CheckCircle, AlertCircle, Info, Trophy } from 'lucide-react';
 
 export const ToastContext = createContext();
 
-let toastId = 0;
-
 export const ToastProvider = ({ children }) => {
     const [toasts, setToasts] = useState([]);
+    const [achievement, setAchievement] = useState(null);
 
-    const addToast = useCallback((toast) => {
-        const id = toastId++;
-        setToasts(prev => [...prev, { id, ...toast }]);
+    const showToast = useCallback((message, type = 'info', duration = 3000) => {
+        const id = Date.now();
+        setToasts(prev => [...prev, { id, message, type }]);
 
-        // Auto-remove after duration
         setTimeout(() => {
             setToasts(prev => prev.filter(t => t.id !== id));
-        }, toast.duration || 4000);
-
-        return id;
+        }, duration);
     }, []);
 
-    const removeToast = useCallback((id) => {
+    const showSuccess = (msg) => showToast(msg, 'success');
+    const showError = (msg) => showToast(msg, 'error');
+
+    const showAchievement = useCallback((ach) => {
+        setAchievement(ach);
+        // Auto dismiss after 5s
+        setTimeout(() => setAchievement(null), 5000);
+    }, []);
+
+    const dismissToast = (id) => {
         setToasts(prev => prev.filter(t => t.id !== id));
-    }, []);
-
-    // Helper functions
-    const showAchievement = useCallback((achievement) => {
-        addToast({
-            type: 'achievement',
-            title: 'Achievement Unlocked!',
-            message: achievement.title,
-            icon: achievement.icon,
-            xp: achievement.xpReward,
-            duration: 5000
-        });
-    }, [addToast]);
-
-    const showSuccess = useCallback((message) => {
-        addToast({ type: 'success', message, duration: 3000 });
-    }, [addToast]);
-
-    const showError = useCallback((message) => {
-        addToast({ type: 'error', message, duration: 4000 });
-    }, [addToast]);
-
-    const showInfo = useCallback((message) => {
-        addToast({ type: 'info', message, duration: 3000 });
-    }, [addToast]);
-
-    // Optimize context value to prevent unnecessary re-renders
-    const contextValue = useMemo(() => ({
-        addToast,
-        removeToast,
-        showAchievement,
-        showSuccess,
-        showError,
-        showInfo
-    }), [addToast, removeToast, showAchievement, showSuccess, showError, showInfo]);
+    };
 
     return (
-        <ToastContext.Provider value={contextValue}>
+        <ToastContext.Provider value={{ showToast, showSuccess, showError, showAchievement }}>
             {children}
-            <ToastContainer toasts={toasts} removeToast={removeToast} />
-        </ToastContext.Provider>
-    );
-};
 
-const ToastContainer = ({ toasts, removeToast }) => {
-    return (
-        <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-3 pointer-events-none">
+            {/* Achievement Overlay */}
             <AnimatePresence>
-                {toasts.map(toast => (
-                    <Toast key={toast.id} toast={toast} onClose={() => removeToast(toast.id)} />
-                ))}
+                {achievement && (
+                    <motion.div
+                        initial={{ y: -100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -100, opacity: 0 }}
+                        className="fixed top-8 left-0 right-0 z-50 flex justify-center pointer-events-none"
+                    >
+                        <div className="bg-slate-900 border border-yellow-500/50 rounded-2xl p-4 shadow-[0_0_50px_rgba(234,179,8,0.3)] flex items-center gap-4 max-w-md w-full mx-4 pointer-events-auto">
+                            <div className="h-16 w-16 bg-gradient-to-br from-yellow-400 to-amber-600 rounded-xl flex items-center justify-center text-3xl shadow-inner">
+                                {achievement.icon || '🏆'}
+                            </div>
+                            <div className="flex-1">
+                                <p className="text-yellow-500 text-xs font-bold uppercase tracking-widest mb-1">Achievement Unlocked!</p>
+                                <h4 className="text-white font-bold text-lg leading-tight">{achievement.title}</h4>
+                                <p className="text-slate-400 text-sm">{achievement.description}</p>
+                            </div>
+                            <button onClick={() => setAchievement(null)} className="text-slate-500 hover:text-white">
+                                <X size={20} />
+                            </button>
+                        </div>
+                    </motion.div>
+                )}
             </AnimatePresence>
-        </div>
-    );
-};
 
-const Toast = ({ toast, onClose }) => {
-    const getStyles = () => {
-        switch (toast.type) {
-            case 'achievement':
-                return 'bg-gradient-to-r from-amber-500/20 to-orange-500/20 border-amber-500/50';
-            case 'success':
-                return 'bg-emerald-500/20 border-emerald-500/50';
-            case 'error':
-                return 'bg-red-500/20 border-red-500/50';
-            default:
-                return 'bg-slate-800/90 border-white/10';
-        }
-    };
-
-    const getIcon = () => {
-        switch (toast.type) {
-            case 'achievement':
-                return <span className="text-2xl">{toast.icon || '🏆'}</span>;
-            case 'success':
-                return <Check size={20} className="text-emerald-400" />;
-            case 'error':
-                return <AlertCircle size={20} className="text-red-400" />;
-            default:
-                return <Info size={20} className="text-blue-400" />;
-        }
-    };
-
-    return (
-        <motion.div
-            initial={{ opacity: 0, x: 100, scale: 0.9 }}
-            animate={{ opacity: 1, x: 0, scale: 1 }}
-            exit={{ opacity: 0, x: 100, scale: 0.9 }}
-            className={`pointer-events-auto min-w-[280px] max-w-sm p-4 rounded-2xl border backdrop-blur-xl shadow-2xl ${getStyles()}`}
-        >
-            <div className="flex items-start gap-3">
-                <div className="shrink-0 mt-0.5">
-                    {getIcon()}
-                </div>
-                <div className="flex-1 min-w-0">
-                    {toast.title && (
-                        <p className="text-xs uppercase tracking-wider font-bold text-amber-400 mb-1">
-                            {toast.title}
-                        </p>
-                    )}
-                    <p className="text-white font-medium">{toast.message}</p>
-                    {toast.xp && (
-                        <p className="text-sm text-amber-300 mt-1 font-bold">+{toast.xp} XP</p>
-                    )}
-                </div>
-                <button
-                    onClick={onClose}
-                    className="shrink-0 p-1 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                    <X size={16} className="text-white/60" />
-                </button>
+            {/* Toast Container */}
+            <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+                <AnimatePresence>
+                    {toasts.map(toast => (
+                        <motion.div
+                            key={toast.id}
+                            initial={{ x: 100, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: 100, opacity: 0 }}
+                            className={`
+                                pointer-events-auto min-w-[300px] p-4 rounded-xl shadow-lg border flex items-start gap-3
+                                ${toast.type === 'success' ? 'bg-emerald-950/90 border-emerald-500/30 text-emerald-200' : ''}
+                                ${toast.type === 'error' ? 'bg-red-950/90 border-red-500/30 text-red-200' : ''}
+                                ${toast.type === 'info' ? 'bg-slate-900/90 border-slate-700 text-slate-200' : ''}
+                            `}
+                        >
+                            <div className="mt-0.5">
+                                {toast.type === 'success' && <CheckCircle size={18} className="text-emerald-400" />}
+                                {toast.type === 'error' && <AlertCircle size={18} className="text-red-400" />}
+                                {toast.type === 'info' && <Info size={18} className="text-blue-400" />}
+                            </div>
+                            <p className="text-sm font-medium flex-1">{toast.message}</p>
+                            <button onClick={() => dismissToast(toast.id)} className="opacity-50 hover:opacity-100">
+                                <X size={16} />
+                            </button>
+                        </motion.div>
+                    ))}
+                </AnimatePresence>
             </div>
-        </motion.div>
+        </ToastContext.Provider>
     );
 };
 
