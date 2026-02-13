@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain, Target } from 'lucide-react';
+import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain, Target, Loader2 } from 'lucide-react';
 import DifficultyDial from './ui/DifficultyDial';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
@@ -281,13 +281,18 @@ const SettingsModal = ({ onClose }) => {
                                         className="flex-1 rounded-xl bg-slate-800 border border-white/10 px-3 py-2 text-sm outline-none focus:border-indigo-500"
                                     />
                                 </div>
-                                {error && <p className="text-xs text-red-400">{error}</p>}
+                                {error && <p className="text-xs text-red-400" role="alert">{error}</p>}
                                 <button
                                     type="submit"
                                     disabled={loading}
-                                    className="w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-sm transition disabled:opacity-70"
+                                    className="w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-sm transition disabled:opacity-70 flex items-center justify-center gap-2"
+                                    aria-busy={loading}
                                 >
-                                    {loading ? 'Working…' : authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                                    {loading && <Loader2 className="animate-spin w-4 h-4" />}
+                                    {loading
+                                        ? (authMode === 'signin' ? 'Signing in...' : 'Creating account...')
+                                        : (authMode === 'signin' ? 'Sign In' : 'Create Account')
+                                    }
                                 </button>
                             </form>
                         )}
