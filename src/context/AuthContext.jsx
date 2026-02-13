@@ -7,6 +7,11 @@ const AuthContext = createContext();
 const STORAGE_KEY = 'frenchApp_user';
 const CREDENTIALS_KEY = 'frenchApp_credentials';
 
+// Dummy hash for non-existent users to prevent timing attacks
+// Salt: 16 bytes (32 hex chars) of zeros
+// Hash: 32 bytes (64 hex chars) of zeros
+const DUMMY_HASH = "00000000000000000000000000000000:0000000000000000000000000000000000000000000000000000000000000000";
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(() => {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -65,17 +70,17 @@ export const AuthProvider = ({ children }) => {
             const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
             let record = credentials[email];
 
-            if (!record) {
-                throw new Error('Invalid credentials');
-            }
-
             // Handle legacy format (separate hash/salt) if encountered
-            if (!record.password && record.hash && record.salt) {
+            if (record && !record.password && record.hash && record.salt) {
                 record.password = `${record.salt}:${record.hash}`;
             }
 
-            const isValid = await verifyPassword(record.password, password);
-            if (!isValid) {
+            // Mitigate user enumeration via timing attacks:
+            // Always verify a hash (real or dummy) so the operation takes consistent time.
+            const hashToVerify = record ? record.password : DUMMY_HASH;
+            const isValid = await verifyPassword(hashToVerify, password);
+
+            if (!record || !isValid) {
                 throw new Error('Invalid credentials');
             }
 
