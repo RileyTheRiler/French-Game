@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, Volume1, ArrowRight, RefreshCw, Check, X, AlertCircle } from 'lucide-react';
+import { Volume2, Volume1, ArrowRight, RefreshCw, Check, AlertCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -13,32 +14,39 @@ import confetti from 'canvas-confetti';
 const DictationGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
-
-    const [currentSentence, setCurrentSentence] = useState(null);
-    const [userInput, setUserInput] = useState('');
-    const [status, setStatus] = useState('playing'); // playing, checking, success, error
-    const [diff, setDiff] = useState(null);
-    const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+    const inputRef = useRef(null);
 
     // Filter useful accents for the toolbar
     const ACCENTS = ['é', 'è', 'ê', 'ë', 'à', 'â', 'ç', 'î', 'ï', 'ô', 'ù', 'û'];
 
-    useEffect(() => {
-        loadNewSentence();
-    }, []);
-
-    const loadNewSentence = () => {
-        // Simple random selection for now
+    const initializeGame = () => {
         const randomSentence = DICTATION_SENTENCES[Math.floor(Math.random() * DICTATION_SENTENCES.length)];
-        setCurrentSentence(randomSentence);
-        setUserInput('');
-        setStatus('playing');
-        setDiff(null);
-        // Clean speech synthesis queue
-        window.speechSynthesis.cancel();
+        return {
+            currentSentence: randomSentence,
+            status: 'playing',
+            diff: null
+        };
     };
 
-    const playAudio = (rate = 1.0) => {
+    const [{ currentSentence, status, diff }, setGameState] = useState(initializeGame);
+    const [userInput, setUserInput] = useState('');
+    const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+
+    const loadNewSentence = useCallback(() => {
+        const randomSentence = DICTATION_SENTENCES[Math.floor(Math.random() * DICTATION_SENTENCES.length)];
+        setGameState({
+            currentSentence: randomSentence,
+            status: 'playing',
+            diff: null
+        });
+        setUserInput('');
+        window.speechSynthesis.cancel();
+    }, []);
+
+    // Effect for initial load is removed in favor of lazy init
+    // But we need to handle browser quirks? No, lazy init is fine.
+
+    const playAudio = useCallback((rate = 1.0) => {
         if (!currentSentence || isPlayingAudio) return;
 
         setIsPlayingAudio(true);
@@ -55,29 +63,20 @@ const DictationGame = () => {
         utterance.onerror = () => setIsPlayingAudio(false);
 
         window.speechSynthesis.speak(utterance);
-    };
+    }, [currentSentence, isPlayingAudio]);
 
     // Ensure voices are loaded (chrome weirdness)
     useEffect(() => {
-        window.speechSynthesis.getVoices();
+        const loadVoices = () => window.speechSynthesis.getVoices();
+        loadVoices();
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+        return () => {
+            window.speechSynthesis.onvoiceschanged = null;
+        };
     }, []);
 
-    const checkAnswer = () => {
-        if (!userInput.trim()) return;
-
-        const normalizedInput = userInput.trim(); // Keep case sensitivity for strict dictation? Or lenient?
-        // Let's go with strict on accents/spelling, maybe lenient on end punctuation if we want to be nice.
-        // For "Dictation", strict is usually better.
-
-        if (normalizedInput === currentSentence.text) {
-            handleSuccess();
-        } else {
-            handleError(normalizedInput);
-        }
-    };
-
-    const handleSuccess = () => {
-        setStatus('success');
+    const handleSuccess = useCallback(() => {
+        setGameState(prev => ({ ...prev, status: 'success' }));
         SoundManager.playSuccess();
         addXP(15);
         confetti({
@@ -85,24 +84,38 @@ const DictationGame = () => {
             spread: 70,
             origin: { y: 0.6 }
         });
-    };
+    }, [addXP]);
 
-    const handleError = (input) => {
-        setStatus('error');
-        SoundManager.playMiss();
-
+    const handleError = useCallback((input) => {
         // Simple word-by-word diff calculation for display
         const targetWords = currentSentence.text.split(' ');
         const inputWords = input.split(' ');
 
-        // This is a naive visual diff, but helpful enough
-        // Ideally we'd use a diff library, but let's build a simple visualizer
-        setDiff({ target: targetWords, input: inputWords });
-    };
+        setGameState(prev => ({
+            ...prev,
+            status: 'error',
+            diff: { target: targetWords, input: inputWords }
+        }));
+        SoundManager.playMiss();
+    }, [currentSentence]);
+
+    const checkAnswer = useCallback(() => {
+        if (!userInput.trim() || !currentSentence) return;
+
+        const normalizedInput = userInput.trim();
+
+        if (normalizedInput === currentSentence.text) {
+            handleSuccess();
+        } else {
+            handleError(normalizedInput);
+        }
+    }, [userInput, currentSentence, handleSuccess, handleError]);
 
     const insertAccent = (char) => {
         setUserInput(prev => prev + char);
-        // Focus back on input (optional, might need ref)
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
     };
 
     return (
@@ -141,6 +154,7 @@ const DictationGame = () => {
                 <div className="w-full space-y-4">
                     <div className="relative">
                         <textarea
+                            ref={inputRef}
                             value={userInput}
                             onChange={(e) => setUserInput(e.target.value)}
                             placeholder="Type what you hear..."
@@ -203,7 +217,7 @@ const DictationGame = () => {
                                     <p className="text-red-200 font-medium">Not quite right. Compare your answer:</p>
                                     <div className="text-lg">
                                         <div className="text-slate-400 mb-1 text-sm uppercase tracking-wide">Target:</div>
-                                        <p className="text-green-400 font-medium">{currentSentence.text}</p>
+                                        <p className="text-green-400 font-medium">{currentSentence?.text}</p>
                                     </div>
                                     <div className="text-lg">
                                         <div className="text-slate-400 mb-1 text-sm uppercase tracking-wide">Your Input:</div>
@@ -214,7 +228,7 @@ const DictationGame = () => {
                         </motion.div>
                     )}
 
-                    {status === 'success' && (
+                    {status === 'success' && currentSentence && (
                         <motion.div
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}

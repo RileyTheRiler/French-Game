@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Book, ChevronLeft, Award, Lock, BookOpen, Play, Pause,
@@ -115,7 +115,8 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
         if (onSaveProgress && currentNode?.type !== 'ending') {
             onSaveProgress(story.id, { currentNode: currentNodeId, history });
         }
-    }, [currentNodeId, history]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentNodeId, history, story.id]);
 
     const handleChoice = (choice) => {
         SoundManager.playPop();

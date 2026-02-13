@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Trophy, RotateCcw, Sparkles } from 'lucide-react';
+import { Trophy, RotateCcw, Sparkles } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -16,24 +17,12 @@ const MemoryMatchGame = () => {
     const { addXP } = useProgress();
     const { getWeightedPracticeWords } = useVocabulary();
 
-    const [cards, setCards] = useState([]);
-    const [flipped, setFlipped] = useState([]);
-    const [solved, setSolved] = useState([]);
-    const [disabled, setDisabled] = useState(false);
-    const [turns, setTurns] = useState(0);
-    const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
+    const [difficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
-
-    const startNewGame = () => {
-        const pairCount = difficulty === 'hard' ? 8 : 6;
+    const generateCards = (diff) => {
+        const pairCount = diff === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
-        // Create pairs (French and English)
         const newCards = [];
         words.forEach(word => {
             newCards.push({
@@ -52,13 +41,61 @@ const MemoryMatchGame = () => {
             });
         });
 
-        // Shuffle
-        setCards(newCards.sort(() => Math.random() - 0.5));
+        return newCards.sort(() => Math.random() - 0.5);
+    };
+
+    const [cards, setCards] = useState(() => generateCards('normal'));
+    const [flipped, setFlipped] = useState([]);
+    const [solved, setSolved] = useState([]);
+    const [disabled, setDisabled] = useState(false);
+    const [turns, setTurns] = useState(0);
+    const [gameComplete, setGameComplete] = useState(false);
+
+    const startNewGame = () => {
+        setCards(generateCards(difficulty));
         setFlipped([]);
         setSolved([]);
         setTurns(0);
         setGameComplete(false);
         setDisabled(false);
+    };
+
+    const handleWin = () => {
+        setGameComplete(true);
+        SoundManager.playLevelUp();
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+        addXP(30);
+    };
+
+    const checkForMatch = (currentId) => {
+        const firstId = flipped[0];
+        const secondId = currentId;
+        const firstCard = cards.find(c => c.id === firstId);
+        const secondCard = cards.find(c => c.id === secondId);
+
+        if (firstCard.wordId === secondCard.wordId) {
+            // Match
+            SoundManager.playMatch();
+            const newSolved = [...solved, firstId, secondId];
+            setSolved(newSolved);
+            setFlipped([]);
+            setDisabled(false);
+
+            if (newSolved.length === cards.length) {
+                handleWin();
+            }
+        } else {
+            // No Match
+            SoundManager.playClick(); // or a soft fail sound
+            setTimeout(() => {
+                setFlipped([]);
+                setDisabled(false);
+            }, 1000);
+        }
     };
 
     const handleClick = (id) => {
@@ -76,49 +113,6 @@ const MemoryMatchGame = () => {
             setTurns(t => t + 1);
             checkForMatch(id);
         }
-    };
-
-    const checkForMatch = (currentId) => {
-        const firstId = flipped[0];
-        const secondId = currentId;
-        const firstCard = cards.find(c => c.id === firstId);
-        const secondCard = cards.find(c => c.id === secondId);
-
-        if (firstCard.wordId === secondCard.wordId) {
-            // Match
-            SoundManager.playMatch();
-            setSolved(prev => [...prev, firstId, secondId]);
-            setFlipped([]);
-            setDisabled(false);
-        } else {
-            // No Match
-            SoundManager.playClick(); // or a soft fail sound
-            setTimeout(() => {
-                setFlipped([]);
-                setDisabled(false);
-            }, 1000);
-        }
-    };
-
-    // Check Win Condition
-    useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
-        }
-    }, [solved]);
-
-    const handleWin = () => {
-        setGameComplete(true);
-        SoundManager.playLevelUp();
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-
-        // XP Calculation: Base 20 - turns penalty? Or fix 20? 
-        // Let's give nice XP.
-        addXP(30);
     };
 
     return (

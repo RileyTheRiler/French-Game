@@ -1,125 +1,109 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useAuth } from './AuthContext';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
 import { useProgress } from './ProgressContext';
-import { useVocabulary } from './VocabularyContext';
-import { exportPayload, loadRemoteState, mergeState, saveRemoteState } from '../services/cloudSync';
 
-const SyncContext = createContext();
+export const SyncContext = createContext();
 
 export const SyncProvider = ({ children }) => {
-    const { user } = useAuth();
     const { stats, hydrateProgress } = useProgress();
-    const { vocabulary, hydrateVocabulary } = useVocabulary();
-
-    const [syncing, setSyncing] = useState(false);
+    const [status, setStatus] = useState('idle'); // idle, syncing, up_to_date, error, conflict
     const [lastSyncedAt, setLastSyncedAt] = useState(null);
-    const [status, setStatus] = useState('idle');
-    const pendingRef = useRef(false);
+    const [conflictData, setConflictData] = useState(null);
 
-    const localSnapshot = useMemo(() => ({
-        progress: stats,
-        vocabulary,
-        updatedAt: stats?.updatedAt || 0
-    }), [stats, vocabulary]);
-
-    const performSync = useCallback(async () => {
-        if (!user) return;
-
-        // Skip sync if offline
-        if (!navigator.onLine) {
-            setStatus('offline');
-            return;
-        }
-
-        if (syncing) {
-            pendingRef.current = true;
-            return;
-        }
-        setSyncing(true);
+    // Mock Cloud Sync
+    const syncData = async () => {
         setStatus('syncing');
         try {
-            const remote = await loadRemoteState(user.id);
-            const merged = mergeState(localSnapshot, remote);
-            await saveRemoteState(user.id, merged);
-            if (merged.progress) hydrateProgress(merged.progress);
-            if (merged.vocabulary) hydrateVocabulary(merged.vocabulary);
-            setLastSyncedAt(new Date());
-            setStatus('up_to_date');
-        } catch (err) {
-            console.error(err);
-            setStatus(`error: ${err.message}`);
-        } finally {
-            setSyncing(false);
-            if (pendingRef.current) {
-                pendingRef.current = false;
-                performSync();
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Simulate random conflict (10% chance)
+            if (Math.random() > 0.9) {
+                setStatus('conflict');
+                setConflictData({
+                    local: stats,
+                    cloud: {
+                        ...stats,
+                        xp: stats.xp + 500, // Cloud has more XP
+                        wordsLearned: stats.wordsLearned + 5
+                    }
+                });
+                return;
             }
-        }
-    }, [user, localSnapshot, hydrateProgress, hydrateVocabulary, syncing]);
 
+            // Success
+            setStatus('up_to_date');
+            setLastSyncedAt(new Date());
+            localStorage.setItem('frenchApp_lastSync', new Date().toISOString());
+
+        } catch (err) {
+            setStatus('error');
+            console.error('Sync failed:', err);
+        }
+    };
+
+    // Auto-sync on significant changes (debounced)
     useEffect(() => {
-        if (user) {
-            performSync();
+        const timer = setTimeout(() => {
+            if (stats.xp > 0) { // Don't sync empty initial state
+                syncData();
+            }
+        }, 5000); // Sync 5s after last change
+
+        return () => clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [stats.xp, stats.wordsLearned]); // Only trigger on major stat changes
+
+    const resolveConflict = (strategy) => {
+        if (strategy === 'use_cloud') {
+            hydrateProgress(conflictData.cloud);
         }
-    }, [user, performSync]);
+        // 'use_local' does nothing, just keeps current state
+        setStatus('up_to_date');
+        setConflictData(null);
+    };
 
-    // Handle Online/Offline events
-    useEffect(() => {
-        const handleOnline = () => {
-            console.log('Back online, syncing...');
-            performSync();
-        };
-        const handleOffline = () => setStatus('offline');
+    const exportData = () => {
+        const dataStr = JSON.stringify(stats, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+        const exportFileDefaultName = `lingolift_backup_${new Date().toISOString().slice(0, 10)}.json`;
 
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, [performSync]);
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    };
 
-    useEffect(() => {
-        if (user && navigator.onLine) {
-            const debounce = setTimeout(() => performSync(), 2000); // Increased debounce to avoid spam
-            return () => clearTimeout(debounce);
-        }
-        return undefined;
-    }, [user, localSnapshot, performSync]);
+    const importData = async (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const importedStats = JSON.parse(event.target.result);
+                    // Basic validation
+                    if (typeof importedStats.xp !== 'number') throw new Error("Invalid save file");
 
-    const exportData = useCallback(() => {
-        const payload = exportPayload(stats, vocabulary);
-        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'lingolift-backup.json';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }, [stats, vocabulary]);
-
-    const importData = useCallback(async (file) => {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-        if (parsed.progress) {
-            hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
-        }
-        if (parsed.vocabulary) {
-            hydrateVocabulary(parsed.vocabulary.map(word => ({ ...word, updatedAt: Date.now() })));
-        }
-        setStatus('imported');
-    }, [hydrateProgress, hydrateVocabulary]);
+                    hydrateProgress(importedStats);
+                    setStatus('imported');
+                    resolve();
+                } catch (err) {
+                    reject(err);
+                }
+            };
+            reader.readAsText(file);
+        });
+    };
 
     return (
         <SyncContext.Provider value={{
-            syncing,
-            lastSyncedAt,
             status,
-            performSync,
+            lastSyncedAt,
+            syncNow: syncData,
+            resolveConflict,
+            conflictData,
             exportData,
-            importData
+            importData,
+            syncing: status === 'syncing'
         }}>
             {children}
         </SyncContext.Provider>

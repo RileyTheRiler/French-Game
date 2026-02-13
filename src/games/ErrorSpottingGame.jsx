@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Check, ArrowRight, RotateCcw, Search } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -13,18 +14,17 @@ import confetti from 'canvas-confetti';
 const ErrorSpottingGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
-    const [puzzle, setPuzzle] = useState(null);
-    const [status, setStatus] = useState('playing'); // 'playing', 'correct', 'finished'
+
+    // Lazy initialization
+    const [puzzle, setPuzzle] = useState(() => generateErrorSpotting(1));
+    const [status, setStatus] = useState(() => puzzle ? 'playing' : 'finished');
+
     const [score, setScore] = useState(0);
     const [questionCount, setQuestionCount] = useState(0);
     const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
     const MAX_QUESTIONS = 5;
 
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
-
-    const loadNextPuzzle = () => {
+    const loadNextPuzzle = useCallback(() => {
         const newPuzzle = generateErrorSpotting(1);
         if (newPuzzle) {
             setPuzzle(newPuzzle);
@@ -33,10 +33,10 @@ const ErrorSpottingGame = () => {
         } else {
             setStatus('finished');
         }
-    };
+    }, []);
 
-    const handleWordClick = (word, index) => {
-        if (status !== 'playing') return;
+    const handleWordClick = (word) => {
+        if (status !== 'playing' || !puzzle) return;
 
         // Clean punctuation for comparison (simple check)
         const cleanWord = word.replace(/[.,!?]/g, '');
@@ -112,7 +112,7 @@ const ErrorSpottingGame = () => {
                                     layout
                                     whileHover={status === 'playing' ? { scale: 1.1, textShadow: "0 0 8px rgba(255,255,255,0.5)" } : {}}
                                     whileTap={status === 'playing' ? { scale: 0.95 } : {}}
-                                    onClick={() => handleWordClick(word, idx)}
+                                    onClick={() => handleWordClick(word)}
                                     disabled={status !== 'playing'}
                                     className={`
                                         rounded-lg px-2 py-1 transition-colors relative
