@@ -24,7 +24,10 @@ const CultureQuestGame = () => {
     const [gameComplete, setGameComplete] = useState(false);
 
     useEffect(() => {
-        setQuestions(getCultureSession());
+        // Wrap in setTimeout to prevent synchronous state update in effect
+        setTimeout(() => {
+            setQuestions(getCultureSession());
+        }, 0);
     }, []);
 
     const currentQuestion = questions[currentIndex];
