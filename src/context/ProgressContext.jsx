@@ -921,7 +921,6 @@ export const ProgressProvider = ({ children }) => {
                 ...prev.cognitiveStats,
                 ...updates
             },
-            cognitiveStats: { ...prev.cognitiveStats, ...updates },
             updatedAt: Date.now()
         }));
     }, []);
