@@ -3,16 +3,20 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 const useSpeechRecognition = (lang = 'fr-FR') => {
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
-    const [error, setError] = useState(null);
+    const [error, setError] = useState(() => {
+        if (typeof window !== 'undefined' && !('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+            return 'Speech Recognition Not Supported';
+        }
+        return null;
+    });
     const recognitionRef = useRef(null);
 
     useEffect(() => {
-        if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-            setError('Speech Recognition Not Supported');
-            return;
-        }
+        if (error === 'Speech Recognition Not Supported') return;
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
         recognitionRef.current = new SpeechRecognition();
         recognitionRef.current.continuous = false; // Capture one sentence at a time
         recognitionRef.current.interimResults = true;
@@ -24,12 +28,9 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
         };
 
         recognitionRef.current.onresult = (event) => {
-            let interimTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     setTranscript(event.results[i][0].transcript);
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
                 }
             }
         };
@@ -52,7 +53,7 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
                 recognitionRef.current.stop();
             }
         };
-    }, [lang]);
+    }, [lang, error]);
 
     const startListening = useCallback(() => {
         setTranscript('');

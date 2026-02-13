@@ -25,6 +25,12 @@ const SurvivalChallenge = () => {
     const [gameResult, setGameResult] = useState(null);
     const [stressLevel, setStressLevel] = useState(0);
 
+    const handleTimeOut = useCallback(() => {
+        setIsPlaying(false);
+        setGameResult({ success: false, reason: 'timeout' });
+        SoundManager.playMiss();
+    }, []);
+
     // Timer effect
     useEffect(() => {
         if (!isPlaying || timeRemaining <= 0) return;
@@ -37,14 +43,14 @@ const SurvivalChallenge = () => {
                 }
                 // Increase stress as time runs low
                 if (prev <= 30) {
-                    setStressLevel(Math.min(100, stressLevel + 5));
+                    setStressLevel(s => Math.min(100, s + 5));
                 }
                 return prev - 1;
             });
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [isPlaying, timeRemaining]);
+    }, [isPlaying, timeRemaining, handleTimeOut]);
 
     const startScenario = (scenario) => {
         setSelectedScenario(scenario);
@@ -55,6 +61,21 @@ const SurvivalChallenge = () => {
         setShowHint(false);
         setStressLevel(0);
         setGameResult(null);
+    };
+
+    const handleGameEnd = (success) => {
+        setIsPlaying(false);
+
+        if (success) {
+            const score = calculateScore(selectedScenario, timeRemaining, hintsUsed);
+            addXP(score);
+            if (updateSurvivalBest) updateSurvivalBest(selectedScenario.id, timeRemaining);
+            setGameResult({ success: true, score, timeRemaining });
+            SoundManager.playLevelUp();
+            confetti({ particleCount: 100, spread: 70 });
+        } else {
+            setGameResult({ success: false, reason: 'failed' });
+        }
     };
 
     const handleOptionSelect = (option) => {
@@ -79,27 +100,6 @@ const SurvivalChallenge = () => {
                 setCurrentStage(nextStage);
                 setShowHint(false);
             }
-        }
-    };
-
-    const handleTimeOut = () => {
-        setIsPlaying(false);
-        setGameResult({ success: false, reason: 'timeout' });
-        SoundManager.playMiss();
-    };
-
-    const handleGameEnd = (success) => {
-        setIsPlaying(false);
-
-        if (success) {
-            const score = calculateScore(selectedScenario, timeRemaining, hintsUsed);
-            addXP(score);
-            updateSurvivalBest?.(selectedScenario.id, timeRemaining);
-            setGameResult({ success: true, score, timeRemaining });
-            SoundManager.playLevelUp();
-            confetti({ particleCount: 100, spread: 70 });
-        } else {
-            setGameResult({ success: false, reason: 'failed' });
         }
     };
 

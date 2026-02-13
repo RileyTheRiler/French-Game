@@ -183,6 +183,7 @@ const FallingWordsGame = () => {
             isPlayingRef.current = false;
             if (requestRef.current) cancelAnimationFrame(requestRef.current);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [getDueWords]);
 
     useEffect(() => {
@@ -536,6 +537,7 @@ const FallingWordsGame = () => {
 
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [gameOver, onExit]);
 
     return (
