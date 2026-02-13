@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -13,14 +14,16 @@ import confetti from 'canvas-confetti';
 const ClozeGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
-    const [puzzle, setPuzzle] = useState(null);
+
+    // Lazy initialization to avoid setState in useEffect on mount
+    const [puzzle, setPuzzle] = useState(() => generateCloze(1));
     const [selectedOption, setSelectedOption] = useState(null);
-    const [status, setStatus] = useState('playing'); // 'playing', 'correct', 'wrong', 'finished'
+    const [status, setStatus] = useState(() => puzzle ? 'playing' : 'finished');
     const [score, setScore] = useState(0);
     const [questionCount, setQuestionCount] = useState(0);
     const MAX_QUESTIONS = 5;
 
-    const loadNextPuzzle = () => {
+    const loadNextPuzzle = useCallback(() => {
         const newPuzzle = generateCloze(1); // Default to level 1 for now
         if (newPuzzle) {
             setPuzzle(newPuzzle);
@@ -30,14 +33,10 @@ const ClozeGame = () => {
             // Fallback or error state if generator fails
             setStatus('finished');
         }
-    };
-
-    useEffect(() => {
-        loadNextPuzzle();
     }, []);
 
     const handleOptionClick = (option) => {
-        if (status !== 'playing') return;
+        if (status !== 'playing' || !puzzle) return;
 
         setSelectedOption(option);
 

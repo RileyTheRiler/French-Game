@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, RotateCcw, Sparkles } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
@@ -16,19 +17,12 @@ const MemoryMatchGame = () => {
     const { addXP } = useProgress();
     const { getWeightedPracticeWords } = useVocabulary();
 
-    const [cards, setCards] = useState([]);
-    const [flipped, setFlipped] = useState([]);
-    const [solved, setSolved] = useState([]);
-    const [disabled, setDisabled] = useState(false);
-    const [turns, setTurns] = useState(0);
-    const [gameComplete, setGameComplete] = useState(false);
     const [difficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
-    const startNewGame = () => {
-        const pairCount = difficulty === 'hard' ? 8 : 6;
+    const generateCards = (diff) => {
+        const pairCount = diff === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
-        // Create pairs (French and English)
         const newCards = [];
         words.forEach(word => {
             newCards.push({
@@ -47,8 +41,18 @@ const MemoryMatchGame = () => {
             });
         });
 
-        // Shuffle
-        setCards(newCards.sort(() => Math.random() - 0.5));
+        return newCards.sort(() => Math.random() - 0.5);
+    };
+
+    const [cards, setCards] = useState(() => generateCards('normal'));
+    const [flipped, setFlipped] = useState([]);
+    const [solved, setSolved] = useState([]);
+    const [disabled, setDisabled] = useState(false);
+    const [turns, setTurns] = useState(0);
+    const [gameComplete, setGameComplete] = useState(false);
+
+    const startNewGame = () => {
+        setCards(generateCards(difficulty));
         setFlipped([]);
         setSolved([]);
         setTurns(0);
@@ -56,10 +60,16 @@ const MemoryMatchGame = () => {
         setDisabled(false);
     };
 
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
+    const handleWin = () => {
+        setGameComplete(true);
+        SoundManager.playLevelUp();
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+        addXP(30);
+    };
 
     const checkForMatch = (currentId) => {
         const firstId = flipped[0];
@@ -70,9 +80,14 @@ const MemoryMatchGame = () => {
         if (firstCard.wordId === secondCard.wordId) {
             // Match
             SoundManager.playMatch();
-            setSolved(prev => [...prev, firstId, secondId]);
+            const newSolved = [...solved, firstId, secondId];
+            setSolved(newSolved);
             setFlipped([]);
             setDisabled(false);
+
+            if (newSolved.length === cards.length) {
+                handleWin();
+            }
         } else {
             // No Match
             SoundManager.playClick(); // or a soft fail sound
@@ -99,27 +114,6 @@ const MemoryMatchGame = () => {
             checkForMatch(id);
         }
     };
-
-    const handleWin = () => {
-        setGameComplete(true);
-        SoundManager.playLevelUp();
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-
-        // XP Calculation: Base 20 - turns penalty? Or fix 20? 
-        // Let's give nice XP.
-        addXP(30);
-    };
-
-    // Check Win Condition
-    useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
-        }
-    }, [solved]);
 
     return (
         <GameLayout

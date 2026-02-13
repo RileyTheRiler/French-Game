@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, ArrowRight } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
@@ -13,14 +14,17 @@ import confetti from 'canvas-confetti';
 const ErrorSpottingGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
-    const [puzzle, setPuzzle] = useState(null);
-    const [status, setStatus] = useState('playing'); // 'playing', 'correct', 'finished'
+
+    // Lazy initialization
+    const [puzzle, setPuzzle] = useState(() => generateErrorSpotting(1));
+    const [status, setStatus] = useState(() => puzzle ? 'playing' : 'finished');
+
     const [score, setScore] = useState(0);
     const [questionCount, setQuestionCount] = useState(0);
     const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
     const MAX_QUESTIONS = 5;
 
-    const loadNextPuzzle = () => {
+    const loadNextPuzzle = useCallback(() => {
         const newPuzzle = generateErrorSpotting(1);
         if (newPuzzle) {
             setPuzzle(newPuzzle);
@@ -29,14 +33,10 @@ const ErrorSpottingGame = () => {
         } else {
             setStatus('finished');
         }
-    };
-
-    useEffect(() => {
-        loadNextPuzzle();
     }, []);
 
     const handleWordClick = (word) => {
-        if (status !== 'playing') return;
+        if (status !== 'playing' || !puzzle) return;
 
         // Clean punctuation for comparison (simple check)
         const cleanWord = word.replace(/[.,!?]/g, '');

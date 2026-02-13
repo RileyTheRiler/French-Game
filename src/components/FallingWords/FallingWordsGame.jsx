@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -38,12 +39,11 @@ const FallingWordsGame = () => {
     const opponentName = queryParams.get('opponent') || 'Opponent';
     const isRivalsMode = mode === 'rivals';
 
-    const onExit = () => navigate('/');
+    const onExit = useCallback(() => navigate('/'), [navigate]);
 
-    const { getDueWords, updateWordProgress, CATEGORIES, markWordSeen, getPracticeQueue } = useVocabulary();
+    const { getDueWords, updateWordProgress, markWordSeen } = useVocabulary();
     const {
         stats,
-        recordCategoryPerformance,
         setModeDifficulty,
         addXP,
         addCoins,
@@ -56,7 +56,7 @@ const FallingWordsGame = () => {
     } = useProgress();
 
     const difficultySetting = stats?.difficultySettings?.fallingWords || 3;
-    const [difficulty, setDifficulty] = useState(difficultySetting);
+    const [difficulty] = useState(difficultySetting);
 
     const difficultyConfig = useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
 
