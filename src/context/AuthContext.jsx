@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { nanoid } from '../utils/id';
-import { hashPassword, verifyPassword } from '../utils/crypto';
+import { hashPassword, verifyPassword, DUMMY_HASH } from '../utils/crypto';
 
 const AuthContext = createContext();
 
@@ -65,17 +65,24 @@ export const AuthProvider = ({ children }) => {
             const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
             let record = credentials[email];
 
-            if (!record) {
-                throw new Error('Invalid credentials');
+            // Timing attack mitigation: always perform verification
+            let storedHash = DUMMY_HASH;
+            let recordFound = false;
+
+            if (record) {
+                // Handle legacy format (separate hash/salt) if encountered
+                if (!record.password && record.hash && record.salt) {
+                    record.password = `${record.salt}:${record.hash}`;
+                }
+                if (record.password) {
+                    storedHash = record.password;
+                    recordFound = true;
+                }
             }
 
-            // Handle legacy format (separate hash/salt) if encountered
-            if (!record.password && record.hash && record.salt) {
-                record.password = `${record.salt}:${record.hash}`;
-            }
+            const isValid = await verifyPassword(storedHash, password);
 
-            const isValid = await verifyPassword(record.password, password);
-            if (!isValid) {
+            if (!recordFound || !isValid) {
                 throw new Error('Invalid credentials');
             }
 
