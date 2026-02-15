@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { SCENARIOS } from './scenarios';
 import MonitorFeedback from '../../components/UI/MonitorFeedback';
 import { soundManager } from '../../utils/SoundManager';
@@ -7,24 +7,19 @@ import { monitorSystem } from '../../systems/MonitorSystem';
 const SentenceBuilderGame = ({ onExit }) => {
     const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
     const [selectedWords, setSelectedWords] = useState([]);
-    const [availableWords, setAvailableWords] = useState([]);
+
+    // Initialize with shuffled words from the first scenario
+    const [availableWords, setAvailableWords] = useState(() => {
+        const firstScenario = SCENARIOS[0];
+        return firstScenario ? [...firstScenario.words].sort(() => Math.random() - 0.5) : [];
+    });
+
     const [feedback, setFeedback] = useState(null);
     const [monitorMessage, setMonitorMessage] = useState(null);
     const [monitorTipId, setMonitorTipId] = useState(null);
     const [streak, setStreak] = useState(0);
 
     const scenario = SCENARIOS[currentScenarioIndex];
-
-    useEffect(() => {
-        if (scenario) {
-            // Shuffle words for the word bank
-            setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
-            setSelectedWords([]);
-            setFeedback(null);
-            setMonitorMessage(null);
-            setMonitorTipId(null);
-        }
-    }, [currentScenarioIndex, scenario]);
 
     const handleWordClick = (word, idx) => {
         setSelectedWords(prev => [...prev, word]);
@@ -59,10 +54,23 @@ const SentenceBuilderGame = ({ onExit }) => {
     };
 
     const nextLevel = () => {
+        let nextIndex;
         if (currentScenarioIndex < SCENARIOS.length - 1) {
-            setCurrentScenarioIndex(curr => curr + 1);
+            nextIndex = currentScenarioIndex + 1;
         } else {
-            setCurrentScenarioIndex(0);
+            nextIndex = 0;
+        }
+
+        setCurrentScenarioIndex(nextIndex);
+
+        // Reset state for new level
+        const nextScenario = SCENARIOS[nextIndex];
+        if (nextScenario) {
+            setAvailableWords([...nextScenario.words].sort(() => Math.random() - 0.5));
+            setSelectedWords([]);
+            setFeedback(null);
+            setMonitorMessage(null);
+            setMonitorTipId(null);
         }
     };
 

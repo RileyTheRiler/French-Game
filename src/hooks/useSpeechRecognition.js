@@ -3,12 +3,17 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 const useSpeechRecognition = (lang = 'fr-FR') => {
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
-    const [error, setError] = useState(null);
+    const [error, setError] = useState(() => {
+        // Check support on initialization
+        if (typeof window !== 'undefined' && !('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+            return 'Speech Recognition Not Supported';
+        }
+        return null;
+    });
     const recognitionRef = useRef(null);
 
     useEffect(() => {
         if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-            setError('Speech Recognition Not Supported');
             return;
         }
 
@@ -56,6 +61,8 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
 
     const startListening = useCallback(() => {
         setTranscript('');
+        if (error === 'Speech Recognition Not Supported') return;
+
         setError(null);
         if (recognitionRef.current) {
             try {
@@ -64,7 +71,7 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
                 console.error("Failed to start recognition", e);
             }
         }
-    }, []);
+    }, [error]);
 
     const stopListening = useCallback(() => {
         if (recognitionRef.current) {

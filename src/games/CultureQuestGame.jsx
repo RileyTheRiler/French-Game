@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, BookOpen, Star, CheckCircle, XCircle } from 'lucide-react';
+import { Globe, BookOpen, CheckCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -16,7 +16,8 @@ const CultureQuestGame = () => {
     const { addXP } = useProgress();
 
     // Game State
-    const [questions, setQuestions] = useState([]);
+    // Initialize lazily to avoid "setState in useEffect" if possible
+    const [questions] = useState(() => getCultureSession());
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
@@ -24,7 +25,7 @@ const CultureQuestGame = () => {
     const [gameComplete, setGameComplete] = useState(false);
 
     useEffect(() => {
-        setQuestions(getCultureSession());
+        // Just empty to avoid linting error
     }, []);
 
     const currentQuestion = questions[currentIndex];
@@ -43,17 +44,7 @@ const CultureQuestGame = () => {
         }
     };
 
-    const handleNext = () => {
-        if (currentIndex < questions.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-            setIsAnswered(false);
-            setSelectedOption(null);
-        } else {
-            finishGame();
-        }
-    };
-
-    const finishGame = () => {
+    const finishGame = useCallback(() => {
         setGameComplete(true);
         const xpEarned = score * 15; // 15 XP per correct answer
         addXP(xpEarned);
@@ -61,7 +52,17 @@ const CultureQuestGame = () => {
             SoundManager.playLevelUp();
             confetti();
         }
-    };
+    }, [addXP, questions.length, score]);
+
+    const handleNext = useCallback(() => {
+        if (currentIndex < questions.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+            setIsAnswered(false);
+            setSelectedOption(null);
+        } else {
+            finishGame();
+        }
+    }, [currentIndex, questions.length, finishGame]);
 
     if (!currentQuestion) return <div>Loading...</div>;
 
