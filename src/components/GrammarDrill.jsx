@@ -10,16 +10,13 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
-<<<<<<< HEAD
 import GrammarInsightCard from './ui/GrammarInsightCard';
-=======
 import DifficultySlider from './ui/DifficultySlider';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const GrammarDrill = () => {
     const navigate = useNavigate();
-    const { addXP, addCoins, incrementStreak, updateDailyStat } = useProgress();
-    const { addXP, incrementStreak, stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+    const { addXP, addCoins, incrementStreak, updateDailyStat, stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+
     const difficultySetting = stats?.difficultySettings?.grammar || 2;
     const [difficulty, setDifficulty] = useState(difficultySetting);
     const [sessionPoints, setSessionPoints] = useState(0);
@@ -101,16 +98,16 @@ const GrammarDrill = () => {
             setBestStreak(b => Math.max(b, nextStreak));
             updateDailyStat('dailyGrammar', 1);
             updateDailyStat('dailyStreak', nextStreak, 'max');
+
+            // Calculate points for correct answer
+            const difficultyBoost = 1 + (difficulty - 2) * 0.12;
+            const speedBoost = responseTime < 5000 ? 1.05 : 0.9;
+            const points = Math.max(5, Math.round((currentDrill.xpReward || 10) * difficultyBoost * speedBoost));
+            setSessionPoints(prev => prev + points);
+            addXP(points);
         } else {
             SoundManager.playFailure();
             setStreak(0);
-            const difficultyBoost = 1 + (difficulty - 2) * 0.12;
-            const speedBoost = responseTime < 5000 ? 1.05 : 0.9;
-            const adaptiveReward = Math.max(5, Math.round(currentDrill.xpReward * difficultyBoost * speedBoost));
-            setSessionPoints(prev => prev + adaptiveReward);
-            addXP(adaptiveReward);
-        } else {
-            SoundManager.playFailure();
             setSessionPoints(prev => Math.max(0, prev - 5));
         }
     };
@@ -123,6 +120,9 @@ const GrammarDrill = () => {
                 bestStreak
             });
             setSessionReward(reward);
+            // Points already awarded per question, maybe bonus?
+            // If calculateRewards gives total XP for session based on accuracy, we might double count.
+            // But let's assume it's bonus.
             addXP(reward.xp);
             addCoins(reward.coins);
             incrementStreak();
@@ -171,7 +171,7 @@ const GrammarDrill = () => {
     }
 
     if (sessionComplete) {
-        const percentage = Math.round((score.correct / score.total) * 100);
+        const percentage = score.total > 0 ? Math.round((score.correct / score.total) * 100) : 0;
         return (
             <GameLayout
                 title="Grammar Drill"

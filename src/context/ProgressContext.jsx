@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { calculateLevel, getLevelProgress } from '../utils/gamificationUtils';
 import { ACHIEVEMENTS } from '../data/achievements';
@@ -483,7 +484,7 @@ export const ProgressProvider = ({ children }) => {
         });
     }, []);
 
-    const resetProgress = useCallback(() => {
+    const resetProgress = useCallback((resetStats) => {
         setStats({ ...defaultStats });
     }, [defaultStats]);
 

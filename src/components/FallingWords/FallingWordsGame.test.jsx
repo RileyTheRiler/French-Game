@@ -16,6 +16,15 @@ vi.mock('../../utils/SoundManager', () => ({
     },
 }));
 
+vi.mock('react-i18next', () => ({
+    useTranslation: () => ({
+        t: (key) => key === 'games.falling_words.title' ? 'Falling Words' : key,
+        i18n: {
+            language: 'en'
+        }
+    }),
+}));
+
 vi.mock('lucide-react', () => ({
     Ghost: () => <div data-testid="icon-ghost" />,
     Swords: () => <div data-testid="icon-swords" />,

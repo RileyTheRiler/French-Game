@@ -55,12 +55,11 @@ const getSeasonCountdown = (timestamp) => {
 };
 
 const LeaderboardModal = ({ onClose }) => {
-    const { stats, level } = useProgress();
+    const { stats, level, getWeeklySummary } = useProgress();
     const { friends } = useSocial();
     const [tab, setTab] = useState('weekly');
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-<<<<<<< HEAD
     React.useEffect(() => {
         const handleOnline = () => setIsOffline(false);
         const handleOffline = () => setIsOffline(true);
@@ -76,6 +75,7 @@ const LeaderboardModal = ({ onClose }) => {
     let baseData = [];
     if (tab === 'weekly') baseData = MOCK_WEEKLY;
     else if (tab === 'alltime') baseData = MOCK_ALLTIME;
+    else if (tab === 'seasonal') baseData = SEASONAL_PLAYERS;
     else if (tab === 'friends') {
         // Map friends to leaderboard format
         baseData = friends.map(f => ({
@@ -86,10 +86,8 @@ const LeaderboardModal = ({ onClose }) => {
             country: f.country
         }));
     }
-=======
-    const baseData = tab === 'weekly' ? MOCK_WEEKLY : tab === 'alltime' ? MOCK_ALLTIME : SEASONAL_PLAYERS;
+
     const isSeasonal = tab === 'seasonal';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
     // Insert user into leaderboard
     const userEntry = {
@@ -188,44 +186,19 @@ const LeaderboardModal = ({ onClose }) => {
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex border-b border-white/10">
-                        {['weekly', 'alltime', 'friends'].map((t) => (
+                    <div className="flex border-b border-white/10 overflow-x-auto">
+                        {['weekly', 'alltime', 'seasonal', 'friends'].map((t) => (
                             <button
                                 key={t}
                                 onClick={() => setTab(t)}
-                                className={`flex-1 py-3 text-sm font-bold transition-all capitalize ${tab === t
+                                className={`flex-1 py-3 px-2 text-sm font-bold transition-all capitalize whitespace-nowrap ${tab === t
                                     ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
                                     : 'text-slate-400 hover:text-white'
-<<<<<<< HEAD
                                     }`}
                             >
                                 {t === 'alltime' ? 'All Time' : t}
                             </button>
                         ))}
-=======
-                                }`}
-                        >
-                            This Week
-                        </button>
-                        <button
-                            onClick={() => setTab('alltime')}
-                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'alltime'
-                                    ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
-                                    : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            All Time
-                        </button>
-                        <button
-                            onClick={() => setTab('seasonal')}
-                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'seasonal'
-                                    ? 'text-indigo-300 border-b-2 border-indigo-300 bg-indigo-500/10'
-                                    : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            Seasonal
-                        </button>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
                     </div>
 
                     {/* Leaderboard List */}
@@ -236,73 +209,75 @@ const LeaderboardModal = ({ onClose }) => {
                         </div>
                     )}
                     <div className="p-4 max-h-[50vh] overflow-y-auto custom-scrollbar">
-                        <motion.div
-                            key={tab}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                            className="space-y-2"
-                        >
-                            {isOffline ? (
-                                <div className="text-center py-12 text-slate-500">
-                                    <Globe size={48} className="mx-auto mb-4 opacity-50 text-slate-600" />
-                                    <p className="font-bold text-slate-300 mb-1">You are offline</p>
-                                    <p className="text-sm">Leaderboards are not available without an internet connection.</p>
-                                </div>
-                            ) : leaderboard.length === 0 ? (
-                                <div className="text-center py-8 text-slate-500">
-                                    No friends yet! Add some in the Social Hub.
-                                </div>
-                            ) : (
-                                leaderboard.map((player, idx) => (
-                                    <motion.div
-                                        key={player.name}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.05 }}
-                                        className={`flex items-center justify-between p-3 rounded-xl transition-all ${player.isUser
-                                            ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 ring-2 ring-indigo-500/20'
-                                            : player.rank <= 3
-                                                ? 'bg-amber-500/10 border border-amber-500/20'
-                                                : 'bg-slate-800/50 border border-white/5'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            {/* Rank */}
-                                            <div className="w-8 flex justify-center">
-                                                {getRankIcon(player.rank)}
-                                            </div>
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={tab}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: 20 }}
+                                className="space-y-2"
+                            >
+                                {isOffline ? (
+                                    <div className="text-center py-12 text-slate-500">
+                                        <Globe size={48} className="mx-auto mb-4 opacity-50 text-slate-600" />
+                                        <p className="font-bold text-slate-300 mb-1">You are offline</p>
+                                        <p className="text-sm">Leaderboards are not available without an internet connection.</p>
+                                    </div>
+                                ) : leaderboard.length === 0 ? (
+                                    <div className="text-center py-8 text-slate-500">
+                                        No players found for this category.
+                                    </div>
+                                ) : (
+                                    leaderboard.map((player, idx) => (
+                                        <motion.div
+                                            key={`${player.name}-${tab}`}
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ delay: idx * 0.05 }}
+                                            className={`flex items-center justify-between p-3 rounded-xl transition-all ${player.isUser
+                                                ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 ring-2 ring-indigo-500/20'
+                                                : player.rank <= 3
+                                                    ? 'bg-amber-500/10 border border-amber-500/20'
+                                                    : 'bg-slate-800/50 border border-white/5'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                {/* Rank */}
+                                                <div className="w-8 flex justify-center">
+                                                    {getRankIcon(player.rank)}
+                                                </div>
 
-                                            {/* Avatar / Country */}
-                                            <div className="text-2xl">{player.country}</div>
+                                                {/* Avatar / Country */}
+                                                <div className="text-2xl">{player.country}</div>
 
-                                            {/* Name & Level */}
-                                            <div>
-                                                <p className={`font-bold ${player.isUser ? 'text-indigo-300' : 'text-white'}`}>
-                                                    {player.name}
-                                                </p>
-                                                <div className="flex items-center gap-2 text-xs text-slate-400">
-                                                    <span>Lvl {player.level}</span>
-                                                    {player.streak > 0 && (
-                                                        <span className="flex items-center gap-1 text-orange-400">
-                                                            <Flame size={12} /> {player.streak}
-                                                        </span>
-                                                    )}
+                                                {/* Name & Level */}
+                                                <div>
+                                                    <p className={`font-bold ${player.isUser ? 'text-indigo-300' : 'text-white'}`}>
+                                                        {player.name}
+                                                    </p>
+                                                    <div className="flex items-center gap-2 text-xs text-slate-400">
+                                                        <span>Lvl {player.level}</span>
+                                                        {player.streak > 0 && (
+                                                            <span className="flex items-center gap-1 text-orange-400">
+                                                                <Flame size={12} /> {player.streak}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
 
-                                        {/* XP */}
-                                        <div className="text-right">
-                                            <p className="font-mono font-bold text-amber-400">
-                                                {player.xp.toLocaleString()}
-                                            </p>
-                                            <p className="text-xs text-slate-500">XP</p>
-                                        </div>
-                                    </motion.div>
-                                ))
-                            )}
-                        </motion.div>
+                                            {/* XP */}
+                                            <div className="text-right">
+                                                <p className="font-mono font-bold text-amber-400">
+                                                    {player.xp.toLocaleString()}
+                                                </p>
+                                                <p className="text-xs text-slate-500">XP</p>
+                                            </div>
+                                        </motion.div>
+                                    ))
+                                )}
+                            </motion.div>
+                        </AnimatePresence>
                     </div>
 
                     {/* Footer */}
