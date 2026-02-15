@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { nanoid } from '../utils/id';
-import { hashPassword, verifyPassword } from '../utils/crypto';
+import { hashPassword, verifyPassword, DUMMY_HASH } from '../utils/crypto';
 
 const AuthContext = createContext();
 
@@ -65,17 +65,24 @@ export const AuthProvider = ({ children }) => {
             const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
             let record = credentials[email];
 
-            if (!record) {
-                throw new Error('Invalid credentials');
+            // Normalize verification target to prevent timing attacks (User Enumeration)
+            let storedHash = DUMMY_HASH;
+
+            if (record) {
+                if (record.password) {
+                    storedHash = record.password;
+                } else if (record.hash && record.salt) {
+                    // Handle legacy format (separate hash/salt) if encountered
+                    storedHash = `${record.salt}:${record.hash}`;
+                    // Update local record for migration check logic below
+                    record.password = storedHash;
+                }
             }
 
-            // Handle legacy format (separate hash/salt) if encountered
-            if (!record.password && record.hash && record.salt) {
-                record.password = `${record.salt}:${record.hash}`;
-            }
+            // Always perform verification to mask whether user exists or not
+            const isValid = await verifyPassword(storedHash, password);
 
-            const isValid = await verifyPassword(record.password, password);
-            if (!isValid) {
+            if (!record || !isValid) {
                 throw new Error('Invalid credentials');
             }
 
