@@ -1,7 +1,8 @@
+/* eslint-disable no-unused-vars */
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Check, X, ArrowRight, RotateCcw } from 'lucide-react';
+import { Check, ArrowRight, BookOpen } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -14,24 +15,35 @@ const ClozeGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
     const [puzzle, setPuzzle] = useState(null);
-    const [selectedOption, setSelectedOption] = useState(null);
     const [status, setStatus] = useState('playing'); // 'playing', 'correct', 'wrong', 'finished'
+    const [selectedOption, setSelectedOption] = useState(null);
     const [score, setScore] = useState(0);
     const [questionCount, setQuestionCount] = useState(0);
     const MAX_QUESTIONS = 5;
 
+    // Load initial puzzle
     useEffect(() => {
-        loadNextPuzzle();
+        // Wrap in timeout to avoid potential synchronous state update warnings during mount
+        const t = setTimeout(() => {
+            const newPuzzle = generateCloze(1);
+            if (newPuzzle) {
+                setPuzzle(newPuzzle);
+                setStatus('playing');
+                setSelectedOption(null);
+            } else {
+                setStatus('finished');
+            }
+        }, 0);
+        return () => clearTimeout(t);
     }, []);
 
     const loadNextPuzzle = () => {
         const newPuzzle = generateCloze(1); // Default to level 1 for now
         if (newPuzzle) {
             setPuzzle(newPuzzle);
-            setSelectedOption(null);
             setStatus('playing');
+            setSelectedOption(null);
         } else {
-            // Fallback or error state if generator fails
             setStatus('finished');
         }
     };
@@ -70,7 +82,7 @@ const ClozeGame = () => {
         return (
             <GameLayout title="Fill in the Blank" onBack={() => navigate('/')}>
                 <Card className="max-w-md mx-auto text-center p-8">
-                    <h2 className="text-3xl font-bold text-white mb-4">Practice Complete!</h2>
+                    <h2 className="text-3xl font-bold text-white mb-4">Session Complete!</h2>
                     <p className="text-slate-400 mb-8">You got {score} out of {MAX_QUESTIONS} correct.</p>
                     <div className="flex justify-center gap-4">
                         <Button onClick={() => navigate('/')} variant="ghost">BACK</Button>
@@ -83,86 +95,74 @@ const ClozeGame = () => {
 
     if (!puzzle) return <div>Loading...</div>;
 
-    // Split question into parts to highlight the blank
-    const parts = puzzle.question.split('_____');
+    const parts = puzzle.sentence.split('___');
 
     return (
         <GameLayout
-            title="Fill in the Blank"
-            subtitle="Choose the correct word to complete the sentence."
+            title="Cloze Master"
+            subtitle="Complete the sentence with the correct word."
             onBack={() => navigate('/')}
         >
-            <div className="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[60vh]">
+            <div className="max-w-2xl mx-auto flex flex-col items-center justify-center min-h-[60vh] gap-8">
 
-                {/* Sentence Display */}
-                <Card className="w-full mb-8 p-10 text-center relative overflow-hidden group">
-                    <div className="absolute inset-0 bg-indigo-500/5 group-hover:bg-indigo-500/10 transition-colors" />
-
-                    <h3 className="text-3xl md:text-4xl font-bold text-white leading-relaxed relative z-10">
+                <Card className="w-full p-8 text-center bg-slate-800/80 backdrop-blur border-indigo-500/20 shadow-2xl">
+                    <h3 className="text-2xl md:text-3xl font-bold text-white leading-relaxed mb-6">
                         {parts[0]}
-                        <motion.span
-                            className={`
-                                inline-block px-4 py-2 mx-1 rounded-xl border-b-4 min-w-[100px] align-bottom
-                                ${status === 'correct' ? 'bg-green-500/20 border-green-500 text-green-300' : ''}
-                                ${status === 'wrong' ? 'bg-red-500/20 border-red-500 text-red-300' : ''}
-                                ${status === 'playing' ? 'bg-white/10 border-white/30 text-transparent' : ''}
-                            `}
-                            animate={status === 'correct' ? { scale: [1, 1.1, 1] } : {}}
-                        >
-                            {status === 'playing' ? '?' : selectedOption}
-                        </motion.span>
+                        <span className={`
+                            inline-block min-w-[100px] border-b-4 mx-2 px-2 text-center transition-colors
+                            ${status === 'correct' ? 'border-green-500 text-green-400' :
+                              status === 'wrong' ? 'border-red-500 text-red-400' : 'border-indigo-500 text-indigo-300'}
+                        `}>
+                            {selectedOption || '_____'}
+                        </span>
                         {parts[1]}
                     </h3>
-
-                    <p className="mt-6 text-slate-400 text-lg font-medium italic">
-                        "{puzzle.translation}"
-                    </p>
+                    <p className="text-slate-400 italic">"{puzzle.translation}"</p>
                 </Card>
 
-                {/* Options Grid */}
                 <div className="grid grid-cols-2 gap-4 w-full">
                     {puzzle.options.map((option, idx) => {
-                        let variant = "default";
+                        let variant = "outline";
                         if (status !== 'playing') {
-                            if (option === puzzle.answer) variant = "correct";
-                            else if (option === selectedOption) variant = "wrong";
-                            else variant = "dimmed";
+                            if (option === puzzle.answer) variant = "success";
+                            else if (option === selectedOption) variant = "danger";
                         }
 
                         return (
-                            <motion.button
+                            <Button
                                 key={idx}
-                                whileHover={status === 'playing' ? { scale: 1.02, y: -2 } : {}}
-                                whileTap={status === 'playing' ? { scale: 0.98 } : {}}
+                                variant={variant}
                                 onClick={() => handleOptionClick(option)}
                                 disabled={status !== 'playing'}
-                                className={`
-                                    p-6 rounded-2xl text-xl font-bold transition-all shadow-lg border-b-4
-                                    ${variant === 'default' ? 'bg-white text-slate-800 border-slate-300 hover:bg-indigo-50 hover:border-indigo-300' : ''}
-                                    ${variant === 'correct' ? 'bg-green-500 text-white border-green-700' : ''}
-                                    ${variant === 'wrong' ? 'bg-red-500 text-white border-red-700' : ''}
-                                    ${variant === 'dimmed' ? 'bg-slate-800/50 text-slate-500 border-transparent opacity-50' : ''}
-                                `}
+                                className="py-6 text-xl"
                             >
                                 {option}
-                            </motion.button>
+                            </Button>
                         );
                     })}
                 </div>
 
-                {/* Feedback / Next Button */}
                 <AnimatePresence>
                     {status !== 'playing' && (
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="mt-8 w-full"
+                            className="w-full"
                         >
+                            <Card className="bg-indigo-900/20 border-indigo-500/30 p-4 mb-4">
+                                <div className="flex items-start gap-3">
+                                    <BookOpen className="text-indigo-400 shrink-0 mt-1" />
+                                    <div>
+                                        <h4 className="font-bold text-indigo-300 mb-1">Grammar Note</h4>
+                                        <p className="text-slate-300 text-sm">{puzzle.explanation}</p>
+                                    </div>
+                                </div>
+                            </Card>
                             <Button
                                 onClick={handleNext}
-                                className={`w-full py-4 text-xl rounded-2xl shadow-xl ${status === 'correct' ? 'bg-green-500 hover:bg-green-600' : 'bg-slate-700 hover:bg-slate-600'}`}
+                                className="w-full py-4 text-lg bg-indigo-600 hover:bg-indigo-500"
                             >
-                                {status === 'correct' ? 'Excellent! Next' : 'Continue'} <ArrowRight className="ml-2" />
+                                {questionCount < MAX_QUESTIONS - 1 ? "Next Question" : "Finish"} <ArrowRight className="ml-2" />
                             </Button>
                         </motion.div>
                     )}

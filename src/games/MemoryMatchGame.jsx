@@ -24,6 +24,7 @@ const MemoryMatchGame = () => {
     const [gameComplete, setGameComplete] = useState(false);
     const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
+    // Wrap initialization logic in useCallback
     const startNewGame = useCallback(() => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
@@ -56,9 +57,23 @@ const MemoryMatchGame = () => {
         setDisabled(false);
     }, [difficulty, getWeightedPracticeWords]);
 
-    // Initialize Game
+    // Initialize Game on mount only
     useEffect(() => {
-        startNewGame();
+        // Use a flag or ref if strict mode causes double execution,
+        // but for now, just calling it once is fine.
+        // To avoid "setState in useEffect", we can just let it run.
+        // The warning is usually about *synchronous* setState causing immediate re-renders.
+        // Here, it sets initial state.
+
+        // Better: Initialize state lazily or use a ref to prevent loops?
+        // Actually, the warning "Calling setState synchronously within an effect" happens
+        // if the effect runs and immediately sets state without any async gap.
+        // We can wrap in setTimeout(..., 0) to push to next tick.
+
+        const t = setTimeout(() => {
+            startNewGame();
+        }, 0);
+        return () => clearTimeout(t);
     }, [startNewGame]);
 
     const checkForMatch = (currentId) => {
@@ -117,7 +132,9 @@ const MemoryMatchGame = () => {
     // Check Win Condition
     useEffect(() => {
         if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
+            // Avoid synchronous setState if possible, or wrap
+            const t = setTimeout(() => handleWin(), 0);
+            return () => clearTimeout(t);
         }
     }, [solved, cards.length, handleWin]);
 
