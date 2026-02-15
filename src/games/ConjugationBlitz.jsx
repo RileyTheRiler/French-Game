@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Zap, Trophy, RotateCcw, ArrowRight, X } from 'lucide-react';
+import { Timer, Zap, Trophy, RotateCcw } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import SoundManager from '../utils/SoundManager';
 import { VERB_DATA, PRONOUNS, TENSES } from '../data/verbData';
-import confetti from 'canvas-confetti';
 
 const ConjugationBlitz = () => {
     const navigate = useNavigate();
@@ -25,19 +24,18 @@ const ConjugationBlitz = () => {
 
     const inputRef = useRef(null);
     const timerRef = useRef(null);
+    const scoreRef = useRef(0);
+
+    // Sync scoreRef
+    useEffect(() => {
+        scoreRef.current = score;
+    }, [score]);
 
     // Helpers
-    const getRandomChallenge = () => {
+    const getRandomChallenge = useCallback(() => {
         const verb = VERB_DATA[Math.floor(Math.random() * VERB_DATA.length)];
         const tense = TENSES[Math.floor(Math.random() * TENSES.length)];
         const pronoun = PRONOUNS[Math.floor(Math.random() * PRONOUNS.length)];
-
-        // Handle special case for 'je' before vowel/mute h? (j'aime)
-        // For simplicity in data, we stored full "je ..." or "j'..."? 
-        // Wait, data stored just "aime". Code needs to handle pronoun display?
-        // Actually, let's look at my data structure.
-        // Data: { present: { je: 'aime' ... } }
-        // So I need to construct the prompt carefully.
 
         return {
             verb,
@@ -45,22 +43,23 @@ const ConjugationBlitz = () => {
             pronoun,
             answer: verb.conjugations[tense.id][pronoun]
         };
-    };
+    }, []);
 
-    const startGame = () => {
-        setScore(0);
-        setStreak(0);
-        setResults([]);
-        setTimeLeft(60);
-        setStatus('playing');
-        loadNextChallenge();
-    };
-
-    const loadNextChallenge = () => {
+    const loadNextChallenge = useCallback(() => {
         setCurrentChallenge(getRandomChallenge());
         setUserInput('');
         if (inputRef.current) inputRef.current.focus();
-    };
+    }, [getRandomChallenge]);
+
+    const endGame = useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP using ref to get latest score
+        const baseXP = scoreRef.current * 2;
+        addXP(baseXP);
+    }, [addXP]);
 
     // Timer Logic
     useEffect(() => {
@@ -76,21 +75,15 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
+    }, [status, endGame]);
 
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        checkAnswer();
+    const startGame = () => {
+        setScore(0);
+        setStreak(0);
+        setResults([]);
+        setTimeLeft(60);
+        setStatus('playing');
+        loadNextChallenge();
     };
 
     const checkAnswer = () => {
@@ -125,13 +118,9 @@ const ConjugationBlitz = () => {
         loadNextChallenge();
     };
 
-    // Formatting helper
-    const formatPronoun = (pronoun, verbResponse) => {
-        // Simple logic for J' vs Je
-        // This is purely for display relative to the verb if we wanted to show them together
-        // But the prompt shows Pronoun separately usually.
-        // Let's just display the Pronoun string from the array for now.
-        return pronoun;
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        checkAnswer();
     };
 
     return (

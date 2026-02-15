@@ -240,7 +240,7 @@ export const ProgressProvider = ({ children }) => {
             checkStreak();
         }, 0);
         return () => clearTimeout(timer);
-    }, []); // Run once on mount
+    }, [checkStreak]); // Run once on mount
 
     const ensureSeasonWindow = useCallback(() => {
         setStats(prev => {
@@ -264,7 +264,7 @@ export const ProgressProvider = ({ children }) => {
             ensureSeasonWindow();
         }, 0);
         return () => clearTimeout(timer);
-    }, []);
+    }, [ensureSeasonWindow]);
 
     const updateDailyStat = useCallback((statName, amount = 1, mode = 'add') => {
         setStats(prev => {
@@ -353,14 +353,14 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
+    }, [stats, showAchievement]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
             checkAchievements();
         }, 0);
         return () => clearTimeout(timer);
-    }, [stats.xp, stats.wordsLearned, stats.storiesCompleted, stats.conversationsCompleted, stats.streak, checkAchievements]);
+    }, [checkAchievements]);
 
 
     const addCoins = useCallback((amount) => {

@@ -172,7 +172,7 @@ export class NPCSystem {
      * Generates contextual responses based on conversation prompts and user input
      */
     async interactFreeForm(npcId, userMessage, context = {}) {
-        const { prompt, turnCount, previousMessages = [] } = context;
+        const { prompt, turnCount } = context;
         const npc = this.getNPC(npcId) || { name: prompt?.npcName || 'NPC' };
 
         // Initialize conversation memory
@@ -248,7 +248,7 @@ export class NPCSystem {
         }
 
         // ========== Response Generation ==========
-        const responses = this._getContextualResponses(prompt, detectedTopic, memory, userLower);
+        const responses = this._getContextualResponses(prompt);
 
         // Select appropriate response based on context
         if (memory.turns <= 1) {
@@ -306,7 +306,7 @@ export class NPCSystem {
     /**
      * Get contextual responses based on prompt type
      */
-    _getContextualResponses(prompt, topic, memory, userLower) {
+    _getContextualResponses(prompt) {
         const promptId = prompt?.id || 'default';
 
         // Response templates by prompt type
@@ -468,7 +468,7 @@ export class NPCSystem {
      * @returns {Object} Response with text, correction, etc.
      */
     generateOpenEndedResponse(userMessage, context = {}) {
-        const { npcName = 'NPC', scenario = 'default', previousMessages = [] } = context;
+        const { scenario = 'default', previousMessages = [] } = context;
 
         // Check for grammar errors first
         const grammarErrors = checkGrammar(userMessage, { scenario });
@@ -643,4 +643,3 @@ export class NPCSystem {
 }
 
 export const npcSystem = new NPCSystem();
-

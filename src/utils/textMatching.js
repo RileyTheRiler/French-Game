@@ -63,7 +63,7 @@ export const isFuzzyMatch = (input, target, threshold = 0.8) => {
         // This is a simplified check, ideally we'd look up phrases
     }
 
-    return (matchCount / targetWords.length) >= 0.5; // at least 50% of key words matched
+    return (matchCount / targetWords.length) >= threshold; // at least threshold% of key words matched
 };
 
 /**

@@ -150,7 +150,7 @@ const parsePhonemes = (ipa) => {
 const normalizeText = (text) => {
     if (!text) return '';
     return text.toLowerCase()
-        .replace(/[.,!?;:'"()\-]/g, '')
+        .replace(/[.,!?;:'"()-]/g, '')
         .trim();
 };
 
@@ -383,7 +383,7 @@ export const getPhonemeHints = (phoneme) => {
  * Generate practice recommendations based on user history
  */
 export const generatePracticeRecommendations = (historyData) => {
-    const { weakWords = {}, errorPatterns = {}, categoryStats = {} } = historyData;
+    const { weakWords = {}, categoryStats = {} } = historyData;
 
     const recommendations = {
         focusPhonemes: [],

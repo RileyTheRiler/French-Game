@@ -1,30 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { SCENARIOS } from './scenarios';
-import MonitorFeedback from '../../components/UI/MonitorFeedback';
-import { soundManager } from '../../utils/SoundManager';
+import MonitorFeedback from '../../components/ui/MonitorFeedback';
+import SoundManager from '../../utils/SoundManager';
 import { monitorSystem } from '../../systems/MonitorSystem';
 
 const SentenceBuilderGame = ({ onExit }) => {
     const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
+    const scenario = SCENARIOS[currentScenarioIndex];
+
     const [selectedWords, setSelectedWords] = useState([]);
-    const [availableWords, setAvailableWords] = useState([]);
+    const [availableWords, setAvailableWords] = useState(() =>
+        scenario ? [...scenario.words].sort(() => Math.random() - 0.5) : []
+    );
     const [feedback, setFeedback] = useState(null);
     const [monitorMessage, setMonitorMessage] = useState(null);
     const [monitorTipId, setMonitorTipId] = useState(null);
     const [streak, setStreak] = useState(0);
-
-    const scenario = SCENARIOS[currentScenarioIndex];
-
-    useEffect(() => {
-        if (scenario) {
-            // Shuffle words for the word bank
-            setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
-            setSelectedWords([]);
-            setFeedback(null);
-            setMonitorMessage(null);
-            setMonitorTipId(null);
-        }
-    }, [currentScenarioIndex, scenario]);
 
     const handleWordClick = (word, idx) => {
         setSelectedWords(prev => [...prev, word]);
@@ -36,6 +27,25 @@ const SentenceBuilderGame = ({ onExit }) => {
         setSelectedWords(prev => prev.filter((_, i) => i !== idx));
     };
 
+    const nextLevel = () => {
+        let nextIndex;
+        if (currentScenarioIndex < SCENARIOS.length - 1) {
+            nextIndex = currentScenarioIndex + 1;
+        } else {
+            nextIndex = 0;
+        }
+        setCurrentScenarioIndex(nextIndex);
+
+        const nextScenario = SCENARIOS[nextIndex];
+        if (nextScenario) {
+            setAvailableWords([...nextScenario.words].sort(() => Math.random() - 0.5));
+            setSelectedWords([]);
+            setFeedback(null);
+            setMonitorMessage(null);
+            setMonitorTipId(null);
+        }
+    };
+
     const checkSentence = () => {
         const formedSentence = selectedWords.join(' ');
 
@@ -43,7 +53,7 @@ const SentenceBuilderGame = ({ onExit }) => {
             setFeedback('success');
             setMonitorMessage(null);
             setMonitorTipId(null);
-            soundManager.playMatch();
+            SoundManager.playMatch();
             setStreak(s => s + 1);
             setTimeout(() => {
                 nextLevel();
@@ -53,16 +63,8 @@ const SentenceBuilderGame = ({ onExit }) => {
             const analysis = monitorSystem.analyze(scenario.targetSentence, formedSentence);
             setMonitorMessage(analysis?.message || null);
             setMonitorTipId(analysis?.tipId || null);
-            soundManager.playMiss();
+            SoundManager.playMiss();
             setStreak(0);
-        }
-    };
-
-    const nextLevel = () => {
-        if (currentScenarioIndex < SCENARIOS.length - 1) {
-            setCurrentScenarioIndex(curr => curr + 1);
-        } else {
-            setCurrentScenarioIndex(0);
         }
     };
 

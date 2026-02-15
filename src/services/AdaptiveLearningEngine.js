@@ -30,13 +30,6 @@ const CATEGORY_WEIGHTS = {
     weather: 0.8
 };
 
-// Learning style indicators
-const LEARNING_STYLES = {
-    visual: ['prefers mouth shape diagrams', 'responds to color coding'],
-    auditory: ['uses listen button frequently', 'better with audio cues'],
-    kinesthetic: ['benefits from rhythm training', 'needs hands-on practice']
-};
-
 /**
  * Compute a comprehensive skill profile from user data
  * 
@@ -45,7 +38,7 @@ const LEARNING_STYLES = {
  * @returns {Object} Skill profile
  */
 export const computeSkillProfile = (progressData, vocabularyData) => {
-    const { categoryStats = {}, errorPatterns = {}, dailyStats = {}, weakWords = {} } = progressData;
+    const { categoryStats = {}, dailyStats = {} } = progressData;
 
     // Calculate category strengths (0-100)
     const categoryStrengths = {};
@@ -270,7 +263,7 @@ const shuffleWithinClusters = (items, clusterSize) => {
  * @returns {Object} Difficulty adjustment parameters
  */
 export const getDifficultyAdjustment = (recentPerformance) => {
-    const { accuracy = 0.7, avgResponseTime = 3000, streakLength = 0 } = recentPerformance;
+    const { accuracy = 0.7, streakLength = 0 } = recentPerformance;
 
     let multiplier = 1.0;
     let timerAdjustment = 0;

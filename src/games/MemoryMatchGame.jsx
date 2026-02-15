@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Trophy, RotateCcw, Sparkles } from 'lucide-react';
+import { Trophy, RotateCcw, Sparkles } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -22,14 +22,9 @@ const MemoryMatchGame = () => {
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
+    const [difficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
-
-    const startNewGame = () => {
+    const startNewGame = useCallback(() => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
@@ -59,7 +54,28 @@ const MemoryMatchGame = () => {
         setTurns(0);
         setGameComplete(false);
         setDisabled(false);
-    };
+    }, [difficulty, getWeightedPracticeWords]);
+
+    const handleWin = useCallback(() => {
+        setGameComplete(true);
+        SoundManager.playLevelUp();
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 }
+        });
+
+        // XP Calculation: Base 20 - turns penalty? Or fix 20?
+        // Let's give nice XP.
+        addXP(30);
+    }, [addXP]);
+
+    // Initialize Game
+    useEffect(() => {
+        setTimeout(() => {
+            startNewGame();
+        }, 0);
+    }, [startNewGame]);
 
     const handleClick = (id) => {
         if (disabled || gameComplete) return;
@@ -103,23 +119,11 @@ const MemoryMatchGame = () => {
     // Check Win Condition
     useEffect(() => {
         if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
+            setTimeout(() => {
+                handleWin();
+            }, 0);
         }
-    }, [solved]);
-
-    const handleWin = () => {
-        setGameComplete(true);
-        SoundManager.playLevelUp();
-        confetti({
-            particleCount: 100,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-
-        // XP Calculation: Base 20 - turns penalty? Or fix 20? 
-        // Let's give nice XP.
-        addXP(30);
-    };
+    }, [solved, cards.length, handleWin]);
 
     return (
         <GameLayout
