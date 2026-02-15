@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SCENARIOS } from '../data/conversationScenarios';
 import CallScreen from '../components/VoiceCall/CallScreen';
@@ -25,6 +25,63 @@ const VoiceCall = () => {
     const [callState, setCallState] = useState('connecting');
 
     const currentNode = scenario.nodes[currentNodeId];
+
+    const handleSpeak = useCallback((text, onEnd) => {
+        setCallState('npc_speaking');
+        setIsNpcSpeaking(true);
+        setStatus('Speaking...');
+
+        // Simulating speech end for visualizer since web speech API doesn't have reliable 'onend' callback for TTS in all browsers or wrapper
+        speak(text);
+
+        const duration = Math.max(2000, text.length * 80);
+        setTimeout(() => {
+            setIsNpcSpeaking(false);
+            if (onEnd) onEnd();
+        }, duration);
+    }, []);
+
+    const startListeningPhase = useCallback(() => {
+        setCallState('listening');
+        setStatus('Listening...');
+        resetTranscript();
+        startListening();
+    }, [resetTranscript, startListening]);
+
+    const handleProcessInput = useCallback((input) => {
+        stopListening();
+        setCallState('processing');
+        setStatus('Processing...');
+
+        // Guard clause if currentNode or options are missing
+        if (!currentNode || !currentNode.options) {
+             console.warn("No current node or options for processing input");
+             return;
+        }
+
+        const match = findBestMatch(input, currentNode.options);
+
+        if (match && match.score > 0.4) {
+            const option = match.option;
+
+            if (option.isCorrect) {
+                setStatus('Correct!');
+                setTimeout(() => {
+                    setCurrentNodeId(option.nextNode);
+                }, 1000);
+            } else {
+                // Feedback then retry
+                handleSpeak(option.feedback || "Je ne comprends pas.", () => {
+                    startListeningPhase();
+                });
+            }
+        } else {
+            // No match found
+            handleSpeak("Pardon ? Pouvez-vous répéter ?", () => {
+                startListeningPhase();
+            });
+        }
+    }, [currentNode, handleSpeak, startListeningPhase, stopListening]);
 
     // Effect: Handle Node Transitions
     useEffect(() => {
@@ -60,32 +117,7 @@ const VoiceCall = () => {
             startListeningPhase();
         }
 
-    }, [currentNodeId, scenario]);
-
-    const handleSpeak = (text, onEnd) => {
-        setCallState('npc_speaking');
-        setIsNpcSpeaking(true);
-        setStatus('Speaking...');
-
-        // Simulating speech end for visualizer since web speech API doesn't have reliable 'onend' callback for TTS in all browsers or wrapper
-        // We use a rough estimation of time: 100ms per character?
-        // OR better: speak() function in utils/audio is fire and forget. 
-        // For a hack, let's assume average reading speed.
-        speak(text);
-
-        const duration = Math.max(2000, text.length * 80);
-        setTimeout(() => {
-            setIsNpcSpeaking(false);
-            if (onEnd) onEnd();
-        }, duration);
-    };
-
-    const startListeningPhase = () => {
-        setCallState('listening');
-        setStatus('Listening...');
-        resetTranscript();
-        startListening();
-    };
+    }, [currentNodeId, scenario, currentNode, handleSpeak, startListeningPhase, addXP, navigate]);
 
     // Effect: Check transcript for matches
     useEffect(() => {
@@ -97,36 +129,7 @@ const VoiceCall = () => {
         }, 1500);
 
         return () => clearTimeout(timer);
-    }, [transcript, callState]);
-
-    const handleProcessInput = (input) => {
-        stopListening();
-        setCallState('processing');
-        setStatus('Processing...');
-
-        const match = findBestMatch(input, currentNode.options);
-
-        if (match && match.score > 0.4) {
-            const option = match.option;
-
-            if (option.isCorrect) {
-                setStatus('Correct!');
-                setTimeout(() => {
-                    setCurrentNodeId(option.nextNode);
-                }, 1000);
-            } else {
-                // Feedback then retry
-                handleSpeak(option.feedback || "Je ne comprends pas.", () => {
-                    startListeningPhase();
-                });
-            }
-        } else {
-            // No match found
-            handleSpeak("Pardon ? Pouvez-vous répéter ?", () => {
-                startListeningPhase();
-            });
-        }
-    };
+    }, [transcript, callState, handleProcessInput]);
 
     const handleToggleMic = () => {
         if (isListening) {
