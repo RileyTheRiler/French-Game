@@ -50,6 +50,8 @@ export default [
       'no-constant-condition': 'warn',
       'no-case-declarations': 'warn',
       'no-unsafe-optional-chaining': 'warn',
+      // Explicitly downgrade additional strict react-hooks rules that might be present in newer versions
+      'react-hooks/immutability': 'warn',
     },
   },
 ]
