@@ -52,6 +52,7 @@ export default [
       'no-unsafe-optional-chaining': 'warn',
       // Explicitly downgrade additional strict react-hooks rules that might be present in newer versions
       'react-hooks/immutability': 'warn',
+      'react-hooks/purity': 'warn',
     },
   },
 ]
