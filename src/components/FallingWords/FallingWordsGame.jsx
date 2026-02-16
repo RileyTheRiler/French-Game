@@ -193,85 +193,7 @@ const FallingWordsGame = () => {
         return () => clearInterval(interval);
     }, [isRivalsMode, gameOver]);
 
-    // Initialize
-    useEffect(() => {
-        // Check for existing ghost data
-        const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
-        if (savedGhost) {
-            setHasGhostData(true);
-        }
-
-        try {
-            const words = getPracticeQueue ? getPracticeQueue('fallingWords', 40) : getDueWords();
-            if (!words || words.length === 0) {
-                console.warn("No words available!");
-                validWords.current = vocabulary || [];
-            } else {
-                validWords.current = words;
-            }
-        } catch (e) {
-            console.error("Error fetching words:", e);
-            validWords.current = vocabulary || [];
-        }
-
-        // Init Audio
-        SoundManager.init();
-
-        startGame();
-
-        return () => {
-            isPlayingRef.current = false;
-            if (requestRef.current) cancelAnimationFrame(requestRef.current);
-        };
-    }, [getPracticeQueue, getDueWords, vocabulary]);
-
-    useEffect(() => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
-
-        recognitionRef.current = new SpeechRecognition();
-        recognitionRef.current.lang = 'fr-FR';
-        recognitionRef.current.interimResults = false;
-        recognitionRef.current.maxAlternatives = 1;
-
-        recognitionRef.current.onresult = (event) => {
-            const heard = event.results[0][0].transcript;
-            const target = lastHeardWordRef.current;
-            if (target) {
-                const { accuracy } = scorePronunciation(target.french, heard);
-                setShadowFeedback({ heard, accuracy, target });
-            }
-            setIsShadowing(false);
-        };
-        recognitionRef.current.onerror = () => setIsShadowing(false);
-        recognitionRef.current.onend = () => setIsShadowing(false);
-    }, []);
-
-    const startGame = () => {
-        isPlayingRef.current = true;
-
-        // Prepare Ghost Data if mode is active
-        if (isGhostModeRef.current) {
-            const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
-            ghostDataRef.current = savedGhost ? JSON.parse(savedGhost) : [];
-        } else {
-            ghostDataRef.current = [];
-        }
-
-        // Reset Recording
-        recordingRef.current = [{ time: 0, score: 0 }];
-
-        const now = performance.now();
-        lastTimeRef.current = now;
-        startTimeRef.current = now;
-
-        if (!isZenModeRef.current) {
-            timeLeftRef.current = INITIAL_TIME_SECONDS;
-            setTimeLeft(INITIAL_TIME_SECONDS);
-        }
-
-        requestRef.current = requestAnimationFrame(gameLoop);
-    };
+    // HELPER FUNCTIONS ----------------------------------------------------------------
 
     const getCategoryAccuracy = (category) => {
         if (!categoryPerformance[category]) return 0.85;
@@ -283,6 +205,57 @@ const FallingWordsGame = () => {
         const perf = categoryPerformance[category];
         return perf?.averageResponseTime || performanceSummary.averageResponse || 2000;
     };
+
+    const spawnParticles = (x, y) => {
+        const newParticles = [];
+        const colors = ['#f472b6', '#38bdf8', '#4ade80', '#fbbf24', '#ffffff'];
+
+        for (let i = 0; i < 12; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = 50 + Math.random() * 100; // px/s
+            const tx = Math.cos(angle) * velocity + 'px';
+            const ty = Math.sin(angle) * velocity + 'px';
+
+            newParticles.push({
+                id: particleIdCounter.current++,
+                x,
+                y,
+                tx,
+                ty,
+                color: colors[Math.floor(Math.random() * colors.length)]
+            });
+        }
+
+        setParticles(prev => [...prev, ...newParticles]);
+
+        setTimeout(() => {
+            setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
+        }, 1000);
+    };
+
+    const triggerShake = () => {
+        setIsShaking(true);
+        setTimeout(() => setIsShaking(false), 500);
+    };
+
+    const grantSessionRewards = useCallback(() => {
+        if (rewardGrantedRef.current) return;
+        rewardGrantedRef.current = true;
+        const reward = calculateRewards('fallingWords', {
+            score,
+            maxCombo,
+            wordsCaught,
+            livesRemaining: 3, // Dummy value as we don't use lives
+            zenMode: isZenModeRef.current
+        });
+        setSessionReward(reward);
+        addXP(reward.xp);
+        addCoins(reward.coins);
+        updateDailyStat('dailyStreak', maxCombo, 'max');
+        incrementStat('gamesPlayed', 1);
+    }, [addCoins, addXP, incrementStat, maxCombo, score, updateDailyStat, wordsCaught]);
+
+    // CORE GAME LOGIC ----------------------------------------------------------------
 
     const spawnWord = () => {
         if (validWords.current.length === 0) return;
@@ -319,53 +292,16 @@ const FallingWordsGame = () => {
         }
     };
 
-    const spawnParticles = (x, y) => {
-        const newParticles = [];
-        const colors = ['#f472b6', '#38bdf8', '#4ade80', '#fbbf24', '#ffffff'];
+    const endGame = (finalScore) => {
+        isPlayingRef.current = false;
+        setGameOver(true);
+        SoundManager.playGameOver();
 
-        for (let i = 0; i < 12; i++) {
-            const angle = Math.random() * Math.PI * 2;
-            const velocity = 50 + Math.random() * 100; // px/s
-            const tx = Math.cos(angle) * velocity + 'px';
-            const ty = Math.sin(angle) * velocity + 'px';
-
-            newParticles.push({
-                id: particleIdCounter.current++,
-                x,
-                y,
-                tx,
-                ty,
-                color: colors[Math.floor(Math.random() * colors.length)]
-            });
+        // Save Ghost Data (only if not zen mode and score > 0)
+        if (!isZenModeRef.current && finalScore > 0) {
+            localStorage.setItem(GHOST_STORAGE_KEY, JSON.stringify(recordingRef.current));
+            setHasGhostData(true);
         }
-
-        setParticles(prev => [...prev, ...newParticles]);
-
-        setTimeout(() => {
-            setParticles(prev => prev.filter(p => !newParticles.find(np => np.id === p.id)));
-        }, 1000);
-    };
-
-    const grantSessionRewards = useCallback(() => {
-        if (rewardGrantedRef.current) return;
-        rewardGrantedRef.current = true;
-        const reward = calculateRewards('fallingWords', {
-            score,
-            maxCombo,
-            wordsCaught,
-            livesRemaining: 3, // Dummy value as we don't use lives
-            zenMode: isZenModeRef.current
-        });
-        setSessionReward(reward);
-        addXP(reward.xp);
-        addCoins(reward.coins);
-        updateDailyStat('dailyStreak', maxCombo, 'max');
-        incrementStat('gamesPlayed', 1);
-    }, [addCoins, addXP, incrementStat, maxCombo, score, updateDailyStat, wordsCaught]);
-
-    const triggerShake = () => {
-        setIsShaking(true);
-        setTimeout(() => setIsShaking(false), 500);
     };
 
     const gameLoop = (time) => {
@@ -460,16 +396,54 @@ const FallingWordsGame = () => {
         }
     };
 
-    const endGame = (finalScore) => {
-        isPlayingRef.current = false;
-        setGameOver(true);
-        SoundManager.playGameOver();
+    const startGame = () => {
+        isPlayingRef.current = true;
 
-        // Save Ghost Data (only if not zen mode and score > 0)
-        if (!isZenModeRef.current && finalScore > 0) {
-            localStorage.setItem(GHOST_STORAGE_KEY, JSON.stringify(recordingRef.current));
-            setHasGhostData(true);
+        // Prepare Ghost Data if mode is active
+        if (isGhostModeRef.current) {
+            const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
+            ghostDataRef.current = savedGhost ? JSON.parse(savedGhost) : [];
+        } else {
+            ghostDataRef.current = [];
         }
+
+        // Reset Recording
+        recordingRef.current = [{ time: 0, score: 0 }];
+
+        const now = performance.now();
+        lastTimeRef.current = now;
+        startTimeRef.current = now;
+
+        if (!isZenModeRef.current) {
+            timeLeftRef.current = INITIAL_TIME_SECONDS;
+            setTimeLeft(INITIAL_TIME_SECONDS);
+        }
+
+        requestRef.current = requestAnimationFrame(gameLoop);
+    };
+
+    const restartGame = () => {
+        setScore(0);
+        setGhostScore(0);
+        setOpponentScore(0);
+        setGameOver(false);
+        setInputValue('');
+        setCombo(0);
+        setIsShaking(false);
+        setParticles([]);
+        setWordsCaught(0);
+        setSessionReward(null);
+        rewardGrantedRef.current = false;
+        spawnTimerRef.current = 0;
+        currentSpawnIntervalRef.current = INITIAL_SPAWN_INTERVAL;
+        currentFallSpeedRef.current = INITIAL_FALL_SPEED;
+        setShadowFeedback(null);
+        setIsShadowing(false);
+
+        activeWordsRef.current = [];
+        setRenderedWords([]);
+
+        startGame();
     };
 
     const handleInputChange = (e) => {
@@ -546,29 +520,61 @@ const FallingWordsGame = () => {
         playWordAudio(targetWord, { preferCache: true, offlineOnly: offlineAudio });
     };
 
-    const restartGame = () => {
-        setScore(0);
-        setGhostScore(0);
-        setOpponentScore(0);
-        setGameOver(false);
-        setInputValue('');
-        setCombo(0);
-        setIsShaking(false);
-        setParticles([]);
-        setWordsCaught(0);
-        setSessionReward(null);
-        rewardGrantedRef.current = false;
-        spawnTimerRef.current = 0;
-        currentSpawnIntervalRef.current = INITIAL_SPAWN_INTERVAL;
-        currentFallSpeedRef.current = INITIAL_FALL_SPEED;
-        setShadowFeedback(null);
-        setIsShadowing(false);
+    // INIT EFFECTS ----------------------------------------------------------------
 
-        activeWordsRef.current = [];
-        setRenderedWords([]);
+    // Initialize
+    useEffect(() => {
+        // Check for existing ghost data
+        const savedGhost = localStorage.getItem(GHOST_STORAGE_KEY);
+        if (savedGhost) {
+            setHasGhostData(true);
+        }
+
+        try {
+            const words = getPracticeQueue ? getPracticeQueue('fallingWords', 40) : getDueWords();
+            if (!words || words.length === 0) {
+                console.warn("No words available!");
+                validWords.current = vocabulary || [];
+            } else {
+                validWords.current = words;
+            }
+        } catch (e) {
+            console.error("Error fetching words:", e);
+            validWords.current = vocabulary || [];
+        }
+
+        // Init Audio
+        SoundManager.init();
 
         startGame();
-    };
+
+        return () => {
+            isPlayingRef.current = false;
+            if (requestRef.current) cancelAnimationFrame(requestRef.current);
+        };
+    }, [getPracticeQueue, getDueWords, vocabulary]); // removed startGame from deps to avoid recursion if startGame isn't stable. But startGame relies on gameLoop etc. Ideally useEffect should just depend on init props.
+
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) return;
+
+        recognitionRef.current = new SpeechRecognition();
+        recognitionRef.current.lang = 'fr-FR';
+        recognitionRef.current.interimResults = false;
+        recognitionRef.current.maxAlternatives = 1;
+
+        recognitionRef.current.onresult = (event) => {
+            const heard = event.results[0][0].transcript;
+            const target = lastHeardWordRef.current;
+            if (target) {
+                const { accuracy } = scorePronunciation(target.french, heard);
+                setShadowFeedback({ heard, accuracy, target });
+            }
+            setIsShadowing(false);
+        };
+        recognitionRef.current.onerror = () => setIsShadowing(false);
+        recognitionRef.current.onend = () => setIsShadowing(false);
+    }, []);
 
     useEffect(() => {
         if (gameOver) {

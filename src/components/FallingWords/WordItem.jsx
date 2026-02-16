@@ -4,28 +4,31 @@ import { formatRelativeTime } from '../../utils/time';
 
 const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8, mastery, lastSeen }) => {
     // Only show hint after hintDelay seconds have passed since spawn
-    const [showHint, setShowHint] = useState(false);
+    const [showHint, setShowHint] = useState(() => {
+        if (!hint) return false;
+        if (hintDelay === 0) return true;
+        // Check if enough time has already passed
+        const elapsed = performance.now() - spawnTime;
+        return elapsed >= hintDelay * 1000;
+    });
 
     useEffect(() => {
-        if (!hint || hintDelay === 0) {
-            setShowHint(!!hint && hintDelay === 0);
-            return;
+        if (!hint || showHint) return;
+
+        if (hintDelay === 0) {
+            const timer = setTimeout(() => setShowHint(true), 0);
+            return () => clearTimeout(timer);
         }
 
-        const elapsed = Date.now() - spawnTime;
+        const elapsed = performance.now() - spawnTime;
         const remainingDelay = Math.max(0, (hintDelay * 1000) - elapsed);
-
-        if (remainingDelay === 0) {
-            setShowHint(true);
-            return;
-        }
 
         const timer = setTimeout(() => {
             setShowHint(true);
         }, remainingDelay);
 
         return () => clearTimeout(timer);
-    }, [hint, spawnTime, hintDelay]);
+    }, [hint, spawnTime, hintDelay, showHint]);
 
     const tooltip = `Lvl ${mastery || 1} • Last seen ${formatRelativeTime(lastSeen)}`;
 
@@ -48,7 +51,7 @@ const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8, 
                 {/* Scholar Mode Metadata */}
                 {hint && hint.startsWith('[') && (
                     <span className="text-[10px] uppercase tracking-widest text-indigo-300 mb-1 font-bold opacity-80">
-                        {hint.replace(/[\[\]]/g, '')}
+                        {hint.replace(/[[\]]/g, '')}
                     </span>
                 )}
                 <span className="text-xl">{text}</span>

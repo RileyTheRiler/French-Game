@@ -1,4 +1,60 @@
 // Native French speaker profiles for language partner matching
+
+const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+export const detectErrors = (text) => {
+    const errors = [];
+
+    // Common French errors to detect
+    const errorPatterns = [
+        { pattern: /je suis (\d+) ans/i, suggestion: "j'ai $1 ans", explanation: "On utilise 'avoir' pour l'âge, pas 'être'" },
+        { pattern: /je suis froid/i, suggestion: "j'ai froid", explanation: "On utilise 'avoir froid', pas 'être froid'" },
+        { pattern: /je suis faim/i, suggestion: "j'ai faim", explanation: "On utilise 'avoir faim', pas 'être faim'" },
+        { pattern: /je suis besoin/i, suggestion: "j'ai besoin", explanation: "On utilise 'avoir besoin', pas 'être besoin'" },
+        { pattern: /c'est bon\?$/i, suggestion: "C'est bien ?", explanation: "'C'est bon' pour la nourriture, 'C'est bien' pour demander confirmation" },
+        { pattern: /je connais comment/i, suggestion: "je sais comment", explanation: "'Savoir' pour les compétences, 'connaître' pour les personnes/lieux" },
+        { pattern: /je pense que oui/i, suggestion: "je crois que oui", explanation: "Plus naturel avec 'croire' dans ce contexte" }
+    ];
+
+    for (const { pattern, suggestion, explanation } of errorPatterns) {
+        if (pattern.test(text)) {
+            errors.push({
+                original: text.match(pattern)[0],
+                suggestion: text.replace(pattern, suggestion),
+                explanation
+            });
+        }
+    }
+
+    return errors;
+};
+
+// Response generation helpers
+export const generateResponse = (speaker, userMessage, context = {}) => {
+    const patterns = speaker.responsePatterns;
+    const lowerMsg = userMessage.toLowerCase();
+
+    // Detect message intent
+    if (lowerMsg.includes('bonjour') || lowerMsg.includes('salut') || lowerMsg.includes('hello') || lowerMsg.includes('hi')) {
+        return randomChoice(patterns.greeting);
+    }
+
+    // Check for common errors and provide corrections
+    const corrections = detectErrors(userMessage);
+    if (corrections.length > 0) {
+        const correctionTemplate = randomChoice(patterns.correction);
+        return correctionTemplate.replace('{correction}', corrections[0].suggestion);
+    }
+
+    // Ask a follow-up question sometimes
+    if (Math.random() > 0.6) {
+        return randomChoice(patterns.question);
+    }
+
+    // Default to encouragement
+    return randomChoice(patterns.encouragement);
+};
+
 export const NATIVE_SPEAKERS = [
     {
         id: 'ns_marie',
@@ -201,61 +257,6 @@ export const NATIVE_SPEAKERS = [
         }
     }
 ];
-
-// Response generation helpers
-export const generateResponse = (speaker, userMessage, context = {}) => {
-    const patterns = speaker.responsePatterns;
-    const lowerMsg = userMessage.toLowerCase();
-
-    // Detect message intent
-    if (lowerMsg.includes('bonjour') || lowerMsg.includes('salut') || lowerMsg.includes('hello') || lowerMsg.includes('hi')) {
-        return randomChoice(patterns.greeting);
-    }
-
-    // Check for common errors and provide corrections
-    const corrections = detectErrors(userMessage);
-    if (corrections.length > 0) {
-        const correctionTemplate = randomChoice(patterns.correction);
-        return correctionTemplate.replace('{correction}', corrections[0].suggestion);
-    }
-
-    // Ask a follow-up question sometimes
-    if (Math.random() > 0.6) {
-        return randomChoice(patterns.question);
-    }
-
-    // Default to encouragement
-    return randomChoice(patterns.encouragement);
-};
-
-export const detectErrors = (text) => {
-    const errors = [];
-
-    // Common French errors to detect
-    const errorPatterns = [
-        { pattern: /je suis (\d+) ans/i, suggestion: "j'ai $1 ans", explanation: "On utilise 'avoir' pour l'âge, pas 'être'" },
-        { pattern: /je suis froid/i, suggestion: "j'ai froid", explanation: "On utilise 'avoir froid', pas 'être froid'" },
-        { pattern: /je suis faim/i, suggestion: "j'ai faim", explanation: "On utilise 'avoir faim', pas 'être faim'" },
-        { pattern: /je suis besoin/i, suggestion: "j'ai besoin", explanation: "On utilise 'avoir besoin', pas 'être besoin'" },
-        { pattern: /c'est bon\?$/i, suggestion: "C'est bien ?", explanation: "'C'est bon' pour la nourriture, 'C'est bien' pour demander confirmation" },
-        { pattern: /je connais comment/i, suggestion: "je sais comment", explanation: "'Savoir' pour les compétences, 'connaître' pour les personnes/lieux" },
-        { pattern: /je pense que oui/i, suggestion: "je crois que oui", explanation: "Plus naturel avec 'croire' dans ce contexte" }
-    ];
-
-    for (const { pattern, suggestion, explanation } of errorPatterns) {
-        if (pattern.test(text)) {
-            errors.push({
-                original: text.match(pattern)[0],
-                suggestion: text.replace(pattern, suggestion),
-                explanation
-            });
-        }
-    }
-
-    return errors;
-};
-
-const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 // Conversation starters for different topics
 export const CONVERSATION_STARTERS = {

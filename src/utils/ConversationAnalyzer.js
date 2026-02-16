@@ -89,46 +89,6 @@ const TOPIC_KEYWORDS = {
 };
 
 /**
- * Analyze a conversation transcript
- * @param {Array} messages - Array of {text, isUser, timestamp} objects
- * @param {Object} prompt - The conversation prompt with success criteria
- * @returns {Object} Analysis results
- */
-export function analyzeConversation(messages, prompt) {
-    const userMessages = messages.filter(m => m.isUser);
-
-    // Calculate metrics
-    const fluencyMetrics = calculateFluency(userMessages);
-    const vocabularyMetrics = analyzeVocabulary(userMessages);
-    const accuracyMetrics = checkAccuracy(userMessages);
-    const communicationMetrics = assessCommunication(userMessages, prompt);
-
-    // Calculate overall score
-    const overallScore = Math.round(
-        (fluencyMetrics.score * 0.2) +
-        (vocabularyMetrics.score * 0.25) +
-        (accuracyMetrics.score * 0.25) +
-        (communicationMetrics.score * 0.3)
-    );
-
-    // Determine XP earned
-    const baseXP = prompt?.xpReward || 50;
-    const earnedXP = Math.round(baseXP * (overallScore / 100));
-
-    return {
-        overallScore,
-        earnedXP,
-        fluency: fluencyMetrics,
-        vocabulary: vocabularyMetrics,
-        accuracy: accuracyMetrics,
-        communication: communicationMetrics,
-        totalTurns: userMessages.length,
-        highlights: generateHighlights(userMessages, accuracyMetrics),
-        suggestions: generateSuggestions(fluencyMetrics, vocabularyMetrics, accuracyMetrics)
-    };
-}
-
-/**
  * Calculate fluency metrics based on response patterns
  */
 function calculateFluency(userMessages) {
@@ -367,6 +327,46 @@ function generateSuggestions(fluency, vocabulary, accuracy) {
     }
 
     return suggestions;
+}
+
+/**
+ * Analyze a conversation transcript
+ * @param {Array} messages - Array of {text, isUser, timestamp} objects
+ * @param {Object} prompt - The conversation prompt with success criteria
+ * @returns {Object} Analysis results
+ */
+export function analyzeConversation(messages, prompt) {
+    const userMessages = messages.filter(m => m.isUser);
+
+    // Calculate metrics
+    const fluencyMetrics = calculateFluency(userMessages);
+    const vocabularyMetrics = analyzeVocabulary(userMessages);
+    const accuracyMetrics = checkAccuracy(userMessages);
+    const communicationMetrics = assessCommunication(userMessages, prompt);
+
+    // Calculate overall score
+    const overallScore = Math.round(
+        (fluencyMetrics.score * 0.2) +
+        (vocabularyMetrics.score * 0.25) +
+        (accuracyMetrics.score * 0.25) +
+        (communicationMetrics.score * 0.3)
+    );
+
+    // Determine XP earned
+    const baseXP = prompt?.xpReward || 50;
+    const earnedXP = Math.round(baseXP * (overallScore / 100));
+
+    return {
+        overallScore,
+        earnedXP,
+        fluency: fluencyMetrics,
+        vocabulary: vocabularyMetrics,
+        accuracy: accuracyMetrics,
+        communication: communicationMetrics,
+        totalTurns: userMessages.length,
+        highlights: generateHighlights(userMessages, accuracyMetrics),
+        suggestions: generateSuggestions(fluencyMetrics, vocabularyMetrics, accuracyMetrics)
+    };
 }
 
 export default {

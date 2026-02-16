@@ -64,20 +64,7 @@ const DictationGame = () => {
         window.speechSynthesis.getVoices();
     }, []);
 
-    const checkAnswer = () => {
-        if (!userInput.trim()) return;
-
-        const normalizedInput = userInput.trim(); // Keep case sensitivity for strict dictation? Or lenient?
-        // Let's go with strict on accents/spelling, maybe lenient on end punctuation if we want to be nice.
-        // For "Dictation", strict is usually better.
-
-        if (normalizedInput === currentSentence.text) {
-            handleSuccess();
-        } else {
-            handleError(normalizedInput);
-        }
-    };
-
+    // Defined before usage
     const handleSuccess = () => {
         setStatus('success');
         SoundManager.playSuccess();
@@ -89,6 +76,7 @@ const DictationGame = () => {
         });
     };
 
+    // Defined before usage
     const handleError = (input) => {
         setStatus('error');
         SoundManager.playMiss();
@@ -100,6 +88,18 @@ const DictationGame = () => {
         // This is a naive visual diff, but helpful enough
         // Ideally we'd use a diff library, but let's build a simple visualizer
         setDiff({ target: targetWords, input: inputWords });
+    };
+
+    const checkAnswer = () => {
+        if (!userInput.trim()) return;
+
+        const normalizedInput = userInput.trim();
+
+        if (normalizedInput === currentSentence.text) {
+            handleSuccess();
+        } else {
+            handleError(normalizedInput);
+        }
     };
 
     const insertAccent = (char) => {

@@ -195,69 +195,24 @@ const approximatePhonemes = (frenchText) => {
 };
 
 /**
- * Analyze pronunciation comparing target word to spoken text
- * 
- * @param {Object} targetWord - Word object with french, ipa, etc.
- * @param {string} spokenText - Transcribed user speech
- * @returns {Object} Analysis results
- */
-export const analyzePronunciation = (targetWord, spokenText) => {
-    const target = normalizeText(targetWord.french);
-    const spoken = normalizeText(spokenText);
-
-    // Basic text match score
-    const textDistance = levenshteinDistance(target, spoken);
-    const textScore = Math.max(0, 100 - (textDistance / Math.max(target.length, 1)) * 100);
-
-    // Phoneme analysis
-    const targetPhonemes = targetWord.ipa ? parsePhonemes(targetWord.ipa) : approximatePhonemes(target);
-    const spokenPhonemes = approximatePhonemes(spoken);
-
-    const phonemeDistance = levenshteinDistance(targetPhonemes.join(''), spokenPhonemes.join(''));
-    const phonemeScore = Math.max(0, 100 - (phonemeDistance / Math.max(targetPhonemes.length, 1)) * 50);
-
-    // Identify problem phonemes
-    const problemAreas = identifyProblemPhonemes(targetPhonemes, spokenPhonemes);
-
-    // Generate phoneme breakdown with accuracy
-    const phonemeBreakdown = generatePhonemeBreakdown(targetPhonemes, spokenPhonemes);
-
-    // Calculate rhythm score (simplified - based on syllable count match)
-    const targetSyllables = countSyllables(target);
-    const spokenSyllables = countSyllables(spoken);
-    const rhythmScore = Math.max(0, 100 - Math.abs(targetSyllables - spokenSyllables) * 25);
-
-    // Combined score with weights
-    const overallScore = Math.round(
-        textScore * 0.4 +
-        phonemeScore * 0.4 +
-        rhythmScore * 0.2
-    );
-
-    // Generate feedback
-    const feedback = generateFeedback(overallScore, problemAreas, targetWord);
-
-    return {
-        score: overallScore,
-        textScore: Math.round(textScore),
-        phonemeScore: Math.round(phonemeScore),
-        rhythmScore: Math.round(rhythmScore),
-        phonemeBreakdown,
-        problemAreas,
-        feedback,
-        targetPhonemes,
-        spokenPhonemes,
-        isExactMatch: target === spoken
-    };
-};
-
-/**
  * Count syllables in French text (approximation)
  */
 const countSyllables = (text) => {
     const vowelPattern = /[aeiouyàâäéèêëïîôùûü]/gi;
     const matches = text.match(vowelPattern);
     return matches ? matches.length : 1;
+};
+
+/**
+ * Get the category of a phoneme
+ */
+const getPhonemeCategory = (phoneme) => {
+    for (const [category, phonemes] of Object.entries(PHONEME_CATEGORIES)) {
+        if (phonemes.includes(phoneme)) {
+            return category;
+        }
+    }
+    return 'general';
 };
 
 /**
@@ -285,18 +240,6 @@ const identifyProblemPhonemes = (target, spoken) => {
     }
 
     return problems;
-};
-
-/**
- * Get the category of a phoneme
- */
-const getPhonemeCategory = (phoneme) => {
-    for (const [category, phonemes] of Object.entries(PHONEME_CATEGORIES)) {
-        if (phonemes.includes(phoneme)) {
-            return category;
-        }
-    }
-    return 'general';
 };
 
 /**
@@ -365,6 +308,63 @@ const generateFeedback = (score, problemAreas, targetWord) => {
     feedback.focusAreas = [...new Set(feedback.focusAreas)];
 
     return feedback;
+};
+
+/**
+ * Analyze pronunciation comparing target word to spoken text
+ *
+ * @param {Object} targetWord - Word object with french, ipa, etc.
+ * @param {string} spokenText - Transcribed user speech
+ * @returns {Object} Analysis results
+ */
+export const analyzePronunciation = (targetWord, spokenText) => {
+    const target = normalizeText(targetWord.french);
+    const spoken = normalizeText(spokenText);
+
+    // Basic text match score
+    const textDistance = levenshteinDistance(target, spoken);
+    const textScore = Math.max(0, 100 - (textDistance / Math.max(target.length, 1)) * 100);
+
+    // Phoneme analysis
+    const targetPhonemes = targetWord.ipa ? parsePhonemes(targetWord.ipa) : approximatePhonemes(target);
+    const spokenPhonemes = approximatePhonemes(spoken);
+
+    const phonemeDistance = levenshteinDistance(targetPhonemes.join(''), spokenPhonemes.join(''));
+    const phonemeScore = Math.max(0, 100 - (phonemeDistance / Math.max(targetPhonemes.length, 1)) * 50);
+
+    // Identify problem phonemes
+    const problemAreas = identifyProblemPhonemes(targetPhonemes, spokenPhonemes);
+
+    // Generate phoneme breakdown with accuracy
+    const phonemeBreakdown = generatePhonemeBreakdown(targetPhonemes, spokenPhonemes);
+
+    // Calculate rhythm score (simplified - based on syllable count match)
+    const targetSyllables = countSyllables(target);
+    const spokenSyllables = countSyllables(spoken);
+    const rhythmScore = Math.max(0, 100 - Math.abs(targetSyllables - spokenSyllables) * 25);
+
+    // Combined score with weights
+    const overallScore = Math.round(
+        textScore * 0.4 +
+        phonemeScore * 0.4 +
+        rhythmScore * 0.2
+    );
+
+    // Generate feedback
+    const feedback = generateFeedback(overallScore, problemAreas, targetWord);
+
+    return {
+        score: overallScore,
+        textScore: Math.round(textScore),
+        phonemeScore: Math.round(phonemeScore),
+        rhythmScore: Math.round(rhythmScore),
+        phonemeBreakdown,
+        problemAreas,
+        feedback,
+        targetPhonemes,
+        spokenPhonemes,
+        isExactMatch: target === spoken
+    };
 };
 
 /**

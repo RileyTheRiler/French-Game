@@ -65,8 +65,7 @@ const MemoryMatchGame = () => {
             origin: { y: 0.6 }
         });
 
-        // XP Calculation: Base 20 - turns penalty? Or fix 20?
-        // Let's give nice XP.
+        // XP Calculation
         addXP(30);
     }, [addXP]);
 
@@ -77,23 +76,7 @@ const MemoryMatchGame = () => {
         }, 0);
     }, [startNewGame]);
 
-    const handleClick = (id) => {
-        if (disabled || gameComplete) return;
-        if (flipped.includes(id) || solved.includes(id)) return;
-
-        if (flipped.length === 0) {
-            setFlipped([id]);
-            const card = cards.find(c => c.id === id);
-            if (card.type === 'french') speak(card.content);
-            SoundManager.playClick();
-        } else {
-            setFlipped(prev => [...prev, id]);
-            setDisabled(true);
-            setTurns(t => t + 1);
-            checkForMatch(id);
-        }
-    };
-
+    // Defined before usage
     const checkForMatch = (currentId) => {
         const firstId = flipped[0];
         const secondId = currentId;
@@ -113,6 +96,23 @@ const MemoryMatchGame = () => {
                 setFlipped([]);
                 setDisabled(false);
             }, 1000);
+        }
+    };
+
+    const handleClick = (id) => {
+        if (disabled || gameComplete) return;
+        if (flipped.includes(id) || solved.includes(id)) return;
+
+        if (flipped.length === 0) {
+            setFlipped([id]);
+            const card = cards.find(c => c.id === id);
+            if (card.type === 'french') speak(card.content);
+            SoundManager.playClick();
+        } else {
+            setFlipped(prev => [...prev, id]);
+            setDisabled(true);
+            setTurns(t => t + 1);
+            checkForMatch(id);
         }
     };
 

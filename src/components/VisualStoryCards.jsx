@@ -93,9 +93,14 @@ const VisualStoryCards = () => {
         // Shuffle cards
         filtered = filtered.sort(() => Math.random() - 0.5);
 
-        setCards(filtered);
-        setCurrentIndex(0);
-        setIsFlipped(false);
+        // Use setTimeout to avoid synchronous setState warning
+        const timer = setTimeout(() => {
+            setCards(filtered);
+            setCurrentIndex(0);
+            setIsFlipped(false);
+        }, 0);
+
+        return () => clearTimeout(timer);
     }, [selectedCategory]);
 
     // Play audio

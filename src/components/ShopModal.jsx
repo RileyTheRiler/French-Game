@@ -10,14 +10,13 @@ import { getDailyShopSelection } from '../utils/market';
 const ShopModal = ({ onClose }) => {
     const { t, i18n } = useTranslation();
     const { stats, buyItem, activateDoubleXP } = useProgress();
-    const [shopData, setShopData] = useState({ consumables: [], cosmetics: [] });
     const [activeTab, setActiveTab] = useState('featured'); // 'featured', 'supplies'
 
-    useEffect(() => {
+    // Initialize state synchronously to avoid useEffect setState error
+    const [shopData, setShopData] = useState(() => {
         const today = new Date().toDateString();
-        const selection = getDailyShopSelection(today);
-        setShopData(selection);
-    }, []);
+        return getDailyShopSelection(today);
+    });
 
     const formatNumber = (num) => {
         return new Intl.NumberFormat(i18n.language).format(num);
