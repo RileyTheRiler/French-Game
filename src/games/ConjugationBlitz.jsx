@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Zap, Trophy, RotateCcw, ArrowRight, X } from 'lucide-react';
+import { Timer, Zap, Trophy } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import SoundManager from '../utils/SoundManager';
 import { VERB_DATA, PRONOUNS, TENSES } from '../data/verbData';
-import confetti from 'canvas-confetti';
-
 const ConjugationBlitz = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
@@ -62,6 +60,16 @@ const ConjugationBlitz = () => {
         if (inputRef.current) inputRef.current.focus();
     };
 
+    const endGame = () => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    };
+
     // Timer Logic
     useEffect(() => {
         if (status === 'playing') {
@@ -77,16 +85,6 @@ const ConjugationBlitz = () => {
         }
         return () => clearInterval(timerRef.current);
     }, [status]);
-
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -123,15 +121,6 @@ const ConjugationBlitz = () => {
         }
 
         loadNextChallenge();
-    };
-
-    // Formatting helper
-    const formatPronoun = (pronoun, verbResponse) => {
-        // Simple logic for J' vs Je
-        // This is purely for display relative to the verb if we wanted to show them together
-        // But the prompt shows Pronoun separately usually.
-        // Let's just display the Pronoun string from the array for now.
-        return pronoun;
     };
 
     return (
