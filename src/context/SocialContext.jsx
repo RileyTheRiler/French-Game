@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProgress } from './ProgressContext';
 
@@ -36,39 +37,35 @@ export const SocialProvider = ({ children }) => {
         return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
     });
 
-    const [activeChallenge, setActiveChallenge] = useState({
+    const [activeChallengeData, setActiveChallengeData] = useState(() => ({
         id: 'chal_weekly_xp',
         title: 'Team XP Weekly',
         target: 10000,
-        current: 0,
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
-    });
+    }));
 
-    // Compute total current progress
-    useEffect(() => {
-        const userContribution = Math.max(0, stats.xp - userCoopStartXp);
-        const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
+    // Derive state
+    const userContribution = Math.max(0, stats.xp - userCoopStartXp);
+    const totalProgress = Math.min(activeChallengeData.target, userContribution + friendsProgress);
+    const isChallengeCompleted = totalProgress >= activeChallengeData.target;
 
-        setActiveChallenge(prev => ({
-            ...prev,
-            current: total,
-            isCompleted: total >= prev.target
-        }));
-    }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
+    const activeChallenge = {
+        ...activeChallengeData,
+        current: totalProgress,
+        isCompleted: isChallengeCompleted
+    };
 
     const claimCoopReward = useCallback(() => {
-        if (!activeChallenge.isCompleted) return;
+        if (!isChallengeCompleted) return;
 
         // Award bonus
         addXP(500); // Bonus XP
         // Could add coins here too if Context supported it
 
         // Reset or generate new challenge (mock logic)
-        setActiveChallenge(prev => ({
+        setActiveChallengeData(prev => ({
             ...prev,
-            current: 0,
-            isCompleted: false,
             target: Math.floor(prev.target * 1.2), // Increase difficulty
             title: 'Next Team Challenge'
         }));
@@ -78,7 +75,7 @@ export const SocialProvider = ({ children }) => {
         setFriendsProgress(0);
 
         return 500; // Return reward amount
-    }, [activeChallenge.isCompleted, stats.xp, addXP]);
+    }, [isChallengeCompleted, stats.xp, addXP]);
 
     // Persist to local storage
     useEffect(() => {

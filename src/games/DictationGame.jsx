@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, Volume1, ArrowRight, RefreshCw, Check, X, AlertCircle } from 'lucide-react';
+import { Volume2, Volume1, ArrowRight, RefreshCw, Check, AlertCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -16,27 +16,27 @@ const DictationGame = () => {
 
     const [currentSentence, setCurrentSentence] = useState(null);
     const [userInput, setUserInput] = useState('');
-    const [status, setStatus] = useState('playing'); // playing, checking, success, error
+    const [status, setStatus] = useState('playing');
     const [diff, setDiff] = useState(null);
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
-    // Filter useful accents for the toolbar
     const ACCENTS = ['é', 'è', 'ê', 'ë', 'à', 'â', 'ç', 'î', 'ï', 'ô', 'ù', 'û'];
 
-    useEffect(() => {
-        loadNewSentence();
-    }, []);
-
     const loadNewSentence = () => {
-        // Simple random selection for now
         const randomSentence = DICTATION_SENTENCES[Math.floor(Math.random() * DICTATION_SENTENCES.length)];
         setCurrentSentence(randomSentence);
         setUserInput('');
         setStatus('playing');
         setDiff(null);
-        // Clean speech synthesis queue
         window.speechSynthesis.cancel();
     };
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            loadNewSentence();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, []);
 
     const playAudio = (rate = 1.0) => {
         if (!currentSentence || isPlayingAudio) return;
@@ -44,9 +44,8 @@ const DictationGame = () => {
         setIsPlayingAudio(true);
         const utterance = new SpeechSynthesisUtterance(currentSentence.text);
         utterance.lang = 'fr-FR';
-        utterance.rate = rate; // 1.0 is normal, 0.7 is slow
+        utterance.rate = rate;
 
-        // Try to get a decent french voice
         const voices = window.speechSynthesis.getVoices();
         const frenchVoice = voices.find(v => v.lang.includes('fr')) || voices[0];
         if (frenchVoice) utterance.voice = frenchVoice;
@@ -57,7 +56,6 @@ const DictationGame = () => {
         window.speechSynthesis.speak(utterance);
     };
 
-    // Ensure voices are loaded (chrome weirdness)
     useEffect(() => {
         window.speechSynthesis.getVoices();
     }, []);
@@ -65,9 +63,7 @@ const DictationGame = () => {
     const checkAnswer = () => {
         if (!userInput.trim()) return;
 
-        const normalizedInput = userInput.trim(); // Keep case sensitivity for strict dictation? Or lenient?
-        // Let's go with strict on accents/spelling, maybe lenient on end punctuation if we want to be nice.
-        // For "Dictation", strict is usually better.
+        const normalizedInput = userInput.trim();
 
         if (normalizedInput === currentSentence.text) {
             handleSuccess();
@@ -91,18 +87,14 @@ const DictationGame = () => {
         setStatus('error');
         SoundManager.playMiss();
 
-        // Simple word-by-word diff calculation for display
         const targetWords = currentSentence.text.split(' ');
         const inputWords = input.split(' ');
 
-        // This is a naive visual diff, but helpful enough
-        // Ideally we'd use a diff library, but let's build a simple visualizer
         setDiff({ target: targetWords, input: inputWords });
     };
 
     const insertAccent = (char) => {
         setUserInput(prev => prev + char);
-        // Focus back on input (optional, might need ref)
     };
 
     return (
@@ -112,8 +104,6 @@ const DictationGame = () => {
             onBack={() => navigate('/')}
         >
             <div className="max-w-2xl mx-auto flex flex-col items-center gap-8 min-h-[60vh]">
-
-                {/* Audio Controls */}
                 <Card className="w-full p-8 flex flex-col items-center justify-center gap-6 bg-slate-800/50 backdrop-blur">
                     <div className="flex gap-4">
                         <Button
@@ -137,7 +127,6 @@ const DictationGame = () => {
                     <p className="text-slate-400 text-sm">Click the large button for normal speed, small for slow.</p>
                 </Card>
 
-                {/* Input Area */}
                 <div className="w-full space-y-4">
                     <div className="relative">
                         <textarea
@@ -145,11 +134,7 @@ const DictationGame = () => {
                             onChange={(e) => setUserInput(e.target.value)}
                             placeholder="Type what you hear..."
                             disabled={status === 'success'}
-                            className={`
-                                w-full p-6 text-2xl bg-slate-900/80 border-2 rounded-2xl outline-none transition-all resize-none min-h-[160px] font-medium
-                                ${status === 'error' ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-slate-700 focus:border-indigo-500 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)]'}
-                                ${status === 'success' ? 'border-green-500/50 text-green-400' : 'text-white'}
-                            `}
+                            className={`w-full p-6 text-2xl bg-slate-900/80 border-2 rounded-2xl outline-none transition-all resize-none min-h-[160px] font-medium ${status === 'error' ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-slate-700 focus:border-indigo-500 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)]'} ${status === 'success' ? 'border-green-500/50 text-green-400' : 'text-white'}`}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' && !e.shiftKey) {
                                     e.preventDefault();
@@ -158,7 +143,6 @@ const DictationGame = () => {
                             }}
                         />
 
-                        {/* Status Icon Overlay */}
                         <AnimatePresence>
                             {status === 'success' && (
                                 <motion.div
@@ -172,7 +156,6 @@ const DictationGame = () => {
                         </AnimatePresence>
                     </div>
 
-                    {/* Accent Toolbar */}
                     {status !== 'success' && (
                         <div className="flex flex-wrap gap-2 justify-center">
                             {ACCENTS.map(char => (
@@ -188,7 +171,6 @@ const DictationGame = () => {
                     )}
                 </div>
 
-                {/* Feedback Area */}
                 <AnimatePresence mode="wait">
                     {status === 'error' && diff && (
                         <motion.div
@@ -231,7 +213,6 @@ const DictationGame = () => {
                     )}
                 </AnimatePresence>
 
-                {/* Actions */}
                 <div className="w-full flex justify-end">
                     {status === 'playing' ? (
                         <Button onClick={checkAnswer} className="w-full md:w-auto text-lg px-8 py-6">
@@ -250,7 +231,6 @@ const DictationGame = () => {
                         </Button>
                     )}
                 </div>
-
             </div>
         </GameLayout>
     );
