@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
 import { nanoid } from '../utils/id';
 import { hashPassword, verifyPassword } from '../utils/crypto';
@@ -6,6 +7,10 @@ const AuthContext = createContext();
 
 const STORAGE_KEY = 'frenchApp_user';
 const CREDENTIALS_KEY = 'frenchApp_credentials';
+
+// Pre-computed dummy hash to prevent timing attacks (user enumeration)
+// Format: 16 bytes salt (32 hex) : 32 bytes hash (64 hex)
+const DUMMY_HASH = '00000000000000000000000000000000:0000000000000000000000000000000000000000000000000000000000000000';
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(() => {
@@ -64,18 +69,22 @@ export const AuthProvider = ({ children }) => {
             }
             const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
             let record = credentials[email];
+            let passwordHash = DUMMY_HASH;
 
-            if (!record) {
-                throw new Error('Invalid credentials');
+            if (record) {
+                // Handle legacy format (separate hash/salt) if encountered
+                if (!record.password && record.hash && record.salt) {
+                    record.password = `${record.salt}:${record.hash}`;
+                }
+                if (record.password) {
+                    passwordHash = record.password;
+                }
             }
 
-            // Handle legacy format (separate hash/salt) if encountered
-            if (!record.password && record.hash && record.salt) {
-                record.password = `${record.salt}:${record.hash}`;
-            }
+            // Security: Always verify a password hash to prevent timing attacks (user enumeration)
+            const isValid = await verifyPassword(passwordHash, password);
 
-            const isValid = await verifyPassword(record.password, password);
-            if (!isValid) {
+            if (!record || !isValid) {
                 throw new Error('Invalid credentials');
             }
 
