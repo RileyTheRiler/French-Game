@@ -25,7 +25,8 @@ const VoiceCall = () => {
 
     const currentNode = scenario.nodes[currentNodeId];
 
-    const handleSpeak = (text, onEnd) => {
+    // Wrap in useCallback to avoid dependency cycles
+    const handleSpeak = React.useCallback((text, onEnd) => {
         setCallState('npc_speaking');
         setIsNpcSpeaking(true);
         setStatus('Speaking...');
@@ -37,19 +38,22 @@ const VoiceCall = () => {
             setIsNpcSpeaking(false);
             if (onEnd) onEnd();
         }, duration);
-    };
+    }, []);
 
-    const startListeningPhase = () => {
+    const startListeningPhase = React.useCallback(() => {
         setCallState('listening');
         setStatus('Listening...');
         resetTranscript();
         startListening();
-    };
+    }, [resetTranscript, startListening]);
 
-    const handleProcessInput = (input) => {
+    const handleProcessInput = React.useCallback((input) => {
         stopListening();
         setCallState('processing');
         setStatus('Processing...');
+
+        // Guard against race conditions where currentNode might be outdated or null
+        if (!currentNode) return;
 
         const match = findBestMatch(input, currentNode.options);
 
@@ -73,26 +77,31 @@ const VoiceCall = () => {
                 startListeningPhase();
             });
         }
-    };
+    }, [currentNode, handleSpeak, startListeningPhase, stopListening]);
 
     // Effect: Handle Node Transitions
     useEffect(() => {
         if (!currentNode) return;
 
+        let isMounted = true;
+
         // If node has 'end' flag
         if (currentNode.end) {
             // Wrap in timeout to avoid synchronous state update during render
             const timer = setTimeout(() => {
+                if (!isMounted) return;
                 handleSpeak(currentNode.message, () => {
+                    if (!isMounted) return;
                     setCallState('ended');
                     setStatus('Call Ended');
                     setTimeout(() => {
+                        if (!isMounted) return;
                         navigate('/'); // Go back to menu after delay
                         if (currentNode.success) addXP(scenario.xpReward);
                     }, 3000);
                 });
             }, 0);
-            return () => clearTimeout(timer);
+            return () => { isMounted = false; clearTimeout(timer); };
         }
 
         // Normal node: NPC speaks first (if message exists)
@@ -100,22 +109,25 @@ const VoiceCall = () => {
 
         if (messageToSpeak) {
             const timer = setTimeout(() => {
+                if (!isMounted) return;
                 setStatus('Speaking...');
                 handleSpeak(messageToSpeak, () => {
+                    if (!isMounted) return;
                     // After speaking, start listening
                     startListeningPhase();
                 });
             }, 0);
-            return () => clearTimeout(timer);
+            return () => { isMounted = false; clearTimeout(timer); };
         } else {
             // No message (rare), just listen
             const timer = setTimeout(() => {
+                if (!isMounted) return;
                 startListeningPhase();
             }, 0);
-            return () => clearTimeout(timer);
+            return () => { isMounted = false; clearTimeout(timer); };
         }
 
-    }, [currentNodeId, scenario]);
+    }, [currentNode, currentNodeId, scenario, handleSpeak, startListeningPhase, navigate, addXP]);
 
     // Effect: Check transcript for matches
     useEffect(() => {
@@ -127,7 +139,7 @@ const VoiceCall = () => {
         }, 1500);
 
         return () => clearTimeout(timer);
-    }, [transcript, callState]);
+    }, [transcript, callState, handleProcessInput]);
 
     const handleToggleMic = () => {
         if (isListening) {

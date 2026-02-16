@@ -13,39 +13,12 @@ const LearningPathContext = createContext();
 
 /**
  * LearningPathProvider - Manages adaptive learning path state
- * 
- * Provides:
- * - Skill proficiencies per category
- * - Learning style preferences
- * - Current learning path with milestones
- * - Personalized content queue
- * - Adaptive parameters (difficulty, pace)
  */
 export const LearningPathProvider = ({ children }) => {
-    const { stats, categoryStats, dailyStats, errorPatterns, weakWords, getWeeklySummary } = useProgress();
-    const { vocabulary, getDueWords, getWeightedPracticeWords } = useVocabulary();
+    const { categoryStats, dailyStats, errorPatterns, weakWords, getWeeklySummary } = useProgress();
+    const { vocabulary, getWeightedPracticeWords } = useVocabulary();
 
-    // Skill profile computed from user data
-    const [skillProfile, setSkillProfile] = useState(null);
-
-    // Learning style detected from behavior
-    const [learningStyle, setLearningStyle] = useState({ primary: 'balanced', scores: {} });
-
-    // Current difficulty adjustment
-    const [difficultyParams, setDifficultyParams] = useState({
-        multiplier: 1.0,
-        timerAdjustment: 0,
-        hintsEnabled: true,
-        encouragementLevel: 'normal'
-    });
-
-    // AI-generated insights
-    const [insights, setInsights] = useState([]);
-
-    // Personalized content queue
-    const [contentQueue, setContentQueue] = useState([]);
-
-    // Behavior tracking for learning style detection
+    // Lazy initialization for behavior data
     const [behaviorData, setBehaviorData] = useState(() => {
         const saved = localStorage.getItem('frenchApp_behavior');
         return saved ? JSON.parse(saved) : {
@@ -57,42 +30,65 @@ export const LearningPathProvider = ({ children }) => {
         };
     });
 
+    // Compute derived state directly during render or useMemo to avoid sync setState effects
+    const skillProfile = useMemo(() => {
+        if (!vocabulary || vocabulary.length === 0) return null;
+
+        const progressData = {
+            categoryStats: categoryStats || {},
+            errorPatterns: errorPatterns || {},
+            dailyStats: dailyStats || {},
+            weakWords: weakWords || {}
+        };
+
+        return computeSkillProfile(progressData, vocabulary);
+    }, [vocabulary, categoryStats, dailyStats, errorPatterns, weakWords]);
+
+    const learningStyle = useMemo(() => {
+        return detectLearningStyle(behaviorData);
+    }, [behaviorData]);
+
+    const insights = useMemo(() => {
+        if (!skillProfile) return [];
+        const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
+        return generateInsights(weeklyData, skillProfile);
+    }, [skillProfile, getWeeklySummary]);
+
+    // Use a ref or state for queue if we need to modify it,
+    // but initializing it from memo avoids the effect loop.
+    // If we need to *modify* it (shift items), state is better.
+    // We can initialize state from the memo? No, that's tricky.
+    // Let's use a state that updates ONLY when dependencies change significantly or manually refreshed.
+    const [contentQueue, setContentQueue] = useState(() => {
+        if (skillProfile && vocabulary && vocabulary.length > 0) {
+            return getPersonalizedQueue(skillProfile, vocabulary, 30);
+        }
+        return [];
+    });
+
+    // Update queue when profile changes, wrapped in useEffect but carefully
+    useEffect(() => {
+        if (skillProfile && vocabulary && vocabulary.length > 0) {
+            // Only update if queue is empty or significantly stale?
+            // For now, just setting it is fine as long as it doesn't cause loop.
+            // Since skillProfile is memoized, this effect runs only when profile changes.
+            const queue = getPersonalizedQueue(skillProfile, vocabulary, 30);
+            setContentQueue(queue);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [skillProfile, vocabulary]);
+
+    const [difficultyParams, setDifficultyParams] = useState({
+        multiplier: 1.0,
+        timerAdjustment: 0,
+        hintsEnabled: true,
+        encouragementLevel: 'normal'
+    });
+
     // Save behavior data
     useEffect(() => {
         localStorage.setItem('frenchApp_behavior', JSON.stringify(behaviorData));
     }, [behaviorData]);
-
-    // Recompute skill profile when relevant data changes
-    useEffect(() => {
-        if (vocabulary && vocabulary.length > 0) {
-            const progressData = {
-                categoryStats: categoryStats || {},
-                errorPatterns: errorPatterns || {},
-                dailyStats: dailyStats || {},
-                weakWords: weakWords || {}
-            };
-
-            const profile = computeSkillProfile(progressData, vocabulary);
-            setSkillProfile(profile);
-        }
-    }, [vocabulary, categoryStats, dailyStats, errorPatterns, weakWords]);
-
-    // Generate insights when profile updates
-    useEffect(() => {
-        if (skillProfile) {
-            const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
-            const newInsights = generateInsights(weeklyData, skillProfile);
-            setInsights(newInsights);
-        }
-    }, [skillProfile, getWeeklySummary]);
-
-    // Generate personalized queue when profile updates
-    useEffect(() => {
-        if (skillProfile && vocabulary && vocabulary.length > 0) {
-            const queue = getPersonalizedQueue(skillProfile, vocabulary, 30);
-            setContentQueue(queue);
-        }
-    }, [skillProfile, vocabulary]);
 
     // Update difficulty based on recent session performance
     const updateDifficultyFromSession = useCallback((sessionStats) => {
@@ -108,12 +104,6 @@ export const LearningPathProvider = ({ children }) => {
             [action]: (prev[action] || 0) + value
         }));
     }, []);
-
-    // Update learning style based on behavior
-    useEffect(() => {
-        const style = detectLearningStyle(behaviorData);
-        setLearningStyle(style);
-    }, [behaviorData]);
 
     // Get the next batch of personalized content
     const getNextBatch = useCallback((batchSize = 10) => {

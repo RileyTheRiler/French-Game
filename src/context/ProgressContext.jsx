@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { calculateLevel, getLevelProgress } from '../utils/gamificationUtils';
 import { ACHIEVEMENTS } from '../data/achievements';
@@ -240,7 +241,7 @@ export const ProgressProvider = ({ children }) => {
             checkStreak();
         }, 0);
         return () => clearTimeout(timer);
-    }, []); // Run once on mount
+    }, [checkStreak]);
 
     const ensureSeasonWindow = useCallback(() => {
         setStats(prev => {
@@ -264,7 +265,7 @@ export const ProgressProvider = ({ children }) => {
             ensureSeasonWindow();
         }, 0);
         return () => clearTimeout(timer);
-    }, []);
+    }, [ensureSeasonWindow]);
 
     const updateDailyStat = useCallback((statName, amount = 1, mode = 'add') => {
         setStats(prev => {
@@ -353,6 +354,7 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
 
     // Check achievements when relevant stats change
