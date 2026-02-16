@@ -1,0 +1,924 @@
+
+> french-game@0.0.0 lint /app
+> eslint .
+
+
+/app/playwright.config.js
+   6:19  warning  'process' is not defined  no-undef
+   7:14  warning  'process' is not defined  no-undef
+   8:14  warning  'process' is not defined  no-undef
+  23:31  warning  'process' is not defined  no-undef
+
+/app/src/App.jsx
+  3:27  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/AchievementsModal.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u          no-unused-vars
+  11:27  warning  'stats' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  11:34  warning  'level' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/BranchingStoryMode.jsx
+    1:38  warning  'useMemo' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                      no-unused-vars
+    2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                       no-unused-vars
+    8:29  warning  'getStoryById' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                 no-unused-vars
+  118:8   warning  React Hook useEffect has missing dependencies: 'currentNode?.type', 'onSaveProgress', and 'story.id'. Either include them or remove the dependency array. If 'onSaveProgress' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+
+/app/src/components/Community/CorrectionReview.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/Community/WritingExercise.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            no-unused-vars
+  10:13  warning  'getPrompts' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               no-unused-vars
+  22:17  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  20 |             const prompt = WRITING_PROMPTS.find(p => p.id === initialPromptId);
+  21 |             if (prompt) {
+> 22 |                 setSelectedPrompt(prompt);
+     |                 ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  23 |                 setView('write');
+  24 |             }
+  25 |         }  react-hooks/set-state-in-effect
+
+/app/src/components/ConversationSimulator.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          no-unused-vars
+  14:25  warning  'isFuzzyMatch' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+  65:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  63 |
+  64 |         // Reset input state
+> 65 |         setUserInputValue("");
+     |         ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  66 |         setShowLegacyOptions(false);
+  67 |
+  68 |         // Clear any existing timer  react-hooks/set-state-in-effect
+
+/app/src/components/ConversationSummary.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  71:29  warning  'Icon' is defined but never used                                               no-unused-vars
+
+/app/src/components/CulturalDeepDive.jsx
+    2:10   warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  164:113  warning  'speak' is not defined                                                         no-undef
+
+/app/src/components/CultureMastery/ComprehensionQuiz.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  43:13  warning  'finishQuiz' was used before it was defined                                    no-use-before-define
+
+/app/src/components/CultureMastery/FranceMap.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/CultureMastery/MediaCenter.jsx
+   3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                no-unused-vars
+  22:12  warning  'quizMode' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+  22:22  warning  'setQuizMode' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  49:33  warning  'score' is defined but never used                                                            no-unused-vars
+
+/app/src/components/CultureMastery/MediaPlayer.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u               no-unused-vars
+  13:21  warning  'setSubMode' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/CultureMastery/RegionExplorer.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                    no-unused-vars
+  21:12  warning  'selectedWord' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+  21:26  warning  'setSelectedWord' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  22:12  warning  'showQuiz' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+  22:22  warning  'setShowQuiz' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u      no-unused-vars
+
+/app/src/components/CultureMastery/SurvivalChallenge.jsx
+   1:38  warning  'useCallback' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                          no-unused-vars
+   3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                               no-unused-vars
+  10:30  warning  'getScenarioById' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                      no-unused-vars
+  35:21  warning  'handleTimeOut' was used before it was defined                                                                                                                                                                                              no-use-before-define
+  47:8   warning  React Hook useEffect has a missing dependency: 'stressLevel'. Either include it or remove the dependency array. You can also do a functional update 'setStressLevel(s => ...)' if you only need 'stressLevel' in the 'setStressLevel' call  react-hooks/exhaustive-deps
+  77:17  warning  'handleGameEnd' was used before it was defined                                                                                                                                                                                              no-use-before-define
+
+/app/src/components/CustomDeckManager.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/DailyChallengeWidget.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  33:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  31 |
+  32 |     useEffect(() => {
+> 33 |         setChallenges(getTodaysChallenges());
+     |         ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  34 |         const activeTimed = getActiveTimedChallenge();
+  35 |         setTimedChallenge(activeTimed);
+  36 |         setTimeRemaining(activeTimed.expiresAt - Date.now());  react-hooks/set-state-in-effect
+
+/app/src/components/DailyGoalRing.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  29:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  27 |     useEffect(() => {
+  28 |         if (isComplete && !hasAnimated) {
+> 29 |             setJustCompleted(true);
+     |             ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  30 |             triggerConfetti(CONFETTI_PRESETS.goal);
+  31 |             setHasAnimated(true);
+  32 |  react-hooks/set-state-in-effect
+
+/app/src/components/DailyMix.jsx
+    1:47  warning  'useRef' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+    3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+   52:9   error    Error: Cannot access variable before it is declared
+
+`nextQuestion` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  50 |
+  51 |     useEffect(() => {
+> 52 |         nextQuestion();
+     |         ^^^^^^^^^^^^ `nextQuestion` accessed before it is declared
+  53 |     }, []);
+  54 |
+  55 |     const nextQuestion = () => {
+
+  53 |     }, []);
+  54 |
+> 55 |     const nextQuestion = () => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 56 |         if (vocabulary.length < 4) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |         const target = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 65 |         setOptions([target.english, ...distractors].sort(() => Math.random() - 0.5));
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |     };
+     | ^^^^^^^ `nextQuestion` is declared here
+  67 |
+  68 |     const handleAnswer = (answer) => {
+  69 |         if (gameOver) return;  react-hooks/immutability
+   52:9   warning  'nextQuestion' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-use-before-define
+   53:8   warning  React Hook useEffect has a missing dependency: 'nextQuestion'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   react-hooks/exhaustive-deps
+  143:11  warning  'difficultyConfig' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  154:12  warning  'combo' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             no-unused-vars
+  206:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  204 |     useEffect(() => {
+  205 |         if (vocabulary.length > 0 && sessionQueue.length === 0) {
+> 206 |             generateSession();
+      |             ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  207 |         }
+  208 |     }, [vocabulary]);
+  209 |                                                                  react-hooks/set-state-in-effect
+  208:8   warning  React Hook useEffect has missing dependencies: 'generateSession' and 'sessionQueue.length'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+  279:9   warning  'handleNext' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-use-before-define
+  284:9   warning  'handleNext' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-use-before-define
+  295:13  warning  'finishSession' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-use-before-define
+
+/app/src/components/DictionaryModal.jsx
+   7:30  warning  'formatDateTime' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  26:31  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  24 |         tip.content.toLowerCase().includes(searchTerm.toLowerCase())
+  25 |     );
+> 26 |     const now = useMemo(() => Date.now(), [vocabulary]);
+     |                               ^^^^^^^^^^ Cannot call impure function
+  27 |
+  28 |     return (
+  29 |         <div   react-hooks/purity
+  26:43  warning  React Hook useMemo has an unnecessary dependency: 'vocabulary'. Either exclude it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+
+/app/src/components/DreamGoals.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/EtymologyMap.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/FallingWords/FallingWordsGame.jsx
+    3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                   no-unused-vars
+   47:9   warning  'setModeDifficulty' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u               no-unused-vars
+   59:24  warning  'setDifficulty' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                   no-unused-vars
+   60:11  warning  'difficultyRef' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                   no-unused-vars
+  220:9   warning  'startGame' was used before it was defined                                                                      no-use-before-define
+  226:8   warning  React Hook useEffect has a missing dependency: 'startGame'. Either include it or remove the dependency array    react-hooks/exhaustive-deps
+  273:52  warning  'gameLoop' was used before it was defined                                                                       no-use-before-define
+  385:17  warning  'endGame' was used before it was defined                                                                        no-use-before-define
+  617:8   warning  React Hook useEffect has a missing dependency: 'restartGame'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/src/components/FallingWords/WordItem.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   no-unused-vars
+  11:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+   9 |     useEffect(() => {
+  10 |         if (!hint || hintDelay === 0) {
+> 11 |             setShowHint(!!hint && hintDelay === 0);
+     |             ^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  12 |             return;
+  13 |         }
+  14 |  react-hooks/set-state-in-effect
+  51:41  error    Unnecessary escape character: \[                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-useless-escape
+
+/app/src/components/FlashcardMode.jsx
+    3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            no-unused-vars
+   21:11  warning  The 'onExit' function makes the dependencies of useEffect Hook (at line 213) change on every render. To fix this, wrap the definition of 'onExit' in its own useCallback() Hook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          react-hooks/exhaustive-deps
+   33:11  warning  'difficultyConfig' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         no-unused-vars
+  115:8   warning  React Hook useEffect has a missing dependency: 'currentWord'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+  176:8   warning  React Hook useCallback has a missing dependency: 'finishSession'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/exhaustive-deps
+  269:17  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  267 |     }
+  268 |
+> 269 |     const now = Date.now();
+      |                 ^^^^^^^^^^ Cannot call impure function
+  270 |     const isSnoozed = currentWord?.snoozeUntil && currentWord.snoozeUntil > now;
+  271 |     const metaTooltip = currentWord ? `Lvl ${currentWord.level} • Last seen ${formatRelativeTime(currentWord.lastSeen)}${currentWord.pinned ? ' • Pinned' : ''}` : '';
+  272 |  react-hooks/purity
+
+/app/src/components/FocusModeSelector.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/FocusSession.jsx
+    3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+   41:41  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  39 |     const [selectedOption, setSelectedOption] = useState(null);
+  40 |     const [score, setScore] = useState(0);
+> 41 |     const [sessionStartTime] = useState(Date.now());
+     |                                         ^^^^^^^^^^ Cannot call impure function
+  42 |     const [isComplete, setIsComplete] = useState(false);
+  43 |
+  44 |     // Speed Round local state                                                                                                                                                                                                                                         react-hooks/purity
+   84:8   warning  React Hook useEffect has missing dependencies: 'getWeightedPracticeWords' and 'queue.length'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+   93:21  warning  'finishSession' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-use-before-define
+  101:8   warning  React Hook useEffect has a missing dependency: 'finishSession'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+  151:13  warning  'finishSession' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-use-before-define
+  186:50  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  184 |                             <div className="glass-panel p-4 text-center">
+  185 |                                 <div className="text-3xl font-black text-amber-400">
+> 186 |                                     {Math.floor((Date.now() - sessionStartTime) / 60000)}m
+      |                                                  ^^^^^^^^^^ Cannot call impure function
+  187 |                                 </div>
+  188 |                                 <div className="text-xs text-slate-400 uppercase font-bold">Time Spent</div>
+  189 |                             </div>                                react-hooks/purity
+  369:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  367 |
+  368 |     useEffect(() => {
+> 369 |         nextQuestion();
+      |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  370 |     }, [nextQuestion]);
+  371 |
+  372 |     const handleVote = (answer) => {  react-hooks/set-state-in-effect
+
+/app/src/components/FreeFormChat.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  40:43  warning  'userLevel' is defined but never used                                          no-unused-vars
+
+/app/src/components/GrammarDeepDive.jsx
+    3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u               no-unused-vars
+  202:43  warning  'isAnswered' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/GrammarDrill.jsx
+   3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            no-unused-vars
+  23:37  error    Error: Cannot call impure function during render
+
+`performance.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  21 |     const [difficulty, setDifficulty] = useState(difficultySetting);
+  22 |     const [sessionPoints, setSessionPoints] = useState(0);
+> 23 |     const questionStartRef = useRef(performance.now());
+     |                                     ^^^^^^^^^^^^^^^^^ Cannot call impure function
+  24 |
+  25 |     const [drills, setDrills] = useState([]);
+  26 |     const [currentIndex, setCurrentIndex] = useState(0);  react-hooks/purity
+  82:30  error    Error: Cannot call impure function during render
+
+`performance.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  80 |
+  81 |         const isCorrect = answer === currentDrill.answer;
+> 82 |         const responseTime = performance.now() - questionStartRef.current;
+     |                              ^^^^^^^^^^^^^^^^^ Cannot call impure function
+  83 |         recordCategoryPerformance(currentDrill.category, {
+  84 |             success: isCorrect,
+  85 |             responseTime,                                              react-hooks/purity
+
+/app/src/components/GrammarLessonView.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/GrammarModal.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              no-unused-vars
+  14:39  error    Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  12 |     // Tip of the Day based on date
+  13 |     const tipOfTheDay = useMemo(() => {
+> 14 |         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+     |                                       ^^^^^^^^^^ Cannot call impure function
+  15 |         return GRAMMAR_TIPS[dayOfYear % GRAMMAR_TIPS.length];
+  16 |     }, []);
+  17 |  react-hooks/purity
+
+/app/src/components/GrammarTreeVisualizer.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/Hub/Neighborhood.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  11:21  warning  'type' is defined but never used                                               no-unused-vars
+  11:49  warning  'Icon' is defined but never used                                               no-unused-vars
+
+/app/src/components/InstallPrompt.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   no-unused-vars
+  14:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  12 |         // Check if already installed
+  13 |         if (window.matchMedia('(display-mode: standalone)').matches) {
+> 14 |             setIsInstalled(true);
+     |             ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  15 |             return;
+  16 |         }
+  17 |  react-hooks/set-state-in-effect
+
+/app/src/components/LeaderboardModal.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/LeagueProgressWidget.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u          no-unused-vars
+  9:13  warning  'stats' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/LearningProfileQuiz.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/ListenRepeatLab.jsx
+   1:35  warning  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              no-unused-vars
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  26:38  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  24 |                     key={i}
+  25 |                     animate={active ? {
+> 26 |                         height: [10, Math.random() * 40 + 10, 10],
+     |                                      ^^^^^^^^^^^^^ Cannot call impure function
+  27 |                     } : {
+  28 |                         height: 4
+  29 |                     }                    react-hooks/purity
+  32:41  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  30 |                     }
+  31 |                     transition={active ? {
+> 32 |                         duration: 0.5 + Math.random(),
+     |                                         ^^^^^^^^^^^^^ Cannot call impure function
+  33 |                         repeat: Infinity,
+  34 |                         ease: "easeInOut"
+  35 |                     } : {}}  react-hooks/purity
+  53:12  warning  'isPlayingNew' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  53:26  warning  'setIsPlayingNew' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               no-unused-vars
+  81:13  warning  'stopRecording' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-use-before-define
+  92:13  warning  'evaluatePronunciation' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        no-use-before-define
+
+/app/src/components/LoadingFallback.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/MainMenu.jsx
+   4:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                  no-unused-vars
+  38:66  warning  'setTargetCefr' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/Mastery/FluencyProjection.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/Mastery/RetentionHeatmap.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/Mastery/SkillRadar.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/MemoryPalace.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             no-unused-vars
+  25:13  warning  'userVocabulary' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            no-unused-vars
+  35:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  33 |         const roomData = memoryPalace.rooms?.[currentRoom] || {};
+  34 |         if (roomData.items) {
+> 35 |             setPlacedItems(roomData.items);
+     |             ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  36 |         } else {
+  37 |             setPlacedItems([]);
+  38 |         }  react-hooks/set-state-in-effect
+
+/app/src/components/Messaging/ChatInterface.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  89:66  warning  'formatRelativeTime' was used before it was defined                            no-use-before-define
+
+/app/src/components/Messaging/LanguagePartnerFinder.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/OfflineBanner.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/OnboardingChecklist.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/PatternDrills.jsx
+    1:27  warning  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           no-unused-vars
+    3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              no-unused-vars
+   48:38  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `globalDifficulty`, but the source dependencies were [drillType]. Inferred different dependency than source.
+
+  46 |
+  47 |     // Start a new session
+> 48 |     const startSession = useCallback(() => {
+     |                                      ^^^^^^^
+> 49 |         let newExercises = [];
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 50 |
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 68 |         setSessionComplete(false);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 69 |     }, [drillType]);
+     | ^^^^^^ Could not preserve existing manual memoization
+  70 |
+  71 |     // Handle conjugation table answer
+  72 |     const handleConjugationInput = (pronoun, value) => {  react-hooks/preserve-manual-memoization
+   69:8   warning  React Hook useCallback has a missing dependency: 'globalDifficulty'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+  252:90  warning  'index' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          no-unused-vars
+
+/app/src/components/PersonalizedDashboard.jsx
+    2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                 no-unused-vars
+   29:13  warning  'stats' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+   29:20  warning  'level' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+   31:9   warning  'skillProfile' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  239:65  warning  'index' is defined but never used                                                             no-unused-vars
+  402:23  warning  '_' is defined but never used                                                                 no-unused-vars
+
+/app/src/components/PersonalizedDashboard/ErrorHeatmap.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/PlacementQuiz.jsx
+    3:27  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  113:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  111 |             });
+  112 |             showSuccess(`Placement saved! Starting XP: ${xpAward}`);
+> 113 |             setPlacementSaved(true);
+      |             ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  114 |         }
+  115 |     }, [applyPlacementResult, showResults, placementSaved, xpAward, accuracy, totalQuestions, showSuccess]);
+  116 |  react-hooks/set-state-in-effect
+
+/app/src/components/PodcastMode.jsx
+    3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                no-unused-vars
+   59:8   warning  React Hook useEffect has a missing dependency: 'playbackSpeed'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+   98:21  error    Error: Cannot access variable before it is declared
+
+`finishSession` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+   96 |                 } else {
+   97 |                     // Session complete
+>  98 |                     finishSession();
+      |                     ^^^^^^^^^^^^^ `finishSession` accessed before it is declared
+   99 |                 }
+  100 |             }, 1500); // 1.5 second pause between items
+  101 |         };
+
+  141 |
+  142 |     // Finish session
+> 143 |     const finishSession = () => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 144 |         setIsPlaying(false);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 145 |         if (audioRef.current) {
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 155 |         setSessionComplete(true);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 156 |     };
+      | ^^^^^^^ `finishSession` is declared here
+  157 |
+  158 |     // Session selection screen
+  159 |     if (!sessionStarted) {  react-hooks/immutability
+   98:21  warning  'finishSession' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               no-use-before-define
+  102:8   warning  React Hook useCallback has a missing dependency: 'finishSession'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+
+/app/src/components/Pronunciation/MinimalPairDrill.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-unused-vars
+  12:41  warning  'onExit' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  14:12  warning  'currentPairIndex' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+  14:30  warning  'setCurrentPairIndex' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 no-unused-vars
+  15:12  warning  'targetWordIndex' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+  15:29  warning  'setTargetWordIndex' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  no-unused-vars
+  57:17  error    Error: Cannot access variable before it is declared
+
+`handleCheck` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  55 |                 const result = event.results[0][0].transcript.toLowerCase().trim();
+  56 |                 setTranscript(result);
+> 57 |                 handleCheck(result);
+     |                 ^^^^^^^^^^^ `handleCheck` accessed before it is declared
+  58 |             };
+  59 |         }
+  60 |     }, [currentItem]); // Re-bind if needed, or just once.
+
+  60 |     }, [currentItem]); // Re-bind if needed, or just once.
+  61 |
+> 62 |     const handleCheck = (spoken) => {
+     |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 63 |         if (!currentItem) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 64 |
+     …
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 83 |         }
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 84 |     };
+     | ^^^^^^^ `handleCheck` is declared here
+  85 |
+  86 |     const startListening = () => {
+  87 |         setStatus('listening');  react-hooks/immutability
+  57:17  warning  'handleCheck' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        no-use-before-define
+  60:8   warning  React Hook useEffect has a missing dependency: 'handleCheck'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+
+/app/src/components/Pronunciation/ProsodyLab.jsx
+    3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+   71:8   warning  React Hook useEffect has a missing dependency: 'isRecording'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+  115:51  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+  113 |                                 <AudioVisualizer
+  114 |                                     isListening={isRecording}
+> 115 |                                     audioContext={audioContextRef.current}
+      |                                                   ^^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  116 |                                     mediaStream={mediaStreamRef.current}
+  117 |                                 />
+  118 |                             ) : (                                                              react-hooks/refs
+  116:50  error    Error: Cannot access refs during render
+
+React refs are values that are not needed for rendering. Refs should only be accessed outside of render, such as in event handlers or effects. Accessing a ref value (the `current` property) during render can cause your component not to update as expected (https://react.dev/reference/react/useRef).
+
+  114 |                                     isListening={isRecording}
+  115 |                                     audioContext={audioContextRef.current}
+> 116 |                                     mediaStream={mediaStreamRef.current}
+      |                                                  ^^^^^^^^^^^^^^^^^^^^^^ Cannot access ref value during render
+  117 |                                 />
+  118 |                             ) : (
+  119 |                                 <div className="text-slate-500 text-sm">Tap mic to see your voice rhythm</div>  react-hooks/refs
+
+/app/src/components/Pronunciation/RhythmTrainer.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                        no-unused-vars
+  38:12  warning  'recordingDuration' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                    no-unused-vars
+  48:11  warning  'utteranceRef' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                         no-unused-vars
+  58:28  warning  'estimateSyllables' was used before it was defined                                                                   no-use-before-define
+  59:35  warning  'estimateDuration' was used before it was defined                                                                    no-use-before-define
+  62:8   warning  React Hook useEffect has a missing dependency: 'estimateDuration'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/src/components/Pronunciation/ShadowingDrill.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            no-unused-vars
+  15:12  warning  'isListening' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              no-unused-vars
+  15:25  warning  'setIsListening' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           no-unused-vars
+  27:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+  25 |
+  26 |     useEffect(() => {
+> 27 |         setSession(getShadowingSession());
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  28 |     }, []);
+  29 |
+  30 |     const currentPhrase = session[currentIndex];  react-hooks/set-state-in-effect
+  42:8   warning  React Hook useEffect has missing dependencies: 'audioContext' and 'mediaStream'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+
+/app/src/components/PronunciationCoach.jsx
+    2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             no-unused-vars
+   39:12  warning  'totalXP' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   no-unused-vars
+   69:50  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  67 |         const remainingCount = 5 - selectedWeak.length;
+  68 |         const otherWords = vocabulary.filter(w => !selectedWeak.includes(w));
+> 69 |         const randomFill = otherWords.sort(() => Math.random() - 0.5).slice(0, remainingCount);
+     |                                                  ^^^^^^^^^^^^^ Cannot call impure function
+  70 |
+  71 |         return [...selectedWeak, ...randomFill];
+  72 |     }, [vocabulary, stats.weakWords]);                                                                                                                                                                                                                                                                                               react-hooks/purity
+  109:17  error    Error: Cannot access variable before it is declared
+
+`checkPronunciation` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+  107 |                 const result = event.results[0][0].transcript;
+  108 |                 setTranscript(result);
+> 109 |                 checkPronunciation(result);
+      |                 ^^^^^^^^^^^^^^^^^^ `checkPronunciation` accessed before it is declared
+  110 |             };
+  111 |
+  112 |             recognitionRef.current.onerror = (event) => {
+
+  150 |     };
+  151 |
+> 152 |     const checkPronunciation = (heard) => {
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 153 |         setStatus('checking');
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 154 |
+      …
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 183 |         }, 600);
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 184 |     };
+      | ^^^^^^^ `checkPronunciation` is declared here
+  185 |
+  186 |     const handleNext = () => {
+  187 |         if (currentWordIndex < wordsToPractice.length - 1) {  react-hooks/immutability
+  109:17  warning  'checkPronunciation' was used before it was defined                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-use-before-define
+  131:8   warning  React Hook useEffect has missing dependencies: 'audioContext', 'checkPronunciation', and 'mediaStream'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+
+/app/src/components/QuickSessionCard.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/ReadingRoom.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  18:43  warning  'userLevel' is defined but never used                                          no-unused-vars
+
+/app/src/components/RealWorld/DialectTours.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/RealWorld/ProfessionalSuite.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/RealWorld/SlangExplorer.jsx
+   3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       no-unused-vars
+  41:44  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+  39 |             : SLANG_DATA;
+  40 |
+> 41 |         const randomItem = pool[Math.floor(Math.random() * pool.length)];
+     |                                            ^^^^^^^^^^^^^ Cannot call impure function
+  42 |         setCurrentQuizItem(randomItem);
+  43 |         setQuizFeedback(null);
+  44 |  react-hooks/purity
+
+/app/src/components/SRSReviewQueue.jsx
+    1:51  warning  'useMemo' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    no-unused-vars
+    3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     no-unused-vars
+   47:13  warning  'vocabulary' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        no-unused-vars
+  100:9   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+   98 |         }));
+   99 |
+> 100 |         setReviewQueue(queue);
+      |         ^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  101 |         if (queue.length > 0) {
+  102 |             initializeCard(queue[0]);
+  103 |         }  react-hooks/set-state-in-effect
+  104:8   warning  React Hook useEffect has a missing dependency: 'getDueWords'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+
+/app/src/components/SentenceBuilder.jsx
+  294:8  warning  React Hook useEffect has a missing dependency: 'loadNextPuzzle'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/app/src/components/SettingsModal.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  86:18  warning  'err' is defined but never used                                                no-unused-vars
+
+/app/src/components/ShopModal.jsx
+   1:27  warning  'useEffect' is defined but never used. Allowed unused vars must match /^[A-Z_]/u             no-unused-vars
+   3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                no-unused-vars
+  16:22  warning  'setShopData' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/SmartBreakModal.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                         no-unused-vars
+   9:29  warning  'updateCognitiveState' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  13:11  warning  'handleDismiss' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u         no-unused-vars
+
+/app/src/components/SmartImport/WordDetailModal.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/SocialModal.jsx
+   3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                      no-unused-vars
+  22:29  warning  'connectedPartners' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/StatsModal.jsx
+   3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  11:27  warning  'Icon' is defined but never used                                               no-unused-vars
+
+/app/src/components/StoryMode.jsx
+    2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+   82:13  warning  'finishStory' was used before it was defined                                   no-use-before-define
+  103:17  warning  'finishStory' was used before it was defined                                   no-use-before-define
+
+/app/src/components/StreakCard.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/VisualStoryCards.jsx
+   3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u          no-unused-vars
+  65:20  warning  'stats' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/VoiceCall/CallScreen.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/WeeklyGoalTracker.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                                                                                                    no-unused-vars
+  12:11  warning  The 'sessionsThisWeek' logical expression could make the dependencies of useMemo Hook (at line 39) change on every render. To fix this, wrap the initialization of 'sessionsThisWeek' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/app/src/components/WeeklyRecapModal.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u            no-unused-vars
+  11:12  warning  'step' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u     no-unused-vars
+  11:18  warning  'setStep' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/WritingPad.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/a11y/LiveRegion.jsx
+  30:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/app/src/components/layout/GameLayout.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/ui/ConfettiEffect.jsx
+   83:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+  109:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/app/src/components/ui/DifficultyDial.jsx
+    2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                                   no-unused-vars
+  134:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/app/src/components/ui/EmptyState.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  7:11  warning  'Icon' is assigned a value but never used                                      no-unused-vars
+
+/app/src/components/ui/GrammarInsightCard.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                       no-unused-vars
+  26:11  warning  'hasExtendedContent' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/ui/LoadingState.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/components/ui/SuccessState.jsx
+   2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  14:5   warning  'children' is defined but never used                                           no-unused-vars
+
+/app/src/context/A11yContext.jsx
+  5:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/app/src/context/AuthContext.jsx
+  122:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/app/src/context/AuthContext.security.test.jsx
+  3:35  warning  'act' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/context/CommunityContext.jsx
+    4:27  warning  'generateResponse' is defined but never used. Allowed unused vars must match /^[A-Z_]/u                                         no-unused-vars
+  276:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/app/src/context/LearningPathContext.jsx
+   25:13  warning  'stats' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                           no-unused-vars
+   26:25  warning  'getDueWords' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u                                     no-unused-vars
+   85:9   warning  Unused eslint-disable directive (no problems were reported from 'no-unused-vars')
+  256:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/app/src/context/ProgressContext.jsx
+  487:40  warning  'resetStats' is defined but never used  no-unused-vars
+
+/app/src/context/SocialContext.jsx
+  183:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+/app/src/context/ToastContext.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/data/grammarTips.js
+  131:28  warning  'context' is assigned a value but never used  no-unused-vars
+  196:28  warning  'context' is assigned a value but never used  no-unused-vars
+  279:28  warning  'context' is assigned a value but never used  no-unused-vars
+  326:28  warning  'context' is assigned a value but never used  no-unused-vars
+  350:27  warning  'gender' is defined but never used            no-unused-vars
+
+/app/src/data/nativeSpeakers.js
+  33:56  warning  'context' is assigned a value but never used  no-unused-vars
+
+/app/src/data/patternDrillsData.js
+  128:43  warning  'difficulty' is assigned a value but never used  no-unused-vars
+  163:51  warning  'difficulty' is assigned a value but never used  no-unused-vars
+
+/app/src/data/podcastData.js
+  83:30  warning  'index' is defined but never used  no-unused-vars
+
+/app/src/games/ClozeGame.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/games/ConjugationBlitz.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/games/CultureQuestGame.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/games/DictationGame.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/games/ErrorSpottingGame.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/games/MemoryMatchGame.jsx
+  3:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/main_debug.jsx
+  3:10  warning  'createRoot' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/pages/MasteryDashboard.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/pages/SmartImport.jsx
+  2:10  warning  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/src/services/PronunciationAnalyzer.js
+  272:48  warning  'targetWord' is defined but never used  no-unused-vars
+
+/app/src/systems/NPCSystem.js
+  155:15  warning  'npc' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+/app/tests/test_market_logic.js
+  5:7  warning  'mockRandom' is assigned a value but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+
+✖ 268 problems (31 errors, 237 warnings)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+
+ ELIFECYCLE  Command failed with exit code 1.

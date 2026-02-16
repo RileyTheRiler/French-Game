@@ -1,27 +1,10 @@
 import React, { useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain, Target } from 'lucide-react';
 import DifficultyDial from './ui/DifficultyDial';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { warmVoiceCache } from '../utils/audio';
-
-const SettingsModal = ({ onClose }) => {
-    const { audioEnabled, toggleAudio, offlineAudio, toggleOfflineAudio, resetProgress } = useProgress();
-    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
-    const [confirmReset, setConfirmReset] = React.useState(false);
-    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
-
-    const handleOfflineAudio = async () => {
-        const next = !offlineAudio;
-        toggleOfflineAudio();
-        if (!offlineAudio && next) {
-            setIsCachingAudio(true);
-            warmVoiceCache();
-            await downloadAudioOnce();
-            setIsCachingAudio(false);
-        }
-    };
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
 
@@ -29,6 +12,8 @@ const SettingsModal = ({ onClose }) => {
     const {
         audioEnabled,
         toggleAudio,
+        offlineAudio,
+        toggleOfflineAudio,
         reducedMotion,
         toggleReducedMotion,
         colorTheme,
@@ -41,15 +26,28 @@ const SettingsModal = ({ onClose }) => {
         globalDifficulty,
         setGlobalDifficulty
     } = useProgress();
-    const { resetVocabulary } = useVocabulary();
+    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
     const { user, signIn, signUp, signOut, loading, error } = useAuth();
     const { exportData, importData, status, lastSyncedAt, syncing } = useSync();
+
     const [confirmReset, setConfirmReset] = React.useState(false);
+    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
     const [authMode, setAuthMode] = React.useState('signin');
     const [form, setForm] = React.useState({ email: '', password: '' });
     const [importError, setImportError] = React.useState('');
     const dialogRef = useRef(null);
     const closeButtonRef = useRef(null);
+
+    const handleOfflineAudio = async () => {
+        const next = !offlineAudio;
+        toggleOfflineAudio();
+        if (!offlineAudio && next) {
+            setIsCachingAudio(true);
+            warmVoiceCache();
+            await downloadAudioOnce();
+            setIsCachingAudio(false);
+        }
+    };
 
     useEffect(() => {
         if (closeButtonRef.current) {
@@ -139,7 +137,7 @@ const SettingsModal = ({ onClose }) => {
                 </p>
 
                 <div className="space-y-6">
-                    {/* Learner Focus - New Section */}
+                    {/* Learner Focus */}
                     <div className="glass-panel p-4 border border-indigo-500/20 bg-indigo-500/5 mb-6">
                         <div className="flex items-start gap-3 mb-4">
                             <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-300">
@@ -336,7 +334,12 @@ const SettingsModal = ({ onClose }) => {
                         >
                             <motion.div
                                 animate={{ x: offlineAudio ? 26 : 2 }}
-                    {/* Privacy & Portability */}
+                                className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
+                            />
+                        </button>
+                    </div>
+
+                    {/* Data Portability */}
                     <div className="glass-panel p-4 border border-emerald-500/20 bg-emerald-500/5 space-y-3">
                         <div className="flex items-center gap-3">
                             <div className="p-3 rounded-xl bg-emerald-500/20 text-emerald-300">
@@ -404,7 +407,7 @@ const SettingsModal = ({ onClose }) => {
                             </div>
                         </div>
 
-                        {/* Challenge Mode (dependant on Learner Type) */}
+                        {/* Challenge Mode */}
                         <div className={`p-3 rounded-xl border transition-all ${difficultySettings?.learnerType === 'scholar' ? 'opacity-70 border-dashed border-amber-500/30' : 'border-transparent'}`}>
                             {difficultySettings?.learnerType === 'scholar' && (
                                 <p className="text-xs text-amber-400 mb-2 font-bold flex items-center gap-1">

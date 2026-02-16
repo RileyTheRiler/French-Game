@@ -34,6 +34,19 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
     const [isActive, setIsActive] = useState(false);
     const [gameOver, setGameOver] = useState(false);
 
+    const nextQuestion = () => {
+        if (vocabulary.length < 4) return;
+        const target = vocabulary[Math.floor(Math.random() * vocabulary.length)];
+        const distractors = vocabulary
+            .filter(w => w.id !== target.id)
+            .sort(() => Math.random() - 0.5)
+            .slice(0, 3)
+            .map(w => w.english);
+
+        setCurrentWord(target);
+        setOptions([target.english, ...distractors].sort(() => Math.random() - 0.5));
+    };
+
     useEffect(() => {
         if (!isActive || gameOver) return;
         const timer = setInterval(() => {
@@ -49,21 +62,8 @@ const SpeedRound = ({ vocabulary, onComplete }) => {
     }, [isActive, gameOver]);
 
     useEffect(() => {
-        nextQuestion();
+        setTimeout(() => nextQuestion(), 0);
     }, []);
-
-    const nextQuestion = () => {
-        if (vocabulary.length < 4) return;
-        const target = vocabulary[Math.floor(Math.random() * vocabulary.length)];
-        const distractors = vocabulary
-            .filter(w => w.id !== target.id)
-            .sort(() => Math.random() - 0.5)
-            .slice(0, 3)
-            .map(w => w.english);
-
-        setCurrentWord(target);
-        setOptions([target.english, ...distractors].sort(() => Math.random() - 0.5));
-    };
 
     const handleAnswer = (answer) => {
         if (gameOver) return;
@@ -153,6 +153,28 @@ const DailyMix = () => {
     const [bonusXP, setBonusXP] = useState(0);
     const [combo, setCombo] = useState(0);
 
+    // Helpers need to be defined before they are used (even if used in other functions, hoist them up)
+    const finishSession = () => {
+        SoundManager.playLevelUp();
+        triggerConfetti();
+        addXP(totalXP + bonusXP);
+        addCoins(25);
+        incrementDailyMixStreak();
+        setSessionComplete(true);
+    };
+
+    const handleNext = () => {
+        if (currentIndex < sessionQueue.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+            setIsAnswered(false);
+            setIsCorrect(false);
+            setSelectedOption(null);
+            setIsRevealed(false);
+        } else {
+            finishSession();
+        }
+    };
+
     const generateSession = () => {
         const weightedWords = getWeightedPracticeWords(10);
         let queue = [];
@@ -203,7 +225,7 @@ const DailyMix = () => {
 
     useEffect(() => {
         if (vocabulary.length > 0 && sessionQueue.length === 0) {
-            generateSession();
+            setTimeout(() => generateSession(), 0);
         }
     }, [vocabulary]);
 
@@ -282,27 +304,6 @@ const DailyMix = () => {
     const handleSpeedRoundComplete = (xpEarned) => {
         setBonusXP(xpEarned);
         handleNext();
-    };
-
-    const handleNext = () => {
-        if (currentIndex < sessionQueue.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-            setIsAnswered(false);
-            setIsCorrect(false);
-            setSelectedOption(null);
-            setIsRevealed(false);
-        } else {
-            finishSession();
-        }
-    };
-
-    const finishSession = () => {
-        SoundManager.playLevelUp();
-        triggerConfetti();
-        addXP(totalXP + bonusXP);
-        addCoins(25);
-        incrementDailyMixStreak();
-        setSessionComplete(true);
     };
 
     if (!sessionQueue.length) return <LoadingState message="Preparing your Daily Mix..." />;

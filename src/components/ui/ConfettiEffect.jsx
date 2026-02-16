@@ -1,19 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-
-// Confetti particle component
-const Particle = ({ style, color }) => (
-    <div
-        className="absolute pointer-events-none"
-        style={{
-            ...style,
-            backgroundColor: color,
-            width: '10px',
-            height: '10px',
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-        }}
-    />
-);
 
 // Main confetti effect component
 const ConfettiEffect = ({
@@ -27,7 +14,8 @@ const ConfettiEffect = ({
 
     useEffect(() => {
         if (!active) {
-            setParticles([]);
+            // Use setTimeout to avoid synchronous setState in effect
+            setTimeout(() => setParticles([]), 0);
             return;
         }
 
@@ -43,9 +31,12 @@ const ConfettiEffect = ({
             scale: 0.5 + Math.random() * 1,
             delay: Math.random() * 500,
             duration: 2000 + Math.random() * 1000,
+            // Pre-calculate random visual properties to avoid impure render calls
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
         }));
 
-        setParticles(newParticles);
+        // Use setTimeout to avoid synchronous setState in effect
+        setTimeout(() => setParticles(newParticles), 0);
 
         // Clean up after animation
         const timer = setTimeout(() => {
@@ -78,7 +69,7 @@ const ConfettiEffect = ({
                         className="w-3 h-3"
                         style={{
                             backgroundColor: particle.color,
-                            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                            borderRadius: particle.borderRadius,
                             transform: `scale(${particle.scale})`,
                         }}
                     />

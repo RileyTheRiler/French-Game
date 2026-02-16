@@ -40,6 +40,11 @@ export const SESSION_TEMPLATES = {
     },
 };
 
+// TTS URL builder
+function buildTtsUrl(text) {
+    return `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=fr&q=${encodeURIComponent(text)}`;
+}
+
 /**
  * Generate a podcast playlist based on options
  * @param {Object} options - Playlist generation options
@@ -105,11 +110,6 @@ export function generatePodcastPlaylist(options = {}) {
     });
 
     return playlist;
-}
-
-// TTS URL builder (same as vocabulary.js)
-function buildTtsUrl(text) {
-    return `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=fr&q=${encodeURIComponent(text)}`;
 }
 
 export default {

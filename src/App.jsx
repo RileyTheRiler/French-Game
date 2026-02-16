@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef, Suspense, lazy } from 'react';
+import React, { useRef, useEffect, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { VocabularyProvider } from './context/VocabularyContext';

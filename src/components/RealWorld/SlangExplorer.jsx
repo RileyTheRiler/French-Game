@@ -20,11 +20,7 @@ const SlangExplorer = () => {
 
     // Quiz state
     const [currentQuizItem, setCurrentQuizItem] = useState(null);
-    const [userAnswer, setUserAnswer] = useState(''); // For text input if we wanted, but let's do simplified "reveal" or Multiple Choice for now.
-    // Let's do a "Decoder" mode: Show slang, pick standard. Or Show standard, pick slang.
-    // For simplicity and "Explorer" feel: Flashcard style "Reveal" + "Got it/Missed it" OR Multiple Choice.
-    // Implementation Plan mentioned "Decoder" mini-game. Let's do Multiple Choice for engagement.
-
+    // Removed unused userAnswer
     const [quizOptions, setQuizOptions] = useState([]);
     const [quizFeedback, setQuizFeedback] = useState(null); // 'correct', 'incorrect'
     const [streak, setStreak] = useState(0);
@@ -36,12 +32,6 @@ const SlangExplorer = () => {
         const matchesCategory = selectedCategory ? item.category === selectedCategory : true;
         return matchesSearch && matchesCategory;
     });
-
-    const startQuiz = (category = null) => {
-        setMode('quiz');
-        setStreak(0);
-        nextQuestion(category);
-    };
 
     const nextQuestion = (category) => {
         const pool = category
@@ -61,6 +51,12 @@ const SlangExplorer = () => {
 
         const options = [...wrongOptions, randomItem.standard].sort(() => 0.5 - Math.random());
         setQuizOptions(options);
+    };
+
+    const startQuiz = (category = null) => {
+        setMode('quiz');
+        setStreak(0);
+        nextQuestion(category);
     };
 
     const handleAnswer = (selectedOption) => {

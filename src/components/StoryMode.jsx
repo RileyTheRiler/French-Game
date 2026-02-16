@@ -77,6 +77,13 @@ const StoryReader = ({ story, onBack, onComplete, reward }) => {
     const [quizAnswered, setQuizAnswered] = useState(false);
     const [quizAttempts, setQuizAttempts] = useState(0);
 
+    const finishStory = (quizPerfect = false) => {
+        setHasCompleted(true);
+        setShowQuiz(false); // Hide quiz if showing
+        SoundManager.playSuccess();
+        onComplete({ xpReward: story.xpReward, quizPerfect });
+    };
+
     const handleReadComplete = () => {
         if (!story.quiz) {
             finishStory(true);
@@ -109,13 +116,6 @@ const StoryReader = ({ story, onBack, onComplete, reward }) => {
                 setQuizFeedback(null);
             }, 2500);
         }
-    };
-
-    const finishStory = (quizPerfect = false) => {
-        setHasCompleted(true);
-        setShowQuiz(false); // Hide quiz if showing
-        SoundManager.playSuccess();
-        onComplete({ xpReward: story.xpReward, quizPerfect });
     };
 
     return (

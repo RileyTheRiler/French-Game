@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useProgress } from './ProgressContext';
 import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
@@ -5,7 +6,7 @@ import { calculateNextReview, getInitialState, isPassingGrade, normalizeGrade } 
 import { speak, cacheVocabularyAudio } from '../utils/audio';
 import { buildPracticeQueue } from '../utils/practiceQueue';
 
-const VocabularyContext = createContext();
+export const VocabularyContext = createContext();
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const ensureSrsState = (state) => {

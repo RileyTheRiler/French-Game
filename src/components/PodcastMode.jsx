@@ -65,6 +65,22 @@ const PodcastMode = () => {
         }
     }, [playbackSpeed]);
 
+    // Finish session (hoisted for use in playCurrentItem)
+    const finishSession = useCallback(() => {
+        setIsPlaying(false);
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+
+        // Calculate XP (2 XP per item listened)
+        const earned = playlist.length * 2;
+        setXpEarned(earned);
+        addXP(earned);
+        incrementStat('podcastSessionsCompleted');
+
+        setSessionComplete(true);
+    }, [playlist.length, addXP, incrementStat]);
+
     // Start session
     const startSession = useCallback(() => {
         const newPlaylist = generatePodcastPlaylist({
@@ -99,7 +115,7 @@ const PodcastMode = () => {
                 }
             }, 1500); // 1.5 second pause between items
         };
-    }, [currentItem, currentIndex, playlist.length]);
+    }, [currentItem, currentIndex, playlist.length, finishSession]);
 
     // Auto-play when current item changes
     useEffect(() => {
@@ -137,22 +153,6 @@ const PodcastMode = () => {
         if (currentIndex > 0) {
             setCurrentIndex(prev => prev - 1);
         }
-    };
-
-    // Finish session
-    const finishSession = () => {
-        setIsPlaying(false);
-        if (audioRef.current) {
-            audioRef.current.pause();
-        }
-
-        // Calculate XP (2 XP per item listened)
-        const earned = playlist.length * 2;
-        setXpEarned(earned);
-        addXP(earned);
-        incrementStat('podcastSessionsCompleted');
-
-        setSessionComplete(true);
     };
 
     // Session selection screen

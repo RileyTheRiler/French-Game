@@ -81,41 +81,7 @@ const WritingPad = () => {
         ? ACCENT_CHARACTERS[currentIndex]
         : TRACE_WORDS[currentIndex];
 
-    // Initialize canvas
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        // Set canvas size
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * 2;
-        canvas.height = rect.height * 2;
-        canvas.style.width = `${rect.width}px`;
-        canvas.style.height = `${rect.height}px`;
-
-        const ctx = canvas.getContext('2d');
-        ctx.scale(2, 2);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = strokeWidth;
-        contextRef.current = ctx;
-
-        // Draw initial guide if enabled
-        if (showGuide) {
-            drawGuide();
-        }
-    }, [currentIndex, mode, showGuide]);
-
-    // Update stroke settings
-    useEffect(() => {
-        if (contextRef.current) {
-            contextRef.current.strokeStyle = strokeColor;
-            contextRef.current.lineWidth = strokeWidth;
-        }
-    }, [strokeColor, strokeWidth]);
-
-    // Draw the guide character/word
+    // Draw the guide character/word - Defined before usage
     const drawGuide = useCallback(() => {
         const canvas = canvasRef.current;
         const ctx = contextRef.current;
@@ -140,7 +106,56 @@ const WritingPad = () => {
         ctx.restore();
     }, [currentItem, mode]);
 
+    // Initialize canvas
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        // Set canvas size
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth;
+        contextRef.current = ctx;
+
+        // Draw initial guide if enabled
+        if (showGuide) {
+            drawGuide();
+        }
+    }, [currentIndex, mode, showGuide, drawGuide, strokeColor, strokeWidth]);
+
+    // Update stroke settings
+    useEffect(() => {
+        if (contextRef.current) {
+            contextRef.current.strokeStyle = strokeColor;
+            contextRef.current.lineWidth = strokeWidth;
+        }
+    }, [strokeColor, strokeWidth]);
+
     // Drawing handlers
+    const getCoordinates = (event) => {
+        if (event.touches && event.touches[0]) {
+            const canvas = canvasRef.current;
+            const rect = canvas.getBoundingClientRect();
+            return {
+                offsetX: event.touches[0].clientX - rect.left,
+                offsetY: event.touches[0].clientY - rect.top,
+            };
+        }
+        return {
+            offsetX: event.offsetX,
+            offsetY: event.offsetY,
+        };
+    };
+
     const startDrawing = ({ nativeEvent }) => {
         const { offsetX, offsetY } = getCoordinates(nativeEvent);
         contextRef.current.beginPath();
@@ -155,28 +170,21 @@ const WritingPad = () => {
         contextRef.current.stroke();
     };
 
+    const saveToHistory = () => {
+        const canvas = canvasRef.current;
+        const imageData = canvas.toDataURL();
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push(imageData);
+        setHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+    };
+
     const stopDrawing = () => {
         if (isDrawing) {
             contextRef.current.closePath();
             setIsDrawing(false);
             saveToHistory();
         }
-    };
-
-    // Get coordinates for both mouse and touch events
-    const getCoordinates = (event) => {
-        if (event.touches && event.touches[0]) {
-            const canvas = canvasRef.current;
-            const rect = canvas.getBoundingClientRect();
-            return {
-                offsetX: event.touches[0].clientX - rect.left,
-                offsetY: event.touches[0].clientY - rect.top,
-            };
-        }
-        return {
-            offsetX: event.offsetX,
-            offsetY: event.offsetY,
-        };
     };
 
     // Touch event handlers
@@ -195,14 +203,14 @@ const WritingPad = () => {
         stopDrawing();
     };
 
-    // Save canvas state to history
-    const saveToHistory = () => {
+    // Clear canvas
+    const clearCanvas = () => {
         const canvas = canvasRef.current;
-        const imageData = canvas.toDataURL();
-        const newHistory = history.slice(0, historyIndex + 1);
-        newHistory.push(imageData);
-        setHistory(newHistory);
-        setHistoryIndex(newHistory.length - 1);
+        const ctx = contextRef.current;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (showGuide) drawGuide();
+        setHistory([]);
+        setHistoryIndex(-1);
     };
 
     // Undo last stroke
@@ -223,16 +231,6 @@ const WritingPad = () => {
             ctx.drawImage(img, 0, 0, canvas.width / 2, canvas.height / 2);
         };
         setHistoryIndex(previousIndex);
-    };
-
-    // Clear canvas
-    const clearCanvas = () => {
-        const canvas = canvasRef.current;
-        const ctx = contextRef.current;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (showGuide) drawGuide();
-        setHistory([]);
-        setHistoryIndex(-1);
     };
 
     // Complete current item and move to next

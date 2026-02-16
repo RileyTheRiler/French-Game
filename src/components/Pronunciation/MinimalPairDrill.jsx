@@ -11,15 +11,9 @@ import MouthShapeVisualizer from './MouthShapeVisualizer';
 
 const MinimalPairDrill = ({ onComplete, onExit }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [currentPairIndex, setCurrentPairIndex] = useState(0);
-    const [targetWordIndex, setTargetWordIndex] = useState(0); // 0 or 1 (which word of the pair is target)
 
-    // Flatten pairs for the session? Or just pick random ones.
-    // Let's create a session queue.
-    const [sessionQueue, setSessionQueue] = useState([]);
-
-    useEffect(() => {
-        // Create a random queue of 5 drills
+    // Initialize session queue
+    const [sessionQueue, setSessionQueue] = useState(() => {
         const queue = [];
         for (let i = 0; i < 5; i++) {
             const group = MINIMAL_PAIRS[Math.floor(Math.random() * MINIMAL_PAIRS.length)];
@@ -27,8 +21,8 @@ const MinimalPairDrill = ({ onComplete, onExit }) => {
             const target = Math.random() > 0.5 ? 0 : 1;
             queue.push({ group, pair, targetIdx: target });
         }
-        setSessionQueue(queue);
-    }, []);
+        return queue;
+    });
 
     const [status, setStatus] = useState('idle'); // idle, listening, success, fail, wrong-pair
     const [transcript, setTranscript] = useState('');
@@ -39,25 +33,6 @@ const MinimalPairDrill = ({ onComplete, onExit }) => {
     const currentItem = sessionQueue[currentIndex];
     const targetWord = currentItem ? (currentItem.targetIdx === 0 ? currentItem.pair.word1 : currentItem.pair.word2) : '';
     const otherWord = currentItem ? (currentItem.targetIdx === 0 ? currentItem.pair.word2 : currentItem.pair.word1) : '';
-
-    useEffect(() => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (SpeechRecognition) {
-            recognitionRef.current = new SpeechRecognition();
-            recognitionRef.current.lang = 'fr-FR';
-            recognitionRef.current.interimResults = false;
-            recognitionRef.current.maxAlternatives = 1;
-
-            recognitionRef.current.onstart = () => setIsListening(true);
-            recognitionRef.current.onend = () => setIsListening(false);
-
-            recognitionRef.current.onresult = (event) => {
-                const result = event.results[0][0].transcript.toLowerCase().trim();
-                setTranscript(result);
-                handleCheck(result);
-            };
-        }
-    }, [currentItem]); // Re-bind if needed, or just once.
 
     const handleCheck = (spoken) => {
         if (!currentItem) return;
@@ -82,6 +57,25 @@ const MinimalPairDrill = ({ onComplete, onExit }) => {
             SoundManager.playMiss();
         }
     };
+
+    useEffect(() => {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.lang = 'fr-FR';
+            recognitionRef.current.interimResults = false;
+            recognitionRef.current.maxAlternatives = 1;
+
+            recognitionRef.current.onstart = () => setIsListening(true);
+            recognitionRef.current.onend = () => setIsListening(false);
+
+            recognitionRef.current.onresult = (event) => {
+                const result = event.results[0][0].transcript.toLowerCase().trim();
+                setTranscript(result);
+                handleCheck(result);
+            };
+        }
+    }, [currentItem]); // Re-bind if needed, or just once.
 
     const startListening = () => {
         setStatus('listening');
