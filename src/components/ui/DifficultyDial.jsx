@@ -1,4 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useMemo } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Globe, User, GraduationCap, Rocket, Crown } from 'lucide-react';
 
@@ -101,6 +103,7 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
                     onChange={handleChange}
                     className="absolute inset-0 w-full h-3 opacity-0 cursor-pointer"
                     aria-label="Difficulty level"
+                    aria-valuetext={`${currentLevel.label}: ${currentLevel.description}`}
                 />
 
                 {/* Custom Thumb */}
@@ -114,16 +117,20 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
             {/* Level Markers */}
             {showLabels && (
                 <div className="flex justify-between text-xs text-slate-500 px-1">
-                    {DIFFICULTY_LEVELS.map(level => (
-                        <button
-                            key={level.value}
-                            onClick={() => onChange(level.value)}
-                            className={`transition-colors hover:text-white ${Math.abs(level.value - value) < 13 ? 'text-slate-300 font-semibold' : ''
-                                }`}
-                        >
-                            {level.label}
-                        </button>
-                    ))}
+                    {DIFFICULTY_LEVELS.map(level => {
+                        const isActive = Math.abs(level.value - value) < 13;
+                        return (
+                            <button
+                                key={level.value}
+                                onClick={() => onChange(level.value)}
+                                aria-pressed={isActive}
+                                className={`transition-colors hover:text-white ${isActive ? 'text-slate-300 font-semibold' : ''
+                                    }`}
+                            >
+                                {level.label}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>
