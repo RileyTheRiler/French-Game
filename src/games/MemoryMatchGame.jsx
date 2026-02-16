@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Trophy, RotateCcw, Sparkles } from 'lucide-react';
+import { RotateCcw, Trophy, Sparkles } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -22,18 +22,12 @@ const MemoryMatchGame = () => {
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
-
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
+    const [difficulty] = useState('normal');
 
     const startNewGame = () => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
-        // Create pairs (French and English)
         const newCards = [];
         words.forEach(word => {
             newCards.push({
@@ -52,7 +46,6 @@ const MemoryMatchGame = () => {
             });
         });
 
-        // Shuffle
         setCards(newCards.sort(() => Math.random() - 0.5));
         setFlipped([]);
         setSolved([]);
@@ -60,6 +53,13 @@ const MemoryMatchGame = () => {
         setGameComplete(false);
         setDisabled(false);
     };
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            startNewGame();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleClick = (id) => {
         if (disabled || gameComplete) return;
@@ -85,27 +85,18 @@ const MemoryMatchGame = () => {
         const secondCard = cards.find(c => c.id === secondId);
 
         if (firstCard.wordId === secondCard.wordId) {
-            // Match
             SoundManager.playMatch();
             setSolved(prev => [...prev, firstId, secondId]);
             setFlipped([]);
             setDisabled(false);
         } else {
-            // No Match
-            SoundManager.playClick(); // or a soft fail sound
+            SoundManager.playClick();
             setTimeout(() => {
                 setFlipped([]);
                 setDisabled(false);
             }, 1000);
         }
     };
-
-    // Check Win Condition
-    useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
-        }
-    }, [solved]);
 
     const handleWin = () => {
         setGameComplete(true);
@@ -115,11 +106,17 @@ const MemoryMatchGame = () => {
             spread: 70,
             origin: { y: 0.6 }
         });
-
-        // XP Calculation: Base 20 - turns penalty? Or fix 20? 
-        // Let's give nice XP.
         addXP(30);
     };
+
+    useEffect(() => {
+        if (cards.length > 0 && solved.length === cards.length) {
+            const timer = setTimeout(() => {
+                handleWin();
+            }, 0);
+            return () => clearTimeout(timer);
+        }
+    }, [solved]);
 
     return (
         <GameLayout
@@ -128,8 +125,6 @@ const MemoryMatchGame = () => {
             onBack={() => navigate('/')}
         >
             <div className="max-w-4xl mx-auto flex flex-col items-center gap-6 min-h-[60vh]">
-
-                {/* HUD */}
                 <div className="flex justify-between w-full max-w-md bg-slate-800/50 rounded-xl p-4 border border-white/5">
                     <div className="flex items-center gap-2 text-indigo-300">
                         <RotateCcw size={20} />
@@ -141,7 +136,6 @@ const MemoryMatchGame = () => {
                     </div>
                 </div>
 
-                {/* Grid */}
                 <div className={`grid gap-4 w-full max-w-2xl ${difficulty === 'hard' ? 'grid-cols-4' : 'grid-cols-3 md:grid-cols-4'}`}>
                     {cards.map(card => {
                         const isFlipped = flipped.includes(card.id) || solved.includes(card.id);
@@ -150,9 +144,7 @@ const MemoryMatchGame = () => {
                         return (
                             <motion.button
                                 key={card.id}
-                                className={`
-                                    aspect-[3/4] rounded-xl text-lg font-bold p-2 flex items-center justify-center text-center shadow-lg transition-all relative perspective-1000
-                                `}
+                                className="aspect-[3/4] rounded-xl text-lg font-bold p-2 flex items-center justify-center text-center shadow-lg transition-all relative perspective-1000"
                                 onClick={() => handleClick(card.id)}
                                 initial={{ rotateY: 0 }}
                                 animate={{
@@ -162,21 +154,10 @@ const MemoryMatchGame = () => {
                                 transition={{ duration: 0.3 }}
                                 style={{ transformStyle: 'preserve-3d' }}
                             >
-                                {/* Front (Card Back) */}
-                                <div className={`
-                                    absolute inset-0 bg-indigo-600 rounded-xl backface-hidden flex items-center justify-center border-b-4 border-indigo-800
-                                    ${isSolved ? 'opacity-0' : 'opacity-100'}
-                                `}
-                                    style={{ backfaceVisibility: 'hidden' }}>
+                                <div className={`absolute inset-0 bg-indigo-600 rounded-xl backface-hidden flex items-center justify-center border-b-4 border-indigo-800 ${isSolved ? 'opacity-0' : 'opacity-100'}`} style={{ backfaceVisibility: 'hidden' }}>
                                     <Sparkles className="text-indigo-400/50" size={32} />
                                 </div>
-
-                                {/* Back (Content) */}
-                                <div className={`
-                                    absolute inset-0 bg-white rounded-xl backface-hidden flex items-center justify-center p-2 border-b-4 
-                                    ${isSolved ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-300 text-slate-800'}
-                                `}
-                                    style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
+                                <div className={`absolute inset-0 bg-white rounded-xl backface-hidden flex items-center justify-center p-2 border-b-4 ${isSolved ? 'border-emerald-500 bg-emerald-50 text-emerald-700' : 'border-slate-300 text-slate-800'}`} style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                                     <span className="break-words">{card.content}</span>
                                 </div>
                             </motion.button>
@@ -184,7 +165,6 @@ const MemoryMatchGame = () => {
                     })}
                 </div>
 
-                {/* Win State */}
                 <AnimatePresence>
                     {gameComplete && (
                         <motion.div
@@ -208,7 +188,6 @@ const MemoryMatchGame = () => {
                         </motion.div>
                     )}
                 </AnimatePresence>
-
             </div>
         </GameLayout>
     );

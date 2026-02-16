@@ -7,7 +7,13 @@ import { monitorSystem } from '../../systems/MonitorSystem';
 const SentenceBuilderGame = ({ onExit }) => {
     const [currentScenarioIndex, setCurrentScenarioIndex] = useState(0);
     const [selectedWords, setSelectedWords] = useState([]);
-    const [availableWords, setAvailableWords] = useState([]);
+
+    // Lazy initialization for available words to avoid synchronous set state in useEffect
+    const [availableWords, setAvailableWords] = useState(() => {
+        const scenario = SCENARIOS[0];
+        return scenario ? [...scenario.words].sort(() => Math.random() - 0.5) : [];
+    });
+
     const [feedback, setFeedback] = useState(null);
     const [monitorMessage, setMonitorMessage] = useState(null);
     const [monitorTipId, setMonitorTipId] = useState(null);
@@ -15,14 +21,17 @@ const SentenceBuilderGame = ({ onExit }) => {
 
     const scenario = SCENARIOS[currentScenarioIndex];
 
+    // Effect for index changes (level up), not initial mount
     useEffect(() => {
         if (scenario) {
-            // Shuffle words for the word bank
-            setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
-            setSelectedWords([]);
-            setFeedback(null);
-            setMonitorMessage(null);
-            setMonitorTipId(null);
+            const timer = setTimeout(() => {
+                setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
+                setSelectedWords([]);
+                setFeedback(null);
+                setMonitorMessage(null);
+                setMonitorTipId(null);
+            }, 0);
+            return () => clearTimeout(timer);
         }
     }, [currentScenarioIndex, scenario]);
 

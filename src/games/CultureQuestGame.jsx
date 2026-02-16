@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Globe, BookOpen, Star, CheckCircle, XCircle } from 'lucide-react';
+import { Globe, BookOpen, CheckCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -15,17 +15,12 @@ const CultureQuestGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
 
-    // Game State
-    const [questions, setQuestions] = useState([]);
+    const [questions] = useState(() => getCultureSession());
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
     const [isAnswered, setIsAnswered] = useState(false);
     const [gameComplete, setGameComplete] = useState(false);
-
-    useEffect(() => {
-        setQuestions(getCultureSession());
-    }, []);
 
     const currentQuestion = questions[currentIndex];
 
@@ -55,7 +50,7 @@ const CultureQuestGame = () => {
 
     const finishGame = () => {
         setGameComplete(true);
-        const xpEarned = score * 15; // 15 XP per correct answer
+        const xpEarned = score * 15;
         addXP(xpEarned);
         if (score > questions.length / 2) {
             SoundManager.playLevelUp();
@@ -93,7 +88,6 @@ const CultureQuestGame = () => {
             }
         >
             <div className="max-w-2xl mx-auto flex flex-col gap-8 p-4 min-h-[60vh]">
-                {/* Question Card */}
                 <Card className="p-8 bg-slate-800/80 border-cyan-500/20 shadow-2xl shadow-cyan-900/10">
                     <div className="flex items-center gap-2 mb-6">
                         <Badge className="bg-cyan-900/50 text-cyan-300 border-cyan-500/30">
@@ -105,7 +99,6 @@ const CultureQuestGame = () => {
                     </h2>
                 </Card>
 
-                {/* Options */}
                 <div className="grid grid-cols-1 gap-4">
                     {currentQuestion.options.map((option, idx) => {
                         let variant = "outline";
@@ -118,10 +111,7 @@ const CultureQuestGame = () => {
                             <Button
                                 key={idx}
                                 variant={variant}
-                                className={`
-                                    h-16 text-lg justify-start px-6 relative overflow-hidden
-                                    ${!isAnswered ? 'hover:bg-white/5 hover:border-white/30' : ''}
-                                `}
+                                className={`h-16 text-lg justify-start px-6 relative overflow-hidden ${!isAnswered ? 'hover:bg-white/5 hover:border-white/30' : ''}`}
                                 onClick={() => handleAnswer(option)}
                                 disabled={isAnswered}
                             >
@@ -134,7 +124,6 @@ const CultureQuestGame = () => {
                     })}
                 </div>
 
-                {/* Fact Reveal */}
                 <AnimatePresence>
                     {isAnswered && (
                         <motion.div
