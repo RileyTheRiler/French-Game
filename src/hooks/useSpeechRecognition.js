@@ -1,16 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 
 const useSpeechRecognition = (lang = 'fr-FR') => {
+    const isSupported = typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window);
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
-    const [error, setError] = useState(null);
+    const [error, setError] = useState(isSupported ? null : 'Speech Recognition Not Supported');
     const recognitionRef = useRef(null);
 
     useEffect(() => {
-        if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-            setError('Speech Recognition Not Supported');
-            return;
-        }
+        if (!isSupported) return;
 
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         recognitionRef.current = new SpeechRecognition();
@@ -24,12 +22,9 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
         };
 
         recognitionRef.current.onresult = (event) => {
-            let interimTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     setTranscript(event.results[i][0].transcript);
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
                 }
             }
         };
@@ -52,7 +47,7 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
                 recognitionRef.current.stop();
             }
         };
-    }, [lang]);
+    }, [lang, isSupported]);
 
     const startListening = useCallback(() => {
         setTranscript('');

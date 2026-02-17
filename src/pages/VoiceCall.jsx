@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SCENARIOS } from '../data/conversationScenarios';
 import CallScreen from '../components/VoiceCall/CallScreen';
@@ -6,7 +6,6 @@ import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import { speak } from '../utils/audio';
 import { findBestMatch } from '../utils/textMatching';
 import { useProgress } from '../context/ProgressContext';
-import { motion, AnimatePresence } from 'framer-motion';
 
 const VoiceCall = () => {
     const navigate = useNavigate();
@@ -14,6 +13,7 @@ const VoiceCall = () => {
 
     // Select a random scenario for now, or could pass via location state
     // Defaulting to Restaurant for demo
+    // eslint-disable-next-line no-unused-vars
     const [scenario, setScenario] = useState(SCENARIOS.find(s => s.id === 'restaurant_dinner'));
     const [currentNodeId, setCurrentNodeId] = useState('start');
     const [status, setStatus] = useState('Connecting...');
