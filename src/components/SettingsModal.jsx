@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 // eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain, Target } from 'lucide-react';
 import DifficultyDial from './ui/DifficultyDial';

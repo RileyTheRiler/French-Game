@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Clock } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
@@ -17,6 +19,7 @@ const ShopModal = ({ onClose }) => {
     useEffect(() => {
         const today = new Date().toDateString();
         const selection = getDailyShopSelection(today);
+        // Fix sync setState
         setTimeout(() => setShopData(selection), 0);
     }, []);
 
@@ -32,9 +35,10 @@ const ShopModal = ({ onClose }) => {
 
         const success = buyItem(item);
         if (success) {
+            // Handle instant effects
             if (item.effect?.type === 'add_streak_freeze') {
-                // Instant effect handled by context or just inventory
-            } else if (item.id === 'double_xp') {
+                // Handled by context/inventory
+            } else if (item.id === 'double_xp' || item.effect?.type === 'double_xp') {
                 activateDoubleXP(15);
             } else if (item.id === 'xp_boost_30') {
                 activateDoubleXP(30);

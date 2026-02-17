@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lightbulb, ChevronDown, ChevronUp, ExternalLink, BookOpen, AlertTriangle } from 'lucide-react';
 import { Card } from './Card';

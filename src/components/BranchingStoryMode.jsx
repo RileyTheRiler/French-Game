@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Trophy, Lock, Star, Volume2, Check, X, ChevronRight,

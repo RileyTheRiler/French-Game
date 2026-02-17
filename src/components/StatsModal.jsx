@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 // eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
+// eslint-disable-next-line no-unused-vars
 import { X, TrendingUp, Book, Flame, Trophy, Clock, Target, BarChart3, Calendar, AlertCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
@@ -49,12 +52,15 @@ const StatsModal = ({ isOpen, onClose }) => {
         })
         .filter(Boolean);
 
-    // Category Accuracy
+    // Category Accuracy - Derived from categoryPerformance if available, else categoryStats
     const categoriesStats = Object.entries(stats.categoryStats || {}).map(([cat, data]) => ({
         name: cat,
         accuracy: data.attempts > 0 ? Math.round((data.correct / data.attempts) * 100) : 0,
         attempts: data.attempts
     })).sort((a, b) => b.attempts - a.attempts).slice(0, 6);
+
+    // Use getAllCategories if available for more robust category list
+    const availableCategories = getAllCategories ? getAllCategories() : Object.keys(CATEGORIES || {});
 
     const formatNumber = (num) => {
         return new Intl.NumberFormat(i18n.language).format(num);
@@ -70,16 +76,14 @@ const StatsModal = ({ isOpen, onClose }) => {
             const dateStr = d.toDateString();
             const hasActivity = stats.dailyStats?.[dateStr]?.xp > 0 || stats.lastActiveDate === dateStr;
             const isToday = i === 0;
-            const isFrozen = false;
+            // eslint-disable-next-line no-unused-vars
+            const isFrozen = false; // Placeholder for freeze logic
 
             days.push({ date: d, hasActivity, isToday, isFrozen });
         }
         return days;
     };
     const calendarDays = getCalendarDays();
-
-    // Available categories from Vocabulary Context
-    const availableCategories = getAllCategories ? getAllCategories() : Object.keys(CATEGORIES || {});
 
     return (
         <AnimatePresence>
@@ -176,7 +180,7 @@ const StatsModal = ({ isOpen, onClose }) => {
                                         <StatCard icon={Clock} label={t('stats.perfect_runs')} value={formatNumber(stats.perfectQuizzes || 0)} color="bg-pink-500/30" />
                                     </div>
 
-                                    {/* Coins & Shop Info (from conflicting block) */}
+                                    {/* Coins Info */}
                                     <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex justify-between items-center">
                                         <div className="flex items-center gap-3">
                                             <span className="text-3xl">💰</span>
@@ -281,20 +285,24 @@ const StatsModal = ({ isOpen, onClose }) => {
                                         </div>
                                     </div>
 
-                                    {/* Category Performance (Merged from conflict) */}
+                                    {/* Category Performance */}
                                     <div className="p-6 rounded-2xl bg-white/5 border border-white/5">
                                         <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
                                             <BarChart3 size={20} className="text-indigo-400" />
                                             Category Performance
                                         </h3>
                                         <div className="space-y-3">
-                                            {availableCategories.map(cat => {
+                                            {(availableCategories || categoriesStats.map(c => c.name)).map(cat => {
                                                 const perf = categoryPerformance[cat] || {};
                                                 const accuracy = (perf.accuracy ?? (perf.correct / (perf.attempts || 1))) || 0;
                                                 const avgResponse = perf.averageResponseTime ? Math.round(perf.averageResponseTime) : null;
                                                 const catInfo = CATEGORIES?.[cat];
 
-                                                if (!catInfo && !perf.attempts) return null; // Skip if no info and no attempts
+                                                if (!catInfo && !perf.attempts && !categoriesStats.find(c => c.name === cat)) return null;
+
+                                                // Fallback to categoriesStats if available
+                                                const statAcc = categoriesStats.find(c => c.name === cat)?.accuracy;
+                                                const finalAcc = accuracy || (statAcc ? statAcc / 100 : 0);
 
                                                 return (
                                                     <div key={cat} className="flex items-center justify-between text-sm">
@@ -303,14 +311,14 @@ const StatsModal = ({ isOpen, onClose }) => {
                                                             <span className="text-slate-300">{catInfo?.name || cat}</span>
                                                         </div>
                                                         <div className="flex items-center gap-3">
-                                                            <Badge variant="outline" className={accuracy < 0.7 ? 'border-amber-500/50 text-amber-300' : ''}>
-                                                                {Math.round(accuracy * 100)}%
+                                                            <Badge variant="outline" className={finalAcc < 0.7 ? 'border-amber-500/50 text-amber-300' : ''}>
+                                                                {Math.round(finalAcc * 100)}%
                                                             </Badge>
                                                             {avgResponse && <span className="text-xs text-slate-400">{avgResponse} ms</span>}
                                                         </div>
                                                     </div>
                                                 );
-                                            }).filter(Boolean).slice(0, 8)}
+                                            }).slice(0, 8)}
                                         </div>
                                     </div>
 

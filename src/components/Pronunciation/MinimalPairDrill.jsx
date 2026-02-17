@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';

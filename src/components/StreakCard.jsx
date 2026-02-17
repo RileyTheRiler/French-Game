@@ -1,5 +1,7 @@
 import React from 'react';
 // eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Flame, Snowflake, Trophy, Star, Target } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';

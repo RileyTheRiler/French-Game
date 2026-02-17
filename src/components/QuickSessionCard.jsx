@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Clock, Play, CheckCircle, Sparkles, BookOpen, Gamepad2 } from 'lucide-react';

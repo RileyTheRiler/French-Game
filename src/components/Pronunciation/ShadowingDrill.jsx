@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, Volume2, Play, Activity } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -24,7 +26,7 @@ const ShadowingDrill = ({ onExit, onComplete }) => {
     const audioChunksRef = useRef([]);
 
     useEffect(() => {
-        setSession(getShadowingSession());
+        setTimeout(() => setSession(getShadowingSession()), 0);
     }, []);
 
     const currentPhrase = session[currentIndex];
