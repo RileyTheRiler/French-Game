@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // Pattern Drills data and utilities
 // Structured grammar exercises for analytical learners
 

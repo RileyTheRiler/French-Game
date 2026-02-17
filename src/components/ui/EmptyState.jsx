@@ -1,9 +1,11 @@
 import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Button } from './Button';
 import { Ghost } from 'lucide-react';
 
 export const EmptyState = ({
+    // eslint-disable-next-line no-unused-vars
     icon: Icon = Ghost,
     title,
     description,

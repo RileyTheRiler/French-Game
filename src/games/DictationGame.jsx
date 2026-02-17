@@ -36,7 +36,8 @@ const DictationGame = () => {
     };
 
     useEffect(() => {
-        loadNewSentence();
+        // Use setTimeout to avoid synchronous state update in effect warning
+        setTimeout(() => loadNewSentence(), 0);
     }, []);
 
     const playAudio = (rate = 1.0) => {

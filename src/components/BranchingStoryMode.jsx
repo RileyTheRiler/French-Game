@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Book, ChevronLeft, Award, Lock, BookOpen, Play, Pause,
-    RotateCcw, Trophy, Star, Volume2, Check, X, ChevronRight,
-    Sparkles, Map
+    Trophy, Lock, Star, Volume2, Check, X, ChevronRight,
+    Sparkles, Map, RotateCcw
 } from 'lucide-react';
-import { BRANCHING_STORIES, getStoryById } from '../data/branchingStories';
+import { BRANCHING_STORIES } from '../data/branchingStories';
 import { useProgress } from '../context/ProgressContext';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
@@ -115,7 +114,7 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
         if (onSaveProgress && currentNode?.type !== 'ending') {
             onSaveProgress(story.id, { currentNode: currentNodeId, history });
         }
-    }, [currentNodeId, history]);
+    }, [currentNodeId, history, onSaveProgress, story.id, currentNode?.type]);
 
     const handleChoice = (choice) => {
         SoundManager.playPop();
@@ -151,12 +150,12 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
         }
     };
 
-    const handleEnding = () => {
+    const handleEnding = useCallback(() => {
         setShowEnding(true);
         SoundManager.playSuccess();
         const endingXP = currentNode.xpReward + totalXP;
         onComplete(endingXP, currentNode.id);
-    };
+    }, [currentNode, totalXP, onComplete]);
 
     const speakContent = () => {
         if (currentNode.content) {
@@ -176,9 +175,11 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
     };
 
     // Render ending screen
-    if (currentNode.type === 'ending' && !showEnding) {
-        handleEnding();
-    }
+    useEffect(() => {
+        if (currentNode.type === 'ending' && !showEnding) {
+            handleEnding();
+        }
+    }, [currentNode.type, showEnding, handleEnding]);
 
     if (showEnding) {
         const endingColors = {
@@ -450,7 +451,7 @@ const BranchingStoryMode = () => {
         setCurrentStory(story);
     };
 
-    const handleSaveProgress = (storyId, progress) => {
+    const handleSaveProgress = useCallback((storyId, progress) => {
         updateStats({
             branchingStoriesProgress: {
                 ...storyProgress,
@@ -460,9 +461,9 @@ const BranchingStoryMode = () => {
                 }
             }
         });
-    };
+    }, [storyProgress, updateStats]);
 
-    const handleCompleteStory = (xp, endingId) => {
+    const handleCompleteStory = useCallback((xp, endingId) => {
         addXP(xp);
 
         // Track ending
@@ -480,7 +481,7 @@ const BranchingStoryMode = () => {
                 }
             });
         }
-    };
+    }, [addXP, currentStory, storyProgress, updateStats]);
 
     if (currentStory) {
         return (

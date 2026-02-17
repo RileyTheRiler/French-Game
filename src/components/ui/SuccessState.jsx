@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Check } from 'lucide-react';
 import { Button } from './Button';
@@ -11,6 +12,7 @@ export const SuccessState = ({
     actionLabel = "Continue",
     secondaryAction,
     playSound = true,
+    // eslint-disable-next-line no-unused-vars
     children
 }) => {
 

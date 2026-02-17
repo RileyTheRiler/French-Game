@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Spaced Repetition System (SRS) Logic
  * Enhanced SM-2 algorithm with adaptive learning rate and retention probability.

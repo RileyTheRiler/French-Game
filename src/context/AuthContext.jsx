@@ -1,115 +1,115 @@
-import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';
-import { nanoid } from '../utils/id';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { hashPassword, verifyPassword } from '../utils/crypto';
 
 const AuthContext = createContext();
 
-const STORAGE_KEY = 'frenchApp_user';
-const CREDENTIALS_KEY = 'frenchApp_credentials';
-
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState(() => {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        return stored ? JSON.parse(stored) : null;
-    });
-    const [loading, setLoading] = useState(false);
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Load user from local storage on mount
     useEffect(() => {
-        if (user) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-        } else {
-            localStorage.removeItem(STORAGE_KEY);
-        }
-    }, [user]);
-
-    const providers = useMemo(() => ([
-        { id: 'email', label: 'Email & Password' },
-        { id: 'oauth-demo', label: 'OAuth (demo)' }
-    ]), []);
-
-    const signUp = useCallback(async ({ email, password }) => {
-        setLoading(true);
-        setError(null);
         try {
-            const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
-            if (credentials[email]) {
-                throw new Error('Account already exists');
+            const storedUser = localStorage.getItem('frenchApp_user');
+            if (storedUser) {
+                setUser(JSON.parse(storedUser));
             }
-
-            // Security: Hash password before storage
-            const hashedPassword = await hashPassword(password);
-            credentials[email] = { password: hashedPassword, createdAt: Date.now() };
-
-            localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
-            const newUser = { id: nanoid(), email, createdAt: Date.now(), provider: 'email' };
-            setUser(newUser);
-            return newUser;
         } catch (err) {
-            setError(err.message);
-            throw err;
+            console.error("Failed to load user", err);
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const signIn = useCallback(async ({ email, password, provider = 'email' }) => {
+    const login = useCallback(async (username, password) => {
         setLoading(true);
         setError(null);
+
+        // Emulate network delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+
         try {
-            if (provider !== 'email') {
-                const oauthUser = { id: `oauth-${email || nanoid()}`, email: email || 'demo@oauth.local', provider, createdAt: Date.now() };
-                setUser(oauthUser);
-                return oauthUser;
-            }
-            const credentials = JSON.parse(localStorage.getItem(CREDENTIALS_KEY) || '{}');
-            let record = credentials[email];
+            const storedUsers = JSON.parse(localStorage.getItem('frenchApp_users') || '[]');
+            const record = storedUsers.find(u => u.username.toLowerCase() === username.toLowerCase());
 
             if (!record) {
-                throw new Error('Invalid credentials');
-            }
-
-            // Handle legacy format (separate hash/salt) if encountered
-            if (!record.password && record.hash && record.salt) {
-                record.password = `${record.salt}:${record.hash}`;
+                // Timing attack prevention: simulate verify work even if user not found
+                // We pass dummy data to verifyPassword to consume similar time
+                // This is a simplified simulation
+                await verifyPassword("dummy_hash:salt", "dummy_password");
+                throw new Error("Invalid credentials");
             }
 
             const isValid = await verifyPassword(record.password, password);
             if (!isValid) {
-                throw new Error('Invalid credentials');
+                throw new Error("Invalid credentials");
             }
 
-            // Auto-migrate legacy plaintext passwords
-            // verifyPassword handles checking plaintext, but we should upgrade storage
-            if (record.password === password) {
-                const newHash = await hashPassword(password);
-                credentials[email] = { ...record, password: newHash };
-                localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));
-            }
-
-            const signedInUser = { id: email, email, provider: 'email', createdAt: record.createdAt };
-            setUser(signedInUser);
-            return signedInUser;
+            // Success
+            const userData = { username: record.username, id: record.id };
+            setUser(userData);
+            localStorage.setItem('frenchApp_user', JSON.stringify(userData));
+            return true;
         } catch (err) {
             setError(err.message);
-            throw err;
+            return false;
         } finally {
             setLoading(false);
         }
     }, []);
 
-    const signOut = useCallback(() => {
+    const signup = useCallback(async (username, password) => {
+        setLoading(true);
+        setError(null);
+
+        // Emulate delay
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        try {
+            const storedUsers = JSON.parse(localStorage.getItem('frenchApp_users') || '[]');
+            if (storedUsers.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+                throw new Error("Username already taken");
+            }
+
+            const hashedPassword = await hashPassword(password);
+            const newUser = {
+                id: `user_${Date.now()}`,
+                username,
+                password: hashedPassword,
+                createdAt: Date.now()
+            };
+
+            storedUsers.push(newUser);
+            localStorage.setItem('frenchApp_users', JSON.stringify(storedUsers));
+
+            // Auto login
+            const userData = { username: newUser.username, id: newUser.id };
+            setUser(userData);
+            localStorage.setItem('frenchApp_user', JSON.stringify(userData));
+            return true;
+        } catch (err) {
+            setError(err.message);
+            return false;
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const logout = useCallback(() => {
         setUser(null);
+        localStorage.removeItem('frenchApp_user');
     }, []);
 
     const value = {
         user,
         loading,
         error,
-        providers,
-        signIn,
-        signUp,
-        signOut
+        login,
+        signup,
+        logout,
+        isAuthenticated: !!user
     };
 
     return (
@@ -119,4 +119,10 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};

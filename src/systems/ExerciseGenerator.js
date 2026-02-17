@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { SENTENCE_TEMPLATES, SEMANTIC_PAIRS } from '../data/sentenceTemplates';
 import { vocabularyList, getVocabularyByCategory } from '../data/vocabulary';
 

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Circle, Sparkles, Trophy, Target } from 'lucide-react';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
+import { Check, Trophy, Target, Sparkles } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -9,7 +10,10 @@ const WeeklyGoalTracker = ({ compact = false }) => {
     const { weeklyGoal, isWeeklyGoalMet } = useProgress();
 
     const sessionsPerWeek = weeklyGoal?.sessionsPerWeek || 3;
-    const sessionsThisWeek = weeklyGoal?.sessionsThisWeek || [];
+
+    // Derived state to stabilize dependency
+    const sessionsThisWeek = useMemo(() => weeklyGoal?.sessionsThisWeek || [], [weeklyGoal]);
+
     const sessionsCompleted = sessionsThisWeek.length;
     const goalMet = isWeeklyGoalMet();
 
@@ -166,13 +170,11 @@ const WeeklyGoalTracker = ({ compact = false }) => {
                         </defs>
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <AnimatePresence mode="wait">
                             {goalMet ? (
                                 <motion.div
                                     key="trophy"
                                     initial={{ scale: 0 }}
                                     animate={{ scale: 1 }}
-                                    exit={{ scale: 0 }}
                                     transition={{ type: 'spring' }}
                                 >
                                     <Trophy className="w-8 h-8 text-emerald-400" />
@@ -188,7 +190,6 @@ const WeeklyGoalTracker = ({ compact = false }) => {
                                     <span className="text-slate-400">/{sessionsPerWeek}</span>
                                 </motion.div>
                             )}
-                        </AnimatePresence>
                     </div>
                 </div>
 
@@ -230,12 +231,10 @@ const WeeklyGoalTracker = ({ compact = false }) => {
             </div>
 
             {/* Celebration if goal met */}
-            <AnimatePresence>
-                {goalMet && (
+            {goalMet && (
                     <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
                         className="mt-4 pt-4 border-t border-white/10"
                     >
                         <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
@@ -245,8 +244,7 @@ const WeeklyGoalTracker = ({ compact = false }) => {
                             </p>
                         </div>
                     </motion.div>
-                )}
-            </AnimatePresence>
+            )}
         </div>
     );
 };

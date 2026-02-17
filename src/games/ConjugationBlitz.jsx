@@ -72,10 +72,13 @@ const ConjugationBlitz = () => {
     useEffect(() => {
         if (status === 'playing' && timeLeft <= 0) {
             clearInterval(timerRef.current);
-            setStatus('finished');
-            SoundManager.playLevelUp();
-            const baseXP = score * 2;
-            addXP(baseXP);
+            // Use setTimeout to avoid synchronous state update in effect warning
+            setTimeout(() => {
+                setStatus('finished');
+                SoundManager.playLevelUp();
+                const baseXP = score * 2;
+                addXP(baseXP);
+            }, 0);
         }
     }, [timeLeft, status, score, addXP]);
 

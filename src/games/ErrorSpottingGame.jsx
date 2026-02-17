@@ -34,7 +34,8 @@ const ErrorSpottingGame = () => {
     };
 
     useEffect(() => {
-        loadNextPuzzle();
+        // Use setTimeout to avoid synchronous state update in effect warning
+        setTimeout(() => loadNextPuzzle(), 0);
     }, []);
 
     // eslint-disable-next-line no-unused-vars

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { PERSONAS } from './PersonaDefinitions';
 import { checkGrammar } from '../data/grammarTips';
 

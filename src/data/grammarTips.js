@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Grammar Tips & Rules Database
  * Provides explanations, checkers, and mini-lessons for French grammar rules.

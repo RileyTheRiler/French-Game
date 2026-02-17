@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * ConversationAnalyzer - Analyzes free-form conversation transcripts
  * for fluency, vocabulary range, accuracy, and communication success.

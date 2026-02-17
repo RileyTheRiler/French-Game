@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ArrowLeft, Eraser, Undo, RotateCcw, Check,
-    Palette, PenTool, Eye, EyeOff, Volume2, ChevronRight
+    ArrowLeft, Eraser, Undo, Check,
+    PenTool, Eye, EyeOff, Volume2, ChevronRight
 } from 'lucide-react';
 import { GameLayout } from './layout/GameLayout';
 import { Card } from './ui/Card';
@@ -81,6 +82,31 @@ const WritingPad = () => {
         ? ACCENT_CHARACTERS[currentIndex]
         : TRACE_WORDS[currentIndex];
 
+    // Draw the guide character/word - Hoisted
+    const drawGuide = useCallback(() => {
+        const canvas = canvasRef.current;
+        const ctx = contextRef.current;
+        if (!canvas || !ctx) return;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw guide text
+        ctx.save();
+        ctx.fillStyle = 'rgba(139, 92, 246, 0.15)'; // Light purple
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const text = mode === 'characters' ? currentItem.char : currentItem.word;
+        const fontSize = mode === 'characters' ? 180 : Math.max(40, 200 / text.length);
+        ctx.font = `${fontSize}px 'Georgia', serif`;
+
+        const centerX = canvas.width / 4;
+        const centerY = canvas.height / 4;
+        ctx.fillText(text, centerX, centerY);
+        ctx.restore();
+    }, [currentItem, mode]);
+
     // Initialize canvas
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -105,7 +131,7 @@ const WritingPad = () => {
         if (showGuide) {
             drawGuide();
         }
-    }, [currentIndex, mode, showGuide]);
+    }, [currentIndex, mode, showGuide, drawGuide, strokeColor, strokeWidth]);
 
     // Update stroke settings
     useEffect(() => {
@@ -114,31 +140,6 @@ const WritingPad = () => {
             contextRef.current.lineWidth = strokeWidth;
         }
     }, [strokeColor, strokeWidth]);
-
-    // Draw the guide character/word
-    const drawGuide = useCallback(() => {
-        const canvas = canvasRef.current;
-        const ctx = contextRef.current;
-        if (!canvas || !ctx) return;
-
-        // Clear canvas
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        // Draw guide text
-        ctx.save();
-        ctx.fillStyle = 'rgba(139, 92, 246, 0.15)'; // Light purple
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        const text = mode === 'characters' ? currentItem.char : currentItem.word;
-        const fontSize = mode === 'characters' ? 180 : Math.max(40, 200 / text.length);
-        ctx.font = `${fontSize}px 'Georgia', serif`;
-
-        const centerX = canvas.width / 4;
-        const centerY = canvas.height / 4;
-        ctx.fillText(text, centerX, centerY);
-        ctx.restore();
-    }, [currentItem, mode]);
 
     // Drawing handlers
     const startDrawing = ({ nativeEvent }) => {

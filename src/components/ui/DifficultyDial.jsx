@@ -1,4 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useMemo } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Globe, User, GraduationCap, Rocket, Crown } from 'lucide-react';
 

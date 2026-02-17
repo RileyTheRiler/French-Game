@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { calculateLevel, getLevelProgress } from '../utils/gamificationUtils';
 import { ACHIEVEMENTS } from '../data/achievements';
@@ -162,49 +163,6 @@ export const ProgressProvider = ({ children }) => {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [stats]);
 
-    // Audio & Theme State
-    const [audioEnabled, setAudioEnabled] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_audio');
-        return saved !== null ? JSON.parse(saved) : true;
-    });
-
-    const [offlineAudio, setOfflineAudio] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_offlineAudio');
-        return saved !== null ? JSON.parse(saved) : false;
-    });
-
-    const [reducedMotion, setReducedMotion] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_reducedMotion');
-        return saved !== null ? JSON.parse(saved) : false;
-    });
-
-    const [colorTheme, setColorTheme] = useState(() => {
-        return localStorage.getItem('frenchApp_colorTheme') || 'midnight';
-    });
-
-    useEffect(() => {
-        localStorage.setItem('frenchApp_audio', JSON.stringify(audioEnabled));
-    }, [audioEnabled]);
-
-    useEffect(() => {
-        localStorage.setItem('frenchApp_offlineAudio', JSON.stringify(offlineAudio));
-    }, [offlineAudio]);
-
-    useEffect(() => {
-        localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
-        document.body.classList.toggle('reduced-motion', reducedMotion);
-    }, [reducedMotion]);
-
-    useEffect(() => {
-        localStorage.setItem('frenchApp_colorTheme', colorTheme);
-        document.body.dataset.theme = colorTheme;
-    }, [colorTheme]);
-
-    const toggleAudio = useCallback(() => setAudioEnabled(prev => !prev), []);
-    const toggleOfflineAudio = useCallback(() => setOfflineAudio(prev => !prev), []);
-    const toggleReducedMotion = useCallback(() => setReducedMotion(prev => !prev), []);
-    const switchColorTheme = useCallback((theme) => setColorTheme(theme), []);
-
     const checkStreak = useCallback(() => {
         const today = new Date().toDateString();
         const lastLogin = stats.lastLoginDate;
@@ -240,7 +198,7 @@ export const ProgressProvider = ({ children }) => {
             checkStreak();
         }, 0);
         return () => clearTimeout(timer);
-    }, []); // Run once on mount
+    }, [checkStreak]); // Run once on mount
 
     const ensureSeasonWindow = useCallback(() => {
         setStats(prev => {
@@ -264,7 +222,7 @@ export const ProgressProvider = ({ children }) => {
             ensureSeasonWindow();
         }, 0);
         return () => clearTimeout(timer);
-    }, []);
+    }, [ensureSeasonWindow]);
 
     const updateDailyStat = useCallback((statName, amount = 1, mode = 'add') => {
         setStats(prev => {
@@ -353,7 +311,7 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
+    }, [stats, showAchievement]);
 
     // Check achievements when relevant stats change
     useEffect(() => {
@@ -952,8 +910,7 @@ export const ProgressProvider = ({ children }) => {
 
     const contextValue = useMemo(() => ({
         stats, level, progressToNextLevel, addXP, incrementStreak, incrementDailyMixStreak,
-        audioEnabled, toggleAudio, offlineAudio, toggleOfflineAudio, reducedMotion, toggleReducedMotion,
-        colorTheme, switchColorTheme, resetProgress, addCoins, spendCoins, buyItem, consumeItem,
+        resetProgress, addCoins, spendCoins, buyItem, consumeItem,
         incrementStat, checkAchievements, activateDoubleXP,
         isDoubleXpActive: () => stats.doubleXpUntil && Date.now() < stats.doubleXpUntil,
         updateDailyStat, achievements: stats.unlockedAchievements || [], hydrateProgress,
@@ -980,8 +937,7 @@ export const ProgressProvider = ({ children }) => {
         memoryPalace: stats.memoryPalace || {}
     }), [
         stats, level, progressToNextLevel, addXP, incrementStreak, incrementDailyMixStreak,
-        audioEnabled, toggleAudio, offlineAudio, toggleOfflineAudio, reducedMotion, toggleReducedMotion,
-        colorTheme, switchColorTheme, resetProgress, addCoins, spendCoins, buyItem, consumeItem,
+        resetProgress, addCoins, spendCoins, buyItem, consumeItem,
         incrementStat, checkAchievements, activateDoubleXP, updateDailyStat, hydrateProgress,
         completeOnboarding, applyPlacementResult, setTargetCefr, setWeeklyGoal, setModeDifficulty,
         recordCategoryPerformance, logWordAttempt, updateUserGoals, updateDifficultySettings,

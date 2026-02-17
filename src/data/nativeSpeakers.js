@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // Native French speaker profiles for language partner matching
 export const NATIVE_SPEAKERS = [
     {

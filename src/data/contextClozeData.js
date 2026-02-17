@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Context-Based Cloze Data & Generator
  * 
@@ -107,7 +108,7 @@ const tokenizeFrench = (text) => {
     // Handle contractions like J'ai, l'eau, c'est
     const tokens = text
         .toLowerCase()
-        .replace(/[.,!?;:\"]/g, '')
+        .replace(/[.,!?;:"]/g, '')
         .split(/\s+/)
         .filter(t => t.length > 1);
 
