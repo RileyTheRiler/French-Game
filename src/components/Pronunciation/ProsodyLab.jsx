@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AudioVisualizer from './AudioVisualizer';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 
 const PROSODY_DRILLS = [

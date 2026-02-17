@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, X, MessageSquare, Star, Flag, ChevronRight, Edit3 } from 'lucide-react';
 import { useCommunity } from '../../context/CommunityContext';

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+// eslint-disable-next-line no-unused-vars
+import { motion } from 'framer-motion';
 import { ArrowLeft, Wand2, Plus, Check } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
 import { analyzeText } from '../utils/textAnalysis';

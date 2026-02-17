@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users, UserPlus, Swords, Trophy, Crown, Check, Loader2, PenTool, MessageCircle, Globe } from 'lucide-react';
 import { useSocial } from '../context/SocialContext';

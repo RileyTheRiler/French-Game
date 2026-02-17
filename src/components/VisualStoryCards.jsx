@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import {
     ArrowLeft, ChevronLeft, ChevronRight, Volume2,
-    RotateCcw, Filter, Sparkles, Eye, EyeOff
+    Filter, Sparkles, Eye, EyeOff
 } from 'lucide-react';
 import { GameLayout } from './layout/GameLayout';
-import { Card } from './ui/Card';
-import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { useProgress } from '../context/ProgressContext';
 import { getDifficultyConfig } from './ui/DifficultyDial';
@@ -62,12 +61,11 @@ const getCategoryGradient = (category) => {
 
 const VisualStoryCards = () => {
     const navigate = useNavigate();
-    const { addXP, stats, globalDifficulty } = useProgress();
+    const { addXP, globalDifficulty } = useProgress();
     const { recordReview } = useVocabulary();
     const difficultyConfig = React.useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
 
     // State
-    const [cards, setCards] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState(null);
@@ -80,20 +78,20 @@ const VisualStoryCards = () => {
     const rotate = useTransform(x, [-200, 200], [-15, 15]);
     const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0.5, 1, 1, 1, 0.5]);
 
-    const currentCard = cards[currentIndex];
-
-    // Load cards on mount or filter change
-    useEffect(() => {
+    // Filter and shuffle cards
+    const cards = useMemo(() => {
         let filtered = [...vocabularyList];
-
         if (selectedCategory) {
             filtered = filtered.filter(w => w.category === selectedCategory);
         }
+        // eslint-disable-next-line react-hooks/purity
+        return filtered.sort(() => Math.random() - 0.5);
+    }, [selectedCategory]);
 
-        // Shuffle cards
-        filtered = filtered.sort(() => Math.random() - 0.5);
+    const currentCard = cards[currentIndex];
 
-        setCards(filtered);
+    // Reset index when category changes
+    useEffect(() => {
         setCurrentIndex(0);
         setIsFlipped(false);
     }, [selectedCategory]);

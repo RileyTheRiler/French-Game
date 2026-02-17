@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { useVocabulary } from '../context/VocabularyContext';
 import { getRetentionData, getCategorySkills, predictFluency } from '../utils/analytics';

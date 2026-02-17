@@ -1,4 +1,7 @@
 import React, { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Book, ChevronLeft, Award, Lock, BookOpen } from 'lucide-react';
 import { STORIES } from '../data/stories';

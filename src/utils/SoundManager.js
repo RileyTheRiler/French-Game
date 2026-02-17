@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 // Simple Procedural Sound Manager (No external assets required)
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 

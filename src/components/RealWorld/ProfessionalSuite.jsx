@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Briefcase, Send, Users, FileText, Check, X, Award, ChevronRight } from 'lucide-react';
 import { GameLayout } from '../layout/GameLayout';

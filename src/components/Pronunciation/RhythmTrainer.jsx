@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, MicOff, Volume2, Play, Pause, RotateCcw, Sliders, Award, ArrowRight } from 'lucide-react';
 import { Button } from '../ui/Button';

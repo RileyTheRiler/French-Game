@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trophy, Calendar, Flame, ArrowRight, Star } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ArrowLeft, RefreshCw, CheckCircle, XCircle, Brain, Sparkles } from 'lucide-react';
+import { Search, Brain } from 'lucide-react';
 import { GameLayout } from '../layout/GameLayout';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -20,10 +21,8 @@ const SlangExplorer = () => {
 
     // Quiz state
     const [currentQuizItem, setCurrentQuizItem] = useState(null);
-    const [userAnswer, setUserAnswer] = useState(''); // For text input if we wanted, but let's do simplified "reveal" or Multiple Choice for now.
-    // Let's do a "Decoder" mode: Show slang, pick standard. Or Show standard, pick slang.
-    // For simplicity and "Explorer" feel: Flashcard style "Reveal" + "Got it/Missed it" OR Multiple Choice.
-    // Implementation Plan mentioned "Decoder" mini-game. Let's do Multiple Choice for engagement.
+    // eslint-disable-next-line no-unused-vars
+    const [userAnswer, setUserAnswer] = useState('');
 
     const [quizOptions, setQuizOptions] = useState([]);
     const [quizFeedback, setQuizFeedback] = useState(null); // 'correct', 'incorrect'
@@ -48,6 +47,7 @@ const SlangExplorer = () => {
             ? SLANG_DATA.filter(i => i.category === category)
             : SLANG_DATA;
 
+        // Select random item
         const randomItem = pool[Math.floor(Math.random() * pool.length)];
         setCurrentQuizItem(randomItem);
         setQuizFeedback(null);

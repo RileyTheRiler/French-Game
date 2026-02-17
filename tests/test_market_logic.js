@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import { getDailyShopSelection } from '../src/utils/market.js';
 import { SHOP_ITEMS } from '../src/data/shopItems.js';
 

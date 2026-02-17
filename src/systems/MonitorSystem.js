@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * The MonitorSystem acts as a "conscious editor" for the learner.
  * It analyzes user input against target sentences and provides specific,

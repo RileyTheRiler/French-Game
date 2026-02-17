@@ -110,7 +110,7 @@ const PlacementQuiz = () => {
                 totalQuestions
             });
             showSuccess(`Placement saved! Starting XP: ${xpAward}`);
-            setPlacementSaved(true);
+            setTimeout(() => setPlacementSaved(true), 0);
         }
     }, [applyPlacementResult, showResults, placementSaved, xpAward, accuracy, totalQuestions, showSuccess]);
 

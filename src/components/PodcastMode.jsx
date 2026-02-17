@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft, Play, Pause, SkipForward, SkipBack,
@@ -44,6 +46,22 @@ const PodcastMode = () => {
     const [xpEarned, setXpEarned] = useState(0);
 
     const currentItem = playlist[currentIndex];
+
+    // Finish session - Hoisted
+    const finishSession = useCallback(() => {
+        setIsPlaying(false);
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+
+        // Calculate XP (2 XP per item listened)
+        const earned = playlist.length * 2;
+        setXpEarned(earned);
+        addXP(earned);
+        incrementStat('podcastSessionsCompleted');
+
+        setSessionComplete(true);
+    }, [playlist.length, addXP, incrementStat]);
 
     // Initialize audio element
     useEffect(() => {
@@ -99,7 +117,7 @@ const PodcastMode = () => {
                 }
             }, 1500); // 1.5 second pause between items
         };
-    }, [currentItem, currentIndex, playlist.length]);
+    }, [currentItem, currentIndex, playlist.length, finishSession]);
 
     // Auto-play when current item changes
     useEffect(() => {
@@ -137,22 +155,6 @@ const PodcastMode = () => {
         if (currentIndex > 0) {
             setCurrentIndex(prev => prev - 1);
         }
-    };
-
-    // Finish session
-    const finishSession = () => {
-        setIsPlaying(false);
-        if (audioRef.current) {
-            audioRef.current.pause();
-        }
-
-        // Calculate XP (2 XP per item listened)
-        const earned = playlist.length * 2;
-        setXpEarned(earned);
-        addXP(earned);
-        incrementStat('podcastSessionsCompleted');
-
-        setSessionComplete(true);
     };
 
     // Session selection screen

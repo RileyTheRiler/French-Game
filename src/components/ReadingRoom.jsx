@@ -1,4 +1,6 @@
 import React, { useState, useMemo } from 'react';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Book, BookOpen, ChevronLeft, Award, Lock, Search, Filter,

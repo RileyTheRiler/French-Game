@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, Clock, TrendingUp, Volume2, Check, X, RotateCcw, Zap, Target } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';

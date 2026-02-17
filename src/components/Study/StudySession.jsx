@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Volume2, Ghost, Download, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
 import { LoadingState } from '../ui/LoadingState';
 import { EmptyState } from '../ui/EmptyState';
@@ -42,12 +42,22 @@ const StudySession = () => {
         return Array.from(new Set(vocabulary.map(word => word.cefr))).sort();
     }, [vocabulary]);
 
+    // Moved up to avoid TDZ
+    const finalizeSession = useCallback((metrics) => {
+        const reward = calculateRewards('studySession', metrics);
+        setSessionReward(reward);
+        addXP(reward.xp);
+        addCoins(reward.coins);
+        setSessionComplete(true);
+        triggerConfetti();
+    }, [addXP, addCoins]);
+
     useEffect(() => {
         if (filterCategory === 'all') {
-            setDownloadStatus('disabled');
+            setTimeout(() => setDownloadStatus('disabled'), 0);
             return;
         }
-        setDownloadStatus('checking');
+        setTimeout(() => setDownloadStatus('checking'), 0);
         isCategoryDownloaded(filterCategory).then(isDown => {
             setDownloadStatus(isDown ? 'downloaded' : 'idle');
         });
@@ -69,7 +79,7 @@ const StudySession = () => {
 
     const handleDeleteDownload = async () => {
         if (filterCategory === 'all') return;
-        setDownloadStatus('checking');
+        setTimeout(() => setDownloadStatus('checking'), 0);
         await deleteCategoryAssets(filterCategory);
         setDownloadStatus('idle');
         showToast('Local assets removed.', 'info');
@@ -83,7 +93,7 @@ const StudySession = () => {
             return matchesCEFR && matchesCategory;
         });
 
-        setDueWords(filtered);
+        setTimeout(() => { setDueWords(filtered);
         setCurrentIndex(0);
         setIsFlipped(false);
         setSessionComplete(filtered.length === 0);
@@ -91,7 +101,7 @@ const StudySession = () => {
         setWrongCount(0);
         setCurrentStreak(0);
         setBestStreak(0);
-        setSessionReward(null);
+        setSessionReward(null); }, 0);
         preloadAudioForWords(filtered);
     }, [filterCEFR, filterCategory, getDueWords, preloadAudioForWords]);
 
@@ -107,15 +117,6 @@ const StudySession = () => {
             containerRef.current.focus();
         }
     }, [currentIndex, sessionComplete]);
-
-    const finalizeSession = (metrics) => {
-        const reward = calculateRewards('studySession', metrics);
-        setSessionReward(reward);
-        addXP(reward.xp);
-        addCoins(reward.coins);
-        setSessionComplete(true);
-        triggerConfetti();
-    };
 
     const handleCardClick = () => {
         if (!sessionComplete) {

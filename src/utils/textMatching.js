@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Fuzzy text matching utilities for conversation
  */

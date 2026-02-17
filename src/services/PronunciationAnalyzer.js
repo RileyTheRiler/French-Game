@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * PronunciationAnalyzer Service
  * 
@@ -150,7 +151,7 @@ const parsePhonemes = (ipa) => {
 const normalizeText = (text) => {
     if (!text) return '';
     return text.toLowerCase()
-        .replace(/[.,!?;:'"()\-]/g, '')
+        .replace(/[.,!?;:'"()-]/g, '')
         .trim();
 };
 

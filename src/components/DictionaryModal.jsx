@@ -1,11 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useVocabulary } from '../context/VocabularyContext';
 import { useProgress } from '../context/ProgressContext';
 import { playWordAudio } from '../utils/audio';
 import { GRAMMAR_TIPS } from '../data/grammar';
-import { Star, Pin, Clock3, BellOff, Volume2 } from 'lucide-react';
-import { formatRelativeTime, formatDateTime } from '../utils/time';
-import { Button } from './ui/Button';
+import VocabItem from './Dictionary/VocabItem';
+import GrammarItem from './Dictionary/GrammarItem';
 
 const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
     const { vocabulary, toggleSaveWord, togglePinWord, snoozeWord, clearSnooze } = useVocabulary();
@@ -23,7 +22,11 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
         tip.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tip.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    const now = useMemo(() => Date.now(), [vocabulary]);
+
+    // Use useState to initialize 'now' once on mount, keeping it stable.
+    // This allows React.memo in VocabItem to work effectively as 'now' won't change on every render.
+    // If real-time snooze updates are needed, this strategy would need adjustment, but for a modal session it's usually sufficient.
+    const [now] = useState(() => Date.now());
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
@@ -72,65 +75,19 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                 <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
                     {activeTab === 'vocab' || activeTab === 'saved' ? (
                         filteredVocab.length > 0 ? (
-                            filteredVocab.map(word => {
-                                const snoozed = word.snoozeUntil && word.snoozeUntil > now;
-                                return (
-                                    <div key={word.id} className="p-4 bg-white/5 rounded-xl border border-white/5 flex flex-col gap-3 group hover:bg-white/10 transition-colors">
-                                        <div className="flex justify-between items-start gap-3">
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2">
-                                                    <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
-                                                    <button
-                                                        onClick={() => playWordAudio(word, { preferCache: true, offlineOnly: offlineAudio })}
-                                                        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors"
-                                                    >
-                                                        <Volume2 size={14} />
-                                                    </button>
-                                                </div>
-                                                <p className="text-[var(--text-secondary)]">{word.english}</p>
-                                                {(word.lastSeen || word.lastPracticed) && (
-                                                    <p className="text-xs text-slate-400 mt-2 flex items-center gap-2">
-                                                        <Clock3 size={14} /> Last seen: {formatRelativeTime(word.lastSeen || word.lastPracticed)}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            <div className="text-right flex flex-col items-end gap-2">
-                                                 <span className={`text-xs font-bold px-2 py-1 rounded ${word.level >= 5 ? 'bg-green-500/20 text-green-400' :
-                                                    word.level >= 3 ? 'bg-yellow-500/20 text-yellow-400' :
-                                                        'bg-white/10 text-white/40'
-                                                }`}>
-                                                    Lvl {word.level}
-                                                </span>
-                                                <button
-                                                    onClick={() => toggleSaveWord(word.id)}
-                                                    className={`transition-all hover:scale-110 ${word.isSaved ? 'text-amber-400' : 'text-white/20 hover:text-amber-200'}`}
-                                                    aria-label={word.isSaved ? "Unsave" : "Save"}
-                                                >
-                                                    <Star size={20} fill={word.isSaved ? "currentColor" : "none"} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-white/5">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className={`rounded-full px-3 py-1 h-8 text-xs ${word.pinned ? 'text-emerald-300' : ''}`}
-                                                onClick={() => togglePinWord(word.id)}
-                                            >
-                                                <Pin size={12} className="mr-1" /> {word.pinned ? 'Unpin' : 'Pin'}
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="rounded-full px-3 py-1 h-8 text-xs"
-                                                onClick={() => snoozed ? clearSnooze(word.id) : snoozeWord(word.id)}
-                                            >
-                                                <BellOff size={12} className="mr-1" /> {snoozed ? `Unsnooze` : 'Snooze'}
-                                            </Button>
-                                        </div>
-                                    </div>
-                                );
-                            })
+                            filteredVocab.map(word => (
+                                <VocabItem
+                                    key={word.id}
+                                    word={word}
+                                    now={now}
+                                    onPlayAudio={playWordAudio}
+                                    onToggleSave={toggleSaveWord}
+                                    onTogglePin={togglePinWord}
+                                    onSnooze={snoozeWord}
+                                    onClearSnooze={clearSnooze}
+                                    offlineAudio={offlineAudio}
+                                />
+                            ))
                         ) : (
                             <div className="text-center text-white/30 mt-10">
                                 {activeTab === 'saved' ? "No saved words yet." : "No words found."}
@@ -139,10 +96,7 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                     ) : (
                         filteredGrammar.length > 0 ? (
                             filteredGrammar.map(tip => (
-                                <div key={tip.id} className="p-4 bg-white/5 rounded-xl border border-white/5 hover:bg-white/10 transition-colors">
-                                    <h3 className="text-lg font-bold text-[var(--accent-secondary)] mb-2">{tip.title}</h3>
-                                    <p className="text-sm text-white/80 leading-relaxed">{tip.content}</p>
-                                </div>
+                                <GrammarItem key={tip.id} tip={tip} />
                             ))
                         ) : (
                             <div className="text-center text-white/30 mt-10">
