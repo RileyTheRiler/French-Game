@@ -18,11 +18,13 @@ const SentenceBuilderGame = ({ onExit }) => {
     useEffect(() => {
         if (scenario) {
             // Shuffle words for the word bank
-            setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
-            setSelectedWords([]);
-            setFeedback(null);
-            setMonitorMessage(null);
-            setMonitorTipId(null);
+            setTimeout(() => {
+                setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
+                setSelectedWords([]);
+                setFeedback(null);
+                setMonitorMessage(null);
+                setMonitorTipId(null);
+            }, 0);
         }
     }, [currentScenarioIndex, scenario]);
 
@@ -34,6 +36,14 @@ const SentenceBuilderGame = ({ onExit }) => {
     const handleSelectedWordClick = (word, idx) => {
         setAvailableWords(prev => [...prev, word]);
         setSelectedWords(prev => prev.filter((_, i) => i !== idx));
+    };
+
+    const nextLevel = () => {
+        if (currentScenarioIndex < SCENARIOS.length - 1) {
+            setCurrentScenarioIndex(curr => curr + 1);
+        } else {
+            setCurrentScenarioIndex(0);
+        }
     };
 
     const checkSentence = () => {
@@ -55,14 +65,6 @@ const SentenceBuilderGame = ({ onExit }) => {
             setMonitorTipId(analysis?.tipId || null);
             soundManager.playMiss();
             setStreak(0);
-        }
-    };
-
-    const nextLevel = () => {
-        if (currentScenarioIndex < SCENARIOS.length - 1) {
-            setCurrentScenarioIndex(curr => curr + 1);
-        } else {
-            setCurrentScenarioIndex(0);
         }
     };
 

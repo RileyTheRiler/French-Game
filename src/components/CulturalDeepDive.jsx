@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Globe, BookOpen, ChevronLeft, Award, Star,
-    Zap, Info, Share2, Sparkles, Map, Heart
+    Zap, Info, Share2, Sparkles, Map, Heart, Volume2
 } from 'lucide-react';
 import { CULTURE_ARTICLES } from '../data/cultureData';
 import { useProgress } from '../context/ProgressContext';
@@ -12,6 +12,7 @@ import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
 import SoundManager from '../utils/SoundManager';
+import { speak } from '../utils/audio';
 import { GameLayout } from './layout/GameLayout';
 
 const ArticleCard = ({ article, isNew, onClick }) => (

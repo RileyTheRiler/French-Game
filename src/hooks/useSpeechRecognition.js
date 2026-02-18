@@ -8,7 +8,7 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
 
     useEffect(() => {
         if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-            setError('Speech Recognition Not Supported');
+            setTimeout(() => setError('Speech Recognition Not Supported'), 0);
             return;
         }
 
