@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useMemo, useState, useCallback, useRef } from 'react';
 import { useProgress } from './ProgressContext';
 import { vocabularyList, CATEGORIES, getVocabularyByCategory, getAllCategories } from '../data/vocabulary';
@@ -5,7 +6,7 @@ import { calculateNextReview, getInitialState, isPassingGrade, normalizeGrade } 
 import { speak, cacheVocabularyAudio } from '../utils/audio';
 import { buildPracticeQueue } from '../utils/practiceQueue';
 
-const VocabularyContext = createContext();
+export const VocabularyContext = createContext();
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const ensureSrsState = (state) => {
@@ -80,8 +81,7 @@ export const VocabularyProvider = ({ children }) => {
         audioCacheRef.current = {};
     }, []);
 
-    const computePriority = useCallback((word) => {
-        const now = Date.now();
+    const computePriority = useCallback((word, now = Date.now()) => {
         const srs = ensureSrsState(word.srs);
         const dueWeight = srs.dueDate <= now ? 2 : Math.max(0.5, 1 - ((srs.dueDate - now) / (3 * DAY_MS)));
 
@@ -210,7 +210,9 @@ export const VocabularyProvider = ({ children }) => {
         const now = Date.now();
         return vocabularyRef.current
             .filter(word => (!word.snoozeUntil || word.snoozeUntil <= now) && word.nextReview <= now)
-            .sort((a, b) => computePriority(b) - computePriority(a));
+            .map(word => ({ word, priority: computePriority(word, now) }))
+            .sort((a, b) => b.priority - a.priority)
+            .map(item => item.word);
     }, [computePriority]);
 
     const getPracticeQueue = useCallback((mode = 'default', limit) => {
@@ -218,10 +220,11 @@ export const VocabularyProvider = ({ children }) => {
     }, []);
 
     const getWeightedPracticeWords = useCallback((limit = 30) => {
+        const now = Date.now();
         return vocabulary
             .map(word => ({
                 ...word,
-                priorityScore: computePriority(word)
+                priorityScore: computePriority(word, now)
             }))
             .sort((a, b) => b.priorityScore - a.priorityScore)
             .slice(0, limit)

@@ -16,7 +16,8 @@ describe('Crypto Utils', () => {
     it('should verify a correct password', async () => {
         const password = 'mySecretPassword';
         const hashedPassword = await hashPassword(password);
-        const isValid = await verifyPassword(hashedPassword, password);
+        // Correct signature: verifyPassword(password, storedHash)
+        const isValid = await verifyPassword(password, hashedPassword);
 
         expect(isValid).toBe(true);
     });
@@ -24,7 +25,8 @@ describe('Crypto Utils', () => {
     it('should reject an incorrect password', async () => {
         const password = 'mySecretPassword';
         const hashedPassword = await hashPassword(password);
-        const isValid = await verifyPassword(hashedPassword, 'wrongPassword');
+        // Correct signature: verifyPassword(password, storedHash)
+        const isValid = await verifyPassword('wrongPassword', hashedPassword);
 
         expect(isValid).toBe(false);
     });
