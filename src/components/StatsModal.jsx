@@ -22,23 +22,25 @@ const StatCard = ({ icon: Icon, label, value, color, subValue }) => (
 );
 
 const StatsModal = ({ isOpen, onClose }) => {
-<<<<<<< HEAD
     const { t, i18n } = useTranslation();
-    const { stats, level, progressToNextLevel, achievements, getWeeklySummary, difficultySettings } = useProgress();
-    const { vocabulary } = useVocabulary();
-    const [activeTab, setActiveTab] = useState('overview');
-=======
-    const { stats, level, progressToNextLevel, achievements } = useProgress();
+    const { stats, level, progressToNextLevel, achievements, getWeeklySummary } = useProgress();
     const { vocabulary, getAllCategories, CATEGORIES } = useVocabulary();
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+    const [activeTab, setActiveTab] = useState('overview');
 
     if (!isOpen) return null;
 
     const totalWords = vocabulary?.length || 0;
     const masteredWords = vocabulary?.filter(w => w.level >= 5)?.length || 0;
     const learningWords = vocabulary?.filter(w => w.level >= 1 && w.level < 5)?.length || 0;
-    const categories = getAllCategories ? getAllCategories() : [];
-    const categoryPerformance = stats?.categoryPerformance || {};
+    const categoriesList = getAllCategories ? getAllCategories() : [];
+
+    // Fallback for categories if not from context
+    const categoryStats = stats.categoryStats || {};
+    const categories = Object.entries(categoryStats).map(([cat, data]) => ({
+        name: CATEGORIES?.[cat]?.name || cat,
+        accuracy: data.attempts > 0 ? Math.round((data.correct / data.attempts) * 100) : 0,
+        attempts: data.attempts
+    })).sort((a, b) => b.attempts - a.attempts).slice(0, 6);
 
     // Data for Insights
     const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
@@ -53,13 +55,6 @@ const StatsModal = ({ isOpen, onClose }) => {
             return word ? { ...word, ...data } : null;
         })
         .filter(Boolean);
-
-    // Category Accuracy
-    const categories = Object.entries(stats.categoryStats || {}).map(([cat, data]) => ({
-        name: cat,
-        accuracy: data.attempts > 0 ? Math.round((data.correct / data.attempts) * 100) : 0,
-        attempts: data.attempts
-    })).sort((a, b) => b.attempts - a.attempts).slice(0, 6);
 
     const formatNumber = (num) => {
         return new Intl.NumberFormat(i18n.language).format(num);
@@ -170,7 +165,6 @@ const StatsModal = ({ isOpen, onClose }) => {
                                         </p>
                                     </div>
 
-<<<<<<< HEAD
                                     {/* Stats Grid */}
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                         <StatCard icon={Flame} label={t('stats.streak')} value={`${formatNumber(stats.streak || 0)}`} color="bg-orange-500/30" subValue="days" />
@@ -194,10 +188,6 @@ const StatsModal = ({ isOpen, onClose }) => {
                                                         {d}
                                                     </div>
                                                 ))}
-                                                {/* Filler for start offset if needed, but for last 30 days pure grid we might align differently. 
-                                                    Let's just show last 30 days as a simple grid, or align to week days. 
-                                                    Aligning to weekdays:
-                                                */}
                                             </div>
                                             <div className="grid grid-cols-7 gap-2">
                                                 {Array(calendarDays[0].date.getDay()).fill(null).map((_, i) => (
@@ -259,44 +249,17 @@ const StatsModal = ({ isOpen, onClose }) => {
                                                 </div>
                                             </div>
                                         </div>
-=======
-                            {/* Category Performance */}
-                            <div className="p-6 rounded-2xl bg-slate-900/60 border border-white/5 mb-6">
-                                <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                    <BarChart3 size={20} className="text-indigo-400" />
-                                    Category Performance
-                                </h3>
-                                <div className="space-y-3">
-                                    {categories.map(cat => {
-                                        const perf = categoryPerformance[cat] || {};
-                                        const accuracy = (perf.accuracy ?? (perf.correct / (perf.attempts || 1))) || 0;
-                                        const avgResponse = perf.averageResponseTime ? Math.round(perf.averageResponseTime) : null;
-                                        return (
-                                            <div key={cat} className="flex items-center justify-between text-sm">
-                                                <div className="flex items-center gap-2">
-                                                    <span>{CATEGORIES?.[cat]?.icon}</span>
-                                                    <span className="text-slate-300">{CATEGORIES?.[cat]?.name || cat}</span>
-                                                </div>
-                                                <div className="flex items-center gap-3">
-                                                    <Badge variant="outline" className={accuracy < 0.7 ? 'border-amber-500/50 text-amber-300' : ''}>
-                                                        {Math.round(accuracy * 100)}%
-                                                    </Badge>
-                                                    <span className="text-xs text-slate-400">{avgResponse ? `${avgResponse} ms` : 'n/a'}</span>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                                    </div>
 
-                            {/* Coins & Shop */}
-                            <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex justify-between items-center">
-                                <div className="flex items-center gap-3">
-                                    <span className="text-3xl">💰</span>
-                                    <div>
-                                        <p className="text-xs uppercase tracking-wider text-amber-300/80 font-bold">Your Coins</p>
-                                        <p className="text-2xl font-black text-amber-400">{stats.coins || 0}</p>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+                                    {/* Coins & Shop */}
+                                    <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex justify-between items-center">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-3xl">💰</span>
+                                            <div>
+                                                <p className="text-xs uppercase tracking-wider text-amber-300/80 font-bold">Your Coins</p>
+                                                <p className="text-2xl font-black text-amber-400">{stats.coins || 0}</p>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (

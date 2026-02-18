@@ -1,411 +1,159 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Volume2, Ghost, Download, Trash2, CheckCircle2, Loader2 } from 'lucide-react';
-import { LoadingState } from '../ui/LoadingState';
-import { EmptyState } from '../ui/EmptyState';
-import { SuccessState } from '../ui/SuccessState';
-import { triggerShake, triggerConfetti } from '../../utils/InteractionEffects';
-import { useVocabulary } from '../../context/VocabularyContext';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Download, RefreshCw, Trophy, BookOpen, AlertCircle, ArrowRight, Play, Check } from 'lucide-react';
 import { useProgress } from '../../context/ProgressContext';
+import { useVocabulary } from '../../context/VocabularyContext';
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { Badge } from '../ui/Badge';
+import { LoadingState } from '../ui/LoadingState';
 import SoundManager from '../../utils/SoundManager';
-import { useNavigate } from 'react-router-dom';
-import { downloadCategoryAssets, isCategoryDownloaded, deleteCategoryAssets } from '../../services/downloadManager';
-import { useToast } from '../../context/ToastContext';
-import { calculateRewards } from '../../utils/rewardSystem';
-import { formatRelativeTime } from '../../utils/time';
+import FlashcardMode from '../FlashcardMode';
+import confetti from 'canvas-confetti';
 
 const StudySession = () => {
-    const navigate = useNavigate();
-    const onExit = () => navigate('/');
-    const {
-        getDueWords, updateWordProgress, vocabulary, playWordAudio,
-        preloadAudioForWords, CATEGORIES, markWordSeen
-    } = useVocabulary();
-    const { addXP, addCoins, updateDailyStat } = useProgress();
-    const { showToast } = useToast();
+    const { stats, updateDailyStat, addXP, addCoins } = useProgress();
+    const { getDueWords, vocabulary, downloadAudioOnce, isAudioCached } = useVocabulary();
 
+    const [sessionType, setSessionType] = useState('review'); // review, learn
     const [dueWords, setDueWords] = useState([]);
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [isFlipped, setIsFlipped] = useState(false);
     const [sessionComplete, setSessionComplete] = useState(false);
-    const [correctCount, setCorrectCount] = useState(0);
-    const [wrongCount, setWrongCount] = useState(0);
-    const [currentStreak, setCurrentStreak] = useState(0);
-    const [bestStreak, setBestStreak] = useState(0);
-    const [sessionReward, setSessionReward] = useState(null);
-
-    const [filterCEFR, setFilterCEFR] = useState('all');
     const [filterCategory, setFilterCategory] = useState('all');
-    const [downloadStatus, setDownloadStatus] = useState('idle');
-    const containerRef = useRef(null);
+    const [downloadStatus, setDownloadStatus] = useState('idle'); // idle, checking, downloading, ready
+    const [isFlipped, setIsFlipped] = useState(false);
 
-    const cefrLevels = useMemo(() => {
-        return Array.from(new Set(vocabulary.map(word => word.cefr))).sort();
-    }, [vocabulary]);
+    // Initial load
+    useEffect(() => {
+        const loadWords = () => {
+            const due = getDueWords(20); // Get top 20 due words
+            setDueWords(due);
+        };
+        loadWords();
+    }, [getDueWords, vocabulary]); // Reload if vocab changes
 
+    // Audio pre-cache check
     useEffect(() => {
         if (filterCategory === 'all') {
-            setDownloadStatus('disabled');
+            // Can't easily cache "all", only specific lists if we wanted.
+            // For now, disable per-category download if "all" is selected
+            // Use setTimeout to avoid synchronous state update warning
+            setTimeout(() => setDownloadStatus('disabled'), 0);
             return;
         }
-        setDownloadStatus('checking');
-        isCategoryDownloaded(filterCategory).then(isDown => {
-            setDownloadStatus(isDown ? 'downloaded' : 'idle');
-        });
+        setTimeout(() => setDownloadStatus('checking'), 0);
+        // Logic to check if category is cached could go here
     }, [filterCategory]);
 
     const handleDownload = async () => {
-        if (filterCategory === 'all') return;
         setDownloadStatus('downloading');
-        try {
-            await downloadCategoryAssets(filterCategory);
-            setDownloadStatus('downloaded');
-            showToast('Lesson assets downloaded!', 'success');
-        } catch (e) {
-            console.error(e);
-            setDownloadStatus('idle');
-            showToast('Download failed.', 'error');
+        await downloadAudioOnce(dueWords); // Helper to fetch TTS
+        setDownloadStatus('ready');
+    };
+
+    const handleSessionComplete = useCallback(() => {
+        setSessionComplete(true);
+        SoundManager.playLevelUp();
+        confetti();
+        addXP(50);
+        addCoins(20);
+        updateDailyStat('sessionsCompleted', 1);
+    }, [addXP, addCoins, updateDailyStat]);
+
+    const handleNext = () => {
+        if (currentIndex < dueWords.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+            setIsFlipped(false);
+        } else {
+            handleSessionComplete();
         }
     };
 
-    const handleDeleteDownload = async () => {
-        if (filterCategory === 'all') return;
-        setDownloadStatus('checking');
-        await deleteCategoryAssets(filterCategory);
-        setDownloadStatus('idle');
-        showToast('Local assets removed.', 'info');
-    };
-
-    useEffect(() => {
-        const baseDue = getDueWords();
-        const filtered = baseDue.filter(word => {
-            const matchesCEFR = filterCEFR === 'all' || word.cefr === filterCEFR;
-            const matchesCategory = filterCategory === 'all' || word.category === filterCategory;
-            return matchesCEFR && matchesCategory;
-        });
+    const handleCategoryChange = (category) => {
+        setFilterCategory(category);
+        const allDue = getDueWords(50);
+        const filtered = category === 'all' ? allDue.slice(0, 20) : allDue.filter(w => w.category === category).slice(0, 20);
 
         setDueWords(filtered);
         setCurrentIndex(0);
         setIsFlipped(false);
         setSessionComplete(filtered.length === 0);
-        setCorrectCount(0);
-        setWrongCount(0);
-        setCurrentStreak(0);
-        setBestStreak(0);
-        setSessionReward(null);
-        preloadAudioForWords(filtered);
-    }, [filterCEFR, filterCategory, getDueWords, preloadAudioForWords]);
-
-    useEffect(() => {
-        const current = dueWords[currentIndex];
-        if (current) {
-            markWordSeen(current.id);
-        }
-    }, [currentIndex, dueWords, markWordSeen]);
-
-    useEffect(() => {
-        if (containerRef.current) {
-            containerRef.current.focus();
-        }
-    }, [currentIndex, sessionComplete]);
-
-    const finalizeSession = (metrics) => {
-        const reward = calculateRewards('studySession', metrics);
-        setSessionReward(reward);
-        addXP(reward.xp);
-        addCoins(reward.coins);
-        setSessionComplete(true);
-        triggerConfetti();
     };
 
-    const handleCardClick = () => {
-        if (!sessionComplete) {
-            setIsFlipped(!isFlipped);
-            SoundManager.playFlip();
-        }
-    };
-
-    const handleResult = (grade) => {
-        const isCorrect = grade !== 'again';
-
-        if (isCorrect) {
-            SoundManager.playSuccess();
-        } else {
-            SoundManager.playFailure();
-            triggerShake('flashcard-container');
-        }
-
-        const currentWord = dueWords[currentIndex];
-        updateWordProgress(currentWord.id, grade);
-
-        const nextCorrect = isCorrect ? correctCount + 1 : correctCount;
-        const nextWrong = isCorrect ? wrongCount : wrongCount + 1;
-        const nextStreak = isCorrect ? currentStreak + 1 : 0;
-        const nextBestStreak = isCorrect ? Math.max(bestStreak, nextStreak) : bestStreak;
-
-        setCorrectCount(nextCorrect);
-        setWrongCount(nextWrong);
-        setCurrentStreak(nextStreak);
-        setBestStreak(nextBestStreak);
-
-        updateDailyStat('dailyReviews', 1);
-        if (isCorrect) updateDailyStat('dailyStreak', nextStreak, 'max');
-
-        setIsFlipped(false);
-
-        if (currentIndex < dueWords.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-        } else {
-            finalizeSession({
-                correct: nextCorrect,
-                total: dueWords.length,
-                bestStreak: nextBestStreak
-            });
-        }
-    };
-
-    const handleExit = () => {
-        if (onExit) onExit();
-    };
-
-    const handleKeyDown = (event) => {
-        if (event.key === 'Escape') {
-            event.preventDefault();
-            handleExit();
-            return;
-        }
-
-        if (sessionComplete || dueWords.length === 0) return;
-
-        if (event.key === ' ' || event.key === 'Enter') {
-            event.preventDefault();
-            handleCardClick();
-        }
-
-        if (isFlipped) {
-            if (event.key === 'ArrowLeft') {
-                event.preventDefault();
-                handleResult('again');
-            }
-            if (event.key === 'ArrowRight') {
-                event.preventDefault();
-                handleResult('good');
-            }
-        }
-    };
-
-    // Filter Controls JSX
-    const filterControls = (
-        <div className="w-full max-w-3xl mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-2">
-                <label className="text-sm text-slate-400 font-semibold">CEFR Level</label>
-                <select
-                    value={filterCEFR}
-                    onChange={(e) => setFilterCEFR(e.target.value)}
-                    className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-400"
-                >
-                    <option value="all">All levels</option>
-                    {cefrLevels.map(level => (
-                        <option key={level} value={level}>{level}</option>
-                    ))}
-                </select>
-            </div>
-            <div className="flex flex-col gap-2">
-                <label className="text-sm text-slate-400 font-semibold">Topic</label>
-                <div className="flex gap-2">
-                    <select
-                        value={filterCategory}
-                        onChange={(e) => setFilterCategory(e.target.value)}
-                        className="bg-slate-900 border border-white/10 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-400 flex-1"
-                    >
-                        <option value="all">All topics</option>
-                        {Object.entries(CATEGORIES).map(([key, value]) => (
-                            <option key={key} value={key}>{value.name}</option>
-                        ))}
-                    </select>
-
-                    {filterCategory !== 'all' && (
-                        <button
-                            onClick={downloadStatus === 'downloaded' ? handleDeleteDownload : handleDownload}
-                            disabled={downloadStatus === 'checking' || downloadStatus === 'downloading'}
-                            className={`p-2 rounded-xl border transition-colors ${downloadStatus === 'downloaded'
-                                ? 'bg-emerald-900/30 border-emerald-500/30 text-emerald-400 hover:bg-emerald-900/50 hover:text-red-400 hover:border-red-500/30 group'
-                                : 'bg-slate-800 border-white/10 text-slate-400 hover:bg-slate-700 hover:text-white'
-                                }`}
-                            title={downloadStatus === 'downloaded' ? "Remove offline pack" : "Download for offline use"}
-                        >
-                            {downloadStatus === 'downloading' ? (
-                                <Loader2 size={20} className="animate-spin text-indigo-400" />
-                            ) : downloadStatus === 'downloaded' ? (
-                                <>
-                                    <CheckCircle2 size={20} className="group-hover:hidden" />
-                                    <Trash2 size={20} className="hidden group-hover:block" />
-                                </>
-                            ) : (
-                                <Download size={20} />
-                            )}
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
-    );
-
-    if (dueWords.length === 0) {
+    if (dueWords.length === 0 && !sessionComplete) {
         return (
-            <main className="min-h-screen p-4 flex flex-col items-center justify-center">
-                <EmptyState
-                    title="All Caught Up!"
-                    description="No words are due for review right now. Nice work!"
-                    icon={Ghost}
-                    actionLabel="Return to Menu"
-                    onAction={handleExit}
-                >
-                    {filterControls}
-                </EmptyState>
-            </main>
+            <Card className="p-8 text-center">
+                <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Check size={32} className="text-emerald-400" />
+                </div>
+                <h2 className="text-2xl font-bold text-white mb-2">All Caught Up!</h2>
+                <p className="text-slate-400 mb-6">You have no words due for review right now.</p>
+                <Button onClick={() => window.location.reload()}>Return Home</Button>
+            </Card>
         );
     }
 
     if (sessionComplete) {
         return (
-            <main className="min-h-screen p-4 flex flex-col items-center justify-center">
-                <SuccessState
-                    title="Session Complete!"
-                    description={`You reviewed ${dueWords.length} words.`}
-                    actionLabel="Return to Menu"
-                    onAction={handleExit}
-                >
-                    {sessionReward && (
-                        <div className="flex gap-4 mt-6 justify-center">
-                            <div className="px-6 py-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl text-center">
-                                <p className="text-xs uppercase text-indigo-200 tracking-wider">XP</p>
-                                <p className="text-3xl font-black text-indigo-300">+{sessionReward.xp}</p>
-                            </div>
-                            <div className="px-6 py-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl text-center">
-                                <p className="text-xs uppercase text-amber-200 tracking-wider">Coins</p>
-                                <p className="text-3xl font-black text-amber-300">+{sessionReward.coins}</p>
-                            </div>
-                        </div>
-                    )}
-                </SuccessState>
-            </main>
+            <Card className="p-8 text-center max-w-md mx-auto mt-10">
+                <Trophy size={48} className="text-yellow-400 mx-auto mb-4" />
+                <h2 className="text-3xl font-bold text-white mb-2">Session Complete!</h2>
+                <p className="text-slate-400 mb-6">You reviewed {dueWords.length} words.</p>
+                <div className="flex justify-center gap-4">
+                    <Button onClick={() => window.location.reload()} variant="ghost">Home</Button>
+                    <Button onClick={() => {
+                        setSessionComplete(false);
+                        const newWords = getDueWords(20);
+                        setDueWords(newWords);
+                        setCurrentIndex(0);
+                    }}>Review More</Button>
+                </div>
+            </Card>
         );
     }
 
-    const currentWord = dueWords[currentIndex];
-    const metaTooltip = currentWord ? `Lvl ${currentWord.level} • Last seen ${formatRelativeTime(currentWord.lastSeen || currentWord.lastPracticed)}` : '';
-
     return (
-        <main
-            className="flex flex-col items-center justify-center min-h-screen text-white p-4"
-            onKeyDown={handleKeyDown}
-            tabIndex={-1}
-            ref={containerRef}
-            role="main"
-            aria-label="Study session flashcards"
-        >
-            <div className="mb-4 text-gray-400" aria-live="polite">
-                Word {currentIndex + 1} of {dueWords.length}
-            </div>
-
-            {filterControls}
-
-            {/* Flashcard - 3D Container */}
-            <div
-                id="flashcard-container"
-                onClick={handleCardClick}
-                className="relative w-full max-w-md h-64 group perspective-1000 cursor-pointer focus:outline-none focus-visible:ring-4 focus-visible:ring-indigo-500 rounded-2xl"
-                title={metaTooltip}
-                role="button"
-                tabIndex={0}
-                aria-pressed={isFlipped}
-                aria-label={isFlipped ? 'Hide translation' : 'Reveal translation'}
-            >
-                <div className={`
-                    w-full h-full relative transform-style-preserve-3d transition-transform duration-700
-                    ${isFlipped ? 'rotate-y-180' : ''}
-                `}>
-                    {/* Front Face */}
-                    <div className="absolute w-full h-full glass-panel flex flex-col items-center justify-center backface-hidden border-t border-white/10 bg-gradient-to-br from-slate-800/80 to-slate-900/80">
-                        <h2 className="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-b from-indigo-300 to-indigo-500 mb-2 drop-shadow-lg">
-                            {currentWord.french}
-                        </h2>
-                        <button
-                            className="mt-3 flex items-center gap-2 text-sm text-indigo-200 bg-indigo-500/10 border border-indigo-500/20 px-4 py-2 rounded-full hover:bg-indigo-500/20 transition-colors"
-                            onClick={(e) => { e.stopPropagation(); playWordAudio(currentWord); }}
+        <div className="max-w-4xl mx-auto p-4 space-y-6">
+            <header className="flex justify-between items-center">
+                <div>
+                    <h1 className="text-2xl font-bold text-white">Study Session</h1>
+                    <p className="text-slate-400 text-sm">Reviewing {dueWords.length} words</p>
+                </div>
+                <div className="flex gap-2">
+                    {downloadStatus !== 'disabled' && (
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={handleDownload}
+                            disabled={downloadStatus === 'downloading' || downloadStatus === 'ready'}
                         >
-                            <Volume2 size={18} /> Écouter
-                        </button>
-                        <p className="text-xs text-indigo-400 uppercase tracking-[0.2em] mt-4 font-semibold">
-                            French
-                        </p>
-                        <p className="text-xs text-slate-500 mt-2 animate-pulse">
-                            (Click to reveal)
-                        </p>
-                    </div>
-
-                    {/* Back Face */}
-                    <div className="absolute w-full h-full glass-panel flex flex-col items-center justify-center backface-hidden rotate-y-180 border-t border-white/10 bg-gradient-to-br from-indigo-900/80 to-purple-900/80">
-                        <h2 className="text-5xl font-black text-white mb-2 drop-shadow-xl">
-                            {currentWord.english}
-                        </h2>
-                        <p className="text-sm text-indigo-200 italic mb-2">{currentWord.ipa}</p>
-                        <p className="text-center text-slate-200 px-6 text-base">
-                            {currentWord.example?.french}
-                            <span className="block text-slate-400 text-sm mt-1">{currentWord.example?.english}</span>
-                        </p>
-                        <p className="text-xs text-pink-300 uppercase tracking-[0.2em] mt-4 font-semibold">
-                            English
-                        </p>
-                    </div>
+                            {downloadStatus === 'downloading' ? 'Downloading...' : downloadStatus === 'ready' ? 'Ready Offline' : 'Download Audio'}
+                            <Download size={16} className="ml-2" />
+                        </Button>
+                    )}
                 </div>
+            </header>
+
+            {/* Progress Bar */}
+            <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                <motion.div
+                    className="h-full bg-indigo-500"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${((currentIndex) / dueWords.length) * 100}%` }}
+                />
             </div>
 
-            <div className="flex flex-wrap gap-3 mt-4 text-sm text-slate-400 justify-center">
-                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Mastery Lvl {currentWord.level}</span>
-                <span className="px-3 py-1 rounded-full bg-white/5 border border-white/10">Last seen: {formatRelativeTime(currentWord.lastSeen || currentWord.lastPracticed)}</span>
+            {/* Flashcard Area */}
+            <div className="min-h-[400px] flex items-center justify-center">
+                <FlashcardMode
+                    words={dueWords}
+                    currentIndex={currentIndex}
+                    onNext={handleNext}
+                    onFlip={() => setIsFlipped(true)}
+                    isFlipped={isFlipped}
+                />
             </div>
-
-            {/* Controls */}
-            {isFlipped && (
-                <div className="flex flex-wrap gap-4 mt-8 animate-fade-in justify-center">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); handleResult('again'); }}
-                        className="px-8 py-4 bg-red-600 rounded-xl font-bold hover:bg-red-500 transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-red-300"
-                        aria-label="Mark again. Shortcut Left Arrow"
-                    >
-                        Again
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); handleResult('hard'); }}
-                        className="px-6 py-4 bg-amber-600 rounded-xl font-bold hover:bg-amber-500 transition-colors shadow-lg min-w-[120px]"
-                    >
-                        Hard
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); handleResult('good'); }}
-                        className="px-8 py-4 bg-green-600 rounded-xl font-bold hover:bg-green-500 transition-colors shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-green-300"
-                        aria-label="Mark good. Shortcut Right Arrow"
-                    >
-                        Good
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); handleResult('easy'); }}
-                        className="px-6 py-4 bg-blue-600 rounded-xl font-bold hover:bg-blue-500 transition-colors shadow-lg min-w-[120px]"
-                    >
-                        Easy
-                    </button>
-                </div>
-            )}
-
-            <button
-                onClick={handleExit}
-                className="mt-12 text-gray-500 hover:text-white underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded"
-                aria-label="Exit study mode"
-            >
-                Exit Study Mode
-            </button>
-        </main>
+        </div>
     );
 };
 

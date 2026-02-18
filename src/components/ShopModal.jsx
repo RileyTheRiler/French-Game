@@ -1,21 +1,14 @@
-<<<<<<< HEAD
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShoppingBag, Zap, Shield, Sparkles, Clock, Palette } from 'lucide-react';
+import { X, ShoppingBag, Zap, Shield, Sparkles, Clock, Lightbulb, Clock3 } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { Button } from './ui/Button';
 import SoundManager from '../utils/SoundManager';
 import { getDailyShopSelection } from '../utils/market';
-=======
-import React from 'react';
-import { motion } from 'framer-motion';
-import { X, ShoppingBag, Zap, Shield, Sparkles, Lightbulb, Clock3 } from 'lucide-react'; // Shield for Streak Freeze
-import { useProgress } from '../context/ProgressContext';
-import { Button } from './ui/Button';
-import SoundManager from '../utils/SoundManager';
 
-const ITEMS = [
+// Fallback items if market API fails or for static list
+const STATIC_ITEMS = [
     {
         id: 'streak_freeze',
         name: 'Streak Freeze',
@@ -38,8 +31,7 @@ const ITEMS = [
         description: 'Earn 2x XP for the next 15 minutes.',
         price: 100,
         icon: <Zap className="text-yellow-400" size={32} />,
-        color: 'bg-yellow-500/10 border-yellow-500/30',
-        disabled: false
+        color: 'bg-yellow-500/10 border-yellow-500/30'
     },
     {
         id: 'xp_boost_30',
@@ -47,8 +39,7 @@ const ITEMS = [
         description: 'Boost XP gains for the next 30 minutes.',
         price: 160,
         icon: <Clock3 className="text-indigo-300" size={32} />,
-        color: 'bg-indigo-500/10 border-indigo-500/30',
-        disabled: false
+        color: 'bg-indigo-500/10 border-indigo-500/30'
     },
     {
         id: 'theme_neon',
@@ -60,7 +51,6 @@ const ITEMS = [
         disabled: true
     }
 ];
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const ShopModal = ({ onClose }) => {
     const { t, i18n } = useTranslation();
@@ -71,6 +61,11 @@ const ShopModal = ({ onClose }) => {
     useEffect(() => {
         const today = new Date().toDateString();
         const selection = getDailyShopSelection(today);
+
+        // Merge static items into selection if needed or use as fallback
+        if (selection.consumables.length === 0) {
+            selection.consumables = STATIC_ITEMS.filter(i => !i.disabled);
+        }
         setShopData(selection);
     }, []);
 
@@ -86,16 +81,11 @@ const ShopModal = ({ onClose }) => {
 
         const success = buyItem(item);
         if (success) {
-<<<<<<< HEAD
-            if (item.effect?.type === 'add_streak_freeze') {
-                // Instant effect handled by context or just inventory
-=======
             // Activate Double XP immediately upon purchase
             if (item.id === 'double_xp') {
                 activateDoubleXP(15);
             } else if (item.id === 'xp_boost_30') {
                 activateDoubleXP(30);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
             }
             SoundManager.playSuccess();
         } else {
