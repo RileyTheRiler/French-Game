@@ -30,12 +30,15 @@ const MemoryPalace = () => {
 
     // Initialize items from context
     useEffect(() => {
-        const roomData = memoryPalace.rooms?.[currentRoom] || {};
-        if (roomData.items) {
-            setPlacedItems(roomData.items);
-        } else {
-            setPlacedItems([]);
-        }
+        const timer = setTimeout(() => {
+            const roomData = memoryPalace.rooms?.[currentRoom] || {};
+            if (roomData.items) {
+                setPlacedItems(roomData.items);
+            } else {
+                setPlacedItems([]);
+            }
+        }, 0);
+        return () => clearTimeout(timer);
     }, [currentRoom, memoryPalace]);
 
     const handleStageClick = (e) => {

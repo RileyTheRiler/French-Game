@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, Save, Trash2, Edit3, Share2,
-    Book, List, CheckSquare, Sparkles, ChevronRight, X, Play
+    Book, List, CheckSquare, Sparkles, ChevronRight, X, Play, Volume2
 } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { Badge } from './ui/Badge';
@@ -188,16 +188,16 @@ const LessonCreator = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)}>
+                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)} aria-label="Delete lesson">
                                     <Trash2 size={16} className="text-slate-600 hover:text-red-400" />
                                 </Button>
                                 <Button variant="secondary" size="icon" onClick={() => {
                                     setCurrentLesson(lesson);
                                     setStep(lesson.type === 'deck' ? 'create_deck' : 'create_quiz');
-                                }}>
+                                }} aria-label="Edit lesson">
                                     <Edit3 size={16} />
                                 </Button>
-                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)}>
+                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)} aria-label="Start lesson">
                                     <Play size={16} fill="currentColor" />
                                 </Button>
                             </div>
@@ -230,6 +230,7 @@ const LessonCreator = () => {
                                 value={currentLesson.title}
                                 onChange={(e) => setCurrentLesson(prev => ({ ...prev, title: e.target.value }))}
                                 placeholder="e.g., French Food Quiz"
+                                aria-label="Quiz Title"
                                 className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-white outline-none"
                             />
                         </div>
@@ -241,6 +242,7 @@ const LessonCreator = () => {
                                 value={newQuizItem.question}
                                 onChange={(e) => setNewQuizItem(prev => ({ ...prev, question: e.target.value }))}
                                 placeholder="What is 'The Sun' in French?"
+                                aria-label="Question"
                                 className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-white mb-4 outline-none"
                             />
 
@@ -256,10 +258,12 @@ const LessonCreator = () => {
                                                 setNewQuizItem(prev => ({ ...prev, options: newOpts }));
                                             }}
                                             placeholder={`Option ${idx + 1}`}
+                                            aria-label={`Option ${idx + 1}`}
                                             className={`w-full bg-slate-950/50 border rounded-xl px-4 py-3 text-white outline-none ${newQuizItem.correctAnswer === opt && opt !== '' ? 'border-emerald-500' : 'border-white/10'}`}
                                         />
                                         <button
                                             onClick={() => setNewQuizItem(prev => ({ ...prev, correctAnswer: opt }))}
+                                            aria-pressed={newQuizItem.correctAnswer === opt && opt !== ''}
                                             className={`absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded text-[10px] font-black uppercase ${newQuizItem.correctAnswer === opt && opt !== '' ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-500'}`}
                                         >
                                             Correct
@@ -290,7 +294,7 @@ const LessonCreator = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400">
+                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400" aria-label="Remove question">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -329,6 +333,7 @@ const LessonCreator = () => {
                                 value={currentLesson.title}
                                 onChange={(e) => setCurrentLesson(prev => ({ ...prev, title: e.target.value }))}
                                 placeholder="e.g., My Grocery Trip"
+                                aria-label="Lesson Title"
                                 className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                             />
                         </div>
@@ -341,6 +346,7 @@ const LessonCreator = () => {
                                     value={newWord.french}
                                     onChange={(e) => setNewWord(prev => ({ ...prev, french: e.target.value }))}
                                     placeholder="Le fromage"
+                                    aria-label="French word"
                                     className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                                 />
                             </div>
@@ -351,6 +357,7 @@ const LessonCreator = () => {
                                     value={newWord.english}
                                     onChange={(e) => setNewWord(prev => ({ ...prev, english: e.target.value }))}
                                     placeholder="The cheese"
+                                    aria-label="English translation"
                                     className="w-full bg-slate-950/50 border border-white/10 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
                                 />
                             </div>
@@ -378,7 +385,7 @@ const LessonCreator = () => {
                                     <span className="text-indigo-400">→</span>
                                     <span className="text-slate-400 italic">{item.english}</span>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all" aria-label="Remove word">
                                     <X size={18} />
                                 </button>
                             </motion.div>

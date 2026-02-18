@@ -2,8 +2,7 @@ import React, { memo, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { formatRelativeTime } from '../../utils/time';
 
-<<<<<<< HEAD
-const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }) => {
+const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8, mastery, lastSeen }) => {
     // Only show hint after hintDelay seconds have passed since spawn
     const [showHint, setShowHint] = useState(false);
 
@@ -13,7 +12,7 @@ const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }
             return;
         }
 
-        const elapsed = Date.now() - spawnTime;
+        const elapsed = performance.now() - spawnTime;
         const remainingDelay = Math.max(0, (hintDelay * 1000) - elapsed);
 
         if (remainingDelay === 0) {
@@ -28,10 +27,8 @@ const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }
         return () => clearTimeout(timer);
     }, [hint, spawnTime, hintDelay]);
 
-=======
-const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
     const tooltip = `Lvl ${mastery || 1} • Last seen ${formatRelativeTime(lastSeen)}`;
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+
     return (
         <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
@@ -72,4 +69,3 @@ const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
 });
 
 export default WordItem;
-

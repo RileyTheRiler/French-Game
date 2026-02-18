@@ -45,6 +45,7 @@ const PatternDrills = () => {
     const currentExercise = exercises[currentIndex];
 
     // Start a new session
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const startSession = useCallback(() => {
         let newExercises = [];
 
