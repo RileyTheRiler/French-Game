@@ -3,6 +3,8 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import StudySession from './StudySession';
 import { VocabularyContext } from '../../context/VocabularyContext';
+import { ProgressContext } from '../../context/ProgressContext';
+import { ToastContext } from '../../context/ToastContext';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mocks
@@ -19,9 +21,21 @@ vi.mock('../../utils/InteractionEffects', () => ({
     triggerConfetti: vi.fn(),
 }));
 
+const mockProgress = {
+    addXP: vi.fn(),
+    addCoins: vi.fn(),
+    updateDailyStat: vi.fn(),
+    stats: { dailyStats: {} }
+};
+
+const mockToast = {
+    showToast: vi.fn()
+};
+
 const mockVocabulary = {
     getDueWords: vi.fn(),
     updateWordProgress: vi.fn(),
+    markWordSeen: vi.fn(),
     vocabulary: [
         { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1', category: 'Greetings' },
         { id: '2', french: 'Chat', english: 'Cat', cefr: 'A1', category: 'Animals' }
@@ -33,11 +47,15 @@ const mockVocabulary = {
 
 const renderWithContext = (ui) => {
     return render(
-        <VocabularyContext.Provider value={mockVocabulary}>
-            <MemoryRouter>
-                {ui}
-            </MemoryRouter>
-        </VocabularyContext.Provider>
+        <ProgressContext.Provider value={mockProgress}>
+            <VocabularyContext.Provider value={mockVocabulary}>
+                <ToastContext.Provider value={mockToast}>
+                    <MemoryRouter>
+                        {ui}
+                    </MemoryRouter>
+                </ToastContext.Provider>
+            </VocabularyContext.Provider>
+        </ProgressContext.Provider>
     );
 };
 

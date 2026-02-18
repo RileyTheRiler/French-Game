@@ -216,7 +216,7 @@ const FallingWordsGame = () => {
         recognitionRef.current.onend = () => setIsShadowing(false);
     }, []);
 
-    const startGame = () => {
+    const startGame = useCallback(() => {
         isPlayingRef.current = true;
 
         // Prepare Ghost Data if mode is active
@@ -240,7 +240,7 @@ const FallingWordsGame = () => {
         }
 
         requestRef.current = requestAnimationFrame(gameLoop);
-    };
+    }, []); // Removed gameLoop from dependency to avoid cycle, it uses refs
 
     useEffect(() => {
         difficultyRef.current = difficulty;
@@ -575,7 +575,7 @@ const FallingWordsGame = () => {
         playWordAudio(targetWord, { preferCache: true, offlineOnly: offlineAudio });
     };
 
-    const restartGame = () => {
+    const restartGame = useCallback(() => {
         setScore(0);
         setGhostScore(0);
         setOpponentScore(0);
@@ -597,7 +597,7 @@ const FallingWordsGame = () => {
         setRenderedWords([]);
 
         startGame();
-    };
+    }, [startGame]);
 
     useEffect(() => {
         if (gameOver) {

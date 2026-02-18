@@ -6,7 +6,7 @@ import { calculateNextReview, getInitialState, isPassingGrade, normalizeGrade } 
 import { speak, cacheVocabularyAudio } from '../utils/audio';
 import { buildPracticeQueue } from '../utils/practiceQueue';
 
-const VocabularyContext = createContext();
+export const VocabularyContext = createContext();
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const ensureSrsState = (state) => {
