@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
@@ -20,7 +20,8 @@ const ClozeGame = () => {
     const [questionCount, setQuestionCount] = useState(0);
     const MAX_QUESTIONS = 5;
 
-    const loadNextPuzzle = () => {
+    // Define loadNextPuzzle first using useCallback to be available for useEffect
+    const loadNextPuzzle = useCallback(() => {
         const newPuzzle = generateCloze(1); // Default to level 1 for now
         if (newPuzzle) {
             setPuzzle(newPuzzle);
@@ -30,12 +31,15 @@ const ClozeGame = () => {
             // Fallback or error state if generator fails
             setStatus('finished');
         }
-    };
+    }, []);
 
     useEffect(() => {
-        loadNextPuzzle();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+        // Use timeout to avoid synchronous setState warning if it happens immediately
+        const timer = setTimeout(() => {
+            loadNextPuzzle();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [loadNextPuzzle]);
 
     const handleOptionClick = (option) => {
         if (status !== 'playing') return;

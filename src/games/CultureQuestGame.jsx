@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, BookOpen, CheckCircle } from 'lucide-react';
@@ -16,12 +16,17 @@ const CultureQuestGame = () => {
     const { addXP } = useProgress();
 
     // Game State
+    // Use lazy initializer for initial state to avoid potential issues during render
     const [questions, setQuestions] = useState(() => getCultureSession());
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
     const [isAnswered, setIsAnswered] = useState(false);
     const [gameComplete, setGameComplete] = useState(false);
+
+    // No need for effect if using lazy initialization, but if we need to refresh on mount:
+    // useEffect(() => { setQuestions(getCultureSession()); }, []);
+    // ^ Avoiding this to be safe against double-invocation in strict mode and synchronous set warnings.
 
     const currentQuestion = questions[currentIndex];
 

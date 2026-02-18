@@ -22,10 +22,11 @@ const MemoryMatchGame = () => {
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
+
+    // Fixed difficulty for now, could be dynamic
+    const pairCount = 6;
 
     const startNewGame = () => {
-        const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
         // Create pairs (French and English)
@@ -144,7 +145,7 @@ const MemoryMatchGame = () => {
                 </div>
 
                 {/* Grid */}
-                <div className={`grid gap-4 w-full max-w-2xl ${difficulty === 'hard' ? 'grid-cols-4' : 'grid-cols-3 md:grid-cols-4'}`}>
+                <div className={`grid gap-4 w-full max-w-2xl grid-cols-3 md:grid-cols-4`}>
                     {cards.map(card => {
                         const isFlipped = flipped.includes(card.id) || solved.includes(card.id);
                         const isSolved = solved.includes(card.id);

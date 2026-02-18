@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Wand2, Plus, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ArrowLeft, Wand2 } from 'lucide-react';
 import { useVocabulary } from '../context/VocabularyContext';
 import { analyzeText } from '../utils/textAnalysis';
 import WordDetailModal from '../components/SmartImport/WordDetailModal';
@@ -35,7 +35,6 @@ const SmartImport = () => {
     const handleSaveWord = (wordData) => {
         addCustomWord(wordData);
         // Re-analyze to update status
-        // We need to wait a tick for state update (or ideally pass the new word directly to analyze, but this is simple enough)
         setTimeout(() => {
             const tokens = analyzeText(inputText, [...vocabulary, wordData]); // Optimistic update for re-render
             setAnalyzedTokens(tokens);
