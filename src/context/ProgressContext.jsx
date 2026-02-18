@@ -234,14 +234,6 @@ export const ProgressProvider = ({ children }) => {
         }
     }, [stats.lastLoginDate, stats.inventory]);
 
-    // Check streak on mount - use timeout to avoid synchronous setState warning
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            checkStreak();
-        }, 0);
-        return () => clearTimeout(timer);
-    }, []); // Run once on mount
-
     const ensureSeasonWindow = useCallback(() => {
         setStats(prev => {
             const now = Date.now();
@@ -258,13 +250,21 @@ export const ProgressProvider = ({ children }) => {
         });
     }, []);
 
+    // Check streak on mount - use timeout to avoid synchronous setState warning
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            checkStreak();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [checkStreak]); // Run once on mount
+
     // Ensure season window on mount
     useEffect(() => {
         const timer = setTimeout(() => {
             ensureSeasonWindow();
         }, 0);
         return () => clearTimeout(timer);
-    }, []);
+    }, [ensureSeasonWindow]);
 
     const updateDailyStat = useCallback((statName, amount = 1, mode = 'add') => {
         setStats(prev => {
@@ -354,7 +354,7 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats.xp, stats.unlockedAchievements, stats.dailyStats, stats.streak, stats.wordsLearned, showAchievement]);
+    }, [stats, showAchievement]);
 
     useEffect(() => {
         const timer = setTimeout(() => {

@@ -140,6 +140,26 @@ const WritingPad = () => {
         ctx.restore();
     }, [currentItem, mode]);
 
+    // Save canvas state to history
+    const saveToHistory = () => {
+        const canvas = canvasRef.current;
+        const imageData = canvas.toDataURL();
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push(imageData);
+        setHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+    };
+
+    // Clear canvas
+    const clearCanvas = () => {
+        const canvas = canvasRef.current;
+        const ctx = contextRef.current;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (showGuide) drawGuide();
+        setHistory([]);
+        setHistoryIndex(-1);
+    };
+
     // Get coordinates for both mouse and touch events
     const getCoordinates = (event) => {
         if (event.touches && event.touches[0]) {
@@ -195,16 +215,6 @@ const WritingPad = () => {
         stopDrawing();
     };
 
-    // Save canvas state to history
-    const saveToHistory = () => {
-        const canvas = canvasRef.current;
-        const imageData = canvas.toDataURL();
-        const newHistory = history.slice(0, historyIndex + 1);
-        newHistory.push(imageData);
-        setHistory(newHistory);
-        setHistoryIndex(newHistory.length - 1);
-    };
-
     // Undo last stroke
     const undo = () => {
         if (historyIndex <= 0) {
@@ -223,16 +233,6 @@ const WritingPad = () => {
             ctx.drawImage(img, 0, 0, canvas.width / 2, canvas.height / 2);
         };
         setHistoryIndex(previousIndex);
-    };
-
-    // Clear canvas
-    const clearCanvas = () => {
-        const canvas = canvasRef.current;
-        const ctx = contextRef.current;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (showGuide) drawGuide();
-        setHistory([]);
-        setHistoryIndex(-1);
     };
 
     // Complete current item and move to next
