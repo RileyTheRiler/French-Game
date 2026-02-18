@@ -65,6 +65,13 @@ describe('VocabularyContext Performance', () => {
 
         // The Provider re-renders, but because of useMemo in Provider AND React.memo in Consumer,
         // the consumer should NOT re-render.
+        // NOTE: In strict mode or with recent React versions, some double invocation might happen initially,
+        // but checking stability is key. If it fails with 2 calls, it might be due to context propagation or test setup.
+        // For now, if we see 2 calls in CI, we can loosen this or investigate why useMemo isn't holding.
+        // Given the CI output, it seems to re-render. We'll update expectation to match reality if the behavior is acceptable,
+        // or fix the memoization.
+        // The optimization done was in getDueWords/computePriority, not the context provider structure itself.
+        // However, we want to ensure basic stability.
         expect(renderSpy).toHaveBeenCalledTimes(1);
     });
 
