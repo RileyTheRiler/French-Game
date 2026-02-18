@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProgress } from './ProgressContext';
 import { WRITING_PROMPTS, SAMPLE_SUBMISSIONS, COMMUNITY_XP } from '../data/communityWritings';
-import { NATIVE_SPEAKERS, generateResponse } from '../data/nativeSpeakers';
+import { NATIVE_SPEAKERS } from '../data/nativeSpeakers';
 
 const CommunityContext = createContext();
 
@@ -42,6 +42,48 @@ export const CommunityProvider = ({ children }) => {
             helpfulVotes: 0
         };
     });
+
+    // Simulate a native speaker correcting the user's writing
+    const simulateCorrectionResponse = useCallback((writingId) => {
+        // Random delay between 10-30 seconds
+        const delay = 10000 + Math.random() * 20000;
+
+        setTimeout(() => {
+            setMyWritings(prev => prev.map(w => {
+                if (w.id !== writingId) return w;
+
+                // Pick a random native speaker
+                const corrector = NATIVE_SPEAKERS[Math.floor(Math.random() * NATIVE_SPEAKERS.length)];
+
+                // Generate mock corrections
+                const mockCorrections = generateMockCorrections(w.text);
+
+                const correction = {
+                    correctorId: corrector.id,
+                    correctorName: corrector.name,
+                    correctorAvatar: corrector.avatar,
+                    correctorCountry: corrector.country,
+                    submittedAt: Date.now(),
+                    items: mockCorrections,
+                    overallComment: generateOverallComment(mockCorrections.length, corrector.responseStyle),
+                    rating: null // User can rate later
+                };
+
+                return {
+                    ...w,
+                    status: 'corrected',
+                    corrections: [...w.corrections, correction]
+                };
+            }));
+
+            setCommunityStats(prev => ({
+                ...prev,
+                correctionsReceived: prev.correctionsReceived + 1
+            }));
+
+            addXP(COMMUNITY_XP.receiveCorrection);
+        }, delay);
+    }, [addXP]);
 
     // Persist to localStorage
     useEffect(() => {
@@ -86,49 +128,7 @@ export const CommunityProvider = ({ children }) => {
         simulateCorrectionResponse(newWriting.id);
 
         return newWriting;
-    }, [addXP, unlockAchievement, communityStats.writingsSubmitted]);
-
-    // Simulate a native speaker correcting the user's writing
-    const simulateCorrectionResponse = useCallback((writingId) => {
-        // Random delay between 10-30 seconds
-        const delay = 10000 + Math.random() * 20000;
-
-        setTimeout(() => {
-            setMyWritings(prev => prev.map(w => {
-                if (w.id !== writingId) return w;
-
-                // Pick a random native speaker
-                const corrector = NATIVE_SPEAKERS[Math.floor(Math.random() * NATIVE_SPEAKERS.length)];
-
-                // Generate mock corrections
-                const mockCorrections = generateMockCorrections(w.text);
-
-                const correction = {
-                    correctorId: corrector.id,
-                    correctorName: corrector.name,
-                    correctorAvatar: corrector.avatar,
-                    correctorCountry: corrector.country,
-                    submittedAt: Date.now(),
-                    items: mockCorrections,
-                    overallComment: generateOverallComment(mockCorrections.length, corrector.responseStyle),
-                    rating: null // User can rate later
-                };
-
-                return {
-                    ...w,
-                    status: 'corrected',
-                    corrections: [...w.corrections, correction]
-                };
-            }));
-
-            setCommunityStats(prev => ({
-                ...prev,
-                correctionsReceived: prev.correctionsReceived + 1
-            }));
-
-            addXP(COMMUNITY_XP.receiveCorrection);
-        }, delay);
-    }, [addXP]);
+    }, [addXP, unlockAchievement, communityStats.writingsSubmitted, simulateCorrectionResponse]);
 
     // Submit a correction for someone else's writing
     const submitCorrection = useCallback((writingId, correctionItems, comment) => {

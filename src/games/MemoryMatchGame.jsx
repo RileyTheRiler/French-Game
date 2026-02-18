@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Trophy, RotateCcw, Sparkles } from 'lucide-react';
+import { Trophy, RotateCcw, Sparkles } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -22,15 +22,11 @@ const MemoryMatchGame = () => {
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
+    // Fixed difficulty for now, could be dynamic
+    const pairCount = 6;
 
     const startNewGame = () => {
-        const pairCount = difficulty === 'hard' ? 8 : 6;
         const words = getWeightedPracticeWords(pairCount);
 
         // Create pairs (French and English)
@@ -61,22 +57,11 @@ const MemoryMatchGame = () => {
         setDisabled(false);
     };
 
-    const handleClick = (id) => {
-        if (disabled || gameComplete) return;
-        if (flipped.includes(id) || solved.includes(id)) return;
-
-        if (flipped.length === 0) {
-            setFlipped([id]);
-            const card = cards.find(c => c.id === id);
-            if (card.type === 'french') speak(card.content);
-            SoundManager.playClick();
-        } else {
-            setFlipped(prev => [...prev, id]);
-            setDisabled(true);
-            setTurns(t => t + 1);
-            checkForMatch(id);
-        }
-    };
+    // Initialize Game
+    useEffect(() => {
+        startNewGame();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const checkForMatch = (currentId) => {
         const firstId = flipped[0];
@@ -100,12 +85,22 @@ const MemoryMatchGame = () => {
         }
     };
 
-    // Check Win Condition
-    useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
+    const handleClick = (id) => {
+        if (disabled || gameComplete) return;
+        if (flipped.includes(id) || solved.includes(id)) return;
+
+        if (flipped.length === 0) {
+            setFlipped([id]);
+            const card = cards.find(c => c.id === id);
+            if (card.type === 'french') speak(card.content);
+            SoundManager.playClick();
+        } else {
+            setFlipped(prev => [...prev, id]);
+            setDisabled(true);
+            setTurns(t => t + 1);
+            checkForMatch(id);
         }
-    }, [solved]);
+    };
 
     const handleWin = () => {
         setGameComplete(true);
@@ -120,6 +115,14 @@ const MemoryMatchGame = () => {
         // Let's give nice XP.
         addXP(30);
     };
+
+    // Check Win Condition
+    useEffect(() => {
+        if (cards.length > 0 && solved.length === cards.length) {
+            handleWin();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [solved]);
 
     return (
         <GameLayout
@@ -142,7 +145,7 @@ const MemoryMatchGame = () => {
                 </div>
 
                 {/* Grid */}
-                <div className={`grid gap-4 w-full max-w-2xl ${difficulty === 'hard' ? 'grid-cols-4' : 'grid-cols-3 md:grid-cols-4'}`}>
+                <div className={`grid gap-4 w-full max-w-2xl grid-cols-3 md:grid-cols-4`}>
                     {cards.map(card => {
                         const isFlipped = flipped.includes(card.id) || solved.includes(card.id);
                         const isSolved = solved.includes(card.id);

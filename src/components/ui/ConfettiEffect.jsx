@@ -1,19 +1,5 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-
-// Confetti particle component
-const Particle = ({ style, color }) => (
-    <div
-        className="absolute pointer-events-none"
-        style={{
-            ...style,
-            backgroundColor: color,
-            width: '10px',
-            height: '10px',
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-        }}
-    />
-);
 
 // Main confetti effect component
 const ConfettiEffect = ({
@@ -43,6 +29,7 @@ const ConfettiEffect = ({
             scale: 0.5 + Math.random() * 1,
             delay: Math.random() * 500,
             duration: 2000 + Math.random() * 1000,
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px' // Pre-calculate
         }));
 
         setParticles(newParticles);
@@ -78,7 +65,7 @@ const ConfettiEffect = ({
                         className="w-3 h-3"
                         style={{
                             backgroundColor: particle.color,
-                            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                            borderRadius: particle.borderRadius,
                             transform: `scale(${particle.scale})`,
                         }}
                     />
@@ -94,17 +81,17 @@ export const useConfetti = () => {
     const [isActive, setIsActive] = useState(false);
     const [config, setConfig] = useState({});
 
-    const triggerConfetti = useCallback((options = {}) => {
+    const triggerConfetti = React.useCallback((options = {}) => {
         setConfig(options);
         setIsActive(true);
     }, []);
 
-    const handleComplete = useCallback(() => {
+    const handleComplete = React.useCallback(() => {
         setIsActive(false);
         setConfig({});
     }, []);
 
-    const ConfettiComponent = useCallback(() => (
+    const ConfettiComponent = React.useCallback(() => (
         <ConfettiEffect
             active={isActive}
             onComplete={handleComplete}
