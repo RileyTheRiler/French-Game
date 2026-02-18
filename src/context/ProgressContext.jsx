@@ -922,10 +922,6 @@ export const ProgressProvider = ({ children }) => {
     const updateCognitiveState = useCallback((updates) => {
         setStats(prev => ({
             ...prev,
-            cognitiveStats: {
-                ...prev.cognitiveStats,
-                ...updates
-            },
             cognitiveStats: { ...prev.cognitiveStats, ...updates },
             updatedAt: Date.now()
         }));
@@ -934,10 +930,6 @@ export const ProgressProvider = ({ children }) => {
     const logDreamGoal = useCallback((goalId) => {
         setStats(prev => ({
             ...prev,
-            dreamGoals: {
-                ...prev.dreamGoals,
-                [goalId]: Date.now()
-            },
             dreamGoals: { ...prev.dreamGoals, [goalId]: Date.now() },
             updatedAt: Date.now()
         }));
