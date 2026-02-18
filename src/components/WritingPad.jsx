@@ -140,6 +140,22 @@ const WritingPad = () => {
         ctx.restore();
     }, [currentItem, mode]);
 
+    // Get coordinates for both mouse and touch events
+    const getCoordinates = (event) => {
+        if (event.touches && event.touches[0]) {
+            const canvas = canvasRef.current;
+            const rect = canvas.getBoundingClientRect();
+            return {
+                offsetX: event.touches[0].clientX - rect.left,
+                offsetY: event.touches[0].clientY - rect.top,
+            };
+        }
+        return {
+            offsetX: event.offsetX,
+            offsetY: event.offsetY,
+        };
+    };
+
     // Drawing handlers
     const startDrawing = ({ nativeEvent }) => {
         const { offsetX, offsetY } = getCoordinates(nativeEvent);
@@ -161,22 +177,6 @@ const WritingPad = () => {
             setIsDrawing(false);
             saveToHistory();
         }
-    };
-
-    // Get coordinates for both mouse and touch events
-    const getCoordinates = (event) => {
-        if (event.touches && event.touches[0]) {
-            const canvas = canvasRef.current;
-            const rect = canvas.getBoundingClientRect();
-            return {
-                offsetX: event.touches[0].clientX - rect.left,
-                offsetY: event.touches[0].clientY - rect.top,
-            };
-        }
-        return {
-            offsetX: event.offsetX,
-            offsetY: event.offsetY,
-        };
     };
 
     // Touch event handlers

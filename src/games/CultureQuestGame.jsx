@@ -24,7 +24,10 @@ const CultureQuestGame = () => {
     const [gameComplete, setGameComplete] = useState(false);
 
     useEffect(() => {
-        setQuestions(getCultureSession());
+        const timer = setTimeout(() => {
+            setQuestions(getCultureSession());
+        }, 0);
+        return () => clearTimeout(timer);
     }, []);
 
     const currentQuestion = questions[currentIndex];
@@ -43,16 +46,6 @@ const CultureQuestGame = () => {
         }
     };
 
-    const handleNext = () => {
-        if (currentIndex < questions.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-            setIsAnswered(false);
-            setSelectedOption(null);
-        } else {
-            finishGame();
-        }
-    };
-
     const finishGame = () => {
         setGameComplete(true);
         const xpEarned = score * 15; // 15 XP per correct answer
@@ -60,6 +53,16 @@ const CultureQuestGame = () => {
         if (score > questions.length / 2) {
             SoundManager.playLevelUp();
             confetti();
+        }
+    };
+
+    const handleNext = () => {
+        if (currentIndex < questions.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+            setIsAnswered(false);
+            setSelectedOption(null);
+        } else {
+            finishGame();
         }
     };
 

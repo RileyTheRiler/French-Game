@@ -25,12 +25,6 @@ export const LearningPathProvider = ({ children }) => {
     const { stats, categoryStats, dailyStats, errorPatterns, weakWords, getWeeklySummary } = useProgress();
     const { vocabulary, getDueWords, getWeightedPracticeWords } = useVocabulary();
 
-    // Skill profile computed from user data
-    const [skillProfile, setSkillProfile] = useState(null);
-
-    // Learning style detected from behavior
-    const [learningStyle, setLearningStyle] = useState({ primary: 'balanced', scores: {} });
-
     // Current difficulty adjustment
     const [difficultyParams, setDifficultyParams] = useState({
         multiplier: 1.0,
@@ -38,12 +32,6 @@ export const LearningPathProvider = ({ children }) => {
         hintsEnabled: true,
         encouragementLevel: 'normal'
     });
-
-    // AI-generated insights
-    const [insights, setInsights] = useState([]);
-
-    // Personalized content queue
-    const [contentQueue, setContentQueue] = useState([]);
 
     // Behavior tracking for learning style detection
     const [behaviorData, setBehaviorData] = useState(() => {
@@ -57,42 +45,50 @@ export const LearningPathProvider = ({ children }) => {
         };
     });
 
+    // Queue refresh trigger
+    const [queueRefreshIndex, setQueueRefreshIndex] = useState(0);
+
     // Save behavior data
     useEffect(() => {
         localStorage.setItem('frenchApp_behavior', JSON.stringify(behaviorData));
     }, [behaviorData]);
 
-    // Recompute skill profile when relevant data changes
-    useEffect(() => {
-        if (vocabulary && vocabulary.length > 0) {
-            const progressData = {
-                categoryStats: categoryStats || {},
-                errorPatterns: errorPatterns || {},
-                dailyStats: dailyStats || {},
-                weakWords: weakWords || {}
-            };
+    // Skill profile computed from user data
+    const skillProfile = useMemo(() => {
+        if (!vocabulary || vocabulary.length === 0) return null;
 
-            const profile = computeSkillProfile(progressData, vocabulary);
-            setSkillProfile(profile);
-        }
+        const progressData = {
+            categoryStats: categoryStats || {},
+            errorPatterns: errorPatterns || {},
+            dailyStats: dailyStats || {},
+            weakWords: weakWords || {}
+        };
+
+        return computeSkillProfile(progressData, vocabulary);
     }, [vocabulary, categoryStats, dailyStats, errorPatterns, weakWords]);
 
-    // Generate insights when profile updates
-    useEffect(() => {
-        if (skillProfile) {
-            const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
-            const newInsights = generateInsights(weeklyData, skillProfile);
-            setInsights(newInsights);
-        }
+    // Learning style detected from behavior
+    const learningStyle = useMemo(() => {
+        return detectLearningStyle(behaviorData);
+    }, [behaviorData]);
+
+    // AI-generated insights
+    const insights = useMemo(() => {
+        if (!skillProfile) return [];
+        const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
+        return generateInsights(weeklyData, skillProfile);
     }, [skillProfile, getWeeklySummary]);
 
-    // Generate personalized queue when profile updates
-    useEffect(() => {
+    // Personalized content queue
+    const contentQueue = useMemo(() => {
         if (skillProfile && vocabulary && vocabulary.length > 0) {
-            const queue = getPersonalizedQueue(skillProfile, vocabulary, 30);
-            setContentQueue(queue);
+            // Use queueRefreshIndex to force re-computation
+            // eslint-disable-next-line no-unused-vars
+            const _ = queueRefreshIndex;
+            return getPersonalizedQueue(skillProfile, vocabulary, 30);
         }
-    }, [skillProfile, vocabulary]);
+        return [];
+    }, [skillProfile, vocabulary, queueRefreshIndex]);
 
     // Update difficulty based on recent session performance
     const updateDifficultyFromSession = useCallback((sessionStats) => {
@@ -109,12 +105,6 @@ export const LearningPathProvider = ({ children }) => {
         }));
     }, []);
 
-    // Update learning style based on behavior
-    useEffect(() => {
-        const style = detectLearningStyle(behaviorData);
-        setLearningStyle(style);
-    }, [behaviorData]);
-
     // Get the next batch of personalized content
     const getNextBatch = useCallback((batchSize = 10) => {
         if (contentQueue.length >= batchSize) {
@@ -126,11 +116,8 @@ export const LearningPathProvider = ({ children }) => {
 
     // Refresh the content queue
     const refreshQueue = useCallback(() => {
-        if (skillProfile && vocabulary && vocabulary.length > 0) {
-            const queue = getPersonalizedQueue(skillProfile, vocabulary, 30);
-            setContentQueue(queue);
-        }
-    }, [skillProfile, vocabulary]);
+        setQueueRefreshIndex(prev => prev + 1);
+    }, []);
 
     // Get focus categories (weak areas that need attention)
     const getFocusCategories = useCallback(() => {
