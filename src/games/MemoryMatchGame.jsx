@@ -59,7 +59,10 @@ const MemoryMatchGame = () => {
 
     // Initialize Game
     useEffect(() => {
-        startNewGame();
+        const t = setTimeout(() => {
+            startNewGame();
+        }, 0);
+        return () => clearTimeout(t);
     }, [startNewGame]);
 
     const checkForMatch = (currentId) => {

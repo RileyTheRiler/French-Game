@@ -3,6 +3,9 @@
 
 import { VERB_DATA, PRONOUNS, TENSES } from './verbData';
 
+// Re-export PRONOUNS for components
+export { PRONOUNS };
+
 // Noun-adjective agreement data
 export const AGREEMENT_RULES = [
     {
@@ -126,6 +129,11 @@ export function generateConjugationExercise(verbInfinitive = null, tense = null,
  * @returns {Object} Exercise data
  */
 export function generateAgreementExercise(difficulty = 25) {
+    // Unused difficulty param - could affect adjective complexity in future
+    // For now we just use the param to satisfy linter or ignore it
+    // eslint-disable-next-line no-unused-vars
+    const _unused = difficulty;
+
     const noun = NOUNS_FOR_AGREEMENT[Math.floor(Math.random() * NOUNS_FOR_AGREEMENT.length)];
     const adjective = ADJECTIVES[Math.floor(Math.random() * ADJECTIVES.length)];
 
@@ -161,6 +169,9 @@ export function generateAgreementExercise(difficulty = 25) {
  * @returns {Object} Exercise data
  */
 export function generatePatternCompletionExercise(difficulty = 25) {
+    // eslint-disable-next-line no-unused-vars
+    const _unused = difficulty;
+
     // Pick a regular -er or -ir verb
     const regularVerbs = VERB_DATA.filter(v => v.group === 1 || v.group === 2);
     const verb = regularVerbs[Math.floor(Math.random() * regularVerbs.length)];
@@ -241,4 +252,5 @@ export default {
     generateAgreementExercise,
     generatePatternCompletionExercise,
     generateDrillSession,
+    PRONOUNS
 };

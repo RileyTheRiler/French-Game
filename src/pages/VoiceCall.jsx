@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { SCENARIOS } from '../data/conversationScenarios';
 import CallScreen from '../components/VoiceCall/CallScreen';
@@ -25,14 +25,14 @@ const VoiceCall = () => {
 
     const currentNode = scenario.nodes[currentNodeId];
 
-    const startListeningPhase = React.useCallback(() => {
+    const startListeningPhase = useCallback(() => {
         setCallState('listening');
         setStatus('Listening...');
         resetTranscript();
         startListening();
     }, [resetTranscript, startListening]);
 
-    const handleSpeak = React.useCallback((text, onEnd) => {
+    const handleSpeak = useCallback((text, onEnd) => {
         setCallState('npc_speaking');
         setIsNpcSpeaking(true);
         setStatus('Speaking...');
@@ -46,7 +46,7 @@ const VoiceCall = () => {
         }, duration);
     }, []);
 
-    const handleProcessInput = React.useCallback((input) => {
+    const handleProcessInput = useCallback((input) => {
         stopListening();
         setCallState('processing');
         setStatus('Processing...');

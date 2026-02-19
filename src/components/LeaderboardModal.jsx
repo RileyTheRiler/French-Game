@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { X, Trophy, Medal, Crown, Flame, Globe, TrendingUp } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useSocial } from '../context/SocialContext';
@@ -104,7 +104,6 @@ const LeaderboardModal = ({ onClose }) => {
         .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
 
     // Calculate user's league info
-    // Assuming getWeeklySummary is imported or available from data/leagues
     const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
     const userWeeklyXP = weeklyData.reduce((sum, day) => sum + (day.xp || 0), 0);
     const userLeague = getLeagueByXP(userWeeklyXP);
