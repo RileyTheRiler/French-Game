@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StudySession from './StudySession';
 import { VocabularyContext } from '../../context/VocabularyContext';
+import { ProgressContext } from '../../context/ProgressContext';
+import { ToastContext } from '../../context/ToastContext';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mocks
@@ -27,16 +29,38 @@ const mockVocabulary = {
     ],
     playWordAudio: vi.fn(),
     preloadAudioForWords: vi.fn(),
-    CATEGORIES: { 'Greetings': { name: 'Greetings' }, 'Animals': { name: 'Animals' } }
+    CATEGORIES: { 'Greetings': { name: 'Greetings' }, 'Animals': { name: 'Animals' } },
+    markWordSeen: vi.fn()
+};
+
+const mockProgress = {
+    addXP: vi.fn(),
+    addCoins: vi.fn(),
+    updateDailyStat: vi.fn(),
+    stats: {
+        difficultySettings: {
+            flashcards: 2
+        }
+    },
+    setModeDifficulty: vi.fn(),
+    logWordAttempt: vi.fn()
+};
+
+const mockToast = {
+    showToast: vi.fn()
 };
 
 const renderWithContext = (ui) => {
     return render(
-        <VocabularyContext.Provider value={mockVocabulary}>
-            <MemoryRouter>
-                {ui}
-            </MemoryRouter>
-        </VocabularyContext.Provider>
+        <ProgressContext.Provider value={mockProgress}>
+            <VocabularyContext.Provider value={mockVocabulary}>
+                <ToastContext.Provider value={mockToast}>
+                    <MemoryRouter>
+                        {ui}
+                    </MemoryRouter>
+                </ToastContext.Provider>
+            </VocabularyContext.Provider>
+        </ProgressContext.Provider>
     );
 };
 
@@ -59,9 +83,6 @@ describe('StudySession', () => {
         renderWithContext(<StudySession />);
 
         expect(screen.getByText('Bonjour')).toBeInTheDocument();
-        // English should be "hidden" (technically rendered but on the back face)
-        // Testing visibility in jsdom with 3d transforms is tricky, 
-        // passing check that it exists in the document is a start.
         expect(screen.getByText('Hello')).toBeInTheDocument();
         expect(screen.getByText('French')).toBeInTheDocument();
     });
