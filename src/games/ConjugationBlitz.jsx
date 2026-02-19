@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, Zap, Trophy, RotateCcw, ArrowRight, X } from 'lucide-react';
@@ -8,7 +8,6 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import SoundManager from '../utils/SoundManager';
 import { VERB_DATA, PRONOUNS, TENSES } from '../data/verbData';
-import confetti from 'canvas-confetti';
 
 const ConjugationBlitz = () => {
     const navigate = useNavigate();
@@ -32,13 +31,6 @@ const ConjugationBlitz = () => {
         const tense = TENSES[Math.floor(Math.random() * TENSES.length)];
         const pronoun = PRONOUNS[Math.floor(Math.random() * PRONOUNS.length)];
 
-        // Handle special case for 'je' before vowel/mute h? (j'aime)
-        // For simplicity in data, we stored full "je ..." or "j'..."? 
-        // Wait, data stored just "aime". Code needs to handle pronoun display?
-        // Actually, let's look at my data structure.
-        // Data: { present: { je: 'aime' ... } }
-        // So I need to construct the prompt carefully.
-
         return {
             verb,
             tense,
@@ -46,6 +38,45 @@ const ConjugationBlitz = () => {
             answer: verb.conjugations[tense.id][pronoun]
         };
     };
+
+    // Keep endGame stable
+    const endGame = useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp();
+
+        // Use functional state updates where possible or Refs, but here score is in closure?
+        // Actually, useCallback captures score at time of creation.
+        // If we want latest score we should pass it or use Ref.
+        // But since we call endGame() from inside SetInterval...
+        // Let's use a score Ref to track score for final calculation without re-creating endGame every tick?
+        // Or better: just calculate XP based on current score in state when rendering or use a separate effect.
+        // But let's just make endGame have score dependency.
+
+        // Wait, if endGame has score dependency, it changes on every score update.
+        // The interval closure uses OLD endGame.
+        // So we need to use a Ref for score inside endGame, or make endGame a ref...
+        // EASIEST FIX: Don't use score inside endGame for logic other than XP.
+        // But addXP needs score.
+    }, []);
+
+    // We need latest score for XP calculation.
+    // Let's use a ref for score.
+    const scoreRef = useRef(score);
+    useEffect(() => { scoreRef.current = score; }, [score]);
+
+    const handleEndGameLogic = () => {
+        const finalScore = scoreRef.current;
+        const baseXP = finalScore * 2;
+        addXP(baseXP);
+    };
+
+    // Effect to trigger XP reward when status changes to finished?
+    useEffect(() => {
+        if (status === 'finished') {
+            handleEndGameLogic();
+        }
+    }, [status]);
 
     const startGame = () => {
         setScore(0);
@@ -76,17 +107,7 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
-
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
+    }, [status, endGame]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -111,27 +132,17 @@ const ConjugationBlitz = () => {
             setScore(s => s + 1);
             setStreak(prev => {
                 const newStreak = prev + 1;
-                if (newStreak % 5 === 0) SoundManager.playLevelUp(); // Mini milestone sound?
+                if (newStreak % 5 === 0) SoundManager.playLevelUp();
                 return newStreak;
             });
-            // Add slight time bonus?
-            setTimeLeft(t => Math.min(t + 2, 60)); // +2 seconds cap at 60
+            // Add slight time bonus
+            setTimeLeft(t => Math.min(t + 2, 60));
         } else {
             SoundManager.playMiss();
             setStreak(0);
-            // Shake effect handled by UI state potentially, but for speed we just move on
         }
 
         loadNextChallenge();
-    };
-
-    // Formatting helper
-    const formatPronoun = (pronoun, verbResponse) => {
-        // Simple logic for J' vs Je
-        // This is purely for display relative to the verb if we wanted to show them together
-        // But the prompt shows Pronoun separately usually.
-        // Let's just display the Pronoun string from the array for now.
-        return pronoun;
     };
 
     return (
@@ -173,7 +184,7 @@ const ConjugationBlitz = () => {
 
                         {/* Card */}
                         <motion.div
-                            key={currentChallenge.verb.infinitive + currentChallenge.pronoun} // Forced re-render anime
+                            key={currentChallenge.verb.infinitive + currentChallenge.pronoun}
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             className="w-full"

@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useProgress } from './ProgressContext';
 
-const SocialContext = createContext();
+const SocialContext = React.createContext();
 
 const MOCK_NPCS = {
     'PIERRE': { id: 'npc_pierre', name: 'PolyglotPierre', level: 12, country: '🇫🇷', isNPC: true, avatar: '👨‍🎨' },
@@ -36,14 +36,15 @@ export const SocialProvider = ({ children }) => {
         return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
     });
 
-    const [activeChallenge, setActiveChallenge] = useState({
+    // Use lazy initialization for activeChallenge to avoid impure Date.now() call during render
+    const [activeChallenge, setActiveChallenge] = useState(() => ({
         id: 'chal_weekly_xp',
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
-    });
+    }));
 
     // Compute total current progress
     useEffect(() => {

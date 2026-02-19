@@ -1,33 +1,25 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Volume2, Volume1, ArrowRight, RefreshCw, Check, X, AlertCircle } from 'lucide-react';
+import { Mic, Volume2, CheckCircle, XCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
-import { GameLayout } from '../components/layout/GameLayout';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import SoundManager from '../utils/SoundManager';
 import { DICTATION_SENTENCES } from '../data/dictationSentences';
-import confetti from 'canvas-confetti';
+import { GameLayout } from '../components/layout/GameLayout';
+import { Button } from '../components/ui/Button';
+import { Card } from '../components/ui/Card';
+import useSpeechRecognition from '../hooks/useSpeechRecognition';
+import { compareText } from '../utils/textMatching';
 
 const DictationGame = () => {
-    const navigate = useNavigate();
-    const { addXP } = useProgress();
-
+    const { addXP, addCoins } = useProgress();
     const [currentSentence, setCurrentSentence] = useState(null);
     const [userInput, setUserInput] = useState('');
-    const [status, setStatus] = useState('playing'); // playing, checking, success, error
+    const [status, setStatus] = useState('playing'); // playing, checking, correct, incorrect
     const [diff, setDiff] = useState(null);
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
-    // Filter useful accents for the toolbar
-    const ACCENTS = ['é', 'è', 'ê', 'ë', 'à', 'â', 'ç', 'î', 'ï', 'ô', 'ù', 'û'];
+    const { startListening, stopListening, isListening, transcript } = useSpeechRecognition();
 
-    useEffect(() => {
-        loadNewSentence();
-    }, []);
-
-    const loadNewSentence = () => {
+    const loadNewSentence = useCallback(() => {
         // Simple random selection for now
         const randomSentence = DICTATION_SENTENCES[Math.floor(Math.random() * DICTATION_SENTENCES.length)];
         setCurrentSentence(randomSentence);
@@ -36,20 +28,22 @@ const DictationGame = () => {
         setDiff(null);
         // Clean speech synthesis queue
         window.speechSynthesis.cancel();
-    };
+    }, []);
+
+    useEffect(() => {
+        const t = setTimeout(() => {
+            loadNewSentence();
+        }, 0);
+        return () => clearTimeout(t);
+    }, [loadNewSentence]);
 
     const playAudio = (rate = 1.0) => {
         if (!currentSentence || isPlayingAudio) return;
 
         setIsPlayingAudio(true);
-        const utterance = new SpeechSynthesisUtterance(currentSentence.text);
+        const utterance = new SpeechSynthesisUtterance(currentSentence.french);
         utterance.lang = 'fr-FR';
-        utterance.rate = rate; // 1.0 is normal, 0.7 is slow
-
-        // Try to get a decent french voice
-        const voices = window.speechSynthesis.getVoices();
-        const frenchVoice = voices.find(v => v.lang.includes('fr')) || voices[0];
-        if (frenchVoice) utterance.voice = frenchVoice;
+        utterance.rate = rate;
 
         utterance.onend = () => setIsPlayingAudio(false);
         utterance.onerror = () => setIsPlayingAudio(false);
@@ -57,203 +51,165 @@ const DictationGame = () => {
         window.speechSynthesis.speak(utterance);
     };
 
-    // Ensure voices are loaded (chrome weirdness)
-    useEffect(() => {
-        window.speechSynthesis.getVoices();
-    }, []);
-
-    const checkAnswer = () => {
+    const handleCheck = () => {
         if (!userInput.trim()) return;
 
-        const normalizedInput = userInput.trim(); // Keep case sensitivity for strict dictation? Or lenient?
-        // Let's go with strict on accents/spelling, maybe lenient on end punctuation if we want to be nice.
-        // For "Dictation", strict is usually better.
+        const result = compareText(userInput, currentSentence.french);
+        setDiff(result.diff);
 
-        if (normalizedInput === currentSentence.text) {
-            handleSuccess();
+        if (result.isMatch) {
+            setStatus('correct');
+            addXP(20);
+            addCoins(5);
+            // Play success sound
         } else {
-            handleError(normalizedInput);
+            setStatus('incorrect');
         }
     };
 
-    const handleSuccess = () => {
-        setStatus('success');
-        SoundManager.playSuccess();
-        addXP(15);
-        confetti({
-            particleCount: 80,
-            spread: 70,
-            origin: { y: 0.6 }
-        });
-    };
-
-    const handleError = (input) => {
-        setStatus('error');
-        SoundManager.playMiss();
-
-        // Simple word-by-word diff calculation for display
-        const targetWords = currentSentence.text.split(' ');
-        const inputWords = input.split(' ');
-
-        // This is a naive visual diff, but helpful enough
-        // Ideally we'd use a diff library, but let's build a simple visualizer
-        setDiff({ target: targetWords, input: inputWords });
-    };
-
-    const insertAccent = (char) => {
-        setUserInput(prev => prev + char);
-        // Focus back on input (optional, might need ref)
-    };
+    // Effect to handle transcript updates
+    useEffect(() => {
+        if (transcript) {
+            const t = setTimeout(() => {
+                setUserInput(transcript);
+            }, 0);
+            return () => clearTimeout(t);
+        }
+    }, [transcript]);
 
     return (
         <GameLayout
             title="La Dictée"
-            subtitle="Listen carefully and write exactly what you hear."
-            onBack={() => navigate('/')}
+            subtitle="Listen and write exactly what you hear"
+            onExit={() => {}}
         >
-            <div className="max-w-2xl mx-auto flex flex-col items-center gap-8 min-h-[60vh]">
+            <div className="max-w-2xl mx-auto w-full flex flex-col gap-6">
 
                 {/* Audio Controls */}
-                <Card className="w-full p-8 flex flex-col items-center justify-center gap-6 bg-slate-800/50 backdrop-blur">
+                <Card className="p-8 flex flex-col items-center gap-6 bg-indigo-900/20 border-indigo-500/30">
                     <div className="flex gap-4">
                         <Button
+                            size="lg"
                             onClick={() => playAudio(1.0)}
                             disabled={isPlayingAudio}
-                            className="h-24 w-24 rounded-full flex items-center justify-center bg-indigo-600 hover:bg-indigo-500 shadow-lg shadow-indigo-500/25 transition-all hover:scale-105 active:scale-95"
+                            className="h-24 w-24 rounded-full"
                         >
-                            <Volume2 size={40} className={isPlayingAudio ? "animate-pulse" : ""} />
+                            <Volume2 size={48} />
                         </Button>
-
                         <Button
-                            onClick={() => playAudio(0.6)}
-                            disabled={isPlayingAudio}
+                            size="icon"
                             variant="secondary"
-                            className="h-24 w-24 rounded-full flex flex-col items-center justify-center gap-1 bg-slate-700 hover:bg-slate-600 border-2 border-slate-600"
+                            onClick={() => playAudio(0.7)}
+                            disabled={isPlayingAudio}
+                            title="Slow Speed"
+                            className="absolute top-4 right-4"
                         >
-                            <Volume1 size={32} />
-                            <span className="text-xs font-bold uppercase tracking-wider">Slow</span>
+                            <ClockIcon size={20} />
                         </Button>
                     </div>
-                    <p className="text-slate-400 text-sm">Click the large button for normal speed, small for slow.</p>
+                    <p className="text-slate-400 text-sm">Click to listen. Type what you hear.</p>
                 </Card>
 
                 {/* Input Area */}
-                <div className="w-full space-y-4">
-                    <div className="relative">
-                        <textarea
-                            value={userInput}
-                            onChange={(e) => setUserInput(e.target.value)}
-                            placeholder="Type what you hear..."
-                            disabled={status === 'success'}
-                            className={`
-                                w-full p-6 text-2xl bg-slate-900/80 border-2 rounded-2xl outline-none transition-all resize-none min-h-[160px] font-medium
-                                ${status === 'error' ? 'border-red-500/50 shadow-[0_0_20px_rgba(239,68,68,0.2)]' : 'border-slate-700 focus:border-indigo-500 focus:shadow-[0_0_20px_rgba(99,102,241,0.2)]'}
-                                ${status === 'success' ? 'border-green-500/50 text-green-400' : 'text-white'}
-                            `}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    checkAnswer();
-                                }
-                            }}
-                        />
-
-                        {/* Status Icon Overlay */}
-                        <AnimatePresence>
-                            {status === 'success' && (
-                                <motion.div
-                                    initial={{ scale: 0, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    className="absolute top-4 right-4 bg-green-500 rounded-full p-2 text-white shadow-lg"
-                                >
-                                    <Check size={24} strokeWidth={3} />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
+                <div className="relative">
+                    <textarea
+                        value={userInput}
+                        onChange={(e) => setUserInput(e.target.value)}
+                        placeholder="Écrivez ici..."
+                        className="w-full h-32 bg-slate-800/50 border-2 border-slate-700 rounded-2xl p-4 text-xl text-white focus:border-indigo-500 focus:outline-none resize-none transition-colors"
+                        disabled={status !== 'playing'}
+                    />
+                    <div className="absolute bottom-4 right-4 flex gap-2">
+                        <Button
+                            size="icon"
+                            variant={isListening ? 'danger' : 'secondary'}
+                            onClick={isListening ? stopListening : startListening}
+                            className="rounded-full"
+                        >
+                            <Mic className={isListening ? 'animate-pulse' : ''} />
+                        </Button>
                     </div>
-
-                    {/* Accent Toolbar */}
-                    {status !== 'success' && (
-                        <div className="flex flex-wrap gap-2 justify-center">
-                            {ACCENTS.map(char => (
-                                <button
-                                    key={char}
-                                    onClick={() => insertAccent(char)}
-                                    className="h-10 w-10 bg-slate-700 hover:bg-slate-600 active:bg-slate-800 rounded-lg text-lg font-medium text-white transition-colors"
-                                >
-                                    {char}
-                                </button>
-                            ))}
-                        </div>
-                    )}
                 </div>
 
                 {/* Feedback Area */}
                 <AnimatePresence mode="wait">
-                    {status === 'error' && diff && (
+                    {status === 'correct' && (
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            className="w-full"
+                            className="p-4 bg-emerald-500/20 border border-emerald-500/50 rounded-xl flex items-center gap-3"
                         >
-                            <Card className="bg-red-500/10 border-red-500/20 p-6 flex items-start gap-4">
-                                <AlertCircle className="text-red-400 shrink-0 mt-1" />
-                                <div className="space-y-2">
-                                    <p className="text-red-200 font-medium">Not quite right. Compare your answer:</p>
-                                    <div className="text-lg">
-                                        <div className="text-slate-400 mb-1 text-sm uppercase tracking-wide">Target:</div>
-                                        <p className="text-green-400 font-medium">{currentSentence.text}</p>
-                                    </div>
-                                    <div className="text-lg">
-                                        <div className="text-slate-400 mb-1 text-sm uppercase tracking-wide">Your Input:</div>
-                                        <p className="text-red-400 line-through decoration-red-500/50 decoration-2">{userInput}</p>
-                                    </div>
-                                </div>
-                            </Card>
+                            <CheckCircle className="text-emerald-400" />
+                            <div>
+                                <p className="font-bold text-emerald-100">Parfait !</p>
+                                <p className="text-sm text-emerald-200">{currentSentence.translation}</p>
+                            </div>
+                            <Button className="ml-auto" onClick={loadNewSentence}>Next</Button>
                         </motion.div>
                     )}
 
-                    {status === 'success' && (
+                    {status === 'incorrect' && (
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="w-full"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="p-4 bg-red-500/20 border border-red-500/50 rounded-xl"
                         >
-                            <Card className="bg-green-500/10 border-green-500/20 p-6 text-center">
-                                <h3 className="text-2xl font-bold text-green-400 mb-2">Parfait!</h3>
-                                <p className="text-green-200/80">{currentSentence.translation}</p>
-                                <div className="mt-4 pt-4 border-t border-green-500/20 text-sm text-green-300/60 font-mono">
-                                    Grammar Focus: {currentSentence.grammar}
-                                </div>
-                            </Card>
+                            <div className="flex items-center gap-3 mb-2">
+                                <XCircle className="text-red-400" />
+                                <p className="font-bold text-red-100">Pas tout à fait...</p>
+                            </div>
+
+                            {/* Diff Display would go here */}
+                            <div className="p-3 bg-black/30 rounded-lg font-mono text-lg mb-4">
+                                {diff && diff.map((part, i) => (
+                                    <span
+                                        key={i}
+                                        className={part.added ? 'bg-red-500/50' : part.removed ? 'bg-emerald-500/50' : ''}
+                                    >
+                                        {part.value}
+                                    </span>
+                                ))}
+                            </div>
+
+                            <div className="flex justify-end gap-2">
+                                <Button variant="ghost" onClick={() => setStatus('playing')}>Try Again</Button>
+                                <Button onClick={loadNewSentence}>Skip</Button>
+                            </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* Actions */}
-                <div className="w-full flex justify-end">
-                    {status === 'playing' ? (
-                        <Button onClick={checkAnswer} className="w-full md:w-auto text-lg px-8 py-6">
-                            Check Answer
-                        </Button>
-                    ) : (
-                        <Button
-                            onClick={loadNewSentence}
-                            className={`w-full md:w-auto text-lg px-8 py-6 ${status === 'success' ? 'bg-green-600 hover:bg-green-500' : 'bg-slate-700 hover:bg-slate-600'}`}
-                        >
-                            {status === 'success' ? (
-                                <>Next Sentence <ArrowRight className="ml-2" /></>
-                            ) : (
-                                <>Try Another <RefreshCw className="ml-2" /></>
-                            )}
-                        </Button>
-                    )}
-                </div>
-
+                {status === 'playing' && (
+                    <Button
+                        size="lg"
+                        className="w-full"
+                        onClick={handleCheck}
+                        disabled={!userInput.trim()}
+                    >
+                        Vérifier
+                    </Button>
+                )}
             </div>
         </GameLayout>
     );
 };
+
+const ClockIcon = ({ size, className }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+    >
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+    </svg>
+);
 
 export default DictationGame;

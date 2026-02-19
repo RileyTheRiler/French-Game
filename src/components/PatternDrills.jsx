@@ -13,13 +13,11 @@ import { useProgress } from '../context/ProgressContext';
 import { getDifficultyConfig } from './ui/DifficultyDial';
 import {
     DRILL_TYPES,
-    PRONOUNS,
     generateConjugationExercise,
     generateAgreementExercise,
     generatePatternCompletionExercise,
     generateDrillSession,
 } from '../data/patternDrillsData';
-import { TENSES } from '../data/verbData';
 
 const PatternDrills = () => {
     const navigate = useNavigate();
@@ -66,7 +64,7 @@ const PatternDrills = () => {
         setCorrectCount(0);
         setSessionStarted(true);
         setSessionComplete(false);
-    }, [drillType]);
+    }, [drillType, globalDifficulty]);
 
     // Handle conjugation table answer
     const handleConjugationInput = (pronoun, value) => {

@@ -107,3 +107,36 @@ export const findBestMatch = (input, options) => {
 
     return null;
 };
+
+/**
+ * Compare input text with target text for detailed feedback (diff)
+ * @param {string} input - User input
+ * @param {string} target - Correct text
+ * @returns {object} { isMatch: boolean, diff: Array }
+ */
+export const compareText = (input, target) => {
+    const normalizedInput = normalizeText(input);
+    const normalizedTarget = normalizeText(target);
+    const isMatch = normalizedInput === normalizedTarget;
+
+    const inputWords = input.trim().split(/\s+/);
+    const targetWords = target.trim().split(/\s+/);
+    const diff = [];
+
+    // Simple word-by-word diff (positional)
+    const maxLength = Math.max(inputWords.length, targetWords.length);
+    for (let i = 0; i < maxLength; i++) {
+        const inp = inputWords[i] || "";
+        const tgt = targetWords[i] || "";
+
+        if (normalizeText(inp) === normalizeText(tgt)) {
+            diff.push({ value: tgt + " ", added: false, removed: false });
+        } else {
+            // Very naive diff: if mismatch, show correct word as removed (missing) and input word as added (wrong)
+            if (tgt) diff.push({ value: tgt + " ", removed: true });
+            if (inp) diff.push({ value: inp + " ", added: true });
+        }
+    }
+
+    return { isMatch, diff };
+};
