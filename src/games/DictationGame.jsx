@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, Volume2, CheckCircle, XCircle, RotateCcw, Play, HelpCircle } from 'lucide-react';
+import { Mic, Volume2, CheckCircle, XCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
-import { useTranslation } from 'react-i18next';
 import { DICTATION_SENTENCES } from '../data/dictationSentences';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Button } from '../components/ui/Button';
@@ -11,7 +10,6 @@ import useSpeechRecognition from '../hooks/useSpeechRecognition';
 import { compareText } from '../utils/textMatching';
 
 const DictationGame = () => {
-    const { t } = useTranslation();
     const { addXP, addCoins } = useProgress();
     const [currentSentence, setCurrentSentence] = useState(null);
     const [userInput, setUserInput] = useState('');
@@ -19,9 +17,9 @@ const DictationGame = () => {
     const [diff, setDiff] = useState(null);
     const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
-    const { startListening, stopListening, isListening, transcript, resetTranscript } = useSpeechRecognition();
+    const { startListening, stopListening, isListening, transcript } = useSpeechRecognition();
 
-    const loadNewSentence = () => {
+    const loadNewSentence = useCallback(() => {
         // Simple random selection for now
         const randomSentence = DICTATION_SENTENCES[Math.floor(Math.random() * DICTATION_SENTENCES.length)];
         setCurrentSentence(randomSentence);
@@ -30,11 +28,14 @@ const DictationGame = () => {
         setDiff(null);
         // Clean speech synthesis queue
         window.speechSynthesis.cancel();
-    };
+    }, []);
 
     useEffect(() => {
-        loadNewSentence();
-    }, []);
+        const t = setTimeout(() => {
+            loadNewSentence();
+        }, 0);
+        return () => clearTimeout(t);
+    }, [loadNewSentence]);
 
     const playAudio = (rate = 1.0) => {
         if (!currentSentence || isPlayingAudio) return;
@@ -66,13 +67,13 @@ const DictationGame = () => {
         }
     };
 
-    const handleTranscriptUpdate = (newTranscript) => {
-        setUserInput(newTranscript);
-    };
-
+    // Effect to handle transcript updates
     useEffect(() => {
         if (transcript) {
-            handleTranscriptUpdate(transcript);
+            const t = setTimeout(() => {
+                setUserInput(transcript);
+            }, 0);
+            return () => clearTimeout(t);
         }
     }, [transcript]);
 

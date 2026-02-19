@@ -20,7 +20,8 @@ const ErrorSpottingGame = () => {
     const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
     const MAX_QUESTIONS = 5;
 
-    const loadNextPuzzle = () => {
+    // Use useCallback to keep reference stable for useEffect
+    const loadNextPuzzle = React.useCallback(() => {
         const newPuzzle = generateErrorSpotting(1);
         if (newPuzzle) {
             setPuzzle(newPuzzle);
@@ -29,13 +30,13 @@ const ErrorSpottingGame = () => {
         } else {
             setStatus('finished');
         }
-    };
+    }, []);
 
     useEffect(() => {
         loadNextPuzzle();
-    }, []);
+    }, [loadNextPuzzle]);
 
-    const handleWordClick = (word, index) => {
+    const handleWordClick = (word) => {
         if (status !== 'playing') return;
 
         // Clean punctuation for comparison (simple check)
@@ -112,7 +113,7 @@ const ErrorSpottingGame = () => {
                                     layout
                                     whileHover={status === 'playing' ? { scale: 1.1, textShadow: "0 0 8px rgba(255,255,255,0.5)" } : {}}
                                     whileTap={status === 'playing' ? { scale: 0.95 } : {}}
-                                    onClick={() => handleWordClick(word, idx)}
+                                    onClick={() => handleWordClick(word)}
                                     disabled={status !== 'playing'}
                                     className={`
                                         rounded-lg px-2 py-1 transition-colors relative

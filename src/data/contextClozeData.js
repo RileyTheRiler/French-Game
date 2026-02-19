@@ -10,6 +10,22 @@ import { SCENARIOS } from './conversationScenarios';
 import { vocabularyList } from './vocabulary';
 
 /**
+ * Tokenize French text into word objects
+ */
+const tokenizeFrench = (text) => {
+    if (!text) return [];
+
+    // Handle contractions like J'ai, l'eau, c'est
+    const tokens = text
+        .toLowerCase()
+        .replace(/[.,!?;:"]/g, '')
+        .split(/\s+/)
+        .filter(t => t.length > 1);
+
+    return tokens.map(t => ({ french: t, english: '' }));
+};
+
+/**
  * Extract complete sentences from story content
  */
 const extractStorySentences = () => {
@@ -99,30 +115,14 @@ const extractConversationSentences = () => {
 };
 
 /**
- * Tokenize French text into word objects
- */
-const tokenizeFrench = (text) => {
-    if (!text) return [];
-
-    // Handle contractions like J'ai, l'eau, c'est
-    const tokens = text
-        .toLowerCase()
-        .replace(/[.,!?;:\"]/g, '')
-        .split(/\s+/)
-        .filter(t => t.length > 1);
-
-    return tokens.map(t => ({ french: t, english: '' }));
-};
-
-/**
  * Build index mapping vocabulary words to sentences containing them
  */
 const buildWordSentenceIndex = (sentences) => {
     const index = {};
 
-    sentences.forEach((sentence, sentenceIdx) => {
+    sentences.forEach((sentence) => {
         sentence.words.forEach(wordObj => {
-            const normalizedWord = wordObj.french.toLowerCase().replace(/['']/g, "'");
+            const normalizedWord = wordObj.french.toLowerCase().replace(/[']/g, "'");
 
             // Try to match against vocabulary
             vocabularyList.forEach(vocabWord => {

@@ -1,288 +1,191 @@
-import React, { createContext, useContext, useState, useEffect, useRef, Suspense, lazy } from 'react';
-import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
+import { ProgressProvider } from './context/ProgressContext';
 import { VocabularyProvider } from './context/VocabularyContext';
-import { ProgressProvider, useProgress } from './context/ProgressContext';
-import { SyncProvider } from './context/SyncContext';
 import { AuthProvider } from './context/AuthContext';
-import { SocialProvider } from './context/SocialContext';
 import { ToastProvider } from './context/ToastContext';
-import { LearningPathProvider } from './context/LearningPathContext';
-import { CommunityProvider } from './context/CommunityContext';
+import { SyncProvider } from './context/SyncContext';
+import { SocialProvider } from './context/SocialContext';
 import { MessagingProvider } from './context/MessagingContext';
+import { CommunityProvider } from './context/CommunityContext';
+import { LearningPathProvider } from './context/LearningPathContext';
 import { A11yProvider } from './context/A11yContext';
-import { Confetti } from './components/ui/Confetti';
-import { INTERACTION_EVENTS } from './utils/InteractionEffects';
 
-// Core components (not lazy loaded for instant startup)
+// Pages & Components
 import MainMenu from './components/MainMenu';
+import FallingWordsGame from './components/FallingWords/FallingWordsGame';
+import FlashcardMode from './components/FlashcardMode';
+import GrammarDrill from './components/GrammarDrill';
+import StoryMode from './components/StoryMode';
+import BranchingStoryMode from './components/BranchingStoryMode';
+import ListenRepeatLab from './components/ListenRepeatLab';
+import PronunciationCoach from './components/PronunciationCoach';
+import CulturalDeepDive from './components/CulturalDeepDive';
+import DailyMix from './components/DailyMix';
+import ConversationSimulator from './components/ConversationSimulator';
+import DictationGame from './games/DictationGame';
+import ClozeGame from './games/ClozeGame';
+import ErrorSpottingGame from './games/ErrorSpottingGame';
+import MemoryMatchGame from './games/MemoryMatchGame';
+import CultureQuestGame from './games/CultureQuestGame';
+import ConjugationBlitz from './games/ConjugationBlitz';
+import PatternDrills from './components/PatternDrills';
+import VoiceCall from './pages/VoiceCall';
+import SmartImport from './pages/SmartImport';
+import MasteryDashboard from './pages/MasteryDashboard';
+import LessonCreator from './components/LessonCreator';
+import ReadingRoom from './components/ReadingRoom';
+import PodcastMode from './components/PodcastMode';
+import SentenceBuilderGame from './games/SentenceBuilder/SentenceBuilderGame';
+import MediaCenter from './pages/MediaCenter';
+import DialectTours from './components/RealWorld/DialectTours';
+import SlangExplorer from './components/RealWorld/SlangExplorer';
+import ProfessionalSuite from './components/RealWorld/ProfessionalSuite';
+import Neighborhood from './components/Hub/Neighborhood';
+import PersonalizedDashboard from './components/PersonalizedDashboard/PersonalizedDashboard';
+import GrammarDeepDive from './components/GrammarDeepDive';
+import GrammarLessonView from './components/GrammarLessonView';
+import OnboardingChecklist from './components/OnboardingChecklist';
+import PlacementQuiz from './components/PlacementQuiz';
+import LearningProfileQuiz from './components/LearningProfileQuiz';
+import VisualStoryCards from './components/VisualStoryCards';
+import FocusSession from './components/FocusSession';
+import SRSReviewQueue from './components/SRSReviewQueue';
+import CustomDeckManager from './components/CustomDeckManager';
+import FreeFormChat from './components/FreeFormChat';
+import SurvivalChallenge from './components/CultureMastery/SurvivalChallenge';
+import ProsodyLab from './components/Pronunciation/ProsodyLab';
+import InstallPrompt from './components/InstallPrompt';
 import OfflineBanner from './components/OfflineBanner';
 import LoadingFallback from './components/LoadingFallback';
-import InstallPrompt from './components/InstallPrompt';
-import SkipLink from './components/a11y/SkipLink';
+import VideoImmersion from './components/VideoImmersion/VideoImmersion';
+import WritingPad from './components/WritingPad';
+import FocusModeSelector from './components/FocusModeSelector';
+import DailyGoalRing from './components/DailyGoalRing';
+import GoalSettingsModal from './components/GoalSettingsModal';
+import WeeklyGoalTracker from './components/WeeklyGoalTracker';
+import WeeklyRecapModal from './components/WeeklyRecapModal';
+import LeagueProgressWidget from './components/LeagueProgressWidget';
+import DailyChallengeWidget from './components/DailyChallengeWidget';
+import AchievementsModal from './components/AchievementsModal';
+import LeaderboardModal from './components/LeaderboardModal';
+import SettingsModal from './components/SettingsModal';
+import DictionaryModal from './components/DictionaryModal';
+import ShopModal from './components/ShopModal';
+import SocialModal from './components/SocialModal';
+import StatsModal from './components/StatsModal';
+import SmartBreakModal from './components/SmartBreakModal';
+import SuccessState from './components/ui/SuccessState';
+import Confetti from './components/ui/Confetti';
+import LoadingState from './components/ui/LoadingState';
+import EmptyState from './components/ui/EmptyState';
+import GrammarInsightCard from './components/ui/GrammarInsightCard';
+import DifficultyDial from './components/ui/DifficultyDial';
+import DifficultySlider from './components/ui/DifficultySlider';
+import MonitorFeedback from './components/ui/MonitorFeedback';
+import Badge from './components/ui/Badge';
+import Button from './components/ui/Button';
+import Card from './components/ui/Card';
 
-// Lazy-loaded game components
-const FlashcardMode = lazy(() => import('./components/FlashcardMode'));
-const StoryMode = lazy(() => import('./components/StoryMode'));
-const BranchingStoryMode = lazy(() => import('./components/BranchingStoryMode'));
-const ReadingRoom = lazy(() => import('./components/ReadingRoom'));
-const ListenRepeatLab = lazy(() => import('./components/ListenRepeatLab'));
-const CulturalDeepDive = lazy(() => import('./components/CulturalDeepDive'));
-const LessonCreator = lazy(() => import('./components/LessonCreator'));
-const FallingWordsGame = lazy(() => import('./components/FallingWords/FallingWordsGame'));
-const Neighborhood = lazy(() => import('./components/Hub/Neighborhood'));
-const ConversationSimulator = lazy(() => import('./components/ConversationSimulator'));
-const SentenceBuilderGame = lazy(() => import('./components/SentenceBuilder'));
-const StudySession = lazy(() => import('./components/Study/StudySession'));
-const DailyMix = lazy(() => import('./components/DailyMix'));
-const PronunciationCoach = lazy(() => import('./components/PronunciationCoach'));
-const GrammarDrill = lazy(() => import('./components/GrammarDrill'));
-const OnboardingChecklist = lazy(() => import('./components/OnboardingChecklist'));
-const PlacementQuiz = lazy(() => import('./components/PlacementQuiz'));
-const ClozeGame = lazy(() => import('./games/ClozeGame'));
-const ErrorSpottingGame = lazy(() => import('./games/ErrorSpottingGame'));
-const GrammarLessonView = lazy(() => import('./components/GrammarLessonView'));
-const GrammarDeepDive = lazy(() => import('./components/GrammarDeepDive'));
-const FreeFormChat = lazy(() => import('./components/FreeFormChat'));
-const PersonalizedDashboard = lazy(() => import('./components/PersonalizedDashboard'));
-const SRSReviewQueue = lazy(() => import('./components/SRSReviewQueue'));
-const DictationGame = lazy(() => import('./games/DictationGame'));
-const ConjugationBlitz = lazy(() => import('./games/ConjugationBlitz'));
-const MemoryMatchGame = lazy(() => import('./games/MemoryMatchGame'));
-const CultureQuestGame = lazy(() => import('./games/CultureQuestGame'));
-const VideoImmersion = lazy(() => import('./components/VideoImmersion'));
-const SmartImport = lazy(() => import('./pages/SmartImport'));
-const VoiceCall = lazy(() => import('./pages/VoiceCall'));
-const MasteryDashboard = lazy(() => import('./pages/MasteryDashboard'));
-const LearningProfileQuiz = lazy(() => import('./components/LearningProfileQuiz'));
-const CustomDeckManager = lazy(() => import('./components/CustomDeckManager'));
-const FocusModeSelector = lazy(() => import('./components/FocusModeSelector'));
-const FocusSession = lazy(() => import('./components/FocusSession'));
+const AnimatedRoutes = () => {
+    const location = useLocation();
 
-// Learning Modalities
-const PodcastMode = lazy(() => import('./components/PodcastMode'));
-const VisualStoryCards = lazy(() => import('./components/VisualStoryCards'));
-const WritingPad = lazy(() => import('./components/WritingPad'));
-const PatternDrills = lazy(() => import('./components/PatternDrills'));
-// Cultural Mastery
-const FranceMap = lazy(() => import('./components/CultureMastery/FranceMap'));
-const SurvivalChallenge = lazy(() => import('./components/CultureMastery/SurvivalChallenge'));
-const MediaCenter = lazy(() => import('./components/CultureMastery/MediaCenter'));
-
-// Real World Phase 11
-const SlangExplorer = lazy(() => import('./components/RealWorld/SlangExplorer'));
-const ProfessionalSuite = lazy(() => import('./components/RealWorld/ProfessionalSuite'));
-const DialectTours = lazy(() => import('./components/RealWorld/DialectTours'));
-
-// The AI Linguistic Coach Phase 10
-const ProsodyLab = lazy(() => import('./components/Pronunciation/ProsodyLab'));
-const GrammarTreeVisualizer = lazy(() => import('./components/GrammarTreeVisualizer'));
-
-const screenVariants = {
-  initial: { opacity: 0, scale: 0.98 },
-  animate: { opacity: 1, scale: 1, transition: { duration: 0.4, ease: "easeOut" } },
-  exit: { opacity: 0, scale: 1.02, transition: { duration: 0.3, ease: "easeIn" } }
+    return (
+        <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+                <Route path="/" element={<MainMenu />} />
+                <Route path="/falling-words" element={<FallingWordsGame />} />
+                <Route path="/flashcards" element={<FlashcardMode />} />
+                <Route path="/grammar" element={<GrammarDrill />} />
+                <Route path="/story" element={<StoryMode />} />
+                <Route path="/story-mode" element={<BranchingStoryMode />} />
+                <Route path="/listen-repeat" element={<ListenRepeatLab />} />
+                <Route path="/pronunciation" element={<PronunciationCoach />} />
+                <Route path="/culture" element={<CulturalDeepDive />} />
+                <Route path="/daily-mix" element={<DailyMix />} />
+                <Route path="/conversation" element={<ConversationSimulator />} />
+                <Route path="/dictation" element={<DictationGame />} />
+                <Route path="/cloze" element={<ClozeGame />} />
+                <Route path="/error-spotting" element={<ErrorSpottingGame />} />
+                <Route path="/memory-match" element={<MemoryMatchGame />} />
+                <Route path="/culture-quest" element={<CultureQuestGame />} />
+                <Route path="/conjugation-blitz" element={<ConjugationBlitz />} />
+                <Route path="/pattern-drills" element={<PatternDrills />} />
+                <Route path="/voice-call" element={<VoiceCall />} />
+                <Route path="/smart-import" element={<SmartImport />} />
+                <Route path="/mastery" element={<MasteryDashboard />} />
+                <Route path="/lesson-creator" element={<LessonCreator />} />
+                <Route path="/reading-room" element={<ReadingRoom />} />
+                <Route path="/podcast" element={<PodcastMode />} />
+                <Route path="/sentence-builder" element={<SentenceBuilderGame />} />
+                <Route path="/media-center" element={<MediaCenter />} />
+                <Route path="/dialects" element={<DialectTours />} />
+                <Route path="/slang" element={<SlangExplorer />} />
+                <Route path="/professional" element={<ProfessionalSuite />} />
+                <Route path="/neighborhood" element={<Neighborhood />} />
+                <Route path="/dashboard" element={<PersonalizedDashboard />} />
+                <Route path="/grammar-deep-dive" element={<GrammarDeepDive />} />
+                <Route path="/grammar-lesson/:topicId" element={<GrammarLessonView />} />
+                <Route path="/onboarding" element={<OnboardingChecklist />} />
+                <Route path="/placement" element={<PlacementQuiz />} />
+                <Route path="/learning-profile" element={<LearningProfileQuiz />} />
+                <Route path="/visual-stories" element={<VisualStoryCards />} />
+                <Route path="/focus-session" element={<FocusSession />} />
+                <Route path="/srs-review" element={<SRSReviewQueue />} />
+                <Route path="/custom-decks" element={<CustomDeckManager />} />
+                <Route path="/free-chat" element={<FreeFormChat />} />
+                <Route path="/survival" element={<SurvivalChallenge />} />
+                <Route path="/prosody" element={<ProsodyLab />} />
+                <Route path="/video-immersion" element={<VideoImmersion />} />
+                <Route path="/writing-pad" element={<WritingPad />} />
+            </Routes>
+        </AnimatePresence>
+    );
 };
 
-// Wrapper component for lazy-loaded routes with Suspense
-const LazyRoute = ({ children }) => (
-  <Suspense fallback={<LoadingFallback />}>
-    <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
-      {children}
-    </motion.div>
-  </Suspense>
-);
+const App = () => {
+    // Service Worker update handling
+    useEffect(() => {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                // Reload page if SW updates
+                // window.location.reload();
+                // Better UX: Show toast
+                console.log("New version available");
+            });
+        }
+    }, []);
 
-const AppRoutes = () => {
-  const location = useLocation();
-  const { stats } = useProgress();
-  const confettiRef = useRef(null);
-
-  useEffect(() => {
-    const handleConfetti = (e) => {
-      confettiRef.current?.fire(e.detail);
-    };
-    window.addEventListener(INTERACTION_EVENTS.CONFETTI, handleConfetti);
-    return () => window.removeEventListener(INTERACTION_EVENTS.CONFETTI, handleConfetti);
-  }, []);
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-50 overflow-hidden">
-      <SkipLink />
-      <OfflineBanner />
-      <InstallPrompt />
-      <Confetti ref={confettiRef} />
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          <Route path="/" element={
-            !stats.onboardingComplete ? <Navigate to="/onboarding" replace /> :
-              !stats.placementComplete ? <Navigate to="/placement" replace /> :
-                !stats.learningProfile?.completed ? <Navigate to="/profile-quiz" replace /> :
-                  <motion.div variants={screenVariants} initial="initial" animate="animate" exit="exit" className="w-full h-full">
-                    <MainMenu />
-                  </motion.div>
-          } />
-          <Route path="/profile-quiz" element={
-            !stats.onboardingComplete ? <Navigate to="/onboarding" replace /> :
-              !stats.placementComplete ? <Navigate to="/placement" replace /> :
-                stats.learningProfile?.completed ? <Navigate to="/" replace /> :
-                  <LazyRoute><LearningProfileQuiz /></LazyRoute>
-          } />
-          <Route path="/decks" element={<LazyRoute><CustomDeckManager /></LazyRoute>} />
-          <Route path="/focus" element={<LazyRoute><FocusModeSelector /></LazyRoute>} />
-          <Route path="/focus/:mode" element={<LazyRoute><FocusSession /></LazyRoute>} />
-          <Route path="/onboarding" element={
-            stats.onboardingComplete
-              ? <Navigate to={stats.placementComplete ? "/" : "/placement"} replace />
-              : <LazyRoute><OnboardingChecklist /></LazyRoute>
-          } />
-          <Route path="/placement" element={
-            !stats.onboardingComplete ? <Navigate to="/onboarding" replace /> :
-              stats.placementComplete ? <Navigate to="/" replace /> :
-                <LazyRoute><PlacementQuiz /></LazyRoute>
-          } />
-          <Route path="/game/falling-words" element={
-            <LazyRoute><FallingWordsGame /></LazyRoute>
-          } />
-          <Route path="/game/flashcards/:deckId?" element={
-            <LazyRoute><FlashcardMode /></LazyRoute>
-          } />
-          <Route path="/game/daily-mix" element={
-            <LazyRoute><DailyMix /></LazyRoute>
-          } />
-          <Route path="/game/conversation" element={
-            <LazyRoute><ConversationSimulator /></LazyRoute>
-          } />
-          <Route path="/game/story" element={
-            <LazyRoute><StoryMode /></LazyRoute>
-          } />
-          <Route path="/game/branching-story" element={
-            <LazyRoute><BranchingStoryMode /></LazyRoute>
-          } />
-          <Route path="/reading-room" element={
-            <LazyRoute><ReadingRoom /></LazyRoute>
-          } />
-          <Route path="/listen-repeat-lab" element={
-            <LazyRoute><ListenRepeatLab /></LazyRoute>
-          } />
-          <Route path="/cultural-deep-dive" element={
-            <LazyRoute><CulturalDeepDive /></LazyRoute>
-          } />
-          <Route path="/lesson-creator" element={
-            <LazyRoute><LessonCreator /></LazyRoute>
-          } />
-          <Route path="/neighborhood" element={
-            <LazyRoute><Neighborhood /></LazyRoute>
-          } />
-          <Route path="/game/sentence-builder" element={
-            <LazyRoute><SentenceBuilderGame /></LazyRoute>
-          } />
-          <Route path="/study-session" element={
-            <LazyRoute><StudySession /></LazyRoute>
-          } />
-          <Route path="/pronunciation" element={
-            <LazyRoute><PronunciationCoach /></LazyRoute>
-          } />
-          <Route path="/game/grammar" element={
-            <LazyRoute><GrammarDrill /></LazyRoute>
-          } />
-          <Route path="/game/cloze" element={
-            <LazyRoute><ClozeGame /></LazyRoute>
-          } />
-          <Route path="/game/error-spotting" element={
-            <LazyRoute><ErrorSpottingGame /></LazyRoute>
-          } />
-          <Route path="/learn/grammar" element={
-            <LazyRoute><GrammarLessonView /></LazyRoute>
-          } />
-          <Route path="/grammar-deep-dive" element={
-            <LazyRoute><GrammarDeepDive /></LazyRoute>
-          } />
-          <Route path="/game/free-chat" element={
-            <LazyRoute><FreeFormChat /></LazyRoute>
-          } />
-          <Route path="/game/srs-review" element={
-            <LazyRoute><SRSReviewQueue /></LazyRoute>
-          } />
-          <Route path="/learn" element={
-            <LazyRoute><PersonalizedDashboard /></LazyRoute>
-          } />
-          <Route path="/video-immersion" element={
-            <LazyRoute><VideoImmersion /></LazyRoute>
-          } />
-          <Route path="/game/dictation" element={
-            <LazyRoute><DictationGame /></LazyRoute>
-          } />
-          <Route path="/game/conjugation-blitz" element={
-            <LazyRoute><ConjugationBlitz /></LazyRoute>
-          } />
-          <Route path="/game/memory-match" element={
-            <LazyRoute><MemoryMatchGame /></LazyRoute>
-          } />
-          <Route path="/game/culture-quest" element={
-            <LazyRoute><CultureQuestGame /></LazyRoute>
-          } />
-          <Route path="/smart-import" element={
-            <LazyRoute><SmartImport /></LazyRoute>
-          } />
-          <Route path="/game/voice-call" element={
-            <LazyRoute><VoiceCall /></LazyRoute>
-          } />
-          <Route path="/mastery" element={
-            <LazyRoute><MasteryDashboard /></LazyRoute>
-          } />
-
-          {/* Learning Modalities */}
-          <Route path="/learn/podcast" element={<LazyRoute><PodcastMode /></LazyRoute>} />
-          <Route path="/learn/story-cards" element={<LazyRoute><VisualStoryCards /></LazyRoute>} />
-          <Route path="/learn/writing-pad" element={<LazyRoute><WritingPad /></LazyRoute>} />
-          <Route path="/learn/pattern-drills" element={<LazyRoute><PatternDrills /></LazyRoute>} />
-
-          {/* Cultural Mastery Phase 8 */}
-          <Route path="/culture-map" element={<LazyRoute><FranceMap /></LazyRoute>} />
-          <Route path="/survival-challenge" element={<LazyRoute><SurvivalChallenge /></LazyRoute>} />
-          <Route path="/media-center" element={<LazyRoute><MediaCenter /></LazyRoute>} />
-
-          {/* Real World Phase 11 */}
-          <Route path="/real-world/slang" element={<LazyRoute><SlangExplorer /></LazyRoute>} />
-          <Route path="/real-world/professional" element={<LazyRoute><ProfessionalSuite /></LazyRoute>} />
-          <Route path="/real-world/dialects" element={<LazyRoute><DialectTours /></LazyRoute>} />
-
-          {/* The AI Linguistic Coach Phase 10 */}
-          <Route path="/lab/prosody" element={<LazyRoute><ProsodyLab /></LazyRoute>} />
-          <Route path="/lab/sentence-blueprint" element={<LazyRoute><GrammarTreeVisualizer /></LazyRoute>} />
-
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AnimatePresence>
-    </div>
-  );
-};
-
-function App() {
-  return (
-    <AuthProvider>
-      <ToastProvider>
+    return (
         <A11yProvider>
-          <ProgressProvider>
-            <VocabularyProvider>
-              <LearningPathProvider>
-                <SyncProvider>
-                  <SocialProvider>
-                    <CommunityProvider>
-                      <MessagingProvider>
-                        <AppRoutes />
-                      </MessagingProvider>
-                    </CommunityProvider>
-                  </SocialProvider>
-                </SyncProvider>
-              </LearningPathProvider>
-            </VocabularyProvider>
-          </ProgressProvider>
+            <AuthProvider>
+                <ToastProvider>
+                    <SyncProvider>
+                        <ProgressProvider>
+                            <VocabularyProvider>
+                                <SocialProvider>
+                                    <MessagingProvider>
+                                        <CommunityProvider>
+                                            <LearningPathProvider>
+                                                <Router>
+                                                    <div className="min-h-screen bg-slate-950 text-white font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+                                                        <AnimatedRoutes />
+                                                        <InstallPrompt />
+                                                        <OfflineBanner />
+                                                    </div>
+                                                </Router>
+                                            </LearningPathProvider>
+                                        </CommunityProvider>
+                                    </MessagingProvider>
+                                </SocialProvider>
+                            </VocabularyProvider>
+                        </ProgressProvider>
+                    </SyncProvider>
+                </ToastProvider>
+            </AuthProvider>
         </A11yProvider>
-      </ToastProvider>
-    </AuthProvider>
-  );
-}
+    );
+};
 
 export default App;

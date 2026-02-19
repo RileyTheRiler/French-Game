@@ -15,6 +15,7 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
     const recognitionRef = useRef(null);
 
     useEffect(() => {
+        if (typeof window === 'undefined') return;
         if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
             return;
         }
@@ -32,12 +33,13 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
              };
 
              recognitionRef.current.onresult = (event) => {
-                 let interimTranscript = '';
+                 // interimTranscript is unused in state but useful for logic if needed later
+                 // let interimTranscript = '';
                  for (let i = event.resultIndex; i < event.results.length; ++i) {
                      if (event.results[i].isFinal) {
                          setTranscript(event.results[i][0].transcript);
                      } else {
-                         interimTranscript += event.results[i][0].transcript;
+                         // interimTranscript += event.results[i][0].transcript;
                      }
                  }
              };
@@ -46,7 +48,9 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
                  console.error('Speech recognition error', event.error);
                  // Ignore "no-speech" errors as they are common when user pauses
                  if (event.error !== 'no-speech') {
-                     setError(event.error);
+                     // Wrap in timeout to avoid sync update during render cycle if invoked by something else?
+                     // Actually this is an event handler so it's fine, but just in case
+                     setTimeout(() => setError(event.error), 0);
                  }
                  setIsListening(false);
              };
@@ -56,14 +60,14 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
              };
         } catch (e) {
             console.error("Speech Recognition setup failed", e);
-            setError("Setup failed");
+            setTimeout(() => setError("Setup failed"), 0);
         }
 
         return () => {
             if (recognitionRef.current) {
                 try {
                     recognitionRef.current.stop();
-                } catch(e) {
+                } catch (err) {
                     // ignore
                 }
             }
@@ -98,7 +102,7 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
         startListening,
         stopListening,
         error,
-        resetTranscript: () => setTranscript('')
+        resetTranscript: useCallback(() => setTranscript(''), [])
     };
 };
 
