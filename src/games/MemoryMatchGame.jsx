@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Timer, Trophy, RotateCcw, Sparkles } from 'lucide-react';
+import { Trophy, RotateCcw, Sparkles } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -22,12 +22,7 @@ const MemoryMatchGame = () => {
     const [disabled, setDisabled] = useState(false);
     const [turns, setTurns] = useState(0);
     const [gameComplete, setGameComplete] = useState(false);
-    const [difficulty, setDifficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
-
-    // Initialize Game
-    useEffect(() => {
-        startNewGame();
-    }, []);
+    const [difficulty] = useState('normal'); // normal = 6 pairs, hard = 8 pairs
 
     const startNewGame = () => {
         const pairCount = difficulty === 'hard' ? 8 : 6;
@@ -60,6 +55,11 @@ const MemoryMatchGame = () => {
         setGameComplete(false);
         setDisabled(false);
     };
+
+    // Initialize Game
+    useEffect(() => {
+        startNewGame();
+    }, []);
 
     const handleClick = (id) => {
         if (disabled || gameComplete) return;
@@ -100,13 +100,6 @@ const MemoryMatchGame = () => {
         }
     };
 
-    // Check Win Condition
-    useEffect(() => {
-        if (cards.length > 0 && solved.length === cards.length) {
-            handleWin();
-        }
-    }, [solved]);
-
     const handleWin = () => {
         setGameComplete(true);
         SoundManager.playLevelUp();
@@ -120,6 +113,13 @@ const MemoryMatchGame = () => {
         // Let's give nice XP.
         addXP(30);
     };
+
+    // Check Win Condition
+    useEffect(() => {
+        if (cards.length > 0 && solved.length === cards.length) {
+            handleWin();
+        }
+    }, [solved]);
 
     return (
         <GameLayout
