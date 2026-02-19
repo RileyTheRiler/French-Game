@@ -3,6 +3,9 @@
 
 import { VERB_DATA, PRONOUNS, TENSES } from './verbData';
 
+// Re-export constants
+export { PRONOUNS };
+
 // Noun-adjective agreement data
 export const AGREEMENT_RULES = [
     {
@@ -241,4 +244,5 @@ export default {
     generateAgreementExercise,
     generatePatternCompletionExercise,
     generateDrillSession,
+    PRONOUNS
 };

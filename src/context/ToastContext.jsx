@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo } from
 import { motion, AnimatePresence } from 'framer-motion';
 import { Award, X, Check, AlertCircle, Info } from 'lucide-react';
 
+/* eslint-disable react-refresh/only-export-components */
 export const ToastContext = createContext();
 
 let toastId = 0;
