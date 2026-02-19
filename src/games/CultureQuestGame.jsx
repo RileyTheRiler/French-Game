@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, BookOpen, Star, CheckCircle, XCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
+
 import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import { Badge } from '../components/ui/Badge';
@@ -11,21 +12,25 @@ import { getCultureSession } from '../data/cultureData';
 import SoundManager from '../utils/SoundManager';
 import confetti from 'canvas-confetti';
 
+// Verification of GameLayout import style
+// DictationGame: import GameLayout from '../components/layout/GameLayout';
+// MemoryMatchGame: import { GameLayout } from '../components/layout/GameLayout';
+// It seems consistent usage is inconsistent. I should check the file.
+// For now, I will use the one that works in the file I am editing, which was { GameLayout } in the read file.
+// Wait, the read file had: import { GameLayout } from '../components/layout/GameLayout';
+// But DictationGame had: import GameLayout from '../components/layout/GameLayout';
+
 const CultureQuestGame = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
 
-    // Game State
-    const [questions, setQuestions] = useState([]);
+    // Game State initialized lazily
+    const [questions, setQuestions] = useState(() => getCultureSession());
     const [currentIndex, setCurrentIndex] = useState(0);
     const [score, setScore] = useState(0);
     const [selectedOption, setSelectedOption] = useState(null);
     const [isAnswered, setIsAnswered] = useState(false);
     const [gameComplete, setGameComplete] = useState(false);
-
-    useEffect(() => {
-        setQuestions(getCultureSession());
-    }, []);
 
     const currentQuestion = questions[currentIndex];
 
@@ -59,7 +64,11 @@ const CultureQuestGame = () => {
         addXP(xpEarned);
         if (score > questions.length / 2) {
             SoundManager.playLevelUp();
-            confetti();
+            confetti({
+                particleCount: 100,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
         }
     };
 
@@ -109,19 +118,29 @@ const CultureQuestGame = () => {
                 <div className="grid grid-cols-1 gap-4">
                     {currentQuestion.options.map((option, idx) => {
                         let variant = "outline";
+                        // Custom logic for variant string
+                        let className = "h-16 text-lg justify-start px-6 relative overflow-hidden";
+
                         if (isAnswered) {
-                            if (option === currentQuestion.answer) variant = "success";
-                            else if (option === selectedOption) variant = "danger";
+                            if (option === currentQuestion.answer) {
+                                // variant = "success"; // Button component might not support 'success' variant directly, let's assume it does or style manually
+                                className += " bg-emerald-500/20 border-emerald-500 text-emerald-100 hover:bg-emerald-500/30";
+                            }
+                            else if (option === selectedOption) {
+                                // variant = "danger";
+                                className += " bg-red-500/20 border-red-500 text-red-100 hover:bg-red-500/30";
+                            } else {
+                                className += " opacity-50";
+                            }
+                        } else {
+                            className += " hover:bg-white/5 hover:border-white/30";
                         }
 
                         return (
                             <Button
                                 key={idx}
                                 variant={variant}
-                                className={`
-                                    h-16 text-lg justify-start px-6 relative overflow-hidden
-                                    ${!isAnswered ? 'hover:bg-white/5 hover:border-white/30' : ''}
-                                `}
+                                className={className}
                                 onClick={() => handleAnswer(option)}
                                 disabled={isAnswered}
                             >
