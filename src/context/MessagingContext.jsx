@@ -130,7 +130,7 @@ export const MessagingProvider = ({ children }) => {
 
         // Simulate partner response
         simulatePartnerResponse(partnerId, text);
-    }, [addXP, unlockAchievement, messagingStats.totalMessages]);
+    }, [addXP, unlockAchievement, messagingStats.totalMessages, simulatePartnerResponse]);
 
     // Simulate partner typing and response
     const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
@@ -179,6 +179,7 @@ export const MessagingProvider = ({ children }) => {
             }));
         }, randomDelay);
     }, []);
+
 
     // Mark messages as read
     const markAsRead = useCallback((partnerId) => {

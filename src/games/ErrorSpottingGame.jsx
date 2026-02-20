@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { AlertTriangle, Check, ArrowRight, RotateCcw, Search } from 'lucide-react';
+import { Check, ArrowRight } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
 import { Card } from '../components/ui/Card';
@@ -20,11 +21,7 @@ const ErrorSpottingGame = () => {
     const [feedback, setFeedback] = useState(null); // { type: 'success' | 'error', message: string }
     const MAX_QUESTIONS = 5;
 
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
-
-    const loadNextPuzzle = () => {
+    const loadNextPuzzle = useCallback(() => {
         const newPuzzle = generateErrorSpotting(1);
         if (newPuzzle) {
             setPuzzle(newPuzzle);
@@ -33,14 +30,21 @@ const ErrorSpottingGame = () => {
         } else {
             setStatus('finished');
         }
-    };
+    }, []);
 
-    const handleWordClick = (word, index) => {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            loadNextPuzzle();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, [loadNextPuzzle]);
+
+    const handleWordClick = (word) => {
         if (status !== 'playing') return;
 
         // Clean punctuation for comparison (simple check)
         const cleanWord = word.replace(/[.,!?]/g, '');
-        const target = puzzle.error.target.replace(/[.,!?]/g, '');
+        const target = puzzle?.error?.target?.replace(/[.,!?]/g, '');
 
         if (cleanWord === target) {
             // Found the error!
@@ -56,6 +60,7 @@ const ErrorSpottingGame = () => {
         } else {
             // Clicked a correct word
             SoundManager.playPop();
+
             setFeedback({
                 type: 'info',
                 message: "That part looks correct. Keep looking!"

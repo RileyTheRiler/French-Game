@@ -21,6 +21,7 @@ vi.mock('../../utils/InteractionEffects', () => ({
 const mockVocabulary = {
     getDueWords: vi.fn(),
     updateWordProgress: vi.fn(),
+    markWordSeen: vi.fn(),
     vocabulary: [
         { id: '1', french: 'Bonjour', english: 'Hello', cefr: 'A1', category: 'Greetings' },
         { id: '2', french: 'Chat', english: 'Cat', cefr: 'A1', category: 'Animals' }
@@ -39,6 +40,20 @@ const renderWithContext = (ui) => {
         </VocabularyContext.Provider>
     );
 };
+
+vi.mock('../../context/ProgressContext', () => ({
+    useProgress: () => ({
+        addXP: vi.fn(),
+        addCoins: vi.fn(),
+        updateDailyStat: vi.fn(),
+    })
+}));
+
+vi.mock('../../context/ToastContext', () => ({
+    useToast: () => ({
+        showToast: vi.fn(),
+    })
+}));
 
 describe('StudySession', () => {
     beforeEach(() => {
