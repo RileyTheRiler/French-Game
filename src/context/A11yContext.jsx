@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const A11yContext = createContext(null);
@@ -12,29 +13,49 @@ export const useA11y = () => {
 
 export const A11yProvider = ({ children }) => {
     const [announcement, setAnnouncement] = useState('');
-    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-    const [highContrast, setHighContrast] = useState(false);
+
+    // Initialize lazily to avoid synchronous updates during effect
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        return false;
+    });
+
+    const [highContrast, setHighContrast] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(prefers-contrast: more)').matches;
+        }
+        return false;
+    });
 
     // Detect reduced motion preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        setPrefersReducedMotion(mediaQuery.matches);
-
         const handleChange = (e) => setPrefersReducedMotion(e.matches);
-        mediaQuery.addEventListener('change', handleChange);
 
-        return () => mediaQuery.removeEventListener('change', handleChange);
+        // Listen for changes
+        if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', handleChange);
+            return () => mediaQuery.removeEventListener('change', handleChange);
+        } else {
+            mediaQuery.addListener(handleChange);
+            return () => mediaQuery.removeListener(handleChange);
+        }
     }, []);
 
     // Detect high contrast preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-contrast: more)');
-        setHighContrast(mediaQuery.matches);
-
         const handleChange = (e) => setHighContrast(e.matches);
-        mediaQuery.addEventListener('change', handleChange);
 
-        return () => mediaQuery.removeEventListener('change', handleChange);
+        if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', handleChange);
+            return () => mediaQuery.removeEventListener('change', handleChange);
+        } else {
+            mediaQuery.addListener(handleChange);
+            return () => mediaQuery.removeListener(handleChange);
+        }
     }, []);
 
     // Apply body class for reduced motion
