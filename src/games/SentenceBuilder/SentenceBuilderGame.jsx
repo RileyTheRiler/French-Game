@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { SCENARIOS } from './scenarios';
-import MonitorFeedback from '../../components/UI/MonitorFeedback';
+import MonitorFeedback from '../../components/ui/MonitorFeedback';
 import { soundManager } from '../../utils/SoundManager';
 import { monitorSystem } from '../../systems/MonitorSystem';
 
@@ -18,11 +18,14 @@ const SentenceBuilderGame = ({ onExit }) => {
     useEffect(() => {
         if (scenario) {
             // Shuffle words for the word bank
-            setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
-            setSelectedWords([]);
-            setFeedback(null);
-            setMonitorMessage(null);
-            setMonitorTipId(null);
+            // Push to next tick to avoid cascading render warning
+            setTimeout(() => {
+                setAvailableWords([...scenario.words].sort(() => Math.random() - 0.5));
+                setSelectedWords([]);
+                setFeedback(null);
+                setMonitorMessage(null);
+                setMonitorTipId(null);
+            }, 0);
         }
     }, [currentScenarioIndex, scenario]);
 

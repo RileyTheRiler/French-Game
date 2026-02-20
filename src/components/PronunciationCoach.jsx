@@ -4,8 +4,6 @@ import { Mic, MicOff, Volume2, Check, X, Award, AlertCircle, PlaySquare, Layers,
 import { useVocabulary } from '../context/VocabularyContext';
 import { useProgress } from '../context/ProgressContext';
 import { playWordAudio } from '../utils/audio';
-// eslint-disable-next-line no-unused-vars
-import { scorePronunciation } from '../utils/phonetics';
 import SoundManager from '../utils/SoundManager';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/Button';
@@ -24,8 +22,7 @@ const PronunciationCoach = () => {
     const navigate = useNavigate();
     const onExit = () => navigate('/');
     const { vocabulary } = useVocabulary();
-    const { addXP, addCoins, markWordStrength, updateDailyStat, incrementStat, offlineAudio } = useProgress();
-    const { stats } = useProgress();
+    const { addXP, addCoins, markWordStrength, updateDailyStat, incrementStat, offlineAudio, stats } = useProgress();
 
     // Mode state: 'practice', 'minimal-pairs', 'rhythm'
     const [mode, setMode] = useState('practice');
@@ -39,10 +36,8 @@ const PronunciationCoach = () => {
     const [status, setStatus] = useState('idle'); // 'idle', 'listening', 'checking', 'success', 'fail'
     const [lastScore, setLastScore] = useState(0);
     const [sessionComplete, setSessionComplete] = useState(false);
-    // eslint-disable-next-line no-unused-vars
     const [totalXP, setTotalXP] = useState(0);
     const [successCount, setSuccessCount] = useState(0);
-    // eslint-disable-next-line no-unused-vars
     const [attempts, setAttempts] = useState(0);
     const [sessionReward, setSessionReward] = useState(null);
 
@@ -131,7 +126,6 @@ const PronunciationCoach = () => {
                 audioContext.close();
             }
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const startListening = async () => {
