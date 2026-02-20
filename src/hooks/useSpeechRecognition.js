@@ -3,12 +3,16 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 const useSpeechRecognition = (lang = 'fr-FR') => {
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
-    const [error, setError] = useState(null);
+    const [error, setError] = useState(() => {
+        if (typeof window !== 'undefined' && !('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+            return 'Speech Recognition Not Supported';
+        }
+        return null;
+    });
     const recognitionRef = useRef(null);
 
     useEffect(() => {
         if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-            setError('Speech Recognition Not Supported');
             return;
         }
 
@@ -24,6 +28,7 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
         };
 
         recognitionRef.current.onresult = (event) => {
+            // eslint-disable-next-line no-unused-vars
             let interimTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {

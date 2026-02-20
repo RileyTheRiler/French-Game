@@ -1,4 +1,6 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { useMemo } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Globe, User, GraduationCap, Rocket, Crown } from 'lucide-react';
 
@@ -54,6 +56,7 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
 
     // Calculate gradient position for the track fill
     const fillPercentage = value;
+    const descriptionId = "difficulty-desc";
 
     return (
         <div className={`space-y-${compact ? '2' : '4'}`}>
@@ -64,15 +67,15 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
                         <currentLevel.icon className="w-5 h-5" />
                     </div>
                     <div>
-                        <span className="font-bold text-lg">{currentLevel.label}</span>
+                        <span className="font-bold text-lg" id="difficulty-label">{currentLevel.label}</span>
                         {!compact && (
-                            <p className="text-xs text-slate-400 max-w-[200px]">
+                            <p id={descriptionId} className="text-xs text-slate-400 max-w-[200px]">
                                 {currentLevel.description}
                             </p>
                         )}
                     </div>
                 </div>
-                <span className="text-2xl font-mono font-bold text-slate-300">
+                <span className="text-2xl font-mono font-bold text-slate-300" aria-hidden="true">
                     {value}
                 </span>
             </div>
@@ -101,6 +104,8 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
                     onChange={handleChange}
                     className="absolute inset-0 w-full h-3 opacity-0 cursor-pointer"
                     aria-label="Difficulty level"
+                    aria-valuetext={currentLevel.label}
+                    aria-describedby={!compact ? descriptionId : undefined}
                 />
 
                 {/* Custom Thumb */}
@@ -113,17 +118,20 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
 
             {/* Level Markers */}
             {showLabels && (
-                <div className="flex justify-between text-xs text-slate-500 px-1">
-                    {DIFFICULTY_LEVELS.map(level => (
-                        <button
-                            key={level.value}
-                            onClick={() => onChange(level.value)}
-                            className={`transition-colors hover:text-white ${Math.abs(level.value - value) < 13 ? 'text-slate-300 font-semibold' : ''
-                                }`}
-                        >
-                            {level.label}
-                        </button>
-                    ))}
+                <div className="flex justify-between text-xs text-slate-500 px-1" role="group" aria-label="Difficulty presets">
+                    {DIFFICULTY_LEVELS.map(level => {
+                        const isSelected = Math.abs(level.value - value) < 13;
+                        return (
+                            <button
+                                key={level.value}
+                                onClick={() => onChange(level.value)}
+                                aria-pressed={isSelected}
+                                className={`transition-colors hover:text-white ${isSelected ? 'text-slate-300 font-semibold' : ''}`}
+                            >
+                                {level.label}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
         </div>
