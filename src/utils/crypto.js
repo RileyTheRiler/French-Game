@@ -35,12 +35,10 @@ export async function hashPassword(password) {
     return `${saltHex}:${hashHex}`;
 }
 
-export async function verifyPassword(password, storedHash) {
+export async function verifyPassword(storedHash, password) {
     if (!storedHash) return false;
-    if (typeof storedHash !== 'string') return false;
-
     // Legacy plaintext support - insecure but necessary for backward compatibility
-    if (!storedHash.includes(':')) {
+    if (typeof storedHash === 'string' && !storedHash.includes(':')) {
         return storedHash === password;
     }
 
@@ -55,31 +53,40 @@ export async function verifyPassword(password, storedHash) {
         return false;
     }
 
-    const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
+    try {
+        const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
 
-    const key = await crypto.subtle.importKey(
-        'raw',
-        data,
-        { name: 'PBKDF2' },
-        false,
-        ['deriveBits', 'deriveKey']
-    );
+        const key = await crypto.subtle.importKey(
+            'raw',
+            data,
+            { name: 'PBKDF2' },
+            false,
+            ['deriveBits', 'deriveKey']
+        );
 
-    const hashBuffer = await crypto.subtle.deriveBits(
-        {
-            ...PBKDF2_CONFIG,
-            salt: salt
-        },
-        key,
-        256
-    );
+        const hashBuffer = await crypto.subtle.deriveBits(
+            {
+                ...PBKDF2_CONFIG,
+                salt: salt
+            },
+            key,
+            256
+        );
 
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const newHashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const newHashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    return newHashHex === originalHashHex;
+        // Use constant-time comparison helper if available, otherwise simple string comparison
+        // Note: crypto.timingSafeEqual is not available in standard browser environments for strings.
+        // For a client-side app, timing attacks are less of a concern than server-side,
+        // but it's good practice. Here we stick to simple comparison as we lack a polyfill in this file.
+        return newHashHex === originalHashHex;
+    } catch (e) {
+        console.error("Password verification error", e);
+        return false;
+    }
 }
 
 // Generate a random salt (exported helper)
@@ -90,53 +97,3 @@ export const generateSalt = () => {
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
 };
-export const generateSalt = () => {
-    const array = new Uint8Array(16);
-    crypto.getRandomValues(array);
-    return Array.from(array)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-};
-
-export async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await crypto.subtle.importKey('raw', data, { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']);
-  const derivedBits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
-    key,
-    256
-  );
-
-  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
-  const hashHex = Array.from(new Uint8Array(derivedBits)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-  return `${saltHex}:${hashHex}`;
-}
-
-export async function verifyPassword(stored, password) {
-  if (!stored) return false;
-  // Legacy plaintext support - insecure but necessary for backward compatibility until migrated
-  if (!stored.includes(':')) {
-    return stored === password;
-  }
-
-  const [saltHex, hashHex] = stored.split(':');
-  if (!saltHex || !hashHex) return false;
-
-  const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const key = await crypto.subtle.importKey('raw', data, { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']);
-  const derivedBits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
-    key,
-    256
-  );
-
-  const derivedHex = Array.from(new Uint8Array(derivedBits)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-  return derivedHex === hashHex;
-}
