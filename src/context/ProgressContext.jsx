@@ -356,8 +356,6 @@ export const ProgressProvider = ({ children }) => {
     }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
 
     // Check achievements when relevant stats change
-    }, [stats.xp, stats.unlockedAchievements, stats.dailyStats, stats.streak, stats.wordsLearned, showAchievement]);
-
     useEffect(() => {
         const timer = setTimeout(() => {
             checkAchievements();
@@ -485,38 +483,6 @@ export const ProgressProvider = ({ children }) => {
             };
         });
     }, []);
-
-    const [audioEnabled, setAudioEnabled] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_audio');
-        return saved !== null ? JSON.parse(saved) : true;
-    });
-    const [offlineAudio, setOfflineAudio] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_offlineAudio');
-        return saved !== null ? JSON.parse(saved) : false;
-    });
-    const [reducedMotion, setReducedMotion] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_reducedMotion');
-        return saved !== null ? JSON.parse(saved) : false;
-    });
-    const [colorTheme, setColorTheme] = useState(() => {
-        return localStorage.getItem('frenchApp_colorTheme') || 'midnight';
-    });
-
-    useEffect(() => { localStorage.setItem('frenchApp_audio', JSON.stringify(audioEnabled)); }, [audioEnabled]);
-    useEffect(() => { localStorage.setItem('frenchApp_offlineAudio', JSON.stringify(offlineAudio)); }, [offlineAudio]);
-    useEffect(() => {
-        localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
-        document.body.classList.toggle('reduced-motion', reducedMotion);
-    }, [reducedMotion]);
-    useEffect(() => {
-        localStorage.setItem('frenchApp_colorTheme', colorTheme);
-        document.body.dataset.theme = colorTheme;
-    }, [colorTheme]);
-
-    const toggleAudio = useCallback(() => setAudioEnabled(prev => !prev), []);
-    const toggleOfflineAudio = useCallback(() => setOfflineAudio(prev => !prev), []);
-    const toggleReducedMotion = useCallback(() => setReducedMotion(prev => !prev), []);
-    const switchColorTheme = useCallback((theme) => setColorTheme(theme), []);
 
     const resetProgress = useCallback(() => {
         setStats({ ...defaultStats });
@@ -967,12 +933,10 @@ export const ProgressProvider = ({ children }) => {
                 ...prev.dreamGoals,
                 [goalId]: Date.now()
             },
-            dreamGoals: { ...prev.dreamGoals, [goalId]: Date.now() },
             updatedAt: Date.now()
         }));
     }, []);
 
-    const updateMemoryPalaceRoom = useCallback((roomId, items) => {
     const updateMemoryPalaceRoom = useCallback((roomId, data) => {
         setStats(prev => ({
             ...prev,

@@ -1,27 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain, Target } from 'lucide-react';
 import DifficultyDial from './ui/DifficultyDial';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { warmVoiceCache } from '../utils/audio';
-
-const SettingsModal = ({ onClose }) => {
-    const { audioEnabled, toggleAudio, offlineAudio, toggleOfflineAudio, resetProgress } = useProgress();
-    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
-    const [confirmReset, setConfirmReset] = React.useState(false);
-    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
-
-    const handleOfflineAudio = async () => {
-        const next = !offlineAudio;
-        toggleOfflineAudio();
-        if (!offlineAudio && next) {
-            setIsCachingAudio(true);
-            warmVoiceCache();
-            await downloadAudioOnce();
-            setIsCachingAudio(false);
-        }
-    };
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
 
@@ -29,6 +12,8 @@ const SettingsModal = ({ onClose }) => {
     const {
         audioEnabled,
         toggleAudio,
+        offlineAudio,
+        toggleOfflineAudio,
         reducedMotion,
         toggleReducedMotion,
         colorTheme,
@@ -41,13 +26,16 @@ const SettingsModal = ({ onClose }) => {
         globalDifficulty,
         setGlobalDifficulty
     } = useProgress();
-    const { resetVocabulary } = useVocabulary();
+    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
     const { user, signIn, signUp, signOut, loading, error } = useAuth();
     const { exportData, importData, status, lastSyncedAt, syncing } = useSync();
-    const [confirmReset, setConfirmReset] = React.useState(false);
-    const [authMode, setAuthMode] = React.useState('signin');
-    const [form, setForm] = React.useState({ email: '', password: '' });
-    const [importError, setImportError] = React.useState('');
+
+    const [confirmReset, setConfirmReset] = useState(false);
+    const [isCachingAudio, setIsCachingAudio] = useState(false);
+    const [authMode, setAuthMode] = useState('signin');
+    const [form, setForm] = useState({ email: '', password: '' });
+    const [importError, setImportError] = useState('');
+
     const dialogRef = useRef(null);
     const closeButtonRef = useRef(null);
 
@@ -68,6 +56,17 @@ const SettingsModal = ({ onClose }) => {
         document.addEventListener('keydown', handleKeyDown);
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
+
+    const handleOfflineAudio = async () => {
+        const next = !offlineAudio;
+        toggleOfflineAudio();
+        if (!offlineAudio && next) {
+            setIsCachingAudio(true);
+            warmVoiceCache();
+            await downloadAudioOnce();
+            setIsCachingAudio(false);
+        }
+    };
 
     const handleReset = () => {
         resetProgress();
@@ -114,7 +113,7 @@ const SettingsModal = ({ onClose }) => {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative"
+                className="bg-slate-900 border border-white/10 p-8 rounded-3xl max-w-md w-full shadow-2xl relative max-h-[85vh] overflow-y-auto custom-scrollbar"
                 onClick={e => e.stopPropagation()}
                 role="dialog"
                 aria-modal="true"
@@ -122,7 +121,7 @@ const SettingsModal = ({ onClose }) => {
                 aria-describedby="settings-description"
                 ref={dialogRef}
             >
-                <div className="flex justify-between items-center mb-8">
+                <div className="flex justify-between items-center mb-8 sticky top-0 bg-slate-900 z-10 py-2">
                     <h2 id="settings-heading" className="text-3xl font-bold title-gradient">Settings</h2>
                     <button
                         onClick={onClose}
@@ -139,7 +138,7 @@ const SettingsModal = ({ onClose }) => {
                 </p>
 
                 <div className="space-y-6">
-                    {/* Learner Focus - New Section */}
+                    {/* Learner Focus */}
                     <div className="glass-panel p-4 border border-indigo-500/20 bg-indigo-500/5 mb-6">
                         <div className="flex items-start gap-3 mb-4">
                             <div className="p-3 rounded-xl bg-indigo-500/20 text-indigo-300">
@@ -336,6 +335,11 @@ const SettingsModal = ({ onClose }) => {
                         >
                             <motion.div
                                 animate={{ x: offlineAudio ? 26 : 2 }}
+                                className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
+                            />
+                        </button>
+                    </div>
+
                     {/* Privacy & Portability */}
                     <div className="glass-panel p-4 border border-emerald-500/20 bg-emerald-500/5 space-y-3">
                         <div className="flex items-center gap-3">
