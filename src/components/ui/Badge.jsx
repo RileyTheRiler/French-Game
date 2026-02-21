@@ -7,15 +7,20 @@ const variants = {
     success: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
     warning: "bg-amber-500/20 text-amber-300 border-amber-500/30",
     danger: "bg-red-500/20 text-red-300 border-red-500/30",
+    outline: "bg-transparent border-slate-600 text-slate-400",
+    destructive: "bg-red-900/20 text-red-400 border-red-900/30"
 };
 
-export const Badge = ({ children, variant = 'default', className }) => {
+export const Badge = ({ children, variant = 'default', className, ...props }) => {
     return (
-        <span className={cn(
-            "px-2.5 py-0.5 rounded-full text-xs font-semibold border uppercase tracking-wide",
-            variants[variant],
-            className
-        )}>
+        <span
+            className={cn(
+                "px-2.5 py-0.5 rounded-full text-xs font-semibold border uppercase tracking-wide",
+                variants[variant] || variants.default,
+                className
+            )}
+            {...props}
+        >
             {children}
         </span>
     );
