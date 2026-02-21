@@ -43,6 +43,7 @@ const ConfettiEffect = ({
             scale: 0.5 + Math.random() * 1,
             delay: Math.random() * 500,
             duration: 2000 + Math.random() * 1000,
+            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
         }));
 
         setParticles(newParticles);
@@ -78,7 +79,7 @@ const ConfettiEffect = ({
                         className="w-3 h-3"
                         style={{
                             backgroundColor: particle.color,
-                            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                            borderRadius: particle.borderRadius,
                             transform: `scale(${particle.scale})`,
                         }}
                     />
