@@ -3,7 +3,6 @@ import {
     calculateNextReview,
     getInitialState,
     normalizeGrade,
-    isPassingGrade,
     INITIAL_EF,
     calculateRetentionProbability,
     getOptimalReviewTime,

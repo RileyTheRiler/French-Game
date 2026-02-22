@@ -280,10 +280,9 @@ export const getConceptInitialState = () => ({
  * Calculate next review for a concept (uses same algo as words but with tweaks)
  * @param {object} previousState - The previous concept state
  * @param {number} grade - Performance grade (0-5)
- * @param {object} options - Optional settings
  * @returns {object} The new state
  */
-export const calculateConceptNextReview = (previousState, grade, options = {}) => {
+export const calculateConceptNextReview = (previousState, grade) => {
     grade = clampGrade(grade);
     let { interval, repetition, ef, attempts, correct, masteryLevel } =
         previousState || getConceptInitialState();
