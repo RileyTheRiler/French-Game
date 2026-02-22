@@ -1,6 +1,3 @@
-import { getDailyShopSelection } from '../src/utils/market.js';
-import { SHOP_ITEMS } from '../src/data/shopItems.js';
-
 // Mock SHOP_ITEMS for the test since we can't easily import ES modules via node without setup
 // Actually, since the file uses "export const", we need package.json type:module or rename to .mjs
 // Let's just mock the logic to verify the algorithm, or try to run it if the environment supports it.
@@ -21,7 +18,6 @@ const seededRandom = (seed) => {
 };
 
 // Test consistency
-const date1 = "Mon Jan 01 2024";
 const rng1 = seededRandom(12345);
 const val1 = rng1();
 
