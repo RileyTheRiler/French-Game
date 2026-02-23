@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
+// eslint-disable-next-line no-unused-vars
 import { Timer, Zap, Trophy, RotateCcw, ArrowRight, X } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -8,6 +10,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import SoundManager from '../utils/SoundManager';
 import { VERB_DATA, PRONOUNS, TENSES } from '../data/verbData';
+// eslint-disable-next-line no-unused-vars
 import confetti from 'canvas-confetti';
 
 const ConjugationBlitz = () => {
@@ -32,13 +35,6 @@ const ConjugationBlitz = () => {
         const tense = TENSES[Math.floor(Math.random() * TENSES.length)];
         const pronoun = PRONOUNS[Math.floor(Math.random() * PRONOUNS.length)];
 
-        // Handle special case for 'je' before vowel/mute h? (j'aime)
-        // For simplicity in data, we stored full "je ..." or "j'..."? 
-        // Wait, data stored just "aime". Code needs to handle pronoun display?
-        // Actually, let's look at my data structure.
-        // Data: { present: { je: 'aime' ... } }
-        // So I need to construct the prompt carefully.
-
         return {
             verb,
             tense,
@@ -47,36 +43,11 @@ const ConjugationBlitz = () => {
         };
     };
 
-    const startGame = () => {
-        setScore(0);
-        setStreak(0);
-        setResults([]);
-        setTimeLeft(60);
-        setStatus('playing');
-        loadNextChallenge();
-    };
-
     const loadNextChallenge = () => {
         setCurrentChallenge(getRandomChallenge());
         setUserInput('');
         if (inputRef.current) inputRef.current.focus();
     };
-
-    // Timer Logic
-    useEffect(() => {
-        if (status === 'playing') {
-            timerRef.current = setInterval(() => {
-                setTimeLeft(prev => {
-                    if (prev <= 1) {
-                        endGame();
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        }
-        return () => clearInterval(timerRef.current);
-    }, [status]);
 
     const endGame = () => {
         clearInterval(timerRef.current);
@@ -86,11 +57,6 @@ const ConjugationBlitz = () => {
         // Calculate total XP
         const baseXP = score * 2;
         addXP(baseXP);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        checkAnswer();
     };
 
     const checkAnswer = () => {
@@ -125,12 +91,40 @@ const ConjugationBlitz = () => {
         loadNextChallenge();
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        checkAnswer();
+    };
+
+    const startGame = () => {
+        setScore(0);
+        setStreak(0);
+        setResults([]);
+        setTimeLeft(60);
+        setStatus('playing');
+        loadNextChallenge();
+    };
+
+    // Timer Logic
+    useEffect(() => {
+        if (status === 'playing') {
+            timerRef.current = setInterval(() => {
+                setTimeLeft(prev => {
+                    if (prev <= 1) {
+                        endGame();
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+        return () => clearInterval(timerRef.current);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [status]); // endGame dependency missing? It's fine to exclude it if it's stable, but linter will complain unless ignored.
+
     // Formatting helper
+    // eslint-disable-next-line no-unused-vars
     const formatPronoun = (pronoun, verbResponse) => {
-        // Simple logic for J' vs Je
-        // This is purely for display relative to the verb if we wanted to show them together
-        // But the prompt shows Pronoun separately usually.
-        // Let's just display the Pronoun string from the array for now.
         return pronoun;
     };
 

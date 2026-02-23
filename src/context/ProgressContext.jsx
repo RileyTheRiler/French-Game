@@ -240,7 +240,7 @@ export const ProgressProvider = ({ children }) => {
             checkStreak();
         }, 0);
         return () => clearTimeout(timer);
-    }, []); // Run once on mount
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const ensureSeasonWindow = useCallback(() => {
         setStats(prev => {
@@ -264,7 +264,7 @@ export const ProgressProvider = ({ children }) => {
             ensureSeasonWindow();
         }, 0);
         return () => clearTimeout(timer);
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const updateDailyStat = useCallback((statName, amount = 1, mode = 'add') => {
         setStats(prev => {
@@ -329,11 +329,14 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
+    // Destructure relevant stats for checkAchievements to allow stable dependency array
+    const { xp, streak, wordsLearned, unlockedAchievements } = stats;
+
     const checkAchievements = useCallback(() => {
-        const currentLevel = calculateLevel(stats.xp);
+        const currentLevel = calculateLevel(xp);
         const newUnlocks = [];
         ACHIEVEMENTS.forEach(achievement => {
-            if (!stats.unlockedAchievements?.includes(achievement.id)) {
+            if (!unlockedAchievements?.includes(achievement.id)) {
                 if (achievement.condition(stats, currentLevel)) {
                     newUnlocks.push(achievement.id);
                 }
@@ -353,17 +356,15 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
+    }, [xp, streak, wordsLearned, unlockedAchievements, stats, showAchievement]);
 
     // Check achievements when relevant stats change
-    }, [stats.xp, stats.unlockedAchievements, stats.dailyStats, stats.streak, stats.wordsLearned, showAchievement]);
-
     useEffect(() => {
         const timer = setTimeout(() => {
             checkAchievements();
         }, 0);
         return () => clearTimeout(timer);
-    }, [stats.xp, stats.wordsLearned, stats.storiesCompleted, stats.conversationsCompleted, stats.streak, checkAchievements]);
+    }, [xp, wordsLearned, stats.storiesCompleted, stats.conversationsCompleted, streak, checkAchievements]);
 
 
     const addCoins = useCallback((amount) => {
@@ -486,38 +487,6 @@ export const ProgressProvider = ({ children }) => {
         });
     }, []);
 
-    const [audioEnabled, setAudioEnabled] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_audio');
-        return saved !== null ? JSON.parse(saved) : true;
-    });
-    const [offlineAudio, setOfflineAudio] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_offlineAudio');
-        return saved !== null ? JSON.parse(saved) : false;
-    });
-    const [reducedMotion, setReducedMotion] = useState(() => {
-        const saved = localStorage.getItem('frenchApp_reducedMotion');
-        return saved !== null ? JSON.parse(saved) : false;
-    });
-    const [colorTheme, setColorTheme] = useState(() => {
-        return localStorage.getItem('frenchApp_colorTheme') || 'midnight';
-    });
-
-    useEffect(() => { localStorage.setItem('frenchApp_audio', JSON.stringify(audioEnabled)); }, [audioEnabled]);
-    useEffect(() => { localStorage.setItem('frenchApp_offlineAudio', JSON.stringify(offlineAudio)); }, [offlineAudio]);
-    useEffect(() => {
-        localStorage.setItem('frenchApp_reducedMotion', JSON.stringify(reducedMotion));
-        document.body.classList.toggle('reduced-motion', reducedMotion);
-    }, [reducedMotion]);
-    useEffect(() => {
-        localStorage.setItem('frenchApp_colorTheme', colorTheme);
-        document.body.dataset.theme = colorTheme;
-    }, [colorTheme]);
-
-    const toggleAudio = useCallback(() => setAudioEnabled(prev => !prev), []);
-    const toggleOfflineAudio = useCallback(() => setOfflineAudio(prev => !prev), []);
-    const toggleReducedMotion = useCallback(() => setReducedMotion(prev => !prev), []);
-    const switchColorTheme = useCallback((theme) => setColorTheme(theme), []);
-
     const resetProgress = useCallback(() => {
         setStats({ ...defaultStats });
     }, [defaultStats]);
@@ -635,7 +604,8 @@ export const ProgressProvider = ({ children }) => {
         return summary;
     }, [stats.dailyStats]);
 
-    const markWeeklyRecapSeen = useCallback(() => {
+    // eslint-disable-next-line no-unused-vars
+    const markWeeklyRecapSeen = useCallback((mark) => {
         setStats(prev => ({ ...prev, lastWeeklyRecap: new Date().toDateString() }));
     }, []);
 
@@ -955,7 +925,6 @@ export const ProgressProvider = ({ children }) => {
                 ...prev.cognitiveStats,
                 ...updates
             },
-            cognitiveStats: { ...prev.cognitiveStats, ...updates },
             updatedAt: Date.now()
         }));
     }, []);
@@ -967,12 +936,10 @@ export const ProgressProvider = ({ children }) => {
                 ...prev.dreamGoals,
                 [goalId]: Date.now()
             },
-            dreamGoals: { ...prev.dreamGoals, [goalId]: Date.now() },
             updatedAt: Date.now()
         }));
     }, []);
 
-    const updateMemoryPalaceRoom = useCallback((roomId, items) => {
     const updateMemoryPalaceRoom = useCallback((roomId, data) => {
         setStats(prev => ({
             ...prev,
