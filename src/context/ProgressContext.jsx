@@ -354,7 +354,7 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement, stats.dailyStats, stats.storiesCompleted, stats.conversationsCompleted]);
+    }, [stats, showAchievement]); // Simplified dependencies to just 'stats' to satisfy React Compiler while acknowledging we depend on all of it
 
     useEffect(() => {
         const timer = setTimeout(() => {
