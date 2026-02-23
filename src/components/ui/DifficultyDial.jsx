@@ -1,4 +1,6 @@
-import React, { useMemo } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { useMemo, useId } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Globe, User, GraduationCap, Rocket, Crown } from 'lucide-react';
 
@@ -41,6 +43,7 @@ const DIFFICULTY_LEVELS = [
 ];
 
 const DifficultyDial = ({ value, onChange, showLabels = true, compact = false }) => {
+    const descriptionId = useId();
     const currentLevel = useMemo(() => {
         // Find the closest level
         return DIFFICULTY_LEVELS.reduce((prev, curr) =>
@@ -66,7 +69,10 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
                     <div>
                         <span className="font-bold text-lg">{currentLevel.label}</span>
                         {!compact && (
-                            <p className="text-xs text-slate-400 max-w-[200px]">
+                            <p
+                                id={descriptionId}
+                                className="text-xs text-slate-400 max-w-[200px]"
+                            >
                                 {currentLevel.description}
                             </p>
                         )}
@@ -78,7 +84,7 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
             </div>
 
             {/* Slider */}
-            <div className="relative">
+            <div className="relative isolate">
                 {/* Track Background */}
                 <div className="h-3 rounded-full bg-gradient-to-r from-emerald-500 via-yellow-500 to-red-500 opacity-30" />
 
@@ -99,13 +105,15 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
                     max="100"
                     value={value}
                     onChange={handleChange}
-                    className="absolute inset-0 w-full h-3 opacity-0 cursor-pointer"
+                    className="absolute inset-0 w-full h-3 opacity-0 cursor-pointer peer focus:outline-none focus-visible:ring-0"
                     aria-label="Difficulty level"
+                    aria-valuetext={currentLevel.label}
+                    aria-describedby={!compact ? descriptionId : undefined}
                 />
 
                 {/* Custom Thumb */}
                 <motion.div
-                    className="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-slate-300 pointer-events-none"
+                    className="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-slate-300 pointer-events-none peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-400 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-slate-900"
                     animate={{ left: `calc(${fillPercentage}% - 12px)` }}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 />
@@ -113,12 +121,14 @@ const DifficultyDial = ({ value, onChange, showLabels = true, compact = false })
 
             {/* Level Markers */}
             {showLabels && (
-                <div className="flex justify-between text-xs text-slate-500 px-1">
+                <div className="flex justify-between text-xs text-slate-400 px-1">
                     {DIFFICULTY_LEVELS.map(level => (
                         <button
                             key={level.value}
                             onClick={() => onChange(level.value)}
-                            className={`transition-colors hover:text-white ${Math.abs(level.value - value) < 13 ? 'text-slate-300 font-semibold' : ''
+                            aria-label={`Set difficulty to ${level.label}`}
+                            aria-pressed={Math.abs(level.value - value) < 13}
+                            className={`transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 rounded-lg outline-none ${Math.abs(level.value - value) < 13 ? 'text-slate-300 font-semibold' : ''
                                 }`}
                         >
                             {level.label}
