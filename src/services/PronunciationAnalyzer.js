@@ -150,6 +150,7 @@ const parsePhonemes = (ipa) => {
 const normalizeText = (text) => {
     if (!text) return '';
     return text.toLowerCase()
+        // eslint-disable-next-line no-useless-escape
         .replace(/[.,!?;:'"()\-]/g, '')
         .trim();
 };
@@ -195,8 +196,125 @@ const approximatePhonemes = (frenchText) => {
 };
 
 /**
+ * Count syllables in French text (approximation)
+ */
+const countSyllables = (text) => {
+    const vowelPattern = /[aeiouyàâäéèêëïîôùûü]/gi;
+    const matches = text.match(vowelPattern);
+    return matches ? matches.length : 1;
+};
+
+/**
+ * Get the category of a phoneme
+ */
+const getPhonemeCategory = (phoneme) => {
+    for (const [category, phonemes] of Object.entries(PHONEME_CATEGORIES)) {
+        if (phonemes.includes(phoneme)) {
+            return category;
+        }
+    }
+    return 'general';
+};
+
+/**
+ * Identify which phonemes were problematic
+ */
+const identifyProblemPhonemes = (target, spoken) => {
+    const problems = [];
+    const targetSet = new Set(target);
+    const spokenSet = new Set(spoken);
+
+    for (const phoneme of targetSet) {
+        if (!spokenSet.has(phoneme)) {
+            // Check if a similar phoneme was used instead
+            const similar = SIMILAR_PHONEMES[phoneme];
+            const substitution = similar?.find(s => spokenSet.has(s));
+
+            problems.push({
+                phoneme,
+                type: substitution ? 'substitution' : 'missing',
+                substitution: substitution || null,
+                category: getPhonemeCategory(phoneme),
+                tips: PHONEME_TIPS[phoneme] || null
+            });
+        }
+    }
+
+    return problems;
+};
+
+/**
+ * Generate a breakdown of each target phoneme with accuracy indicator
+ */
+const generatePhonemeBreakdown = (target, spoken) => {
+    return target.map((phoneme, index) => {
+        const isPresent = spoken.includes(phoneme);
+        const wasSubstituted = !isPresent && SIMILAR_PHONEMES[phoneme]?.some(s => spoken.includes(s));
+
+        let accuracy = 'incorrect';
+        if (isPresent) {
+            accuracy = 'correct';
+        } else if (wasSubstituted) {
+            accuracy = 'partial';
+        }
+
+        return {
+            phoneme,
+            index,
+            accuracy,
+            tips: PHONEME_TIPS[phoneme] || null
+        };
+    });
+};
+
+/**
+ * Generate personalized feedback based on analysis
+ */
+// eslint-disable-next-line no-unused-vars
+const generateFeedback = (score, problemAreas, targetWord) => {
+    const feedback = {
+        summary: '',
+        encouragement: '',
+        specificTips: [],
+        focusAreas: []
+    };
+
+    // Summary based on score
+    if (score >= 90) {
+        feedback.summary = 'Excellent pronunciation! Nearly perfect.';
+        feedback.encouragement = 'You\'re mastering French sounds beautifully! 🌟';
+    } else if (score >= 75) {
+        feedback.summary = 'Good pronunciation with minor areas to polish.';
+        feedback.encouragement = 'Great progress! A few tweaks will make it perfect.';
+    } else if (score >= 50) {
+        feedback.summary = 'Recognizable but needs practice on some sounds.';
+        feedback.encouragement = 'You\'re on the right track! Let\'s focus on specific sounds.';
+    } else {
+        feedback.summary = 'Let\'s work on this word together.';
+        feedback.encouragement = 'Don\'t worry! French sounds take practice. Listen and try again.';
+    }
+
+    // Specific tips from problem areas
+    for (const problem of problemAreas.slice(0, 3)) {
+        if (problem.tips) {
+            feedback.specificTips.push({
+                sound: problem.tips.name,
+                tip: problem.tips.tip,
+                examples: problem.tips.examples
+            });
+        }
+        feedback.focusAreas.push(problem.category);
+    }
+
+    // Remove duplicate focus areas
+    feedback.focusAreas = [...new Set(feedback.focusAreas)];
+
+    return feedback;
+};
+
+/**
  * Analyze pronunciation comparing target word to spoken text
- * 
+ *
  * @param {Object} targetWord - Word object with french, ipa, etc.
  * @param {string} spokenText - Transcribed user speech
  * @returns {Object} Analysis results
@@ -252,122 +370,6 @@ export const analyzePronunciation = (targetWord, spokenText) => {
 };
 
 /**
- * Count syllables in French text (approximation)
- */
-const countSyllables = (text) => {
-    const vowelPattern = /[aeiouyàâäéèêëïîôùûü]/gi;
-    const matches = text.match(vowelPattern);
-    return matches ? matches.length : 1;
-};
-
-/**
- * Identify which phonemes were problematic
- */
-const identifyProblemPhonemes = (target, spoken) => {
-    const problems = [];
-    const targetSet = new Set(target);
-    const spokenSet = new Set(spoken);
-
-    for (const phoneme of targetSet) {
-        if (!spokenSet.has(phoneme)) {
-            // Check if a similar phoneme was used instead
-            const similar = SIMILAR_PHONEMES[phoneme];
-            const substitution = similar?.find(s => spokenSet.has(s));
-
-            problems.push({
-                phoneme,
-                type: substitution ? 'substitution' : 'missing',
-                substitution: substitution || null,
-                category: getPhonemeCategory(phoneme),
-                tips: PHONEME_TIPS[phoneme] || null
-            });
-        }
-    }
-
-    return problems;
-};
-
-/**
- * Get the category of a phoneme
- */
-const getPhonemeCategory = (phoneme) => {
-    for (const [category, phonemes] of Object.entries(PHONEME_CATEGORIES)) {
-        if (phonemes.includes(phoneme)) {
-            return category;
-        }
-    }
-    return 'general';
-};
-
-/**
- * Generate a breakdown of each target phoneme with accuracy indicator
- */
-const generatePhonemeBreakdown = (target, spoken) => {
-    return target.map((phoneme, index) => {
-        const isPresent = spoken.includes(phoneme);
-        const wasSubstituted = !isPresent && SIMILAR_PHONEMES[phoneme]?.some(s => spoken.includes(s));
-
-        let accuracy = 'incorrect';
-        if (isPresent) {
-            accuracy = 'correct';
-        } else if (wasSubstituted) {
-            accuracy = 'partial';
-        }
-
-        return {
-            phoneme,
-            index,
-            accuracy,
-            tips: PHONEME_TIPS[phoneme] || null
-        };
-    });
-};
-
-/**
- * Generate personalized feedback based on analysis
- */
-const generateFeedback = (score, problemAreas, targetWord) => {
-    const feedback = {
-        summary: '',
-        encouragement: '',
-        specificTips: [],
-        focusAreas: []
-    };
-
-    // Summary based on score
-    if (score >= 90) {
-        feedback.summary = 'Excellent pronunciation! Nearly perfect.';
-        feedback.encouragement = 'You\'re mastering French sounds beautifully! 🌟';
-    } else if (score >= 75) {
-        feedback.summary = 'Good pronunciation with minor areas to polish.';
-        feedback.encouragement = 'Great progress! A few tweaks will make it perfect.';
-    } else if (score >= 50) {
-        feedback.summary = 'Recognizable but needs practice on some sounds.';
-        feedback.encouragement = 'You\'re on the right track! Let\'s focus on specific sounds.';
-    } else {
-        feedback.summary = 'Let\'s work on this word together.';
-        feedback.encouragement = 'Don\'t worry! French sounds take practice. Listen and try again.';
-    }
-
-    // Specific tips from problem areas
-    for (const problem of problemAreas.slice(0, 3)) {
-        if (problem.tips) {
-            feedback.specificTips.push({
-                sound: problem.tips.name,
-                tip: problem.tips.tip,
-                examples: problem.tips.examples
-            });
-        }
-        feedback.focusAreas.push(problem.category);
-    }
-
-    // Remove duplicate focus areas
-    feedback.focusAreas = [...new Set(feedback.focusAreas)];
-
-    return feedback;
-};
-
-/**
  * Get detailed hints for a specific phoneme
  */
 export const getPhonemeHints = (phoneme) => {
@@ -383,6 +385,7 @@ export const getPhonemeHints = (phoneme) => {
  * Generate practice recommendations based on user history
  */
 export const generatePracticeRecommendations = (historyData) => {
+    // eslint-disable-next-line no-unused-vars
     const { weakWords = {}, errorPatterns = {}, categoryStats = {} } = historyData;
 
     const recommendations = {
@@ -393,6 +396,7 @@ export const generatePracticeRecommendations = (historyData) => {
     };
 
     // Analyze error patterns to find common problem phonemes
+    // eslint-disable-next-line no-unused-vars
     const phonemeErrors = {};
     for (const [wordId, data] of Object.entries(weakWords)) {
         if (data.strength < 60) {
