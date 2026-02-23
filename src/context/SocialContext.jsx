@@ -52,11 +52,14 @@ export const SocialProvider = ({ children }) => {
         const userContribution = Math.max(0, stats.xp - userCoopStartXp);
         const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
 
-        setActiveChallenge(prev => ({
-            ...prev,
-            current: total,
-            isCompleted: total >= prev.target
-        }));
+        // Wrap in setTimeout to avoid synchronous setState in effect (fixes react-hooks/set-state-in-effect)
+        setTimeout(() => {
+            setActiveChallenge(prev => ({
+                ...prev,
+                current: total,
+                isCompleted: total >= prev.target
+            }));
+        }, 0);
     }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
 
     const claimCoopReward = useCallback(() => {

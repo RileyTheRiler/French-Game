@@ -12,13 +12,29 @@ export const useA11y = () => {
 
 export const A11yProvider = ({ children }) => {
     const [announcement, setAnnouncement] = useState('');
-    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-    const [highContrast, setHighContrast] = useState(false);
+    // Use lazy initialization to avoid synchronous state updates in effects if possible,
+    // or just rely on the effect with a timeout fix.
+    // Actually, lazy init is better:
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+        if (typeof window !== 'undefined' && window.matchMedia) {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        return false;
+    });
 
-    // Detect reduced motion preference
+    const [highContrast, setHighContrast] = useState(() => {
+        if (typeof window !== 'undefined' && window.matchMedia) {
+            return window.matchMedia('(prefers-contrast: more)').matches;
+        }
+        return false;
+    });
+
+    // Detect reduced motion preference changes
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        setPrefersReducedMotion(mediaQuery.matches);
+        // Initial set not needed due to lazy init, but kept for consistency if we wanted to enforce it.
+        // However, setting it again is redundant and causes the lint error if synchronous.
+        // We only need to listen for changes.
 
         const handleChange = (e) => setPrefersReducedMotion(e.matches);
         mediaQuery.addEventListener('change', handleChange);
@@ -26,10 +42,10 @@ export const A11yProvider = ({ children }) => {
         return () => mediaQuery.removeEventListener('change', handleChange);
     }, []);
 
-    // Detect high contrast preference
+    // Detect high contrast preference changes
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-contrast: more)');
-        setHighContrast(mediaQuery.matches);
+        // Initial set removed (lazy init handles it)
 
         const handleChange = (e) => setHighContrast(e.matches);
         mediaQuery.addEventListener('change', handleChange);
