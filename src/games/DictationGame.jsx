@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+// eslint-disable-next-line no-unused-vars
 import { Volume2, Volume1, ArrowRight, RefreshCw, Check, X, AlertCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { GameLayout } from '../components/layout/GameLayout';
@@ -8,6 +9,7 @@ import { Card } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
 import SoundManager from '../utils/SoundManager';
 import { DICTATION_SENTENCES } from '../data/dictationSentences';
+// eslint-disable-next-line no-unused-vars
 import confetti from 'canvas-confetti';
 
 const DictationGame = () => {
@@ -65,20 +67,6 @@ const DictationGame = () => {
         window.speechSynthesis.getVoices();
     }, []);
 
-    const checkAnswer = () => {
-        if (!userInput.trim()) return;
-
-        const normalizedInput = userInput.trim(); // Keep case sensitivity for strict dictation? Or lenient?
-        // Let's go with strict on accents/spelling, maybe lenient on end punctuation if we want to be nice.
-        // For "Dictation", strict is usually better.
-
-        if (normalizedInput === currentSentence.text) {
-            handleSuccess();
-        } else {
-            handleError(normalizedInput);
-        }
-    };
-
     const handleSuccess = () => {
         setStatus('success');
         SoundManager.playSuccess();
@@ -101,6 +89,20 @@ const DictationGame = () => {
         // This is a naive visual diff, but helpful enough
         // Ideally we'd use a diff library, but let's build a simple visualizer
         setDiff({ target: targetWords, input: inputWords });
+    };
+
+    const checkAnswer = () => {
+        if (!userInput.trim()) return;
+
+        const normalizedInput = userInput.trim(); // Keep case sensitivity for strict dictation? Or lenient?
+        // Let's go with strict on accents/spelling, maybe lenient on end punctuation if we want to be nice.
+        // For "Dictation", strict is usually better.
+
+        if (normalizedInput === currentSentence.text) {
+            handleSuccess();
+        } else {
+            handleError(normalizedInput);
+        }
     };
 
     const insertAccent = (char) => {

@@ -1,8 +1,6 @@
-const PBKDF2_CONFIG = {
-    name: 'PBKDF2',
-    iterations: 100000,
-    hash: 'SHA-256'
-};
+
+const PBKDF2_LEGACY_ITERATIONS = 100000;
+const PBKDF2_ITERATIONS = 600000; // OWASP recommended (2025)
 
 /**
  * Constant-time comparison of two strings to prevent timing attacks.
@@ -49,8 +47,10 @@ export async function hashPassword(password) {
 
     const hashBuffer = await crypto.subtle.deriveBits(
         {
-            ...PBKDF2_CONFIG,
-            salt: salt
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: PBKDF2_ITERATIONS,
+            hash: 'SHA-256'
         },
         key,
         256
@@ -62,7 +62,7 @@ export async function hashPassword(password) {
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const saltHex = saltArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    return `${saltHex}:${hashHex}`;
+    return `${PBKDF2_ITERATIONS}:${saltHex}:${hashHex}`;
 }
 
 export async function verifyPassword(storedHash, password) {
@@ -76,10 +76,23 @@ export async function verifyPassword(storedHash, password) {
     }
 
     const parts = storedHash.split(':');
-    if (parts.length !== 2) return false;
+    let iterations = PBKDF2_LEGACY_ITERATIONS;
+    let saltHex, originalHashHex;
 
-    const [saltHex, originalHashHex] = parts;
-    if (!saltHex || !originalHashHex) return false;
+    if (parts.length === 3) {
+        // Format: iterations:salt:hash
+        iterations = parseInt(parts[0], 10);
+        saltHex = parts[1];
+        originalHashHex = parts[2];
+    } else if (parts.length === 2) {
+        // Format: salt:hash (Legacy)
+        saltHex = parts[0];
+        originalHashHex = parts[1];
+    } else {
+        return false;
+    }
+
+    if (!saltHex || !originalHashHex || isNaN(iterations)) return false;
 
     // Safety check for hex validity
     if (!/^[0-9a-fA-F]+$/.test(saltHex) || !/^[0-9a-fA-F]+$/.test(originalHashHex)) {
@@ -100,8 +113,10 @@ export async function verifyPassword(storedHash, password) {
 
     const hashBuffer = await crypto.subtle.deriveBits(
         {
-            ...PBKDF2_CONFIG,
-            salt: salt
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: iterations,
+            hash: 'SHA-256'
         },
         key,
         256
