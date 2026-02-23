@@ -240,7 +240,7 @@ export const ProgressProvider = ({ children }) => {
             checkStreak();
         }, 0);
         return () => clearTimeout(timer);
-    }, []); // Run once on mount
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const ensureSeasonWindow = useCallback(() => {
         setStats(prev => {
@@ -264,7 +264,7 @@ export const ProgressProvider = ({ children }) => {
             ensureSeasonWindow();
         }, 0);
         return () => clearTimeout(timer);
-    }, []);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     const updateDailyStat = useCallback((statName, amount = 1, mode = 'add') => {
         setStats(prev => {
@@ -329,11 +329,14 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
+    // Destructure relevant stats for checkAchievements to allow stable dependency array
+    const { xp, streak, wordsLearned, unlockedAchievements } = stats;
+
     const checkAchievements = useCallback(() => {
-        const currentLevel = calculateLevel(stats.xp);
+        const currentLevel = calculateLevel(xp);
         const newUnlocks = [];
         ACHIEVEMENTS.forEach(achievement => {
-            if (!stats.unlockedAchievements?.includes(achievement.id)) {
+            if (!unlockedAchievements?.includes(achievement.id)) {
                 if (achievement.condition(stats, currentLevel)) {
                     newUnlocks.push(achievement.id);
                 }
@@ -353,7 +356,7 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [xp, streak, wordsLearned, unlockedAchievements, stats, showAchievement]);
 
     // Check achievements when relevant stats change
     useEffect(() => {
@@ -361,7 +364,7 @@ export const ProgressProvider = ({ children }) => {
             checkAchievements();
         }, 0);
         return () => clearTimeout(timer);
-    }, [stats.xp, stats.wordsLearned, stats.storiesCompleted, stats.conversationsCompleted, stats.streak, checkAchievements]);
+    }, [xp, wordsLearned, stats.storiesCompleted, stats.conversationsCompleted, streak, checkAchievements]);
 
 
     const addCoins = useCallback((amount) => {
@@ -601,7 +604,8 @@ export const ProgressProvider = ({ children }) => {
         return summary;
     }, [stats.dailyStats]);
 
-    const markWeeklyRecapSeen = useCallback((mark) => { // Modified arg name slightly to avoid unused var
+    // eslint-disable-next-line no-unused-vars
+    const markWeeklyRecapSeen = useCallback((mark) => {
         setStats(prev => ({ ...prev, lastWeeklyRecap: new Date().toDateString() }));
     }, []);
 

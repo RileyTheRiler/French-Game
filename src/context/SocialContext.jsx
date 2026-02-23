@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 
 const SocialContext = createContext();
@@ -36,39 +36,36 @@ export const SocialProvider = ({ children }) => {
         return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
     });
 
-    const [activeChallenge, setActiveChallenge] = useState(() => ({
+    const [activeChallengeConfig, setActiveChallengeConfig] = useState(() => ({
         id: 'chal_weekly_xp',
         title: 'Team XP Weekly',
         target: 10000,
-        current: 0,
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
     }));
 
-    // Compute total current progress
-    useEffect(() => {
+    // Derived state for challenge progress
+    const activeChallenge = useMemo(() => {
         const userContribution = Math.max(0, stats.xp - userCoopStartXp);
-        const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
+        const total = Math.min(activeChallengeConfig.target, userContribution + friendsProgress);
+        const isCompleted = total >= activeChallengeConfig.target;
 
-        setActiveChallenge(prev => ({
-            ...prev,
+        return {
+            ...activeChallengeConfig,
             current: total,
-            isCompleted: total >= prev.target
-        }));
-    }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
+            isCompleted
+        };
+    }, [activeChallengeConfig, stats.xp, userCoopStartXp, friendsProgress]);
 
     const claimCoopReward = useCallback(() => {
         if (!activeChallenge.isCompleted) return;
 
         // Award bonus
         addXP(500); // Bonus XP
-        // Could add coins here too if Context supported it
 
         // Reset or generate new challenge (mock logic)
-        setActiveChallenge(prev => ({
+        setActiveChallengeConfig(prev => ({
             ...prev,
-            current: 0,
-            isCompleted: false,
             target: Math.floor(prev.target * 1.2), // Increase difficulty
             title: 'Next Team Challenge'
         }));
