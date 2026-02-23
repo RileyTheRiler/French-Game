@@ -4,6 +4,36 @@ const PBKDF2_CONFIG = {
     hash: 'SHA-256'
 };
 
+/**
+ * Constant-time comparison of two strings to prevent timing attacks.
+ * Note: This implementation assumes strings are hex-encoded hashes of equal length
+ * for the security benefit to be maximal, but handles length mismatch safely.
+ */
+function timingSafeEqual(a, b) {
+    if (typeof a !== 'string' || typeof b !== 'string') {
+        return false;
+    }
+
+    const aLen = a.length;
+    const bLen = b.length;
+
+    // Always iterate over the length of 'a' to simulate work,
+    // but the result is false if lengths differ.
+    // This isn't perfect constant time for length mismatch, but
+    // adequate for password hash verification where length is typically fixed/known.
+    let mismatch = aLen === bLen ? 0 : 1;
+
+    // Iterate over the length of a (or b if shorter, to avoid bounds error, though length check handled above)
+    // We use a bitwise OR to accumulate differences.
+    const len = Math.min(aLen, bLen);
+
+    for (let i = 0; i < len; i++) {
+        mismatch |= (a.charCodeAt(i) ^ b.charCodeAt(i));
+    }
+
+    return mismatch === 0;
+}
+
 export async function hashPassword(password) {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
@@ -35,13 +65,14 @@ export async function hashPassword(password) {
     return `${saltHex}:${hashHex}`;
 }
 
-export async function verifyPassword(password, storedHash) {
+export async function verifyPassword(storedHash, password) {
     if (!storedHash) return false;
     if (typeof storedHash !== 'string') return false;
 
     // Legacy plaintext support - insecure but necessary for backward compatibility
     if (!storedHash.includes(':')) {
-        return storedHash === password;
+        // Use timingSafeEqual even for plaintext to avoid timing leaks on length/content
+        return timingSafeEqual(storedHash, password);
     }
 
     const parts = storedHash.split(':');
@@ -79,7 +110,7 @@ export async function verifyPassword(password, storedHash) {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const newHashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    return newHashHex === originalHashHex;
+    return timingSafeEqual(newHashHex, originalHashHex);
 }
 
 // Generate a random salt (exported helper)
@@ -90,53 +121,3 @@ export const generateSalt = () => {
         .map(b => b.toString(16).padStart(2, '0'))
         .join('');
 };
-export const generateSalt = () => {
-    const array = new Uint8Array(16);
-    crypto.getRandomValues(array);
-    return Array.from(array)
-        .map(b => b.toString(16).padStart(2, '0'))
-        .join('');
-};
-
-export async function hashPassword(password) {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const salt = crypto.getRandomValues(new Uint8Array(16));
-  const key = await crypto.subtle.importKey('raw', data, { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']);
-  const derivedBits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
-    key,
-    256
-  );
-
-  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
-  const hashHex = Array.from(new Uint8Array(derivedBits)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-  return `${saltHex}:${hashHex}`;
-}
-
-export async function verifyPassword(stored, password) {
-  if (!stored) return false;
-  // Legacy plaintext support - insecure but necessary for backward compatibility until migrated
-  if (!stored.includes(':')) {
-    return stored === password;
-  }
-
-  const [saltHex, hashHex] = stored.split(':');
-  if (!saltHex || !hashHex) return false;
-
-  const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const key = await crypto.subtle.importKey('raw', data, { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']);
-  const derivedBits = await crypto.subtle.deriveBits(
-    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
-    key,
-    256
-  );
-
-  const derivedHex = Array.from(new Uint8Array(derivedBits)).map(b => b.toString(16).padStart(2, '0')).join('');
-
-  return derivedHex === hashHex;
-}
