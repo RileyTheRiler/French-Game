@@ -1,6 +1,10 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProgress } from './ProgressContext';
 
+/* eslint-disable react-refresh/only-export-components */
+// This file exports constants/functions alongside components, which triggers react-refresh/only-export-components
+// Disabling for this file to match established project pattern.
+
 const SocialContext = createContext();
 
 const MOCK_NPCS = {
@@ -36,14 +40,14 @@ export const SocialProvider = ({ children }) => {
         return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
     });
 
-    const [activeChallenge, setActiveChallenge] = useState({
+    const [activeChallenge, setActiveChallenge] = useState(() => ({
         id: 'chal_weekly_xp',
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
-    });
+    }));
 
     // Compute total current progress
     useEffect(() => {

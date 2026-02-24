@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Plus, Save, Trash2, Edit3, Share2,
-    Book, List, CheckSquare, Sparkles, ChevronRight, X, Play
+    Plus, Save, Trash2, Edit3,
+    Book, List, CheckSquare, ChevronRight, X, Play, Volume2
 } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { Badge } from './ui/Badge';

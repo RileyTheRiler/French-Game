@@ -1,7 +1,10 @@
 // Pattern Drills data and utilities
 // Structured grammar exercises for analytical learners
 
-import { VERB_DATA, PRONOUNS, TENSES } from './verbData';
+import { VERB_DATA, PRONOUNS as VERB_PRONOUNS, TENSES } from './verbData';
+
+// Re-export PRONOUNS so consumers of this file can access it
+export const PRONOUNS = VERB_PRONOUNS;
 
 // Noun-adjective agreement data
 export const AGREEMENT_RULES = [
@@ -233,6 +236,7 @@ export function generateDrillSession(count = 10, difficulty = 25) {
 }
 
 export default {
+    PRONOUNS,
     AGREEMENT_RULES,
     ADJECTIVES,
     NOUNS_FOR_AGREEMENT,
