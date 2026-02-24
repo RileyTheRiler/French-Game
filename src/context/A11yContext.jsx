@@ -12,28 +12,31 @@ export const useA11y = () => {
 
 export const A11yProvider = ({ children }) => {
     const [announcement, setAnnouncement] = useState('');
-    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-    const [highContrast, setHighContrast] = useState(false);
+
+    // Initialize with lazy state to avoid synchronous effects
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    });
+
+    const [highContrast, setHighContrast] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        return window.matchMedia('(prefers-contrast: more)').matches;
+    });
 
     // Detect reduced motion preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        setPrefersReducedMotion(mediaQuery.matches);
-
         const handleChange = (e) => setPrefersReducedMotion(e.matches);
         mediaQuery.addEventListener('change', handleChange);
-
         return () => mediaQuery.removeEventListener('change', handleChange);
     }, []);
 
     // Detect high contrast preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-contrast: more)');
-        setHighContrast(mediaQuery.matches);
-
         const handleChange = (e) => setHighContrast(e.matches);
         mediaQuery.addEventListener('change', handleChange);
-
         return () => mediaQuery.removeEventListener('change', handleChange);
     }, []);
 

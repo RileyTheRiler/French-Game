@@ -33,7 +33,11 @@ const ClozeGame = () => {
     };
 
     useEffect(() => {
-        loadNextPuzzle();
+        // Wrap in setTimeout to avoid synchronous state update warning during effect
+        const timer = setTimeout(() => {
+            loadNextPuzzle();
+        }, 0);
+        return () => clearTimeout(timer);
     }, []);
 
     const handleOptionClick = (option) => {
