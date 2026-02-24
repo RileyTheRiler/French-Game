@@ -1,66 +1,12 @@
-<<<<<<< HEAD
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ShoppingBag, Zap, Shield, Sparkles, Clock, Palette } from 'lucide-react';
+import { X, ShoppingBag, Zap, Shield, Sparkles, Clock, Palette, Lightbulb, Clock3 } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { Button } from './ui/Button';
 import SoundManager from '../utils/SoundManager';
 import { getDailyShopSelection } from '../utils/market';
-=======
-import React from 'react';
-import { motion } from 'framer-motion';
-import { X, ShoppingBag, Zap, Shield, Sparkles, Lightbulb, Clock3 } from 'lucide-react'; // Shield for Streak Freeze
-import { useProgress } from '../context/ProgressContext';
-import { Button } from './ui/Button';
-import SoundManager from '../utils/SoundManager';
-
-const ITEMS = [
-    {
-        id: 'streak_freeze',
-        name: 'Streak Freeze',
-        description: 'Miss a day without losing your streak!',
-        price: 50,
-        icon: <Shield className="text-blue-400" size={32} />,
-        color: 'bg-blue-500/10 border-blue-500/30'
-    },
-    {
-        id: 'hint_token',
-        name: 'Hint Token',
-        description: 'Spend in Sentence Builder for an auto-placed word.',
-        price: 40,
-        icon: <Lightbulb className="text-emerald-400" size={32} />,
-        color: 'bg-emerald-500/10 border-emerald-500/30'
-    },
-    {
-        id: 'double_xp',
-        name: 'Double XP Potion',
-        description: 'Earn 2x XP for the next 15 minutes.',
-        price: 100,
-        icon: <Zap className="text-yellow-400" size={32} />,
-        color: 'bg-yellow-500/10 border-yellow-500/30',
-        disabled: false
-    },
-    {
-        id: 'xp_boost_30',
-        name: 'Extended XP Brew',
-        description: 'Boost XP gains for the next 30 minutes.',
-        price: 160,
-        icon: <Clock3 className="text-indigo-300" size={32} />,
-        color: 'bg-indigo-500/10 border-indigo-500/30',
-        disabled: false
-    },
-    {
-        id: 'theme_neon',
-        name: 'Neo-Tokyo Theme',
-        description: 'Unlock a cyberpunk aesthetic. (Coming Soon)',
-        price: 200,
-        icon: <Sparkles className="text-pink-400" size={32} />,
-        color: 'bg-pink-500/10 border-pink-500/30',
-        disabled: true
-    }
-];
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const ShopModal = ({ onClose }) => {
     const { t, i18n } = useTranslation();
@@ -71,7 +17,9 @@ const ShopModal = ({ onClose }) => {
     useEffect(() => {
         const today = new Date().toDateString();
         const selection = getDailyShopSelection(today);
-        setShopData(selection);
+        setTimeout(() => {
+            setShopData(selection);
+        }, 0);
     }, []);
 
     const formatNumber = (num) => {
@@ -86,17 +34,17 @@ const ShopModal = ({ onClose }) => {
 
         const success = buyItem(item);
         if (success) {
-<<<<<<< HEAD
             if (item.effect?.type === 'add_streak_freeze') {
                 // Instant effect handled by context or just inventory
-=======
-            // Activate Double XP immediately upon purchase
+            }
+
+            // Activate Double XP immediately upon purchase (merged logic)
             if (item.id === 'double_xp') {
                 activateDoubleXP(15);
             } else if (item.id === 'xp_boost_30') {
                 activateDoubleXP(30);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
             }
+
             SoundManager.playSuccess();
         } else {
             SoundManager.playFailure();
@@ -207,6 +155,7 @@ const ShopModal = ({ onClose }) => {
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            aria-label="Close shop"
                         >
                             <X className="text-slate-400" />
                         </button>
@@ -214,10 +163,18 @@ const ShopModal = ({ onClose }) => {
                 </div>
 
                 {/* Tabs */}
-                <div className="flex px-6 pt-4 gap-4 border-b border-white/5">
+                <div
+                    className="flex px-6 pt-4 gap-4 border-b border-white/5"
+                    role="tablist"
+                    aria-label="Shop categories"
+                >
                     <button
                         onClick={() => setActiveTab('featured')}
                         className={`pb-3 px-2 text-sm font-bold transition-colors relative ${activeTab === 'featured' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                        role="tab"
+                        aria-selected={activeTab === 'featured'}
+                        aria-controls="panel-featured"
+                        id="tab-featured"
                     >
                         {t('shop.featured')}
                         {activeTab === 'featured' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500" />}
@@ -225,6 +182,10 @@ const ShopModal = ({ onClose }) => {
                     <button
                         onClick={() => setActiveTab('supplies')}
                         className={`pb-3 px-2 text-sm font-bold transition-colors relative ${activeTab === 'supplies' ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                        role="tab"
+                        aria-selected={activeTab === 'supplies'}
+                        aria-controls="panel-supplies"
+                        id="tab-supplies"
                     >
                         {t('shop.supplies')}
                         {activeTab === 'supplies' && <motion.div layoutId="activeTab" className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500" />}
@@ -237,6 +198,9 @@ const ShopModal = ({ onClose }) => {
                         {activeTab === 'featured' && (
                             <motion.div
                                 key="featured"
+                                role="tabpanel"
+                                id="panel-featured"
+                                aria-labelledby="tab-featured"
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: 20 }}
@@ -258,6 +222,9 @@ const ShopModal = ({ onClose }) => {
                         {activeTab === 'supplies' && (
                             <motion.div
                                 key="supplies"
+                                role="tabpanel"
+                                id="panel-supplies"
+                                aria-labelledby="tab-supplies"
                                 initial={{ opacity: 0, x: 20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: -20 }}
