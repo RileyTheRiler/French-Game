@@ -1,6 +1,6 @@
 const PBKDF2_CONFIG = {
     name: 'PBKDF2',
-    iterations: 100000,
+    iterations: 600000, // OWASP recommendation (2023)
     hash: 'SHA-256'
 };
 
@@ -62,7 +62,8 @@ export async function hashPassword(password) {
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const saltHex = saltArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    return `${saltHex}:${hashHex}`;
+    // Format: iterations:salt:hash (v2) or salt:hash (v1 legacy)
+    return `${PBKDF2_CONFIG.iterations}:${saltHex}:${hashHex}`;
 }
 
 export async function verifyPassword(storedHash, password) {
@@ -76,10 +77,25 @@ export async function verifyPassword(storedHash, password) {
     }
 
     const parts = storedHash.split(':');
-    if (parts.length !== 2) return false;
 
-    const [saltHex, originalHashHex] = parts;
-    if (!saltHex || !originalHashHex) return false;
+    let iterations = 100000; // Legacy default
+    let saltHex, originalHashHex;
+
+    if (parts.length === 3) {
+        // v2 format: iterations:salt:hash
+        iterations = parseInt(parts[0], 10);
+        saltHex = parts[1];
+        originalHashHex = parts[2];
+    } else if (parts.length === 2) {
+        // v1 format: salt:hash
+        iterations = 100000;
+        saltHex = parts[0];
+        originalHashHex = parts[1];
+    } else {
+        return false;
+    }
+
+    if (!saltHex || !originalHashHex || isNaN(iterations)) return false;
 
     // Safety check for hex validity
     if (!/^[0-9a-fA-F]+$/.test(saltHex) || !/^[0-9a-fA-F]+$/.test(originalHashHex)) {
@@ -100,7 +116,9 @@ export async function verifyPassword(storedHash, password) {
 
     const hashBuffer = await crypto.subtle.deriveBits(
         {
-            ...PBKDF2_CONFIG,
+            name: 'PBKDF2',
+            iterations: iterations,
+            hash: 'SHA-256',
             salt: salt
         },
         key,
