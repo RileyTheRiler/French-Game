@@ -20,10 +20,6 @@ const ClozeGame = () => {
     const [questionCount, setQuestionCount] = useState(0);
     const MAX_QUESTIONS = 5;
 
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
-
     const loadNextPuzzle = () => {
         const newPuzzle = generateCloze(1); // Default to level 1 for now
         if (newPuzzle) {
@@ -35,6 +31,14 @@ const ClozeGame = () => {
             setStatus('finished');
         }
     };
+
+    useEffect(() => {
+        // Wrap in setTimeout to avoid synchronous state update warning during effect
+        const timer = setTimeout(() => {
+            loadNextPuzzle();
+        }, 0);
+        return () => clearTimeout(timer);
+    }, []);
 
     const handleOptionClick = (option) => {
         if (status !== 'playing') return;

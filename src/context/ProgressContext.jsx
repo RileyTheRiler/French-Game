@@ -967,12 +967,10 @@ export const ProgressProvider = ({ children }) => {
                 ...prev.dreamGoals,
                 [goalId]: Date.now()
             },
-            dreamGoals: { ...prev.dreamGoals, [goalId]: Date.now() },
             updatedAt: Date.now()
         }));
     }, []);
 
-    const updateMemoryPalaceRoom = useCallback((roomId, items) => {
     const updateMemoryPalaceRoom = useCallback((roomId, data) => {
         setStats(prev => ({
             ...prev,
