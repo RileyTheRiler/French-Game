@@ -25,19 +25,17 @@ const ConjugationBlitz = () => {
 
     const inputRef = useRef(null);
     const timerRef = useRef(null);
+    const scoreRef = useRef(score);
+
+    useEffect(() => {
+        scoreRef.current = score;
+    }, [score]);
 
     // Helpers
     const getRandomChallenge = () => {
         const verb = VERB_DATA[Math.floor(Math.random() * VERB_DATA.length)];
         const tense = TENSES[Math.floor(Math.random() * TENSES.length)];
         const pronoun = PRONOUNS[Math.floor(Math.random() * PRONOUNS.length)];
-
-        // Handle special case for 'je' before vowel/mute h? (j'aime)
-        // For simplicity in data, we stored full "je ..." or "j'..."? 
-        // Wait, data stored just "aime". Code needs to handle pronoun display?
-        // Actually, let's look at my data structure.
-        // Data: { present: { je: 'aime' ... } }
-        // So I need to construct the prompt carefully.
 
         return {
             verb,
@@ -62,6 +60,16 @@ const ConjugationBlitz = () => {
         if (inputRef.current) inputRef.current.focus();
     };
 
+    const endGame = () => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = scoreRef.current * 2;
+        addXP(baseXP);
+    };
+
     // Timer Logic
     useEffect(() => {
         if (status === 'playing') {
@@ -77,21 +85,6 @@ const ConjugationBlitz = () => {
         }
         return () => clearInterval(timerRef.current);
     }, [status]);
-
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        checkAnswer();
-    };
 
     const checkAnswer = () => {
         const normalizedInput = userInput.trim().toLowerCase();
@@ -125,12 +118,13 @@ const ConjugationBlitz = () => {
         loadNextChallenge();
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        checkAnswer();
+    };
+
     // Formatting helper
     const formatPronoun = (pronoun, verbResponse) => {
-        // Simple logic for J' vs Je
-        // This is purely for display relative to the verb if we wanted to show them together
-        // But the prompt shows Pronoun separately usually.
-        // Let's just display the Pronoun string from the array for now.
         return pronoun;
     };
 
