@@ -37,13 +37,6 @@ const ConjugationBlitz = () => {
         const tense = TENSES[Math.floor(Math.random() * TENSES.length)];
         const pronoun = PRONOUNS[Math.floor(Math.random() * PRONOUNS.length)];
 
-        // Handle special case for 'je' before vowel/mute h? (j'aime)
-        // For simplicity in data, we stored full "je ..." or "j'..."? 
-        // Wait, data stored just "aime". Code needs to handle pronoun display?
-        // Actually, let's look at my data structure.
-        // Data: { present: { je: 'aime' ... } }
-        // So I need to construct the prompt carefully.
-
         return {
             verb,
             tense,
@@ -130,40 +123,8 @@ const ConjugationBlitz = () => {
         checkAnswer();
     };
 
-        const isCorrect = normalizedInput === correctAnswer;
-
-        // Record result
-        setResults(prev => [...prev, {
-            challenge: currentChallenge,
-            userAnswer: normalizedInput,
-            isCorrect
-        }]);
-
-        if (isCorrect) {
-            SoundManager.playSuccess();
-            setScore(s => s + 1);
-            setStreak(prev => {
-                const newStreak = prev + 1;
-                if (newStreak % 5 === 0) SoundManager.playLevelUp(); // Mini milestone sound?
-                return newStreak;
-            });
-            // Add slight time bonus?
-            setTimeLeft(t => Math.min(t + 2, 60)); // +2 seconds cap at 60
-        } else {
-            SoundManager.playMiss();
-            setStreak(0);
-            // Shake effect handled by UI state potentially, but for speed we just move on
-        }
-
-        loadNextChallenge();
-    };
-
     // Formatting helper
     const formatPronoun = (pronoun, verbResponse) => {
-        // Simple logic for J' vs Je
-        // This is purely for display relative to the verb if we wanted to show them together
-        // But the prompt shows Pronoun separately usually.
-        // Let's just display the Pronoun string from the array for now.
         return pronoun;
     };
 

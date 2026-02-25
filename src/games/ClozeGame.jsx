@@ -33,7 +33,10 @@ const ClozeGame = () => {
     };
 
     useEffect(() => {
-        loadNextPuzzle();
+        // Use timeout to avoid synchronous state update during effect
+        setTimeout(() => {
+            loadNextPuzzle();
+        }, 0);
     }, []);
 
     const handleOptionClick = (option) => {
