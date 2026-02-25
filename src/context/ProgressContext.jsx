@@ -329,6 +329,7 @@ export const ProgressProvider = ({ children }) => {
         }));
     }, []);
 
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     const checkAchievements = useCallback(() => {
         const currentLevel = calculateLevel(stats.xp);
         const newUnlocks = [];
