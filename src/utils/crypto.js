@@ -1,6 +1,8 @@
-const PBKDF2_CONFIG = {
+const PBKDF2_ITERATIONS_LEGACY = 100000;
+const PBKDF2_ITERATIONS_CURRENT = 600000; // OWASP recommendation
+
+const PBKDF2_CONFIG_BASE = {
     name: 'PBKDF2',
-    iterations: 100000,
     hash: 'SHA-256'
 };
 
@@ -49,8 +51,9 @@ export async function hashPassword(password) {
 
     const hashBuffer = await crypto.subtle.deriveBits(
         {
-            ...PBKDF2_CONFIG,
-            salt: salt
+            ...PBKDF2_CONFIG_BASE,
+            salt: salt,
+            iterations: PBKDF2_ITERATIONS_CURRENT
         },
         key,
         256
@@ -62,7 +65,8 @@ export async function hashPassword(password) {
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const saltHex = saltArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    return `${saltHex}:${hashHex}`;
+    // Format: iterations:salt:hash
+    return `${PBKDF2_ITERATIONS_CURRENT}:${saltHex}:${hashHex}`;
 }
 
 export async function verifyPassword(storedHash, password) {
@@ -76,9 +80,24 @@ export async function verifyPassword(storedHash, password) {
     }
 
     const parts = storedHash.split(':');
-    if (parts.length !== 2) return false;
+    let iterations = PBKDF2_ITERATIONS_LEGACY;
+    let saltHex, originalHashHex;
 
-    const [saltHex, originalHashHex] = parts;
+    if (parts.length === 2) {
+        // Legacy format: salt:hash (implicitly 100k iterations)
+        [saltHex, originalHashHex] = parts;
+    } else if (parts.length === 3) {
+        // New format: iterations:salt:hash
+        const [iterStr, s, h] = parts;
+        iterations = parseInt(iterStr, 10);
+        saltHex = s;
+        originalHashHex = h;
+
+        if (isNaN(iterations)) return false;
+    } else {
+        return false;
+    }
+
     if (!saltHex || !originalHashHex) return false;
 
     // Safety check for hex validity
@@ -86,7 +105,13 @@ export async function verifyPassword(storedHash, password) {
         return false;
     }
 
-    const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+    // Decode hex salt
+    const saltBytes = [];
+    for (let i = 0; i < saltHex.length; i += 2) {
+        saltBytes.push(parseInt(saltHex.substr(i, 2), 16));
+    }
+    const salt = new Uint8Array(saltBytes);
+
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
 
@@ -100,8 +125,9 @@ export async function verifyPassword(storedHash, password) {
 
     const hashBuffer = await crypto.subtle.deriveBits(
         {
-            ...PBKDF2_CONFIG,
-            salt: salt
+            ...PBKDF2_CONFIG_BASE,
+            salt: salt,
+            iterations: iterations
         },
         key,
         256
