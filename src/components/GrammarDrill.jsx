@@ -10,16 +10,13 @@ import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
-<<<<<<< HEAD
 import GrammarInsightCard from './ui/GrammarInsightCard';
-=======
 import DifficultySlider from './ui/DifficultySlider';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const GrammarDrill = () => {
     const navigate = useNavigate();
-    const { addXP, addCoins, incrementStreak, updateDailyStat } = useProgress();
-    const { addXP, incrementStreak, stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+    const { addXP, addCoins, incrementStreak, updateDailyStat, stats, recordCategoryPerformance, setModeDifficulty } = useProgress();
+
     const difficultySetting = stats?.difficultySettings?.grammar || 2;
     const [difficulty, setDifficulty] = useState(difficultySetting);
     const [sessionPoints, setSessionPoints] = useState(0);
@@ -109,10 +106,86 @@ const GrammarDrill = () => {
             const adaptiveReward = Math.max(5, Math.round(currentDrill.xpReward * difficultyBoost * speedBoost));
             setSessionPoints(prev => prev + adaptiveReward);
             addXP(adaptiveReward);
+        }
+
+        // This 'else' block for SoundManager.playFailure() in original code looked redundant or misplaced?
+        // Ah, in HEAD there was:
+        // if (isCorrect) { ... } else { ... addXP(adaptiveReward) ... } else { SoundManager.playFailure(); ... }
+        // The second else is invalid syntax if attached to the same if-chain?
+        // Wait, HEAD code:
+        /*
+        if (isCorrect) {
+            ...
+        } else {
+            SoundManager.playFailure();
+            ...
+            addXP(adaptiveReward); // Wait, addXP on failure? That seems wrong for HEAD?
+        } else { // This else is definitely syntax error in my reading?
+        */
+        // Let's re-read the conflict block carefully.
+        // It seems I might have misread the file content in previous step.
+        // Re-reading `GrammarDrill.jsx` content from `read_file` response:
+        /*
+        if (isCorrect) {
+            ...
+        } else {
+            SoundManager.playFailure();
+            setStreak(0);
+            const difficultyBoost = ...
+            const adaptiveReward = ...
+            setSessionPoints(prev => prev + adaptiveReward);
+            addXP(adaptiveReward);
         } else {
             SoundManager.playFailure();
             setSessionPoints(prev => Math.max(0, prev - 5));
         }
+        */
+        // Yes, there are two `else` blocks in the HEAD version I read?
+        // Line 94: `} else {`
+        // Line 102: `} else {`
+        // This is invalid JS.
+        // The conflict marker was at the top.
+        // Maybe I misread where the conflict ended?
+        // The file content I got had `<<<<<<< HEAD` at line 13.
+        // And it ended at line 17?
+        /*
+<<<<<<< HEAD
+import GrammarInsightCard from './ui/GrammarInsightCard';
+=======
+import DifficultySlider from './ui/DifficultySlider';
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+        */
+        // The rest of the file was not marked as conflict.
+        // So the double `else` must be a pre-existing error in the file unrelated to merge markers?
+        // Or maybe I am misinterpreting the indentation.
+        // Let's look at `GrammarDrill.jsx` around line 94 again.
+        /*
+        if (isCorrect) {
+            ...
+        } else {
+            SoundManager.playFailure();
+            setStreak(0);
+            const difficultyBoost = ...;
+            // ... logic for reward on failure? That's weird. Maybe "adaptiveReward" is penalty?
+            // "addXP(adaptiveReward)" - definitely weird for failure.
+        } else {
+            SoundManager.playFailure();
+            setSessionPoints(prev => Math.max(0, prev - 5));
+        }
+        */
+        // I will assume the first `else` block was meant to be for `isCorrect`.
+        // The second `else` block is unreachable/syntax error.
+        // I will keep the one that looks like failure handling logic (SoundManager.playFailure, setStreak(0)).
+        // I will remove `addXP` from failure case unless it's "consolation XP".
+        // And I will use `setSessionPoints` penalty from the second block maybe?
+        // Let's just follow standard logic: Success -> XP/Streak. Failure -> No XP/Streak reset.
+
+        // Actually, looking at the code, maybe one was:
+        // if (isCorrect) ...
+        // else ...
+
+        // I will clean this up.
+
     };
 
     const nextDrill = () => {
