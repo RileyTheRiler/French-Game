@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, Zap, Trophy, RotateCcw, ArrowRight, X } from 'lucide-react';
@@ -47,6 +47,12 @@ const ConjugationBlitz = () => {
         };
     };
 
+    const loadNextChallenge = () => {
+        setCurrentChallenge(getRandomChallenge());
+        setUserInput('');
+        if (inputRef.current) inputRef.current.focus();
+    };
+
     const startGame = () => {
         setScore(0);
         setStreak(0);
@@ -56,11 +62,15 @@ const ConjugationBlitz = () => {
         loadNextChallenge();
     };
 
-    const loadNextChallenge = () => {
-        setCurrentChallenge(getRandomChallenge());
-        setUserInput('');
-        if (inputRef.current) inputRef.current.focus();
-    };
+    const endGame = useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    }, [score, addXP]);
 
     // Timer Logic
     useEffect(() => {
@@ -76,22 +86,7 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
-
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        checkAnswer();
-    };
+    }, [status, endGame]);
 
     const checkAnswer = () => {
         const normalizedInput = userInput.trim().toLowerCase();
@@ -123,6 +118,11 @@ const ConjugationBlitz = () => {
         }
 
         loadNextChallenge();
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        checkAnswer();
     };
 
     // Formatting helper

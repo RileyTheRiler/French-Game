@@ -3,7 +3,6 @@ import {
     calculateNextReview,
     getInitialState,
     normalizeGrade,
-    isPassingGrade,
     INITIAL_EF,
     calculateRetentionProbability,
     getOptimalReviewTime,
@@ -113,6 +112,23 @@ describe('SRS Logic', () => {
         it('returns 0 for null state', () => {
             expect(calculateRetentionProbability(null)).toBe(0);
             expect(calculateRetentionProbability({})).toBe(0);
+        });
+
+        it('respects the optional now argument', () => {
+            const DAY_MS = 24 * 60 * 60 * 1000;
+            const dueDate = DAY_MS * 2;
+            const state = { interval: 1, dueDate, ef: 2.5 };
+
+            // Case 1: 1 day before due date
+            const retentionBefore = calculateRetentionProbability(state, dueDate - DAY_MS);
+
+            // Case 2: 1 day after due date
+            const retentionAfter = calculateRetentionProbability(state, dueDate + DAY_MS);
+
+            // Logic:
+            // Before due: 0.9 + (1/1)*0.1 = 1.0
+            // After due: exp(-1 / (1*2.5*0.5)) = exp(-0.8) ~= 0.45
+            expect(retentionBefore).toBeGreaterThan(retentionAfter);
         });
     });
 
