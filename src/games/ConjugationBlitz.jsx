@@ -93,14 +93,42 @@ const ConjugationBlitz = () => {
         return () => clearInterval(timerRef.current);
     }, [status]);
 
+    const checkAnswer = () => {
+        const normalizedInput = userInput.trim().toLowerCase();
+        const correctAnswer = currentChallenge.answer.toLowerCase();
+
+        const isCorrect = normalizedInput === correctAnswer;
+
+        // Record result
+        setResults(prev => [...prev, {
+            challenge: currentChallenge,
+            userAnswer: normalizedInput,
+            isCorrect
+        }]);
+
+        if (isCorrect) {
+            SoundManager.playSuccess();
+            setScore(s => s + 1);
+            setStreak(prev => {
+                const newStreak = prev + 1;
+                if (newStreak % 5 === 0) SoundManager.playLevelUp(); // Mini milestone sound?
+                return newStreak;
+            });
+            // Add slight time bonus?
+            setTimeLeft(t => Math.min(t + 2, 60)); // +2 seconds cap at 60
+        } else {
+            SoundManager.playMiss();
+            setStreak(0);
+            // Shake effect handled by UI state potentially, but for speed we just move on
+        }
+
+        loadNextChallenge();
+    };
+
     const handleSubmit = (e) => {
         e.preventDefault();
         checkAnswer();
     };
-
-    const checkAnswer = () => {
-        const normalizedInput = userInput.trim().toLowerCase();
-        const correctAnswer = currentChallenge.answer.toLowerCase();
 
         const isCorrect = normalizedInput === correctAnswer;
 
