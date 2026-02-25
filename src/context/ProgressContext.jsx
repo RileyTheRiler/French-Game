@@ -913,7 +913,6 @@ export const ProgressProvider = ({ children }) => {
                 ...prev.cognitiveStats,
                 ...updates
             },
-            cognitiveStats: { ...prev.cognitiveStats, ...updates },
             updatedAt: Date.now()
         }));
     }, []);
@@ -925,7 +924,6 @@ export const ProgressProvider = ({ children }) => {
                 ...prev.dreamGoals,
                 [goalId]: Date.now()
             },
-            dreamGoals: { ...prev.dreamGoals, [goalId]: Date.now() },
             updatedAt: Date.now()
         }));
     }, []);

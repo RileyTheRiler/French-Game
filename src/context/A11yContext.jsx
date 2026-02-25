@@ -12,13 +12,32 @@ export const useA11y = () => {
 
 export const A11yProvider = ({ children }) => {
     const [announcement, setAnnouncement] = useState('');
-    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-    const [highContrast, setHighContrast] = useState(false);
+
+    // Lazy initialize to avoid effect sync update warning
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+        if (typeof window !== 'undefined' && window.matchMedia) {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        return false;
+    });
+
+    const [highContrast, setHighContrast] = useState(() => {
+        if (typeof window !== 'undefined' && window.matchMedia) {
+            return window.matchMedia('(prefers-contrast: more)').matches;
+        }
+        return false;
+    });
 
     // Detect reduced motion preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        setPrefersReducedMotion(mediaQuery.matches);
+        // Use lazy initialization for initial state if possible, but inside effect we must be careful.
+        // Since we are setting state on mount, this is effectively synchronous but technically in an effect.
+        // To avoid strict mode warnings about synchronous set state in effect causing cascading renders (though harmless here):
+        // We can check if state differs before setting, or trust initial state if we had used lazy init.
+
+        // Better: use lazy initialization for the useState hook itself to read from window.matchMedia initially,
+        // so this effect only handles *changes*.
 
         const handleChange = (e) => setPrefersReducedMotion(e.matches);
         mediaQuery.addEventListener('change', handleChange);
@@ -29,7 +48,6 @@ export const A11yProvider = ({ children }) => {
     // Detect high contrast preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-contrast: more)');
-        setHighContrast(mediaQuery.matches);
 
         const handleChange = (e) => setHighContrast(e.matches);
         mediaQuery.addEventListener('change', handleChange);
