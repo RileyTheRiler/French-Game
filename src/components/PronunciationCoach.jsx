@@ -1,556 +1,272 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Mic, MicOff, Volume2, Check, X, Award, AlertCircle, PlaySquare, Layers, Repeat, Music, Lightbulb } from 'lucide-react';
-import { useVocabulary } from '../context/VocabularyContext';
+import { Mic, Play, RotateCcw, Award, Volume2, Globe, Brain, Zap, MessageCircle } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
-import { playWordAudio } from '../utils/audio';
+import { speak } from '../utils/audio';
 import { scorePronunciation } from '../utils/phonetics';
+import { analyzeProsody } from '../utils/prosody'; // New utility
 import SoundManager from '../utils/SoundManager';
-import { useNavigate } from 'react-router-dom';
-import { Button } from './ui/Button';
-import { Card } from './ui/Card';
+import { useVocabulary } from '../context/VocabularyContext';
 import { Badge } from './ui/Badge';
 import { GameLayout } from './layout/GameLayout';
-<<<<<<< HEAD
 import AudioVisualizer from './Pronunciation/AudioVisualizer';
 import MouthShapeVisualizer from './Pronunciation/MouthShapeVisualizer';
-import MinimalPairDrill from './Pronunciation/MinimalPairDrill';
-import RhythmTrainer from './Pronunciation/RhythmTrainer';
-import ShadowingDrill from './Pronunciation/ShadowingDrill';
-import { analyzePronunciation, getPhonemeHints } from '../services/PronunciationAnalyzer';
-=======
-import { calculateRewards } from '../utils/rewardSystem';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 
 const PronunciationCoach = () => {
-    const navigate = useNavigate();
-    const onExit = () => navigate('/');
-    const { vocabulary } = useVocabulary();
-<<<<<<< HEAD
-    const { addXP, markWordStrength } = useProgress(); // Check if markWordStrength exists in ProgressContext
+    const { addXP, addCoins } = useProgress();
+    const { getPracticeQueue, markWordSeen, updateWordProgress } = useVocabulary();
 
-    // Mode state: 'practice', 'minimal-pairs', 'rhythm'
-    const [mode, setMode] = useState('practice');
+    // State
+    const [queue, setQueue] = useState([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isRecording, setIsRecording] = useState(false);
+    const [audioBlob, setAudioBlob] = useState(null);
+    const [analysis, setAnalysis] = useState(null);
+    const [score, setScore] = useState(0);
+    const [feedback, setFeedback] = useState('');
+    const [showCelebration, setShowCelebration] = useState(false);
+    const [accuracy, setAccuracy] = useState(0); // Track accuracy for rewards
 
-    // Detailed analysis from PronunciationAnalyzer
-    const [detailedAnalysis, setDetailedAnalysis] = useState(null);
-=======
-    const { addXP, addCoins, updateDailyStat, incrementStat } = useProgress();
-    const { addXP, addCoins, offlineAudio } = useProgress();
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
-
-    const [currentWordIndex, setCurrentWordIndex] = useState(0);
-    const [isListening, setIsListening] = useState(false);
-    const [transcript, setTranscript] = useState('');
-    const [status, setStatus] = useState('idle'); // 'idle', 'listening', 'checking', 'success', 'fail'
-<<<<<<< HEAD
-    const [lastScore, setLastScore] = useState(0);
-=======
-    const [accuracy, setAccuracy] = useState(null);
-    const [phonemeFeedback, setPhonemeFeedback] = useState([]);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
-    const [sessionComplete, setSessionComplete] = useState(false);
-    const [totalXP, setTotalXP] = useState(0);
-    const [successCount, setSuccessCount] = useState(0);
-    const [attempts, setAttempts] = useState(0);
-    const [sessionReward, setSessionReward] = useState(null);
-
-    // Audio Context for Visualizer
-    const [audioContext, setAudioContext] = useState(null);
-    const [mediaStream, setMediaStream] = useState(null);
-
-    // Recognition
+    // Refs
     const recognitionRef = useRef(null);
+    const audioContextRef = useRef(null);
+    const analyserRef = useRef(null);
+    const streamRef = useRef(null);
 
-    // Practice items
-    const { stats } = useProgress();
+    const currentWord = queue[currentIndex];
 
-    // Practice items: Prioritize weak words
-    const wordsToPractice = useMemo(() => {
-        const weakWordIds = Object.keys(stats.weakWords || {}).filter(id => stats.weakWords[id].strength < 80);
-
-        // Get full word objects for weak words
-        const weakWordsList = vocabulary.filter(w => weakWordIds.includes(w.id));
-
-        // Sort weak words by strength (weakest first)
-        weakWordsList.sort((a, b) => (stats.weakWords[a.id]?.strength || 0) - (stats.weakWords[b.id]?.strength || 0));
-
-        // Take up to 3 weak words
-        const selectedWeak = weakWordsList.slice(0, 3);
-
-        // Fill the rest with random words
-        const remainingCount = 5 - selectedWeak.length;
-        const otherWords = vocabulary.filter(w => !selectedWeak.includes(w));
-        const randomFill = otherWords.sort(() => Math.random() - 0.5).slice(0, remainingCount);
-
-        return [...selectedWeak, ...randomFill];
-    }, [vocabulary, stats.weakWords]);
-
-    const currentWord = wordsToPractice[currentWordIndex];
-
-    // Initialize Audio Context on user interaction (to respect browser policies)
-    const initAudio = async () => {
-        if (!audioContext) {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                setMediaStream(stream);
-                setAudioContext(ctx);
-                return true;
-            } catch (err) {
-                console.error("Audio init failed", err);
-                return false;
-            }
-        }
-        return true;
-    };
-
+    // Initialize
     useEffect(() => {
+        const words = getPracticeQueue('pronunciation', 10);
+        setQueue(words);
+
+        // Initialize Speech Recognition
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (SpeechRecognition) {
             recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.continuous = false;
             recognitionRef.current.lang = 'fr-FR';
             recognitionRef.current.interimResults = false;
-            recognitionRef.current.maxAlternatives = 1;
 
-            recognitionRef.current.onstart = () => {
-                setIsListening(true);
-                setStatus('listening');
-            };
-
-            recognitionRef.current.onresult = (event) => {
-                const result = event.results[0][0].transcript;
-                setTranscript(result);
-                checkPronunciation(result);
-            };
-
-            recognitionRef.current.onerror = (event) => {
-                console.error('Speech recognition error', event.error);
-                setIsListening(false);
-                setStatus('idle');
-            };
-
-            recognitionRef.current.onend = () => {
-                setIsListening(false);
-            };
+            recognitionRef.current.onresult = handleSpeechResult;
+            recognitionRef.current.onend = () => setIsRecording(false);
         }
 
         return () => {
-            if (mediaStream) {
-                mediaStream.getTracks().forEach(track => track.stop());
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => track.stop());
             }
-            if (audioContext) {
-                audioContext.close();
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
             }
-        }
-    }, []);
+        };
+    }, [getPracticeQueue]);
 
-    const startListening = async () => {
-        await initAudio();
-        if (recognitionRef.current && !isListening) {
-            setTranscript('');
-            setStatus('listening');
-            try {
-                recognitionRef.current.start();
-            } catch (e) {
-                console.warn("Already started", e);
-            }
+    const startRecording = async () => {
+        try {
+            setAnalysis(null);
+            setFeedback('');
+            setShowCelebration(false);
+
+            // Audio Context for Visualization
+            streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContextRef.current.createMediaStreamSource(streamRef.current);
+            analyserRef.current = audioContextRef.current.createAnalyser();
+            source.connect(analyserRef.current);
+
+            setIsRecording(true);
+            recognitionRef.current?.start();
+
+        } catch (err) {
+            console.error("Error accessing microphone:", err);
+            setFeedback("Microphone access denied. Please check permissions.");
         }
     };
 
-    const stopListening = () => {
-        if (recognitionRef.current && isListening) {
-            recognitionRef.current.stop();
+    const stopRecording = () => {
+        setIsRecording(false);
+        recognitionRef.current?.stop();
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
         }
     };
 
-    // Simple heuristic scoring (0-100)
-    const calculateScore = (target, spoken) => {
-        if (!spoken) return 0;
-        target = target.toLowerCase().trim();
-        spoken = spoken.toLowerCase().trim();
-
-        if (target === spoken) return 100;
-        if (spoken.includes(target) || target.includes(spoken)) return 85;
-
-        // Very basic character overlap for now (can be improved with Levenshtein)
-        let matches = 0;
-        for (let i = 0; i < Math.min(target.length, spoken.length); i++) {
-            if (target[i] === spoken[i]) matches++;
-        }
-        return Math.floor((matches / Math.max(target.length, spoken.length)) * 100);
+    const handleSpeechResult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        checkPronunciation(transcript);
     };
 
-    const checkPronunciation = (heard) => {
-        setStatus('checking');
-<<<<<<< HEAD
+    const checkPronunciation = (transcript) => {
+        if (!currentWord) return;
 
-        // Use the advanced PronunciationAnalyzer
-        const analysis = analyzePronunciation(currentWord, heard);
-        setDetailedAnalysis(analysis);
-        setLastScore(analysis.score);
+        // Phonetic analysis
+        const result = scorePronunciation(currentWord.french, transcript);
+        setAnalysis(result);
 
-        // Update stats
-        if (markWordStrength) {
-            markWordStrength(currentWord.id, analysis.score);
-        }
+        // Prosody analysis (simulated or real if audio blob exists)
+        const prosody = analyzeProsody(null); // Passing null for now as we don't have the blob buffer here yet
 
-        setTimeout(() => {
-            if (analysis.score >= 80) {
-                setStatus('success');
-                SoundManager.playSuccess();
-                const xpGain = analysis.score === 100 ? 20 : 10;
-                setTotalXP(prev => prev + xpGain);
-=======
-        const target = currentWord.french.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
-        const spoken = heard.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, "");
-        setAttempts(prev => prev + 1);
-        const { accuracy: score, feedback } = scorePronunciation(currentWord.french, heard);
-        setAccuracy(score);
-        setPhonemeFeedback(feedback);
+        const finalScore = Math.round(result.accuracy);
+        setScore(finalScore);
+        setAccuracy(finalScore);
 
-        setTimeout(() => {
-            if (score >= 70) {
-                setStatus('success');
-                SoundManager.playSuccess();
-                setTotalXP(prev => prev + 20);
-                setSuccessCount(prev => {
-                    const next = prev + 1;
-                    updateDailyStat('dailyStreak', next, 'max');
-                    return next;
-                });
-                addXP(20);
-                addCoins(5);
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
-            } else {
-                setStatus('fail');
-                SoundManager.playMiss();
-            }
-        }, 600);
-    };
-
-    const handleNext = () => {
-        if (currentWordIndex < wordsToPractice.length - 1) {
-            setCurrentWordIndex(prev => prev + 1);
-            setStatus('idle');
-            setTranscript('');
-            setLastScore(0);
-            setDetailedAnalysis(null);
+        if (finalScore >= 80) {
+            SoundManager.playSuccess();
+            setShowCelebration(true);
+            setFeedback("Excellent! Your accent is spot on.");
+            addXP(15);
+            addCoins(5);
+            updateWordProgress(currentWord.id, 'good');
+        } else if (finalScore >= 50) {
+            SoundManager.playMatch(); // Neutral/Good sound
+            setFeedback("Good effort! Watch your intonation.");
+            addXP(5);
+            updateWordProgress(currentWord.id, 'ok');
         } else {
-            const reward = calculateRewards('pronunciation', {
-                successes: successCount,
-                total: wordsToPractice.length
-            });
-            setSessionReward(reward);
-            addXP(reward.xp);
-            addCoins(reward.coins);
-            incrementStat('pronunciationPractices', successCount);
-            setSessionComplete(true);
-            SoundManager.playLevelUp();
+            SoundManager.playMiss();
+            setFeedback("Let's try that again. Listen closely.");
+            updateWordProgress(currentWord.id, 'again');
         }
     };
 
-    const playExample = () => {
-        playWordAudio(currentWord, { preferCache: true, offlineOnly: offlineAudio });
+    const nextWord = () => {
+        if (currentIndex < queue.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+            setAnalysis(null);
+            setScore(0);
+            setFeedback('');
+            setShowCelebration(false);
+        } else {
+            // End of session logic could go here
+            setFeedback("Session Complete! Great work.");
+        }
     };
 
-    if (mode === 'minimal-pairs') {
-        return (
-            <GameLayout
-                title="Minimal Pairs"
-                subtitle="Distinguish similar sounds"
-                onBack={() => setMode('practice')}
-            >
-                <MinimalPairDrill
-                    onComplete={(xp) => {
-                        addXP(xp);
-                    }}
-                    onExit={() => setMode('practice')}
-                />
-            </GameLayout>
-        );
-    }
-
-    if (mode === 'rhythm') {
-        return (
-            <GameLayout
-                title="Rhythm Training"
-                subtitle="Master French speech patterns and timing"
-                onBack={() => setMode('practice')}
-            >
-                <RhythmTrainer
-                    onComplete={(xp) => {
-                        addXP(xp);
-                    }}
-                    onExit={() => setMode('practice')}
-                />
-            </GameLayout>
-        );
-    }
-
-    if (mode === 'shadowing') {
-        return (
-            <GameLayout
-                title="Shadowing Practice"
-                subtitle="Mimic native speakers"
-                onBack={() => setMode('practice')}
-            >
-                <ShadowingDrill
-                    onComplete={(xp) => {
-                        addXP(xp);
-                    }}
-                    onExit={() => setMode('practice')}
-                />
-            </GameLayout>
-        );
-    }
-
-    if (sessionComplete) {
-        return (
-            <GameLayout title="Training Complete" onBack={onExit}>
-                <div className="h-[60vh] flex flex-col items-center justify-center text-center">
-                    <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-8 p-8 bg-indigo-500/20 rounded-full">
-                        <Award size={80} className="text-indigo-400" />
-                    </motion.div>
-                    <h2 className="text-5xl font-black mb-4 title-gradient">Fluency Boosted!</h2>
-                    <p className="text-slate-400 mb-8 max-w-md text-lg">Your pronunciation is getting sharper every day.</p>
-                    {sessionReward && (
-                        <div className="bg-white/5 border border-white/10 rounded-3xl p-6 mb-12 w-full max-w-xs flex flex-col items-center shadow-2xl">
-                            <span className="text-slate-400 uppercase tracking-widest text-xs font-bold mb-2">Rewards</span>
-                            <div className="flex gap-6">
-                                <div className="text-center">
-                                    <span className="text-3xl font-black text-indigo-400">+{sessionReward.xp}</span>
-                                    <p className="text-xs text-indigo-200">XP</p>
-                                </div>
-                                <div className="text-center">
-                                    <span className="text-3xl font-black text-amber-400">+{sessionReward.coins}</span>
-                                    <p className="text-xs text-amber-200">Coins</p>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-                    <Button size="lg" onClick={onExit} className="px-12 py-4">Return to Hub</Button>
-                </div>
-            </GameLayout>
-        );
-    }
-
-    if (vocabulary.length === 0) return <div className="p-8 text-center">Loading...</div>;
+    if (!currentWord) return (
+        <GameLayout title="Pronunciation Coach">
+            <div className="flex items-center justify-center h-64">
+                <p className="text-slate-400">Loading practice queue...</p>
+            </div>
+        </GameLayout>
+    );
 
     return (
         <GameLayout
             title="Pronunciation Coach"
-            subtitle="Master French phonetics through AI feedback."
-            onBack={onExit}
-            headerRight={
-                <div className="flex gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => setMode('minimal-pairs')} className="text-slate-300">
-                        <Layers size={16} className="mr-2" /> Pairs
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setMode('rhythm')} className="text-slate-300">
-                        <Music size={16} className="mr-2" /> Rhythm
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => setMode('shadowing')} className="text-slate-300">
-                        <Repeat size={16} className="mr-2" /> Shadow
-                    </Button>
-                    <Badge variant="primary" className="text-lg py-1 px-4">{currentWordIndex + 1} / {wordsToPractice.length}</Badge>
-                </div>
-            }
+            subtitle="Master your French accent with real-time feedback"
         >
-            <div className="max-w-4xl mx-auto flex flex-col items-center justify-center min-h-[calc(100vh-200px)] py-8">
+            <div className="max-w-2xl mx-auto space-y-8 p-4">
 
-                <Card className="w-full max-w-2xl p-8 bg-slate-900 border-white/10 shadow-2xl flex flex-col items-center text-center relative overflow-hidden">
+                {/* Main Card */}
+                <div className="relative bg-slate-900 rounded-3xl p-8 border border-white/10 shadow-2xl overflow-hidden">
 
-                    {/* Background Glow */}
-                    <div className={`absolute inset-0 opacity-10 transition-colors duration-500 ${status === 'success' ? 'bg-emerald-500' :
-                        status === 'fail' ? 'bg-red-500' : 'bg-indigo-500'
-                        }`} />
+                    {/* Visualizer Background */}
+                    <div className="absolute inset-0 opacity-20 pointer-events-none">
+                        {isRecording && analyserRef.current && (
+                            <AudioVisualizer analyser={analyserRef.current} />
+                        )}
+                    </div>
 
-                    <Badge variant="outline" className="mb-6 text-slate-500 border-white/10 relative z-10">Target Word</Badge>
+                    <div className="relative z-10 flex flex-col items-center text-center space-y-6">
 
-                    <div className="relative z-10">
-                        <h2 className="text-6xl font-black text-white mb-2 lowercase tracking-wide">{currentWord.french}</h2>
+                        <Badge variant="outline" className="mb-2">
+                            {currentWord.category || 'General Vocabulary'}
+                        </Badge>
 
-                        {/* IPA & Mouth Shape */}
-                        <div className="flex items-center justify-center gap-4 mb-8">
-                            <span className="text-slate-400 font-mono text-xl">/{currentWord.ipa || '...'}/</span>
-                            {currentWord.ipa && <MouthShapeVisualizer ipa={currentWord.ipa} size={48} />}
+                        <h2 className="text-5xl font-black text-white tracking-tight mb-2">
+                            {currentWord.french}
+                        </h2>
+
+                        <p className="text-xl text-slate-400 font-light">
+                            {currentWord.english}
+                        </p>
+
+                        {/* Mouth Shape Guide */}
+                        <div className="my-4">
+                            <MouthShapeVisualizer phoneme={currentWord.french.slice(0, 2)} />
+                            <p className="text-xs text-slate-500 mt-2">Mouth Shape Guide</p>
                         </div>
 
-                        <p className="text-2xl text-slate-400 mb-8 italic">{currentWord.english}</p>
-                    </div>
+                        {/* Controls */}
+                        <div className="flex items-center gap-4 mt-8">
+                            <Button
+                                variant="secondary"
+                                size="lg"
+                                onClick={() => speak(currentWord.french)}
+                                className="rounded-full w-16 h-16 flex items-center justify-center"
+                            >
+                                <Volume2 size={24} />
+                            </Button>
 
-                    <div className="flex gap-4 mb-8 relative z-10">
-                        <Button variant="secondary" size="lg" onClick={playExample} className="rounded-2xl px-6 py-4 flex items-center gap-3 bg-white/5 border-white/10 hover:bg-white/10">
-                            <Volume2 size={24} className="text-indigo-400" />
-                            Listen
-                        </Button>
-                    </div>
-
-                    {/* Visualizer Area */}
-                    <div className="w-full mb-8 relative z-10 h-32 flex flex-col justify-end">
-                        {audioContext && (
-                            <AudioVisualizer
-                                isListening={isListening}
-                                audioContext={audioContext}
-                                mediaStream={mediaStream}
-                            />
-                        )}
-                        {!audioContext && (
-                            <div className="h-full flex items-center justify-center text-slate-600 text-sm">
-                                Microphone visualization ready
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="relative w-full flex flex-col items-center z-10">
-                        <Button
-                            disabled={status === 'checking'}
-                            onClick={isListening ? stopListening : startListening}
-                            className={`w-24 h-24 rounded-full shadow-2xl z-10 flex items-center justify-center transition-all ${isListening ? 'bg-red-500 hover:bg-red-600 scale-110 shadow-red-500/50' :
-                                status === 'success' ? 'bg-emerald-500 shadow-emerald-500/50' :
-                                    'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/50'
+                            <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={isRecording ? stopRecording : startRecording}
+                                className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg transition-all ${
+                                    isRecording
+                                    ? 'bg-red-500 shadow-red-500/50 animate-pulse'
+                                    : 'bg-indigo-500 shadow-indigo-500/50 hover:bg-indigo-400'
                                 }`}
-                        >
-                            {isListening ? <MicOff size={40} /> : <Mic size={40} />}
-                        </Button>
+                            >
+                                <Mic size={40} className="text-white" />
+                            </motion.button>
 
-<<<<<<< HEAD
-                        <div className="mt-8 h-24 flex flex-col items-center justify-center w-full">
-                            <AnimatePresence mode="wait">
-                                {status === 'idle' && (
-                                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-slate-500">
-                                        Tap mic to start
-                                    </motion.p>
-                                )}
-                                {status === 'listening' && (
-                                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-indigo-400 font-bold text-xl animate-pulse">
-                                        Listening...
-                                    </motion.p>
-                                )}
-                                {status === 'checking' && (
-                                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-slate-400 font-bold text-xl">
-                                        Analyzing...
-                                    </motion.p>
-                                )}
-                                {status === 'success' && (
-                                    <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center w-full">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <div className="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full text-sm font-bold border border-emerald-500/30">
-                                                {lastScore}% Match
-                                            </div>
-                                            <span className="text-white font-medium">"{transcript}"</span>
-                                        </div>
-                                        <Button className="mt-2 w-full max-w-xs" onClick={handleNext}>Next Word</Button>
-                                    </motion.div>
-                                )}
-                                {status === 'fail' && (
-                                    <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center w-full">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <div className="px-3 py-1 bg-red-500/20 text-red-400 rounded-full text-sm font-bold border border-red-500/30">
-                                                {lastScore}% Match
-                                            </div>
-                                            <span className="text-slate-400">Heard: "{transcript}"</span>
-                                        </div>
-
-                                        {/* Phoneme Breakdown */}
-                                        {detailedAnalysis?.phonemeBreakdown && detailedAnalysis.phonemeBreakdown.length > 0 && (
-                                            <div className="w-full max-w-md mb-4 p-3 bg-slate-800/50 rounded-xl border border-white/5">
-                                                <div className="text-xs text-slate-400 uppercase tracking-wide mb-2 flex items-center gap-1">
-                                                    <Lightbulb size={12} /> Phoneme Analysis
-                                                </div>
-                                                <div className="flex flex-wrap gap-1 justify-center">
-                                                    {detailedAnalysis.phonemeBreakdown.map((p, i) => (
-                                                        <span
-                                                            key={i}
-                                                            className={`px-2 py-1 rounded font-mono text-sm ${p.accuracy === 'correct' ? 'bg-emerald-500/20 text-emerald-400' :
-                                                                p.accuracy === 'partial' ? 'bg-amber-500/20 text-amber-400' :
-                                                                    'bg-red-500/20 text-red-400'
-                                                                }`}
-                                                        >
-                                                            {p.phoneme}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* AI Feedback */}
-                                        {detailedAnalysis?.feedback?.specificTips?.length > 0 && (
-                                            <div className="w-full max-w-md mb-4 p-3 bg-indigo-900/20 rounded-xl border border-indigo-500/20">
-                                                <div className="text-xs text-indigo-400 uppercase tracking-wide mb-2">
-                                                    💡 Pronunciation Tip
-                                                </div>
-                                                <div className="text-sm text-slate-300">
-                                                    <strong className="text-white">{detailedAnalysis.feedback.specificTips[0].sound}:</strong>{' '}
-                                                    {detailedAnalysis.feedback.specificTips[0].tip}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        <div className="flex gap-2">
-                                            <Button variant="ghost" size="sm" onClick={() => setStatus('idle')}>Try Again</Button>
-                                            <Button variant="ghost" size="sm" onClick={handleNext} className="text-slate-500">Skip</Button>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
+                            {analysis && (
+                                <Button
+                                    variant="outline"
+                                    size="lg"
+                                    onClick={nextWord}
+                                    className="rounded-full w-16 h-16 flex items-center justify-center"
+                                >
+                                    <Play size={24} />
+                                </Button>
+                            )}
                         </div>
-=======
-                    <div className="mt-12 h-28 flex flex-col items-center justify-center w-full">
-                        <AnimatePresence mode="wait">
-                            {status === 'listening' && (
-                                <motion.p key="listen" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-indigo-400 font-bold text-xl animate-pulse">
-                                    Listening... Parlez maintenant !
-                                </motion.p>
-                            )}
-                            {status === 'checking' && (
-                                <motion.p key="check" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-slate-400 font-bold text-xl">
-                                    Analyzing your pronunciation...
-                                </motion.p>
-                            )}
-                            {status === 'success' && (
-                                <motion.div key="success" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center">
-                                    <p className="text-emerald-400 font-bold text-2xl flex items-center gap-2">
-                                        <Check size={24} /> Great! "{transcript}"
-                                    </p>
-                                    <p className="text-sm text-emerald-200 mt-2">+20 XP • +5 coins</p>
-                                    <Button className="mt-4" onClick={handleNext}>Next Word</Button>
-                                </motion.div>
-                            )}
-                            {status === 'fail' && (
-                                <motion.div key="fail" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex flex-col items-center">
-                                    <p className="text-red-400 font-bold text-xl flex items-center gap-2">
-                                        <X size={24} /> Hear: "{transcript || '...'}"
-                                    </p>
-                                    <Button variant="ghost" className="mt-2 text-slate-400" onClick={() => setStatus('idle')}>Try Again</Button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
 
-                        {phonemeFeedback.length > 0 && (
-                            <div className="mt-4 w-full">
-                                <div className="flex items-center justify-between mb-2">
-                                    <p className="text-sm text-slate-400">Per-phoneme feedback</p>
-                                    <span className="text-xs text-indigo-300 font-bold">{accuracy}% accuracy</span>
+                        {isRecording && (
+                            <p className="text-red-400 text-sm font-medium animate-pulse">
+                                Listening... Speak now
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                {/* Feedback Section */}
+                <AnimatePresence>
+                    {analysis && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            className="bg-slate-800/50 rounded-2xl p-6 border border-white/5 backdrop-blur-sm"
+                        >
+                            <div className="flex items-center justify-between mb-4">
+                                <div>
+                                    <h3 className="text-lg font-bold text-white">Analysis Result</h3>
+                                    <p className="text-slate-400 text-sm">{feedback}</p>
                                 </div>
-                                <div className="flex flex-wrap gap-2 justify-center">
-                                    {phonemeFeedback.map((item, idx) => (
-                                        <span
-                                            key={`${item.phoneme}-${idx}`}
-                                            className={`px-3 py-1 rounded-full text-sm font-semibold ${item.status === 'match' ? 'bg-emerald-500/20 text-emerald-300' :
-                                                item.status === 'close' ? 'bg-amber-500/20 text-amber-300' :
-                                                    'bg-red-500/20 text-red-300'}`}
-                                        >
-                                            {item.phoneme}
-                                        </span>
-                                    ))}
+                                <div className={`text-4xl font-black ${score >= 80 ? 'text-emerald-400' : score >= 50 ? 'text-amber-400' : 'text-red-400'}`}>
+                                    {score}%
                                 </div>
                             </div>
-                        )}
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
-                    </div>
-                </Card>
+
+                            {/* Phoneme Breakdown */}
+                            <div className="flex flex-wrap gap-2 mt-4">
+                                {analysis.phonemes?.map((p, i) => (
+                                    <span
+                                        key={i}
+                                        className={`px-3 py-1 rounded-lg text-sm font-bold ${
+                                            p.correct ? 'bg-emerald-500/20 text-emerald-300' : 'bg-red-500/20 text-red-300'
+                                        }`}
+                                    >
+                                        {p.char}
+                                    </span>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
             </div>
         </GameLayout>

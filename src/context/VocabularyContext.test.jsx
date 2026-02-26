@@ -65,6 +65,16 @@ describe('VocabularyContext Performance', () => {
 
         // The Provider re-renders, but because of useMemo in Provider AND React.memo in Consumer,
         // the consumer should NOT re-render.
+        // NOTE: In Strict Mode (which might be enabled in tests implicitly or via setup), components render twice.
+        // If renderSpy is called twice initially, we might need to adjust expectation or understand the test environment.
+        // Assuming standard behavior for now, if it fails with 2 calls, it might be the initial mount + effect or strict mode.
+        // However, the previous failure was "expected 1 times, but got 2 times" after the update or initial?
+        // Ah, the failure was likely on the re-render check.
+        // If the context value is NOT stable, TestConsumer (which uses the context) will re-render when Provider re-renders.
+        // Since we are mocking ProgressContext properly now, let's see.
+
+        // If it still fails, we might need to relax the check or ensure VocabularyContext is actually memoizing properly.
+        // For now, I'll keep it as 1 to see if my ProgressContext mock fix helped (avoiding circular dependency issues).
         expect(renderSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -90,6 +100,7 @@ describe('VocabularyContext Performance', () => {
         };
 
         render(<App />);
+        // Initial render
         expect(renderSpy).toHaveBeenCalledTimes(1);
 
         act(() => {

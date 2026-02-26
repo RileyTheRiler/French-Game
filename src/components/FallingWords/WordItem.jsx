@@ -1,75 +1,78 @@
-import React, { memo, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { memo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { formatRelativeTime } from '../../utils/time';
 
-<<<<<<< HEAD
-const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8 }) => {
+const WordItem = memo(({ text, x, y, isMatched, hint, spawnTime, hintDelay = 8, mastery, lastSeen }) => {
     // Only show hint after hintDelay seconds have passed since spawn
-    const [showHint, setShowHint] = useState(false);
+    const [showHint, setShowHint] = React.useState(false);
 
-    useEffect(() => {
-        if (!hint || hintDelay === 0) {
-            setShowHint(!!hint && hintDelay === 0);
-            return;
-        }
+    React.useEffect(() => {
+        if (!spawnTime || !hint) return;
 
-        const elapsed = Date.now() - spawnTime;
-        const remainingDelay = Math.max(0, (hintDelay * 1000) - elapsed);
+        // Calculate delay in ms
+        const delayMs = hintDelay * 1000;
 
-        if (remainingDelay === 0) {
+        // Check if enough time has already passed (e.g. on re-render)
+        const elapsed = performance.now() - spawnTime;
+        if (elapsed > delayMs) {
             setShowHint(true);
             return;
         }
 
         const timer = setTimeout(() => {
             setShowHint(true);
-        }, remainingDelay);
+        }, delayMs - elapsed);
 
         return () => clearTimeout(timer);
-    }, [hint, spawnTime, hintDelay]);
+    }, [spawnTime, hint, hintDelay]);
 
-=======
-const WordItem = memo(({ text, x, y, isMatched, mastery, lastSeen }) => {
-    const tooltip = `Lvl ${mastery || 1} • Last seen ${formatRelativeTime(lastSeen)}`;
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+    const getMasteryColor = (level) => {
+        if (level >= 5) return 'border-emerald-500 shadow-emerald-500/50';
+        if (level >= 3) return 'border-amber-500 shadow-amber-500/50';
+        return 'border-white/20';
+    };
+
     return (
-        <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className={`absolute px-6 py-3 rounded-2xl font-black shadow-2xl transition-all whitespace-nowrap backdrop-blur-md border border-white/20
-                ${isMatched ? 'scale-150 opacity-0 bg-emerald-500 text-white' : 'bg-white/10 text-white'}
-            `}
-            style={{
-                left: `${x}%`,
-                top: `${y}%`,
-                transform: `translate(-50%, 0)`,
-                boxShadow: isMatched ? '0 0 30px rgba(16, 185, 129, 0.5)' : '0 10px 25px -5px rgba(0, 0, 0, 0.3)'
-            }}
-            title={tooltip}
-        >
-            <span className="relative z-10 flex flex-col items-center">
-                {/* Scholar Mode Metadata */}
-                {hint && hint.startsWith('[') && (
-                    <span className="text-[10px] uppercase tracking-widest text-indigo-300 mb-1 font-bold opacity-80">
-                        {hint.replace(/[\[\]]/g, '')}
-                    </span>
-                )}
-                <span className="text-xl">{text}</span>
-            </span>
-
-            {showHint && hint && !hint.startsWith('[') && (
+        <AnimatePresence>
+            {!isMatched && (
                 <motion.div
+                    className="absolute transform -translate-x-1/2 will-change-transform"
+                    style={{ left: `${x}%`, top: `${y}%` }}
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    className="absolute -top-3 -right-3 bg-yellow-400 text-slate-900 text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full shadow-lg border-2 border-slate-900"
+                    exit={{ scale: 1.5, opacity: 0 }}
                 >
-                    ?
+                    <div className={`
+                        relative px-6 py-3 rounded-2xl bg-slate-900/90 backdrop-blur-md
+                        border-2 text-white font-bold text-lg shadow-xl
+                        ${getMasteryColor(mastery)}
+                    `}>
+                        {text}
+
+                        {/* Hint Overlay */}
+                        <AnimatePresence>
+                            {showHint && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: -10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="absolute -top-8 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs px-2 py-1 rounded shadow-lg whitespace-nowrap"
+                                >
+                                    {hint}
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {/* Mastery Indicator (Optional) */}
+                        {mastery > 0 && (
+                            <div className="absolute -right-2 -bottom-2 bg-slate-800 text-[10px] text-slate-400 px-1.5 py-0.5 rounded-full border border-white/10">
+                                Lvl {mastery}
+                            </div>
+                        )}
+                    </div>
                 </motion.div>
             )}
-            <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent rounded-2xl pointer-events-none" />
-        </motion.div>
+        </AnimatePresence>
     );
 });
 
 export default WordItem;
-
