@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, Calendar, Flame, ArrowRight, Star } from 'lucide-react';
+import { Trophy, ArrowRight } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
@@ -8,7 +8,6 @@ import confetti from 'canvas-confetti';
 
 const WeeklyRecapModal = ({ onClose }) => {
     const { getWeeklySummary, markWeeklyRecapSeen } = useProgress();
-    const [step, setStep] = useState(0);
 
     const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
 
