@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StudySession from './StudySession';
 import { VocabularyContext } from '../../context/VocabularyContext';
+import { ProgressContext } from '../../context/ProgressContext';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mocks
@@ -30,13 +31,25 @@ const mockVocabulary = {
     CATEGORIES: { 'Greetings': { name: 'Greetings' }, 'Animals': { name: 'Animals' } }
 };
 
+const mockProgress = {
+    addXP: vi.fn(),
+    updateDailyStat: vi.fn(),
+    incrementStat: vi.fn(),
+    recordCategoryPerformance: vi.fn(),
+    difficultySettings: {
+        flashcards: 2
+    }
+};
+
 const renderWithContext = (ui) => {
     return render(
-        <VocabularyContext.Provider value={mockVocabulary}>
-            <MemoryRouter>
-                {ui}
-            </MemoryRouter>
-        </VocabularyContext.Provider>
+        <ProgressContext.Provider value={mockProgress}>
+            <VocabularyContext.Provider value={mockVocabulary}>
+                <MemoryRouter>
+                    {ui}
+                </MemoryRouter>
+            </VocabularyContext.Provider>
+        </ProgressContext.Provider>
     );
 };
 
@@ -60,8 +73,6 @@ describe('StudySession', () => {
 
         expect(screen.getByText('Bonjour')).toBeInTheDocument();
         // English should be "hidden" (technically rendered but on the back face)
-        // Testing visibility in jsdom with 3d transforms is tricky, 
-        // passing check that it exists in the document is a start.
         expect(screen.getByText('Hello')).toBeInTheDocument();
         expect(screen.getByText('French')).toBeInTheDocument();
     });

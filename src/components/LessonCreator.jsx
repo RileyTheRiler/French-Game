@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Plus, Save, Trash2, Edit3, Share2,
-    Book, List, CheckSquare, Sparkles, ChevronRight, X, Play
+    Book, List, CheckSquare, Sparkles, ChevronRight, X, Play, Volume2, AlertTriangle, Check
 } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 import { Badge } from './ui/Badge';
@@ -42,6 +42,8 @@ const LessonCreator = () => {
         options: ['', '', '', ''],
         correctAnswer: ''
     });
+
+    const [deletingLessonId, setDeletingLessonId] = useState(null);
 
     useEffect(() => {
         localStorage.setItem('frenchApp_userLessons', JSON.stringify(userLessons));
@@ -130,8 +132,18 @@ const LessonCreator = () => {
     };
 
     const deleteLesson = (id) => {
+        setDeletingLessonId(id);
+        SoundManager.playPop();
+    };
+
+    const confirmDelete = (id) => {
         setUserLessons(prev => prev.filter(l => l.id !== id));
-        SoundManager.playMiss();
+        setDeletingLessonId(null);
+        SoundManager.playMiss(); // Or a distinct delete sound
+    };
+
+    const cancelDelete = () => {
+        setDeletingLessonId(null);
     };
 
     const renderList = () => (
@@ -176,8 +188,8 @@ const LessonCreator = () => {
 
                 <div className="flex flex-col gap-4">
                     {userLessons.map(lesson => (
-                        <Card key={lesson.id} className="p-4 border-white/5 bg-slate-900/40 flex items-center justify-between group">
-                            <div className="flex items-center gap-4">
+                        <Card key={lesson.id} className="p-4 border-white/5 bg-slate-900/40 flex items-center justify-between group overflow-hidden relative">
+                            <div className="flex items-center gap-4 relative z-10">
                                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${lesson.type === 'deck' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-purple-500/10 text-purple-400'
                                     }`}>
                                     {lesson.type === 'deck' ? <Book size={20} /> : <CheckSquare size={20} />}
@@ -187,20 +199,63 @@ const LessonCreator = () => {
                                     <p className="text-xs text-slate-500 uppercase tracking-widest">{lesson.content.length} Items • {lesson.type}</p>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)}>
-                                    <Trash2 size={16} className="text-slate-600 hover:text-red-400" />
-                                </Button>
-                                <Button variant="secondary" size="icon" onClick={() => {
-                                    setCurrentLesson(lesson);
-                                    setStep(lesson.type === 'deck' ? 'create_deck' : 'create_quiz');
-                                }}>
-                                    <Edit3 size={16} />
-                                </Button>
-                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)}>
-                                    <Play size={16} fill="currentColor" />
-                                </Button>
+
+                            <div className="flex gap-2 relative z-10">
+                                <AnimatePresence mode="wait">
+                                    {deletingLessonId === lesson.id ? (
+                                        <motion.div
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            exit={{ opacity: 0, x: 20 }}
+                                            className="flex gap-2 items-center"
+                                        >
+                                            <span className="text-xs text-red-300 font-bold mr-2">Sure?</span>
+                                            <Button variant="ghost" size="sm" onClick={cancelDelete} className="text-slate-400 hover:text-white h-8 w-8 p-0">
+                                                <X size={16} />
+                                            </Button>
+                                            <Button variant="danger" size="sm" onClick={() => confirmDelete(lesson.id)} className="h-8 px-3 bg-red-500 hover:bg-red-600 text-white border-none">
+                                                <Trash2 size={16} />
+                                            </Button>
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            className="flex gap-2"
+                                        >
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => deleteLesson(lesson.id)}
+                                                aria-label={`Delete ${lesson.title}`}
+                                            >
+                                                <Trash2 size={16} className="text-slate-600 hover:text-red-400 transition-colors" />
+                                            </Button>
+                                            <Button variant="secondary" size="icon" onClick={() => {
+                                                setCurrentLesson(lesson);
+                                                setStep(lesson.type === 'deck' ? 'create_deck' : 'create_quiz');
+                                            }} aria-label={`Edit ${lesson.title}`}>
+                                                <Edit3 size={16} />
+                                            </Button>
+                                            <Button variant="primary" size="icon" onClick={() => startStudy(lesson)} aria-label={`Study ${lesson.title}`}>
+                                                <Play size={16} fill="currentColor" />
+                                            </Button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
+
+                            {/* Deletion Warning Background Overlay */}
+                            <AnimatePresence>
+                                {deletingLessonId === lesson.id && (
+                                    <motion.div
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="absolute inset-0 bg-red-500/10 z-0 pointer-events-none"
+                                    />
+                                )}
+                            </AnimatePresence>
                         </Card>
                     ))}
 

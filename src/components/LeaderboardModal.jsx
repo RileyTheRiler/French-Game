@@ -1,319 +1,187 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Trophy, Medal, Crown, Flame, Globe, TrendingUp } from 'lucide-react';
+import { X, Trophy, Medal, ChevronUp, ChevronDown, Users, Globe, WifiOff, RefreshCw } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
-import { useSocial } from '../context/SocialContext';
-import { getLeagueByXP, getLeagueProgress, getNextLeague, getXPToNextLeague } from '../data/leagues';
-import { Card } from './ui/Card';
-import { Button } from './ui/Button';
-import { Badge } from './ui/Badge';
+import { LEAGUES, getLeagueInfo, getNextLeague } from '../data/leagues';
+import { getLeaderboardData, getUserRank } from '../utils/leaderboardUtils';
 
-const MOCK_WEEKLY = [
-    { name: "PolyglotPierre", xp: 2850, level: 12, streak: 14, country: "🇫🇷" },
-    { name: "LinguaLisa", xp: 2340, level: 10, streak: 21, country: "🇺🇸" },
-    { name: "GrammarGuru", xp: 1980, level: 9, streak: 7, country: "🇬🇧" },
-    { name: "VocabVictor", xp: 1650, level: 8, streak: 12, country: "🇨🇦" },
-    { name: "FrenchFiona", xp: 1420, level: 7, streak: 5, country: "🇦🇺" },
-    { name: "ParlerPaul", xp: 1180, level: 6, streak: 9, country: "🇩🇪" },
-    { name: "MotsMarie", xp: 890, level: 5, streak: 3, country: "🇪🇸" },
-    { name: "AcuteAnton", xp: 720, level: 4, streak: 6, country: "🇮🇹" },
-];
+const LeaderboardModal = ({ onClose, userStats }) => {
+    const { stats } = useProgress();
+    const [activeTab, setActiveTab] = useState('league'); // 'league' or 'global'
+    const [leaderboardData, setLeaderboardData] = useState([]);
+    const [userRank, setUserRank] = useState(null);
+    const [loading, setLoading] = useState(true);
 
-const MOCK_ALLTIME = [
-    { name: "PolyglotPierre", xp: 45200, level: 22, streak: 180, country: "🇫🇷" },
-    { name: "MasterMichel", xp: 38900, level: 20, streak: 120, country: "🇧🇪" },
-    { name: "LinguaLisa", xp: 32100, level: 18, streak: 95, country: "🇺🇸" },
-    { name: "GrammarGuru", xp: 28500, level: 17, streak: 75, country: "🇬🇧" },
-    { name: "VocabVictor", xp: 21800, level: 15, streak: 60, country: "🇨🇦" },
-    { name: "FrenchFiona", xp: 18200, level: 14, streak: 45, country: "🇦🇺" },
-    { name: "ParlerPaul", xp: 15600, level: 13, streak: 30, country: "🇩🇪" },
-    { name: "MotsMarie", xp: 12100, level: 11, streak: 22, country: "🇪🇸" },
-];
-
-const SEASONAL_PLAYERS = [
-    { name: "WinterWolf", xp: 980, level: 8, streak: 5, country: "🇸🇪" },
-    { name: "NeigeNoire", xp: 1220, level: 9, streak: 11, country: "🇫🇷" },
-    { name: "SkiingSophie", xp: 860, level: 7, streak: 4, country: "🇨🇭" },
-    { name: "PolarPaul", xp: 760, level: 7, streak: 3, country: "🇨🇦" },
-    { name: "GlaceGina", xp: 655, level: 6, streak: 2, country: "🇳🇴" }
-];
-
-const getRankIcon = (rank) => {
-    if (rank === 1) return <Crown size={20} className="text-yellow-400" />;
-    if (rank === 2) return <Medal size={20} className="text-slate-300" />;
-    if (rank === 3) return <Medal size={20} className="text-amber-600" />;
-    return <span className="text-slate-500 font-mono text-sm">#{rank}</span>;
-};
-
-const getSeasonCountdown = (timestamp) => {
-    if (!timestamp) return 'Season rolling soon';
-    const diff = timestamp - Date.now();
-    if (diff <= 0) return 'Season resetting...';
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
-    return `${days}d ${hours}h left`;
-};
-
-const LeaderboardModal = ({ onClose }) => {
-    const { stats, level } = useProgress();
-    const { friends } = useSocial();
-    const [tab, setTab] = useState('weekly');
+    // Offline detection state
     const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
-<<<<<<< HEAD
-    React.useEffect(() => {
+    useEffect(() => {
         const handleOnline = () => setIsOffline(false);
         const handleOffline = () => setIsOffline(true);
+
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
+
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
         };
     }, []);
 
-    // Determine data based on tab
-    let baseData = [];
-    if (tab === 'weekly') baseData = MOCK_WEEKLY;
-    else if (tab === 'alltime') baseData = MOCK_ALLTIME;
-    else if (tab === 'friends') {
-        // Map friends to leaderboard format
-        baseData = friends.map(f => ({
-            name: f.name,
-            xp: f.weeklyXp || f.xp, // Simulating weekly vs total for now
-            level: f.level,
-            streak: 0, // Mock streak for friends if missing
-            country: f.country
-        }));
-    }
-=======
-    const baseData = tab === 'weekly' ? MOCK_WEEKLY : tab === 'alltime' ? MOCK_ALLTIME : SEASONAL_PLAYERS;
-    const isSeasonal = tab === 'seasonal';
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+    useEffect(() => {
+        if (isOffline) {
+            setLoading(false);
+            return;
+        }
 
-    // Insert user into leaderboard
-    const userEntry = {
-        name: "You",
-        xp: isSeasonal ? (stats.seasonalXp || 0) : (tab === 'weekly' ? Math.min(stats.xp, 3000) : stats.xp),
-        level: level,
-        streak: stats.streak || 0,
-        country: "🌍",
-        isUser: true
+        const fetchData = async () => {
+            setLoading(true);
+            // Simulate network request
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            const data = getLeaderboardData(activeTab, stats.league || 'bronze');
+            setLeaderboardData(data);
+
+            const rank = getUserRank(data, 'user_id'); // Assuming user ID is constant/mocked
+            setUserRank(rank);
+            setLoading(false);
+        };
+
+        fetchData();
+    }, [activeTab, stats.league, isOffline]);
+
+    const currentLeague = getLeagueInfo(stats.league || 'bronze');
+    const nextLeague = getNextLeague(stats.league || 'bronze');
+
+    const renderRankBadge = (rank) => {
+        if (rank === 1) return <Medal className="text-yellow-400" size={24} />;
+        if (rank === 2) return <Medal className="text-slate-300" size={24} />;
+        if (rank === 3) return <Medal className="text-amber-600" size={24} />;
+        return <span className="font-bold text-slate-500 w-6 text-center">{rank}</span>;
     };
-
-    const leaderboard = [...baseData, userEntry]
-        .sort((a, b) => b.xp - a.xp)
-        .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
-
-    // Calculate user's league info
-    const weeklyData = getWeeklySummary ? getWeeklySummary() : [];
-    const userWeeklyXP = weeklyData.reduce((sum, day) => sum + (day.xp || 0), 0);
-    const userLeague = getLeagueByXP(userWeeklyXP);
-    const nextLeague = getNextLeague(userLeague.id);
-    const leagueProgress = getLeagueProgress(userWeeklyXP);
-    const xpToNext = getXPToNextLeague(userWeeklyXP);
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
             onClick={onClose}
         >
             <motion.div
-                initial={{ scale: 0.9, y: 20 }}
-                animate={{ scale: 1, y: 0 }}
-                exit={{ scale: 0.9, y: 20 }}
-                className="w-full max-w-lg"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                className="bg-slate-900 border border-white/10 rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
                 onClick={e => e.stopPropagation()}
             >
-                <Card className="p-0 overflow-hidden border-white/10">
-                    {/* Header */}
-                    <div className="p-6 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border-b border-white/10 flex justify-between items-center">
-                        <div className="flex items-center gap-4">
-                            <div className="p-3 bg-amber-500/30 rounded-2xl">
-                                <Trophy size={28} className="text-amber-400" />
+                {/* Header */}
+                <div className="p-6 pb-4 bg-slate-900/50 backdrop-blur-md z-10 border-b border-white/5">
+                    <div className="flex justify-between items-center mb-6">
+                        <div className="flex items-center gap-3">
+                            <div className={`p-3 rounded-full bg-gradient-to-br ${currentLeague.color} shadow-lg`}>
+                                <Trophy size={24} className="text-white" />
                             </div>
                             <div>
-                                <h2 className="text-2xl font-black text-white">Leaderboard</h2>
-                                <p className="text-amber-300/80 text-sm">Compete with learners worldwide</p>
+                                <h2 className="text-xl font-bold text-white">{currentLeague.name} League</h2>
+                                <p className="text-xs text-slate-400">Ends in 2 days</p>
                             </div>
                         </div>
-                        <Button variant="ghost" onClick={onClose} className="rounded-full h-10 w-10 p-0">
-                            <X size={20} />
-                        </Button>
-                    </div>
-
-                    {/* User League Status */}
-                    <div className="px-4 py-3 bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-b border-white/10">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <span className="text-3xl">{userLeague.icon}</span>
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold text-white">{userLeague.name} League</span>
-                                        <Badge variant="outline" className="text-[10px] bg-violet-500/10 border-violet-500/30 text-violet-300">
-                                            This Week
-                                        </Badge>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                                        <span>{userWeeklyXP.toLocaleString()} XP</span>
-                                        {nextLeague && (
-                                            <>
-                                                <TrendingUp size={12} className="text-emerald-400" />
-                                                <span className="text-emerald-400">{xpToNext} to {nextLeague.name}</span>
-                                            </>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                            {nextLeague && (
-                                <div className="text-right">
-                                    <span className="text-2xl">{nextLeague.icon}</span>
-                                </div>
-                            )}
-                        </div>
-                        {nextLeague && (
-                            <div className="mt-2">
-                                <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                                    <motion.div
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${leagueProgress}%` }}
-                                        className={`h-full bg-gradient-to-r ${userLeague.gradient}`}
-                                    />
-                                </div>
-                            </div>
-                        )}
+                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-colors">
+                            <X className="text-slate-400" />
+                        </button>
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex border-b border-white/10">
-                        {['weekly', 'alltime', 'friends'].map((t) => (
-                            <button
-                                key={t}
-                                onClick={() => setTab(t)}
-                                className={`flex-1 py-3 text-sm font-bold transition-all capitalize ${tab === t
-                                    ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
-                                    : 'text-slate-400 hover:text-white'
-<<<<<<< HEAD
-                                    }`}
-                            >
-                                {t === 'alltime' ? 'All Time' : t}
+                    <div className="flex bg-slate-800 p-1 rounded-xl">
+                        <button
+                            onClick={() => setActiveTab('league')}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'league' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            <Users size={16} /> League
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('global')}
+                            className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${activeTab === 'global' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                        >
+                            <Globe size={16} /> Global
+                        </button>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-2">
+                    {isOffline ? (
+                        <div className="flex flex-col items-center justify-center h-48 text-slate-500 gap-4">
+                            <WifiOff size={48} className="opacity-50" />
+                            <p>You are offline.</p>
+                            <button onClick={() => window.location.reload()} className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300">
+                                <RefreshCw size={16} /> Retry
                             </button>
-                        ))}
-=======
-                                }`}
-                        >
-                            This Week
-                        </button>
-                        <button
-                            onClick={() => setTab('alltime')}
-                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'alltime'
-                                    ? 'text-amber-400 border-b-2 border-amber-400 bg-amber-500/10'
-                                    : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            All Time
-                        </button>
-                        <button
-                            onClick={() => setTab('seasonal')}
-                            className={`flex-1 py-3 text-sm font-bold transition-all ${tab === 'seasonal'
-                                    ? 'text-indigo-300 border-b-2 border-indigo-300 bg-indigo-500/10'
-                                    : 'text-slate-400 hover:text-white'
-                                }`}
-                        >
-                            Seasonal
-                        </button>
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
-                    </div>
-
-                    {/* Leaderboard List */}
-                    {isSeasonal && (
-                        <div className="px-4 py-3 bg-indigo-500/10 border-b border-white/10 flex items-center justify-between text-sm text-indigo-200">
-                            <span>Winter Cup • {getSeasonCountdown(stats.seasonEndsAt)}</span>
-                            <Badge variant="primary" className="bg-indigo-500/30 border-indigo-400/50">Season XP: {stats.seasonalXp || 0}</Badge>
                         </div>
-                    )}
-                    <div className="p-4 max-h-[50vh] overflow-y-auto custom-scrollbar">
-                        <motion.div
-                            key={tab}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
-                            className="space-y-2"
-                        >
-                            {isOffline ? (
-                                <div className="text-center py-12 text-slate-500">
-                                    <Globe size={48} className="mx-auto mb-4 opacity-50 text-slate-600" />
-                                    <p className="font-bold text-slate-300 mb-1">You are offline</p>
-                                    <p className="text-sm">Leaderboards are not available without an internet connection.</p>
-                                </div>
-                            ) : leaderboard.length === 0 ? (
-                                <div className="text-center py-8 text-slate-500">
-                                    No friends yet! Add some in the Social Hub.
-                                </div>
-                            ) : (
-                                leaderboard.map((player, idx) => (
-                                    <motion.div
-                                        key={player.name}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        transition={{ delay: idx * 0.05 }}
-                                        className={`flex items-center justify-between p-3 rounded-xl transition-all ${player.isUser
-                                            ? 'bg-gradient-to-r from-indigo-500/20 to-violet-500/20 border border-indigo-500/30 ring-2 ring-indigo-500/20'
-                                            : player.rank <= 3
-                                                ? 'bg-amber-500/10 border border-amber-500/20'
-                                                : 'bg-slate-800/50 border border-white/5'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            {/* Rank */}
-                                            <div className="w-8 flex justify-center">
-                                                {getRankIcon(player.rank)}
-                                            </div>
-
-                                            {/* Avatar / Country */}
-                                            <div className="text-2xl">{player.country}</div>
-
-                                            {/* Name & Level */}
-                                            <div>
-                                                <p className={`font-bold ${player.isUser ? 'text-indigo-300' : 'text-white'}`}>
-                                                    {player.name}
-                                                </p>
-                                                <div className="flex items-center gap-2 text-xs text-slate-400">
-                                                    <span>Lvl {player.level}</span>
-                                                    {player.streak > 0 && (
-                                                        <span className="flex items-center gap-1 text-orange-400">
-                                                            <Flame size={12} /> {player.streak}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
+                    ) : loading ? (
+                        <div className="flex flex-col gap-3">
+                            {[1, 2, 3, 4, 5].map(i => (
+                                <div key={i} className="h-16 bg-white/5 rounded-xl animate-pulse" />
+                            ))}
+                        </div>
+                    ) : (
+                        leaderboardData.map((user, index) => {
+                            const isCurrentUser = user.id === 'user_id'; // Mock ID check
+                            return (
+                                <motion.div
+                                    key={user.id}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.05 }}
+                                    className={`
+                                        flex items-center justify-between p-4 rounded-xl border transition-all
+                                        ${isCurrentUser
+                                            ? 'bg-indigo-500/10 border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.2)]'
+                                            : 'bg-slate-800/30 border-white/5 hover:bg-slate-800/50'}
+                                    `}
+                                >
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-8 flex justify-center">
+                                            {renderRankBadge(index + 1)}
                                         </div>
-
-                                        {/* XP */}
-                                        <div className="text-right">
-                                            <p className="font-mono font-bold text-amber-400">
-                                                {player.xp.toLocaleString()}
+                                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden border border-white/10">
+                                            {user.avatar ? (
+                                                <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="font-bold text-slate-400">{user.name[0]}</span>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <p className={`font-bold ${isCurrentUser ? 'text-indigo-300' : 'text-white'}`}>
+                                                {user.name} {isCurrentUser && '(You)'}
                                             </p>
-                                            <p className="text-xs text-slate-500">XP</p>
+                                            {index < 3 && activeTab === 'league' && (
+                                                <p className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
+                                                    <ChevronUp size={10} /> Promotion Zone
+                                                </p>
+                                            )}
                                         </div>
-                                    </motion.div>
-                                ))
-                            )}
-                        </motion.div>
-                    </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="font-mono font-bold text-white">{user.xp.toLocaleString()} XP</p>
+                                    </div>
+                                </motion.div>
+                            );
+                        })
+                    )}
+                </div>
 
-                    {/* Footer */}
-                    <div className="p-4 border-t border-white/10 bg-slate-900/50 text-center">
-                        <p className="text-slate-400 text-sm">
-                            Keep learning to climb the ranks! 🚀
+                {/* Footer (Promotion/Demotion Info) */}
+                {!isOffline && !loading && activeTab === 'league' && nextLeague && (
+                    <div className="p-4 bg-slate-900 border-t border-white/10 text-center">
+                        <p className="text-xs text-slate-400">
+                            Top 5 promote to <span className={`font-bold text-${nextLeague.color.split('-')[1]}-400`}>{nextLeague.name} League</span>
                         </p>
                     </div>
-                </Card>
+                )}
             </motion.div>
-        </motion.div >
+        </motion.div>
     );
 };
 

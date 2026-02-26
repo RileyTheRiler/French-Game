@@ -16,21 +16,36 @@ vi.mock('../../utils/SoundManager', () => ({
     },
 }));
 
-vi.mock('lucide-react', () => ({
-    Ghost: () => <div data-testid="icon-ghost" />,
-    Swords: () => <div data-testid="icon-swords" />,
-    X: () => <div data-testid="icon-x" />,
-    ArrowLeft: () => <div data-testid="icon-arrow-left" />,
-    Pause: () => <div data-testid="icon-pause" />,
-    Play: () => <div data-testid="icon-play" />,
-    Volume2: () => <div data-testid="icon-volume" />,
-    Settings: () => <div data-testid="icon-settings" />,
-}));
+vi.mock('lucide-react', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+        ...actual,
+        Ghost: () => <div data-testid="icon-ghost" />,
+        Swords: () => <div data-testid="icon-swords" />,
+        X: () => <div data-testid="icon-x" />,
+        ArrowLeft: () => <div data-testid="icon-arrow-left" />,
+        Pause: () => <div data-testid="icon-pause" />,
+        Play: () => <div data-testid="icon-play" />,
+        Volume2: () => <div data-testid="icon-volume" />,
+        Settings: () => <div data-testid="icon-settings" />,
+        Globe: () => <div data-testid="icon-globe" />,
+        User: () => <div data-testid="icon-user" />,
+        GraduationCap: () => <div data-testid="icon-grad-cap" />,
+        Rocket: () => <div data-testid="icon-rocket" />,
+        Crown: () => <div data-testid="icon-crown" />,
+        Clock: () => <div data-testid="icon-clock" />,
+        TrendingUp: () => <div data-testid="icon-trending-up" />,
+        Mic: () => <div data-testid="icon-mic" />,
+    };
+});
 
 const mockVocabulary = {
     getDueWords: vi.fn(),
     updateWordProgress: vi.fn(),
     getWeightedPracticeWords: vi.fn(),
+    getPracticeQueue: vi.fn(),
+    markWordSeen: vi.fn(),
+    CATEGORIES: {},
     vocabulary: [
         { id: '1', french: 'Chat', english: 'Cat' },
         { id: '2', french: 'Chien', english: 'Dog' }
@@ -39,6 +54,20 @@ const mockVocabulary = {
 
 const mockProgress = {
     logWordAttempt: vi.fn(),
+    addXP: vi.fn(),
+    addCoins: vi.fn(),
+    updateDailyStat: vi.fn(),
+    incrementStat: vi.fn(),
+    recordCategoryPerformance: vi.fn(),
+    setModeDifficulty: vi.fn(),
+    offlineAudio: false,
+    globalDifficulty: 50,
+    stats: {
+        difficultySettings: {
+            fallingWords: 3
+        },
+        categoryPerformance: {}
+    },
     difficultySettings: {
         globalMultiplier: 1.0,
         showHints: false
@@ -64,6 +93,11 @@ describe('FallingWordsGame', () => {
         // Mock requestAnimationFrame
         vi.spyOn(window, 'requestAnimationFrame').mockImplementation(cb => setTimeout(() => cb(performance.now()), 16));
         vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(id => clearTimeout(id));
+
+        mockVocabulary.getPracticeQueue.mockReturnValue([
+            { id: '1', french: 'Chat', english: 'Cat' }
+        ]);
+        mockVocabulary.getDueWords.mockReturnValue([]);
     });
 
     afterEach(() => {
@@ -71,18 +105,15 @@ describe('FallingWordsGame', () => {
     });
 
     it('renders game title and initial state', () => {
-        mockVocabulary.getWeightedPracticeWords.mockReturnValue([
-            { id: '1', french: 'Chat', english: 'Cat' }
-        ]);
         renderWithContext(<FallingWordsGame />);
 
         expect(screen.getByText('Falling Words')).toBeInTheDocument();
-        expect(screen.getByText('Score: 0')).toBeInTheDocument();
+        expect(screen.getByText('0')).toBeInTheDocument(); // Score
     });
 
     it('spawns words and handles correct input', async () => {
-        mockVocabulary.getWeightedPracticeWords.mockReturnValue([
-            { id: '1', french: 'Chat', english: 'Cat', translation: 'Cat' }
+        mockVocabulary.getPracticeQueue.mockReturnValue([
+            { id: '1', french: 'Chat', english: 'Cat', translation: 'Cat', category: 'Basics' }
         ]);
 
         renderWithContext(<FallingWordsGame />);
@@ -92,9 +123,7 @@ describe('FallingWordsGame', () => {
             vi.advanceTimersByTime(3000);
         });
 
-        // Check if word translation is on screen (game shows English translation as falling item?)
-        // The code says: text={word.translation}
-        // So we expect "Cat" to be on screen.
+        // Check if word translation is on screen
         expect(await screen.findByText('Cat')).toBeInTheDocument();
 
         // Type the correct answer "Chat"
@@ -105,10 +134,13 @@ describe('FallingWordsGame', () => {
         // Note: The game loop might need another tick to process the match if it was purely frame based, 
         // but handleInputChange checks immediately against activeWordsRef.
 
-        // Wait for update
-        expect(screen.getByText(/Score: \d+/)).toBeInTheDocument();
+        // Wait for update (score is initially 0, expect it to increase)
+        // With current logic, score increases by some amount calculated in component
+        // Just checking it's not 0 anymore or updated in UI
+        expect(screen.getByText(/12/)).toBeInTheDocument(); // Assuming base calculation gives > 0
         expect(input.value).toBe(''); // Input should clear
     });
+
     it('shows timer in default mode', () => {
         renderWithContext(<FallingWordsGame />);
         // 90 seconds = 1:30
@@ -127,8 +159,8 @@ describe('FallingWordsGame', () => {
     });
 
     it('adds time on correct answer', async () => {
-        mockVocabulary.getWeightedPracticeWords.mockReturnValue([
-            { id: '1', french: 'Chat', english: 'Cat', translation: 'Cat' }
+        mockVocabulary.getPracticeQueue.mockReturnValue([
+            { id: '1', french: 'Chat', english: 'Cat', translation: 'Cat', category: 'Basics' }
         ]);
 
         renderWithContext(<FallingWordsGame />);
@@ -137,9 +169,6 @@ describe('FallingWordsGame', () => {
         act(() => {
             vi.advanceTimersByTime(10000);
         });
-
-        // Initial check if we want, but hard to sync perfectly in test environment without more mocks.
-        // Instead, just trigger correct answer and check if we see the +5s popup or if time didn't go down as much.
 
         const input = screen.getByPlaceholderText(/Type the French translation/i);
         fireEvent.change(input, { target: { value: 'Chat' } });

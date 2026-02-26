@@ -1,132 +1,95 @@
-// League tier definitions for the leaderboard system
-// Weekly XP thresholds determine league placement
+import React from 'react';
+// import { Trophy, Medal, Crown } from 'lucide-react'; // Removed unused imports if we use string icons
 
 export const LEAGUES = [
     {
         id: 'bronze',
         name: 'Bronze',
         minXP: 0,
-        icon: '🥉',
-        color: 'amber',
-        gradient: 'from-amber-700 to-amber-900',
-        description: 'Just getting started'
+        maxXP: 499,
+        color: 'from-orange-700 to-orange-500',
+        icon: '🥉'
     },
     {
         id: 'silver',
         name: 'Silver',
         minXP: 500,
-        icon: '🥈',
-        color: 'slate',
-        gradient: 'from-slate-400 to-slate-600',
-        description: 'Building momentum'
+        maxXP: 1199,
+        color: 'from-slate-400 to-slate-300',
+        icon: '🥈'
     },
     {
         id: 'gold',
         name: 'Gold',
-        minXP: 1500,
-        icon: '🥇',
-        color: 'yellow',
-        gradient: 'from-yellow-400 to-amber-500',
-        description: 'Committed learner'
+        minXP: 1200,
+        maxXP: 2499,
+        color: 'from-yellow-500 to-amber-400',
+        icon: '🥇'
     },
     {
         id: 'platinum',
         name: 'Platinum',
-        minXP: 3000,
-        icon: '💎',
-        color: 'cyan',
-        gradient: 'from-cyan-400 to-blue-500',
-        description: 'Dedicated student'
+        minXP: 2500,
+        maxXP: 4999,
+        color: 'from-cyan-500 to-blue-500',
+        icon: '💎' // Replaced JSX with emoji/string
     },
     {
         id: 'diamond',
         name: 'Diamond',
-        minXP: 6000,
-        icon: '👑',
-        color: 'violet',
-        gradient: 'from-violet-400 to-purple-600',
-        description: 'Language champion'
+        minXP: 5000,
+        maxXP: 9999,
+        color: 'from-indigo-500 to-purple-600',
+        icon: '👑' // Replaced JSX with emoji/string
     },
+    {
+        id: 'master',
+        name: 'Master',
+        minXP: 10000,
+        maxXP: Infinity,
+        color: 'from-fuchsia-600 to-pink-600',
+        icon: '🔥' // Replaced JSX with emoji/string
+    }
 ];
 
-/**
- * Get the current league based on weekly XP
- * @param {number} weeklyXP - XP earned this week
- * @returns {object} The league object
- */
-export const getLeagueByXP = (weeklyXP) => {
-    let currentLeague = LEAGUES[0];
-    for (const league of LEAGUES) {
-        if (weeklyXP >= league.minXP) {
-            currentLeague = league;
-        }
-    }
-    return currentLeague;
+export const getLeagueByXP = (xp) => {
+    return LEAGUES.find(l => xp >= l.minXP && xp <= l.maxXP) || LEAGUES[LEAGUES.length - 1];
 };
 
-/**
- * Get the next league tier
- * @param {string} currentLeagueId - Current league ID
- * @returns {object|null} Next league or null if at max
- */
+export const getLeagueInfo = (leagueId) => {
+    return LEAGUES.find(l => l.id === leagueId) || LEAGUES[0];
+};
+
 export const getNextLeague = (currentLeagueId) => {
-    const currentIndex = LEAGUES.findIndex(l => l.id === currentLeagueId);
-    if (currentIndex < LEAGUES.length - 1) {
-        return LEAGUES[currentIndex + 1];
-    }
-    return null;
+    const idx = LEAGUES.findIndex(l => l.id === currentLeagueId);
+    return idx < LEAGUES.length - 1 ? LEAGUES[idx + 1] : null;
 };
 
-/**
- * Calculate progress percentage to next league
- * @param {number} weeklyXP - XP earned this week
- * @returns {number} Percentage (0-100)
- */
-export const getLeagueProgress = (weeklyXP) => {
-    const currentLeague = getLeagueByXP(weeklyXP);
-    const nextLeague = getNextLeague(currentLeague.id);
-
-    if (!nextLeague) return 100; // Already at max league
-
-    const xpInCurrentTier = weeklyXP - currentLeague.minXP;
-    const xpNeededForNext = nextLeague.minXP - currentLeague.minXP;
-
-    return Math.min(100, Math.floor((xpInCurrentTier / xpNeededForNext) * 100));
+export const getLeagueProgress = (xp) => {
+    const currentLeague = getLeagueByXP(xp);
+    if (currentLeague.maxXP === Infinity) return 100;
+    const range = currentLeague.maxXP - currentLeague.minXP;
+    const progress = xp - currentLeague.minXP;
+    return Math.min(100, Math.max(0, (progress / range) * 100));
 };
 
-/**
- * Get XP needed for next league
- * @param {number} weeklyXP - XP earned this week
- * @returns {number} XP needed, or 0 if at max
- */
-export const getXPToNextLeague = (weeklyXP) => {
-    const currentLeague = getLeagueByXP(weeklyXP);
-    const nextLeague = getNextLeague(currentLeague.id);
-
-    if (!nextLeague) return 0;
-    return nextLeague.minXP - weeklyXP;
+export const getXPToNextLeague = (xp) => {
+    const currentLeague = getLeagueByXP(xp);
+    if (currentLeague.maxXP === Infinity) return 0;
+    return currentLeague.maxXP + 1 - xp;
 };
 
-// Streak milestone rewards
 export const STREAK_MILESTONES = [
-    { days: 7, xpBonus: 100, coinBonus: 50, title: 'Week Warrior', icon: '🔥' },
-    { days: 14, xpBonus: 250, coinBonus: 100, title: 'Fortnight Fighter', icon: '💪' },
-    { days: 30, xpBonus: 500, coinBonus: 200, title: 'Monthly Master', icon: '🏆' },
-    { days: 60, xpBonus: 1000, coinBonus: 500, title: 'Dedication Pro', icon: '⭐' },
-    { days: 100, xpBonus: 2000, coinBonus: 1000, title: 'Century Legend', icon: '👑' },
-    { days: 365, xpBonus: 10000, coinBonus: 5000, title: 'Year Champion', icon: '🎖️' },
+    { day: 3, title: 'Three Day Streak', xpBonus: 50, coinBonus: 20 },
+    { day: 7, title: 'Weekly Warrior', xpBonus: 150, coinBonus: 50 },
+    { day: 14, title: 'Fortnight Fortitude', xpBonus: 300, coinBonus: 100 },
+    { day: 30, title: 'Monthly Master', xpBonus: 1000, coinBonus: 500 }
 ];
 
-/**
- * Check if streak hits a milestone
- * @param {number} streak - Current streak count
- * @returns {object|null} Milestone object or null
- */
 export const checkStreakMilestone = (streak) => {
-    return STREAK_MILESTONES.find(m => m.days === streak) || null;
+    return STREAK_MILESTONES.find(m => m.day === streak);
 };
 
-// Goal presets for different commitment levels
 export const GOAL_PRESETS = [
     {
         id: 'casual',
