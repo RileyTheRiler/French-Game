@@ -12,29 +12,54 @@ export const useA11y = () => {
 
 export const A11yProvider = ({ children }) => {
     const [announcement, setAnnouncement] = useState('');
-    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-    const [highContrast, setHighContrast] = useState(false);
 
-    // Detect reduced motion preference
+    // Lazy initialization to avoid setting state in effect for initial value
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+        if (typeof window !== 'undefined' && window.matchMedia) {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        return false;
+    });
+
+    const [highContrast, setHighContrast] = useState(() => {
+        if (typeof window !== 'undefined' && window.matchMedia) {
+            return window.matchMedia('(prefers-contrast: more)').matches;
+        }
+        return false;
+    });
+
+    // Detect reduced motion preference changes
     useEffect(() => {
+        if (typeof window === 'undefined' || !window.matchMedia) return;
+
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        setPrefersReducedMotion(mediaQuery.matches);
-
         const handleChange = (e) => setPrefersReducedMotion(e.matches);
-        mediaQuery.addEventListener('change', handleChange);
 
-        return () => mediaQuery.removeEventListener('change', handleChange);
+        // Modern browsers
+        if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', handleChange);
+            return () => mediaQuery.removeEventListener('change', handleChange);
+        } else {
+            // Fallback for older environments
+            mediaQuery.addListener(handleChange);
+            return () => mediaQuery.removeListener(handleChange);
+        }
     }, []);
 
-    // Detect high contrast preference
+    // Detect high contrast preference changes
     useEffect(() => {
+        if (typeof window === 'undefined' || !window.matchMedia) return;
+
         const mediaQuery = window.matchMedia('(prefers-contrast: more)');
-        setHighContrast(mediaQuery.matches);
-
         const handleChange = (e) => setHighContrast(e.matches);
-        mediaQuery.addEventListener('change', handleChange);
 
-        return () => mediaQuery.removeEventListener('change', handleChange);
+        if (mediaQuery.addEventListener) {
+            mediaQuery.addEventListener('change', handleChange);
+            return () => mediaQuery.removeEventListener('change', handleChange);
+        } else {
+            mediaQuery.addListener(handleChange);
+            return () => mediaQuery.removeListener(handleChange);
+        }
     }, []);
 
     // Apply body class for reduced motion
