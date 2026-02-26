@@ -26,13 +26,11 @@ const useSpeechRecognition = (lang = 'fr-FR') => {
         };
 
         recognitionRef.current.onresult = (event) => {
-            let interimTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     setTranscript(event.results[i][0].transcript);
-                } else {
-                    interimTranscript += event.results[i][0].transcript;
                 }
+                // Interim results ignored for now, but variable reserved for visual feedback if needed
             }
         };
 

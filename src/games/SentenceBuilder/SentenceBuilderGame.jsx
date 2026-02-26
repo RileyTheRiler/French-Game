@@ -15,6 +15,14 @@ const SentenceBuilderGame = ({ onExit }) => {
 
     const scenario = SCENARIOS[currentScenarioIndex];
 
+    const nextLevel = () => {
+        if (currentScenarioIndex < SCENARIOS.length - 1) {
+            setCurrentScenarioIndex(curr => curr + 1);
+        } else {
+            setCurrentScenarioIndex(0);
+        }
+    };
+
     useEffect(() => {
         if (scenario) {
             // Wrap in setTimeout to avoid synchronous state update in effect warning
@@ -58,14 +66,6 @@ const SentenceBuilderGame = ({ onExit }) => {
             setMonitorTipId(analysis?.tipId || null);
             soundManager.playMiss();
             setStreak(0);
-        }
-    };
-
-    const nextLevel = () => {
-        if (currentScenarioIndex < SCENARIOS.length - 1) {
-            setCurrentScenarioIndex(curr => curr + 1);
-        } else {
-            setCurrentScenarioIndex(0);
         }
     };
 
