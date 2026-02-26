@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Circle, Sparkles, Trophy, Target } from 'lucide-react';
+import { Check, Sparkles, Trophy, Target } from 'lucide-react';
 import { useProgress } from '../context/ProgressContext';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -9,7 +9,10 @@ const WeeklyGoalTracker = ({ compact = false }) => {
     const { weeklyGoal, isWeeklyGoalMet } = useProgress();
 
     const sessionsPerWeek = weeklyGoal?.sessionsPerWeek || 3;
-    const sessionsThisWeek = weeklyGoal?.sessionsThisWeek || [];
+
+    // Memoize sessionsThisWeek to prevent it from changing on every render and causing effect re-runs
+    const sessionsThisWeek = useMemo(() => weeklyGoal?.sessionsThisWeek || [], [weeklyGoal?.sessionsThisWeek]);
+
     const sessionsCompleted = sessionsThisWeek.length;
     const goalMet = isWeeklyGoalMet();
 

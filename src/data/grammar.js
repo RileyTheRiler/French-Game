@@ -276,8 +276,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Speaking to your best friend, use:',
         answer: 'Tu',
         options: ['Tu', 'Vous'],
-<<<<<<< HEAD
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     // Passé Composé
     {
@@ -288,7 +288,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'J\' ___ mangé une pomme. (I ate an apple)',
         answer: 'ai',
         options: ['ai', 'suis', 'avons', 'a'],
-        xpReward: 15
+        xpReward: 15,
+        difficulty: 'intermediate'
     },
     {
         id: 'drill_pc_2',
@@ -298,7 +299,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Elle ___ arrivée hier. (She arrived yesterday)',
         answer: 'est',
         options: ['a', 'est', 'avait', 'était'],
-        xpReward: 15
+        xpReward: 15,
+        difficulty: 'intermediate'
     },
     {
         id: 'drill_pc_3',
@@ -308,7 +310,8 @@ export const GRAMMAR_DRILLS = [
         prompt: '"Aller" uses which helper verb?',
         answer: 'être',
         options: ['avoir', 'être'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'intermediate'
     },
     {
         id: 'drill_pc_4',
@@ -318,7 +321,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Translate: "We went to Paris"',
         answer: 'Nous sommes allés à Paris',
         options: ['Nous avons allé à Paris', 'Nous sommes allés à Paris', 'Nous allons à Paris', 'Nous étions à Paris'],
-        xpReward: 20
+        xpReward: 20,
+        difficulty: 'intermediate'
     },
     // Object Pronouns
     {
@@ -329,7 +333,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Je ___ vois. (I see her - referring to Marie)',
         answer: 'la',
         options: ['la', 'lui', 'le', 'les'],
-        xpReward: 15
+        xpReward: 15,
+        difficulty: 'intermediate'
     },
     {
         id: 'drill_op_2',
@@ -339,7 +344,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Je ___ parle. (I speak to him)',
         answer: 'lui',
         options: ['le', 'lui', 'la', 'leur'],
-        xpReward: 15
+        xpReward: 15,
+        difficulty: 'intermediate'
     },
     {
         id: 'drill_op_3',
@@ -349,7 +355,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Translate: "I give it to her" (the book to Marie)',
         answer: 'Je le lui donne',
         options: ['Je donne le livre à elle', 'Je le lui donne', 'Je lui le donne', 'Je la lui donne'],
-        xpReward: 20
+        xpReward: 20,
+        difficulty: 'advanced'
     },
     // Imparfait vs Passé Composé
     {
@@ -360,7 +367,8 @@ export const GRAMMAR_DRILLS = [
         prompt: '"When I was young, I loved chocolate" - which tense?',
         answer: 'Imparfait',
         options: ['Passé composé', 'Imparfait'],
-        xpReward: 15
+        xpReward: 15,
+        difficulty: 'advanced'
     },
     {
         id: 'drill_imp_2',
@@ -370,7 +378,8 @@ export const GRAMMAR_DRILLS = [
         prompt: '"Yesterday, I bought a book" - which tense?',
         answer: 'Passé composé',
         options: ['Passé composé', 'Imparfait'],
-        xpReward: 15
+        xpReward: 15,
+        difficulty: 'advanced'
     },
     {
         id: 'drill_imp_3',
@@ -380,11 +389,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Il ___ beau quand je suis sorti. (The weather was nice when I went out)',
         answer: 'faisait',
         options: ['a fait', 'faisait', 'fait', 'fera'],
-        xpReward: 20
-=======
-        xpReward: 10,
-        difficulty: 'beginner'
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
+        xpReward: 20,
+        difficulty: 'advanced'
     }
 ];
 

@@ -152,7 +152,7 @@ export class NPCSystem {
     }
 
     reactToQuiz(npcId, isCorrect) {
-        const npc = this.getNPC(npcId) || this.getNPC('librarian'); // Default to librarian for stories
+        this.getNPC(npcId); // Ensure npc exists or log (currently unused return)
 
         if (isCorrect) {
             return {
@@ -172,7 +172,7 @@ export class NPCSystem {
      * Generates contextual responses based on conversation prompts and user input
      */
     async interactFreeForm(npcId, userMessage, context = {}) {
-        const { prompt, turnCount, previousMessages = [] } = context;
+        const { prompt, turnCount } = context;
         const npc = this.getNPC(npcId) || { name: prompt?.npcName || 'NPC' };
 
         // Initialize conversation memory
@@ -468,7 +468,7 @@ export class NPCSystem {
      * @returns {Object} Response with text, correction, etc.
      */
     generateOpenEndedResponse(userMessage, context = {}) {
-        const { npcName = 'NPC', scenario = 'default', previousMessages = [] } = context;
+        const { scenario = 'default', previousMessages = [] } = context;
 
         // Check for grammar errors first
         const grammarErrors = checkGrammar(userMessage, { scenario });

@@ -4,7 +4,7 @@ import { createRoot } from 'react-dom/client';
 
 const root = document.getElementById('root');
 if (root) {
-    root.innerHTML = '<h1>Debug App Works</h1>';
+    createRoot(root).render(<h1>Debug App Works</h1>);
     console.log("Root element populated");
 } else {
     console.error("Root element missing");

@@ -202,32 +202,6 @@ export const NATIVE_SPEAKERS = [
     }
 ];
 
-// Response generation helpers
-export const generateResponse = (speaker, userMessage, context = {}) => {
-    const patterns = speaker.responsePatterns;
-    const lowerMsg = userMessage.toLowerCase();
-
-    // Detect message intent
-    if (lowerMsg.includes('bonjour') || lowerMsg.includes('salut') || lowerMsg.includes('hello') || lowerMsg.includes('hi')) {
-        return randomChoice(patterns.greeting);
-    }
-
-    // Check for common errors and provide corrections
-    const corrections = detectErrors(userMessage);
-    if (corrections.length > 0) {
-        const correctionTemplate = randomChoice(patterns.correction);
-        return correctionTemplate.replace('{correction}', corrections[0].suggestion);
-    }
-
-    // Ask a follow-up question sometimes
-    if (Math.random() > 0.6) {
-        return randomChoice(patterns.question);
-    }
-
-    // Default to encouragement
-    return randomChoice(patterns.encouragement);
-};
-
 export const detectErrors = (text) => {
     const errors = [];
 
@@ -256,6 +230,32 @@ export const detectErrors = (text) => {
 };
 
 const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+// Response generation helpers
+export const generateResponse = (speaker, userMessage, context = {}) => {
+    const patterns = speaker.responsePatterns;
+    const lowerMsg = userMessage.toLowerCase();
+
+    // Detect message intent
+    if (lowerMsg.includes('bonjour') || lowerMsg.includes('salut') || lowerMsg.includes('hello') || lowerMsg.includes('hi')) {
+        return randomChoice(patterns.greeting);
+    }
+
+    // Check for common errors and provide corrections
+    const corrections = detectErrors(userMessage);
+    if (corrections.length > 0) {
+        const correctionTemplate = randomChoice(patterns.correction);
+        return correctionTemplate.replace('{correction}', corrections[0].suggestion);
+    }
+
+    // Ask a follow-up question sometimes
+    if (Math.random() > 0.6) {
+        return randomChoice(patterns.question);
+    }
+
+    // Default to encouragement
+    return randomChoice(patterns.encouragement);
+};
 
 // Conversation starters for different topics
 export const CONVERSATION_STARTERS = {

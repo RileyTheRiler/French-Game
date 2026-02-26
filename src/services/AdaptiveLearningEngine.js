@@ -30,11 +30,98 @@ const CATEGORY_WEIGHTS = {
     weather: 0.8
 };
 
-// Learning style indicators
-const LEARNING_STYLES = {
-    visual: ['prefers mouth shape diagrams', 'responds to color coding'],
-    auditory: ['uses listen button frequently', 'better with audio cues'],
-    kinesthetic: ['benefits from rhythm training', 'needs hands-on practice']
+/**
+ * Format category name for display
+ */
+const formatCategoryName = (category) => {
+    const names = {
+        basics: 'Basics',
+        food: 'Food & Drink',
+        animals: 'Animals',
+        colors: 'Colors',
+        numbers: 'Numbers',
+        travel: 'Travel',
+        places: 'Places',
+        emotions: 'Emotions',
+        verbs: 'Verbs',
+        objects: 'Objects',
+        time: 'Time',
+        family: 'Family',
+        body: 'Body Parts',
+        weather: 'Weather'
+    };
+    return names[category] || category;
+};
+
+/**
+ * Calculate vocabulary mastery percentage
+ */
+const calculateVocabularyMastery = (vocabularyData) => {
+    if (!vocabularyData || vocabularyData.length === 0) return 0;
+
+    const masteredCount = vocabularyData.filter(word => {
+        const srs = word.srs || {};
+        return srs.repetition >= 3 && srs.ef >= 2.0;
+    }).length;
+
+    return Math.round((masteredCount / vocabularyData.length) * 100);
+};
+
+/**
+ * Calculate consistency score based on daily activity
+ */
+const calculateConsistencyScore = (dailyStats) => {
+    const dates = Object.keys(dailyStats).sort();
+    if (dates.length < 2) return 50;
+
+    // Check for gaps in the last 14 days
+    const today = new Date();
+    let activeDays = 0;
+
+    for (let i = 0; i < 14; i++) {
+        const checkDate = new Date(today);
+        checkDate.setDate(checkDate.getDate() - i);
+        const dateStr = checkDate.toDateString();
+
+        if (dailyStats[dateStr] && dailyStats[dateStr].xp > 0) {
+            activeDays++;
+        }
+    }
+
+    return Math.round((activeDays / 14) * 100);
+};
+
+/**
+ * Get CEFR level match score
+ */
+const getCEFRMatchScore = (itemCEFR, targetCEFR) => {
+    const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+    const itemIndex = levels.indexOf(itemCEFR);
+    const targetIndex = levels.indexOf(targetCEFR);
+
+    const diff = Math.abs(itemIndex - targetIndex);
+
+    if (diff === 0) return 30;
+    if (diff === 1) return 20;
+    if (diff === 2) return 5;
+    return -10; // Too far from current level
+};
+
+/**
+ * Shuffle items within clusters to maintain general priority while adding variety
+ */
+const shuffleWithinClusters = (items, clusterSize) => {
+    const result = [];
+    for (let i = 0; i < items.length; i += clusterSize) {
+        const cluster = items.slice(i, i + clusterSize);
+        // Fisher-Yates shuffle within cluster
+        for (let j = cluster.length - 1; j > 0; j--) {
+            const k = Math.floor(Math.random() * (j + 1));
+            [cluster[j], cluster[k]] = [cluster[k], cluster[j]];
+        }
+        result.push(...cluster);
+    }
+    return result;
 };
 
 /**
@@ -45,7 +132,7 @@ const LEARNING_STYLES = {
  * @returns {Object} Skill profile
  */
 export const computeSkillProfile = (progressData, vocabularyData) => {
-    const { categoryStats = {}, errorPatterns = {}, dailyStats = {}, weakWords = {} } = progressData;
+    const { categoryStats = {}, dailyStats = {} } = progressData;
 
     // Calculate category strengths (0-100)
     const categoryStrengths = {};
@@ -112,44 +199,6 @@ export const computeSkillProfile = (progressData, vocabularyData) => {
         totalWords: vocabularyData.length,
         consistencyScore: calculateConsistencyScore(dailyStats)
     };
-};
-
-/**
- * Calculate vocabulary mastery percentage
- */
-const calculateVocabularyMastery = (vocabularyData) => {
-    if (!vocabularyData || vocabularyData.length === 0) return 0;
-
-    const masteredCount = vocabularyData.filter(word => {
-        const srs = word.srs || {};
-        return srs.repetition >= 3 && srs.ef >= 2.0;
-    }).length;
-
-    return Math.round((masteredCount / vocabularyData.length) * 100);
-};
-
-/**
- * Calculate consistency score based on daily activity
- */
-const calculateConsistencyScore = (dailyStats) => {
-    const dates = Object.keys(dailyStats).sort();
-    if (dates.length < 2) return 50;
-
-    // Check for gaps in the last 14 days
-    const today = new Date();
-    let activeDays = 0;
-
-    for (let i = 0; i < 14; i++) {
-        const checkDate = new Date(today);
-        checkDate.setDate(checkDate.getDate() - i);
-        const dateStr = checkDate.toDateString();
-
-        if (dailyStats[dateStr] && dailyStats[dateStr].xp > 0) {
-            activeDays++;
-        }
-    }
-
-    return Math.round((activeDays / 14) * 100);
 };
 
 /**
@@ -231,46 +280,13 @@ export const getPersonalizedQueue = (skillProfile, availableContent, limit = 20)
 };
 
 /**
- * Get CEFR level match score
- */
-const getCEFRMatchScore = (itemCEFR, targetCEFR) => {
-    const levels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
-    const itemIndex = levels.indexOf(itemCEFR);
-    const targetIndex = levels.indexOf(targetCEFR);
-
-    const diff = Math.abs(itemIndex - targetIndex);
-
-    if (diff === 0) return 30;
-    if (diff === 1) return 20;
-    if (diff === 2) return 5;
-    return -10; // Too far from current level
-};
-
-/**
- * Shuffle items within clusters to maintain general priority while adding variety
- */
-const shuffleWithinClusters = (items, clusterSize) => {
-    const result = [];
-    for (let i = 0; i < items.length; i += clusterSize) {
-        const cluster = items.slice(i, i + clusterSize);
-        // Fisher-Yates shuffle within cluster
-        for (let j = cluster.length - 1; j > 0; j--) {
-            const k = Math.floor(Math.random() * (j + 1));
-            [cluster[j], cluster[k]] = [cluster[k], cluster[j]];
-        }
-        result.push(...cluster);
-    }
-    return result;
-};
-
-/**
  * Get difficulty adjustment multiplier based on recent performance
  * 
  * @param {Object} recentPerformance - Recent session/daily stats
  * @returns {Object} Difficulty adjustment parameters
  */
 export const getDifficultyAdjustment = (recentPerformance) => {
-    const { accuracy = 0.7, avgResponseTime = 3000, streakLength = 0 } = recentPerformance;
+    const { accuracy = 0.7, streakLength = 0 } = recentPerformance;
 
     let multiplier = 1.0;
     let timerAdjustment = 0;
@@ -400,29 +416,6 @@ export const generateInsights = (weeklyData, skillProfile) => {
     }
 
     return insights.slice(0, 5); // Limit to 5 insights
-};
-
-/**
- * Format category name for display
- */
-const formatCategoryName = (category) => {
-    const names = {
-        basics: 'Basics',
-        food: 'Food & Drink',
-        animals: 'Animals',
-        colors: 'Colors',
-        numbers: 'Numbers',
-        travel: 'Travel',
-        places: 'Places',
-        emotions: 'Emotions',
-        verbs: 'Verbs',
-        objects: 'Objects',
-        time: 'Time',
-        family: 'Family',
-        body: 'Body Parts',
-        weather: 'Weather'
-    };
-    return names[category] || category;
 };
 
 /**
