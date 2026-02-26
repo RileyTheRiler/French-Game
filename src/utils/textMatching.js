@@ -34,9 +34,8 @@ export const normalizeText = (text) => {
  * Check if user input matches an expected response
  * @param {string} input - User's typed input
  * @param {string} target - Expected target text
- * @param {number} threshold - Match threshold (0-1)
  */
-export const isFuzzyMatch = (input, target, threshold = 0.8) => {
+export const isFuzzyMatch = (input, target) => {
     const normInput = normalizeText(input);
     const normTarget = normalizeText(target);
 

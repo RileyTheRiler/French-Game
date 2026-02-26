@@ -3,7 +3,6 @@ import {
     calculateNextReview,
     getInitialState,
     normalizeGrade,
-    isPassingGrade,
     INITIAL_EF,
     calculateRetentionProbability,
     getOptimalReviewTime,
@@ -113,6 +112,21 @@ describe('SRS Logic', () => {
         it('returns 0 for null state', () => {
             expect(calculateRetentionProbability(null)).toBe(0);
             expect(calculateRetentionProbability({})).toBe(0);
+        });
+
+        it('accepts a custom timestamp', () => {
+            const now = 1700000000000;
+            const state = {
+                interval: 1,
+                dueDate: now - 24 * 60 * 60 * 1000, // 1 day ago relative to custom now
+                ef: 2.5
+            };
+            const retention = calculateRetentionProbability(state, now);
+            // 1 day overdue on 1 day interval with EF 2.5
+            // stability = 1 * 2.5 * 0.5 = 1.25
+            // overdueDays = 1
+            // expected = exp(-1 / 1.25) = exp(-0.8) ~= 0.449
+            expect(retention).toBeCloseTo(0.449, 2);
         });
     });
 
