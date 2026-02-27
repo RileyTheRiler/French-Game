@@ -1,0 +1,3 @@
+## 2024-03-01 - Add ARIA Labels to Icon-Only Buttons
+**Learning:** Icon-only interactive elements lacking `aria-label`s are a widespread accessibility anti-pattern in React UI. For toggles (like a microphone), using dynamic `aria-label` text ("Mute microphone", "Unmute microphone") paired with `aria-pressed` state provides vital predictive context and state representation for screen reader users. Combining this with `focus-visible:ring-2` improves keyboard-only usability drastically without breaking mouse click interactions.
+**Action:** Always scan for unlabelled `<button>` tags that only contain Lucide or FontAwesome icons. Wrap `aria-label` additions with `focus-visible` UI enhancements for comprehensive a11y improvements.
