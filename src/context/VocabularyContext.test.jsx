@@ -58,6 +58,9 @@ describe('VocabularyContext Performance', () => {
         expect(renderSpy).toHaveBeenCalledTimes(1);
         expect(screen.getByText('Vocabulary Size: 2')).toBeInTheDocument();
 
+        // There might be some effects running, clear the mock to avoid false positives
+        renderSpy.mockClear();
+
         // Force parent re-render
         act(() => {
             screen.getByText(/Force Render/).click();
@@ -65,7 +68,7 @@ describe('VocabularyContext Performance', () => {
 
         // The Provider re-renders, but because of useMemo in Provider AND React.memo in Consumer,
         // the consumer should NOT re-render.
-        expect(renderSpy).toHaveBeenCalledTimes(1);
+        expect(renderSpy).toHaveBeenCalledTimes(0);
     });
 
     it('should update consumers when vocabulary changes', () => {
