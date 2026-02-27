@@ -63,12 +63,28 @@ export const VocabularyProvider = ({ children }) => {
     const vocabularyRef = useRef(vocabulary);
 
     useEffect(() => {
-        localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
         vocabularyRef.current = vocabulary;
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+        }, 1000);
+        return () => clearTimeout(timeoutId);
     }, [vocabulary]);
 
     useEffect(() => {
-        localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        }, 1000);
+        return () => clearTimeout(timeoutId);
+    }, [customDecks]);
+
+    // Also save on unmount/page hide to ensure data isn't lost
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabularyRef.current));
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [customDecks]);
 
     const resetVocabulary = useCallback(() => {
@@ -135,18 +151,18 @@ export const VocabularyProvider = ({ children }) => {
         }));
     }, []);
 
-    const isAudioEnabled = () => {
+    const isAudioEnabled = useCallback(() => {
         const saved = localStorage.getItem('frenchApp_audio');
         return saved === null ? true : JSON.parse(saved);
-    };
+    }, []);
 
-    const buildAudioElement = (word) => {
+    const buildAudioElement = useCallback((word) => {
         if (!word?.audioUrl) return null;
         const audio = new Audio(word.audioUrl);
         audio.preload = 'auto';
         audioCacheRef.current[word.id] = audio;
         return audio;
-    };
+    }, []);
 
     const preloadAudioForWords = useCallback((words = []) => {
         words.forEach(word => {
@@ -155,7 +171,7 @@ export const VocabularyProvider = ({ children }) => {
                 buildAudioElement(word);
             }
         });
-    }, []);
+    }, [buildAudioElement]);
 
     const playWordAudio = useCallback((wordOrId) => {
         if (!isAudioEnabled()) return;
@@ -175,7 +191,7 @@ export const VocabularyProvider = ({ children }) => {
         }
 
         speak(word.french);
-    }, []);
+    }, [isAudioEnabled, buildAudioElement]);
 
     const markWordSeen = useCallback((wordId) => {
         const now = Date.now();
