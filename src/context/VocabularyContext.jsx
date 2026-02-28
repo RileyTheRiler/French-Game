@@ -210,7 +210,9 @@ export const VocabularyProvider = ({ children }) => {
         const now = Date.now();
         return vocabularyRef.current
             .filter(word => (!word.snoozeUntil || word.snoozeUntil <= now) && word.nextReview <= now)
-            .sort((a, b) => computePriority(b) - computePriority(a));
+            .map(word => ({ word, priority: computePriority(word) }))
+            .sort((a, b) => b.priority - a.priority)
+            .map(item => item.word);
     }, [computePriority]);
 
     const getPracticeQueue = useCallback((mode = 'default', limit) => {
