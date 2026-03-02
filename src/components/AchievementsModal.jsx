@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Award } from 'lucide-react';
 import { ACHIEVEMENTS } from '../data/achievements';
@@ -8,7 +9,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 
 const AchievementsModal = ({ isOpen, onClose }) => {
-    const { achievements, stats, level } = useProgress();
+    const { achievements } = useProgress();
 
     if (!isOpen) return null;
 
