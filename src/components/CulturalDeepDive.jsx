@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Globe, BookOpen, ChevronLeft, Award, Star,
@@ -13,6 +14,7 @@ import { Card } from './ui/Card';
 import { useNavigate } from 'react-router-dom';
 import SoundManager from '../utils/SoundManager';
 import { GameLayout } from './layout/GameLayout';
+import { speak } from '../utils/audio';
 
 const ArticleCard = ({ article, isNew, onClick }) => (
     <motion.div

@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useRef, Suspense, lazy } from 'react';
+import React, { useEffect, useRef, Suspense, lazy } from 'react';
 import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { AnimatePresence, motion } from 'framer-motion';
 import { VocabularyProvider } from './context/VocabularyContext';
 import { ProgressProvider, useProgress } from './context/ProgressContext';

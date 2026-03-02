@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Play, Pause, RotateCcw, Volume2, Settings, Subtitles, Zap } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -10,6 +11,7 @@ const MediaPlayer = ({ clip, onQuizStart }) => {
     const [currentTime, setCurrentTime] = useState(0);
     const [playbackSpeed, setPlaybackSpeed] = useState(1.0);
     const [showSubtitles, setShowSubtitles] = useState(true);
+    // eslint-disable-next-line no-unused-vars
     const [subMode, setSubMode] = useState('bilingual'); // french, english, bilingual
 
     const containerRef = useRef(null);

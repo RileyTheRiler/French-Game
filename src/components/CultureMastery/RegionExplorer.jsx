@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Book, Utensils, Lightbulb, MapPin, Volume2, CheckCircle } from 'lucide-react';
 import { useProgress } from '../../context/ProgressContext';
@@ -18,6 +19,7 @@ const RegionExplorer = ({ region, onBack }) => {
     const { addXP, updateRegionProgress } = useProgress();
     const [activeTab, setActiveTab] = useState('dialect');
     const [learnedItems, setLearnedItems] = useState(new Set());
+    // eslint-disable-next-line no-unused-vars
     const [selectedWord, setSelectedWord] = useState(null);
     const [showQuiz, setShowQuiz] = useState(false);
 

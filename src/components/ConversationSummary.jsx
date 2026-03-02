@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import {
     Award, TrendingUp, BookOpen, Target, MessageCircle,
@@ -68,6 +69,7 @@ const ScoreRing = ({ score, label, color = 'indigo' }) => {
 /**
  * Metric Card Component
  */
+// eslint-disable-next-line no-unused-vars
 const MetricCard = ({ icon: Icon, label, value, description, color = 'slate' }) => {
     const colorClasses = {
         slate: 'bg-slate-800/50 border-slate-700/50',

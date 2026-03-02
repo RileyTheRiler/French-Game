@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, MapPin, Star, ChevronRight } from 'lucide-react';
 import { useProgress } from '../../context/ProgressContext';

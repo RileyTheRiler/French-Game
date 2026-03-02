@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Trophy, ArrowRight, RefreshCcw } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -34,16 +35,6 @@ const ComprehensionQuiz = ({ clip, onComplete }) => {
         }
     };
 
-    const handleNext = () => {
-        if (currentIndex < questions.length - 1) {
-            setCurrentIndex(prev => prev + 1);
-            setIsAnswered(false);
-            setSelectedAnswer(null);
-        } else {
-            finishQuiz();
-        }
-    };
-
     const finishQuiz = () => {
         const percent = Math.round((score / questions.length) * 100);
         const xpEarned = Math.round((score / questions.length) * clip.xpReward);
@@ -58,7 +49,19 @@ const ComprehensionQuiz = ({ clip, onComplete }) => {
                 spread: 70,
                 origin: { y: 0.6 }
             });
-            SoundManager.playLevelUp();
+            SoundManager.playSuccess();
+        } else {
+            SoundManager.playLevelUp(); // generic finish
+        }
+    };
+
+    const handleNext = () => {
+        if (currentIndex < questions.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+            setIsAnswered(false);
+            setSelectedAnswer(null);
+        } else {
+            finishQuiz();
         }
     };
 
