@@ -116,6 +116,7 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
         if (onSaveProgress && currentNode?.type !== 'ending') {
             onSaveProgress(story.id, { currentNode: currentNodeId, history });
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentNodeId, history]);
 
     const handleChoice = (choice) => {

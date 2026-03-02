@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Send, Lightbulb, CheckCircle, Clock, Star, ChevronRight } from 'lucide-react';
 import { useCommunity } from '../../context/CommunityContext';
@@ -7,6 +8,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 
 const WritingExercise = ({ onBack, initialPromptId = null }) => {
+    // eslint-disable-next-line no-unused-vars
     const { getPrompts, submitWriting, myWritings, WRITING_PROMPTS } = useCommunity();
     const [selectedPrompt, setSelectedPrompt] = useState(null);
     const [text, setText] = useState('');
