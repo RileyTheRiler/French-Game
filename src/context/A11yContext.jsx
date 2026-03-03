@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
 const A11yContext = createContext(null);
 
@@ -75,12 +75,14 @@ export const A11yProvider = ({ children }) => {
         }, 1000);
     }, []);
 
-    const value = {
+    // ⚡ Bolt: Memoize context value to prevent unnecessary re-renders in all consumers
+    // Impact: Avoids re-rendering of all components consuming A11yContext when A11yProvider's parent re-renders.
+    const value = useMemo(() => ({
         announce,
         prefersReducedMotion,
         highContrast,
         setHighContrast
-    };
+    }), [announce, prefersReducedMotion, highContrast]);
 
     return (
         <A11yContext.Provider value={value}>
