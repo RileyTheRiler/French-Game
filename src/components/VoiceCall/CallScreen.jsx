@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { PhoneOff, Mic, MicOff, User } from 'lucide-react';
 
@@ -68,6 +69,8 @@ const CallScreen = ({ npcName, isNpcSpeaking, isUserListening, onEndCall, onTogg
                 {/* Mic Button */}
                 <button
                     onClick={onToggleMic}
+                    aria-label={isUserListening ? "Mute microphone" : "Unmute microphone"}
+                    aria-pressed={isUserListening}
                     className={`w-16 h-16 rounded-full flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 ${isUserListening
                         ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.5)]'
                         : 'bg-slate-800 hover:bg-slate-700 text-slate-400'
@@ -79,6 +82,7 @@ const CallScreen = ({ npcName, isNpcSpeaking, isUserListening, onEndCall, onTogg
                 {/* End Call Button */}
                 <button
                     onClick={onEndCall}
+                    aria-label="End call"
                     className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 active:scale-95"
                 >
                     <PhoneOff size={28} />
