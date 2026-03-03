@@ -18,3 +18,8 @@
 **Vulnerability:** `verifyPassword` used a non-constant time comparison (`===`) for hash verification, allowing potential timing attacks. Additionally, duplicate function definitions in `src/utils/crypto.js` created ambiguity and risk of using an insecure version.
 **Learning:** Copy-paste errors or bad merges can leave dangerous duplicates in utility files. Simple string comparison for hashes leaks timing information about the validity of the hash.
 **Prevention:** Always use a constant-time comparison function (like `crypto.timingSafeEqual` or a manual implementation) for secrets. Ensure linting rules catch duplicate declarations to prevent ambiguous code.
+
+## 2025-02-14 - Insufficient Hash Iterations
+**Vulnerability:** The application used PBKDF2 with only 100,000 iterations to hash passwords, falling short of current OWASP recommendations (which suggest 600,000 iterations for PBKDF2-HMAC-SHA256).
+**Learning:** Hardcoding cryptographic parameters like iterations can quickly become obsolete as computing power increases. A versioned hash format is necessary to allow for future parameter upgrades without invalidating existing credentials.
+**Prevention:** Implement a versioned hash format (e.g., `iterations:salt:hash`) that allows the verification function to adapt to the parameters used when the hash was created. Regularly review and update cryptographic parameters according to industry standards.
