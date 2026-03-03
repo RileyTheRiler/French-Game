@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, Zap, Trophy, RotateCcw, ArrowRight, X } from 'lucide-react';
@@ -25,6 +25,12 @@ const ConjugationBlitz = () => {
 
     const inputRef = useRef(null);
     const timerRef = useRef(null);
+    const scoreRef = useRef(0);
+
+    // Sync score ref with score state for use in endGame closure
+    useEffect(() => {
+        scoreRef.current = score;
+    }, [score]);
 
     // Helpers
     const getRandomChallenge = () => {
@@ -62,6 +68,16 @@ const ConjugationBlitz = () => {
         if (inputRef.current) inputRef.current.focus();
     };
 
+    const endGame = useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = scoreRef.current * 2;
+        addXP(baseXP);
+    }, [addXP]);
+
     // Timer Logic
     useEffect(() => {
         if (status === 'playing') {
@@ -76,17 +92,7 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
-
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
+    }, [status, endGame]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
