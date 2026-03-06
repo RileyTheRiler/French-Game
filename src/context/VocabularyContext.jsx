@@ -470,3 +470,4 @@ export const VocabularyProvider = ({ children }) => {
 };
 
 export const useVocabulary = () => useContext(VocabularyContext);
+export { VocabularyContext };
