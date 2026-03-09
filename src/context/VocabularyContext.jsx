@@ -5,7 +5,7 @@ import { calculateNextReview, getInitialState, isPassingGrade, normalizeGrade } 
 import { speak, cacheVocabularyAudio } from '../utils/audio';
 import { buildPracticeQueue } from '../utils/practiceQueue';
 
-const VocabularyContext = createContext();
+export const VocabularyContext = createContext();
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const ensureSrsState = (state) => {
@@ -210,7 +210,9 @@ export const VocabularyProvider = ({ children }) => {
         const now = Date.now();
         return vocabularyRef.current
             .filter(word => (!word.snoozeUntil || word.snoozeUntil <= now) && word.nextReview <= now)
-            .sort((a, b) => computePriority(b) - computePriority(a));
+            .map(word => ({ word, priorityScore: computePriority(word) }))
+            .sort((a, b) => b.priorityScore - a.priorityScore)
+            .map(item => item.word);
     }, [computePriority]);
 
     const getPracticeQueue = useCallback((mode = 'default', limit) => {
@@ -220,12 +222,12 @@ export const VocabularyProvider = ({ children }) => {
     const getWeightedPracticeWords = useCallback((limit = 30) => {
         return vocabulary
             .map(word => ({
-                ...word,
+                word,
                 priorityScore: computePriority(word)
             }))
             .sort((a, b) => b.priorityScore - a.priorityScore)
             .slice(0, limit)
-            .map(hydrateWord);
+            .map(item => hydrateWord(item.word));
     }, [vocabulary, computePriority]);
 
     useEffect(() => {
