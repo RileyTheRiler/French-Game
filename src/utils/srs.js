@@ -281,6 +281,7 @@ export const getConceptInitialState = () => ({
  * @param {object} options - Optional settings
  * @returns {object} The new state
  */
+// eslint-disable-next-line no-unused-vars
 export const calculateConceptNextReview = (previousState, grade, options = {}) => {
     grade = clampGrade(grade);
     let { interval, repetition, ef, attempts, correct, masteryLevel } =
