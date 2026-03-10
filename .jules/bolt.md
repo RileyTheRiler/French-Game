@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2025-03-10 - O(N) vs O(N log N) Sorting Optimization in SRS Utils
+**Learning:** The previous implementation of `sortByReviewPriority` computed priority scores inside the `.sort()` comparator. Because sorting has a time complexity of O(N log N), this caused `calculateRetentionProbability` to be called repeatedly and unnecessarily for the same items, degrading performance linearly as the user's vocabulary size grows.
+**Action:** Use a Schwartzian transform pattern (map-sort-map) to evaluate the priority of each card exactly once (O(N) operation) prior to sorting. Also, extract the `now = Date.now()` evaluation outside loops to prevent expensive, repeated time lookups on batch SRS calculations.

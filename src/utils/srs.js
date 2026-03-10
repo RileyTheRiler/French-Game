@@ -15,12 +15,12 @@ const clampGrade = (grade) => Math.max(0, Math.min(5, grade));
  * @param {number} srsState.interval - Current interval in days
  * @param {number} srsState.dueDate - Timestamp when card is due
  * @param {number} srsState.ef - Ease Factor
+ * @param {number} [now=Date.now()] - Current timestamp for consistent batch calculation
  * @returns {number} Retention probability (0-1)
  */
-export const calculateRetentionProbability = (srsState) => {
+export const calculateRetentionProbability = (srsState, now = Date.now()) => {
     if (!srsState || !srsState.dueDate) return 0;
 
-    const now = Date.now();
     const timeSinceDue = now - srsState.dueDate;
 
     // If not yet due, retention is high
@@ -183,22 +183,18 @@ export const isPassingGrade = (grade) => normalizeGrade(grade) >= 3;
 export const sortByReviewPriority = (words) => {
     const now = Date.now();
 
-    return [...words].sort((a, b) => {
-        const aState = a.srs || getInitialState();
-        const bState = b.srs || getInitialState();
-
-        const aRetention = calculateRetentionProbability(aState);
-        const bRetention = calculateRetentionProbability(bState);
-
-        const aOverdue = (now - aState.dueDate) / DAY_MS;
-        const bOverdue = (now - bState.dueDate) / DAY_MS;
-
-        // Priority score: low retention + overdue = high priority
-        const aPriority = (1 - aRetention) + Math.max(0, aOverdue * 0.1);
-        const bPriority = (1 - bRetention) + Math.max(0, bOverdue * 0.1);
-
-        return bPriority - aPriority;
-    });
+    // ⚡ Bolt: Use Schwartzian transform to precompute priorities (O(N) vs O(N log N))
+    // and pass 'now' to calculateRetentionProbability to avoid repeated Date.now() calls
+    return words
+        .map(word => {
+            const state = word.srs || getInitialState();
+            const retention = calculateRetentionProbability(state, now);
+            const overdue = (now - state.dueDate) / DAY_MS;
+            const priority = (1 - retention) + Math.max(0, overdue * 0.1);
+            return { word, priority };
+        })
+        .sort((a, b) => b.priority - a.priority)
+        .map(item => item.word);
 };
 
 // =============================================================================
@@ -350,7 +346,7 @@ export const getWeakConcepts = (conceptMastery = {}, masteryThreshold = 70) => {
         const hasEnoughData = state.attempts >= 3;
 
         if ((isWeak || isOverdue) && hasEnoughData) {
-            const retention = calculateRetentionProbability(state);
+            const retention = calculateRetentionProbability(state, now);
             const priority = (1 - retention) + (isOverdue ? 0.3 : 0) + ((100 - state.masteryLevel) / 100);
 
             weakConcepts.push({
