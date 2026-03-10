@@ -276,8 +276,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Speaking to your best friend, use:',
         answer: 'Tu',
         options: ['Tu', 'Vous'],
-<<<<<<< HEAD
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
     // Passé Composé
     {
@@ -288,7 +288,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'J\' ___ mangé une pomme. (I ate an apple)',
         answer: 'ai',
         options: ['ai', 'suis', 'avons', 'a'],
-        xpReward: 15
+        xpReward: 15,
+        difficulty: 'beginner'
     },
     {
         id: 'drill_pc_2',
@@ -298,7 +299,8 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Elle ___ arrivée hier. (She arrived yesterday)',
         answer: 'est',
         options: ['a', 'est', 'avait', 'était'],
-        xpReward: 15
+        xpReward: 15,
+        difficulty: 'beginner'
     },
     {
         id: 'drill_pc_3',
@@ -308,83 +310,56 @@ export const GRAMMAR_DRILLS = [
         prompt: '"Aller" uses which helper verb?',
         answer: 'être',
         options: ['avoir', 'être'],
-        xpReward: 10
+        xpReward: 10,
+        difficulty: 'beginner'
     },
-    {
-        id: 'drill_pc_4',
-        category: 'passe_compose',
-        tip: 'g6',
-        type: 'translate',
-        prompt: 'Translate: "We went to Paris"',
-        answer: 'Nous sommes allés à Paris',
-        options: ['Nous avons allé à Paris', 'Nous sommes allés à Paris', 'Nous allons à Paris', 'Nous étions à Paris'],
-        xpReward: 20
-    },
-    // Object Pronouns
-    {
-        id: 'drill_op_1',
-        category: 'pronouns',
-        tip: 'g7',
-        type: 'fill_blank',
-        prompt: 'Je ___ vois. (I see her - referring to Marie)',
-        answer: 'la',
-        options: ['la', 'lui', 'le', 'les'],
-        xpReward: 15
-    },
-    {
-        id: 'drill_op_2',
-        category: 'pronouns',
-        tip: 'g7',
-        type: 'fill_blank',
-        prompt: 'Je ___ parle. (I speak to him)',
-        answer: 'lui',
-        options: ['le', 'lui', 'la', 'leur'],
-        xpReward: 15
-    },
-    {
-        id: 'drill_op_3',
-        category: 'pronouns',
-        tip: 'g7',
-        type: 'translate',
-        prompt: 'Translate: "I give it to her" (the book to Marie)',
-        answer: 'Je le lui donne',
-        options: ['Je donne le livre à elle', 'Je le lui donne', 'Je lui le donne', 'Je la lui donne'],
-        xpReward: 20
-    },
-    // Imparfait vs Passé Composé
+
+    // Imparfait
     {
         id: 'drill_imp_1',
         category: 'imparfait',
-        tip: 'g8',
-        type: 'choice',
-        prompt: '"When I was young, I loved chocolate" - which tense?',
-        answer: 'Imparfait',
-        options: ['Passé composé', 'Imparfait'],
-        xpReward: 15
+        tip: 'g7',
+        type: 'fill_blank',
+        prompt: 'Quand j\'étais petit, je ___ (jouer) au foot.',
+        answer: 'jouais',
+        options: ['joue', 'ai joué', 'jouais', 'jouerai'],
+        xpReward: 15,
+        difficulty: 'beginner'
     },
     {
         id: 'drill_imp_2',
         category: 'imparfait',
+        tip: 'g7',
+        type: 'choice',
+        prompt: 'Which verb tense is used for background descriptions in the past?',
+        answer: 'Imparfait',
+        options: ['Passé Composé', 'Imparfait', 'Présent'],
+        xpReward: 10,
+        difficulty: 'beginner'
+    },
+
+    // PC vs Imparfait
+    {
+        id: 'drill_pc_imp_1',
+        category: 'passe_compose',
         tip: 'g8',
         type: 'choice',
-        prompt: '"Yesterday, I bought a book" - which tense?',
-        answer: 'Passé composé',
-        options: ['Passé composé', 'Imparfait'],
-        xpReward: 15
+        prompt: 'Which tense would you use for: "I was sleeping when the phone rang"?',
+        answer: 'Imparfait for sleeping, PC for rang',
+        options: ['PC for both', 'Imparfait for sleeping, PC for rang', 'Imparfait for both'],
+        xpReward: 20,
+        difficulty: 'beginner'
     },
     {
-        id: 'drill_imp_3',
+        id: 'drill_pc_imp_2',
         category: 'imparfait',
         tip: 'g8',
         type: 'fill_blank',
         prompt: 'Il ___ beau quand je suis sorti. (The weather was nice when I went out)',
         answer: 'faisait',
         options: ['a fait', 'faisait', 'fait', 'fera'],
-        xpReward: 20
-=======
-        xpReward: 10,
+        xpReward: 20,
         difficulty: 'beginner'
->>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     }
 ];
 

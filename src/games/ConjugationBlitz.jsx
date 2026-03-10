@@ -27,7 +27,7 @@ const ConjugationBlitz = () => {
     const timerRef = useRef(null);
 
     // Helpers
-    const getRandomChallenge = () => {
+    const getRandomChallenge = useCallback(() => {
         const verb = VERB_DATA[Math.floor(Math.random() * VERB_DATA.length)];
         const tense = TENSES[Math.floor(Math.random() * TENSES.length)];
         const pronoun = PRONOUNS[Math.floor(Math.random() * PRONOUNS.length)];
@@ -45,7 +45,13 @@ const ConjugationBlitz = () => {
             pronoun,
             answer: verb.conjugations[tense.id][pronoun]
         };
-    };
+    }, []);
+
+    const loadNextChallenge = useCallback(() => {
+        setCurrentChallenge(getRandomChallenge());
+        setUserInput('');
+        inputRef.current?.focus();
+    }, [getRandomChallenge]);
 
     const startGame = () => {
         setScore(0);
@@ -56,13 +62,17 @@ const ConjugationBlitz = () => {
         loadNextChallenge();
     };
 
-    const loadNextChallenge = () => {
-        setCurrentChallenge(getRandomChallenge());
-        setUserInput('');
-        if (inputRef.current) inputRef.current.focus();
-    };
-
     // Timer Logic
+    const endGame = useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    }, [score, addXP]);
+
     useEffect(() => {
         if (status === 'playing') {
             timerRef.current = setInterval(() => {
@@ -76,22 +86,7 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
-
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        checkAnswer();
-    };
+    }, [status, endGame]);
 
     const checkAnswer = () => {
         const normalizedInput = userInput.trim().toLowerCase();
@@ -125,8 +120,13 @@ const ConjugationBlitz = () => {
         loadNextChallenge();
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        checkAnswer();
+    };
+
     // Formatting helper
-    const formatPronoun = (pronoun, verbResponse) => {
+    const formatPronoun = (pronoun) => {
         // Simple logic for J' vs Je
         // This is purely for display relative to the verb if we wanted to show them together
         // But the prompt shows Pronoun separately usually.
