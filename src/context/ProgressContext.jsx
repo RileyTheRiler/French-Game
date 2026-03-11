@@ -353,6 +353,7 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
+    // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/preserve-manual-memoization
     }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
 
     useEffect(() => {
