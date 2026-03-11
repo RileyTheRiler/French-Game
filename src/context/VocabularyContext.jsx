@@ -80,8 +80,7 @@ export const VocabularyProvider = ({ children }) => {
         audioCacheRef.current = {};
     }, []);
 
-    const computePriority = useCallback((word) => {
-        const now = Date.now();
+    const computePriority = useCallback((word, now = Date.now()) => {
         const srs = ensureSrsState(word.srs);
         const dueWeight = srs.dueDate <= now ? 2 : Math.max(0.5, 1 - ((srs.dueDate - now) / (3 * DAY_MS)));
 
@@ -208,9 +207,14 @@ export const VocabularyProvider = ({ children }) => {
 
     const getDueWords = useCallback(() => {
         const now = Date.now();
-        return vocabularyRef.current
-            .filter(word => (!word.snoozeUntil || word.snoozeUntil <= now) && word.nextReview <= now)
-            .sort((a, b) => computePriority(b) - computePriority(a));
+        const dueWords = vocabularyRef.current.filter(
+            word => (!word.snoozeUntil || word.snoozeUntil <= now) && word.nextReview <= now
+        );
+
+        // Schwartzian transform for O(N) priority computation
+        return dueWords.map(word => ({ word, priorityScore: computePriority(word, now) }))
+            .sort((a, b) => b.priorityScore - a.priorityScore)
+            .map(item => item.word);
     }, [computePriority]);
 
     const getPracticeQueue = useCallback((mode = 'default', limit) => {
@@ -218,14 +222,17 @@ export const VocabularyProvider = ({ children }) => {
     }, []);
 
     const getWeightedPracticeWords = useCallback((limit = 30) => {
+        const now = Date.now();
+        // Schwartzian transform for O(N) priority computation,
+        // map to object reference to avoid expensive object spreads
         return vocabulary
             .map(word => ({
-                ...word,
-                priorityScore: computePriority(word)
+                word,
+                priorityScore: computePriority(word, now)
             }))
             .sort((a, b) => b.priorityScore - a.priorityScore)
             .slice(0, limit)
-            .map(hydrateWord);
+            .map(item => hydrateWord(item.word));
     }, [vocabulary, computePriority]);
 
     useEffect(() => {

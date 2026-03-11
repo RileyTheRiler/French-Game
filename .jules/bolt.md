@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-23 - Schwartzian Transform for O(N) Sorting Optimization
+**Learning:** Algorithms that use expensive calculations (like retention probability based on time) directly inside Array.sort() scale terribly (O(N log N) recalculations). Memory object spreads (`...word`) inside large map operations can also be slow.
+**Action:** Use Schwartzian transforms (map-sort-map) to calculate priority values once per item, creating a `{ item, priorityScore }` reference object. Avoid spreading large objects during this transformation phase; instead, just store the object reference.
