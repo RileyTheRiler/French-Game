@@ -70,13 +70,13 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                         <div className="flex border-b border-white/10">
                             <button
                                 onClick={() => setActiveTab('goals')}
-                                className={`flex-1 p-4 text-center font-bold transition-colors ${activeTab === 'goals' ? 'bg-blue-500/20 text-blue-300 border-b-2 border-blue-500' : 'text-slate-400 hover:bg-white/5'}`}
+                                className={`flex-1 p-4 text-center font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset ${activeTab === 'goals' ? 'bg-blue-500/20 text-blue-300 border-b-2 border-blue-500' : 'text-slate-400 hover:bg-white/5'}`}
                             >
                                 Valid Goals
                             </button>
                             <button
                                 onClick={() => setActiveTab('difficulty')}
-                                className={`flex-1 p-4 text-center font-bold transition-colors ${activeTab === 'difficulty' ? 'bg-purple-500/20 text-purple-300 border-b-2 border-purple-500' : 'text-slate-400 hover:bg-white/5'}`}
+                                className={`flex-1 p-4 text-center font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-inset ${activeTab === 'difficulty' ? 'bg-purple-500/20 text-purple-300 border-b-2 border-purple-500' : 'text-slate-400 hover:bg-white/5'}`}
                             >
                                 Game Difficulty
                             </button>
@@ -94,7 +94,7 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                                                 <button
                                                     key={preset.id}
                                                     onClick={() => applyPreset(preset)}
-                                                    className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPreset === preset.id
+                                                    className={`p-4 rounded-xl border-2 transition-all text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${selectedPreset === preset.id
                                                         ? 'border-emerald-500 bg-emerald-500/20 shadow-lg shadow-emerald-500/20'
                                                         : 'border-white/10 bg-white/5 hover:border-white/30'}
                                                     `}
@@ -173,7 +173,7 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                                                 <button
                                                     key={level}
                                                     onClick={() => setLocalGoals(prev => ({ ...prev, targetCEFR: level }))}
-                                                    className={`p-4 rounded-xl border-2 transition-all ${localGoals.targetCEFR === level
+                                                    className={`p-4 rounded-xl border-2 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${localGoals.targetCEFR === level
                                                         ? 'border-blue-500 bg-blue-500/20 text-white shadow-lg shadow-blue-500/20'
                                                         : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/30'}`}
                                                 >
