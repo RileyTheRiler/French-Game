@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
 // Confetti particle component
-const Particle = ({ style, color }) => (
+const Particle = ({ style, color, isRound }) => (
     <div
         className="absolute pointer-events-none"
         style={{
@@ -10,7 +10,7 @@ const Particle = ({ style, color }) => (
             backgroundColor: color,
             width: '10px',
             height: '10px',
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            borderRadius: isRound ? '50%' : '2px',
         }}
     />
 );
@@ -26,26 +26,29 @@ const ConfettiEffect = ({
     const [particles, setParticles] = useState([]);
 
     useEffect(() => {
-        if (!active) {
-            setParticles([]);
-            return;
-        }
+        const setupTimeout = setTimeout(() => {
+            if (!active) {
+                setParticles([]);
+                return;
+            }
 
-        // Generate particles
-        const newParticles = Array.from({ length: particleCount }, (_, i) => ({
-            id: i,
-            color: colors[Math.floor(Math.random() * colors.length)],
-            startX: Math.random() * window.innerWidth,
-            startY: -20,
-            endX: Math.random() * window.innerWidth,
-            endY: window.innerHeight + 20,
-            rotation: Math.random() * 360,
-            scale: 0.5 + Math.random() * 1,
-            delay: Math.random() * 500,
-            duration: 2000 + Math.random() * 1000,
-        }));
+            // Generate particles
+            const newParticles = Array.from({ length: particleCount }, (_, i) => ({
+                id: i,
+                color: colors[Math.floor(Math.random() * colors.length)],
+                startX: Math.random() * window.innerWidth,
+                startY: -20,
+                endX: Math.random() * window.innerWidth,
+                endY: window.innerHeight + 20,
+                rotation: Math.random() * 360,
+                scale: 0.5 + Math.random() * 1,
+                delay: Math.random() * 500,
+                duration: 2000 + Math.random() * 1000,
+                isRound: Math.random() > 0.5,
+            }));
 
-        setParticles(newParticles);
+            setParticles(newParticles);
+        }, 0);
 
         // Clean up after animation
         const timer = setTimeout(() => {
@@ -53,7 +56,10 @@ const ConfettiEffect = ({
             onComplete?.();
         }, duration);
 
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(setupTimeout);
+            clearTimeout(timer);
+        };
     }, [active, particleCount, colors, duration, onComplete]);
 
     if (particles.length === 0) return null;
@@ -78,7 +84,7 @@ const ConfettiEffect = ({
                         className="w-3 h-3"
                         style={{
                             backgroundColor: particle.color,
-                            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                            borderRadius: particle.isRound ? '50%' : '2px',
                             transform: `scale(${particle.scale})`,
                         }}
                     />
