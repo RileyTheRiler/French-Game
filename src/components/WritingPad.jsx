@@ -81,40 +81,6 @@ const WritingPad = () => {
         ? ACCENT_CHARACTERS[currentIndex]
         : TRACE_WORDS[currentIndex];
 
-    // Initialize canvas
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        // Set canvas size
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * 2;
-        canvas.height = rect.height * 2;
-        canvas.style.width = `${rect.width}px`;
-        canvas.style.height = `${rect.height}px`;
-
-        const ctx = canvas.getContext('2d');
-        ctx.scale(2, 2);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = strokeWidth;
-        contextRef.current = ctx;
-
-        // Draw initial guide if enabled
-        if (showGuide) {
-            drawGuide();
-        }
-    }, [currentIndex, mode, showGuide]);
-
-    // Update stroke settings
-    useEffect(() => {
-        if (contextRef.current) {
-            contextRef.current.strokeStyle = strokeColor;
-            contextRef.current.lineWidth = strokeWidth;
-        }
-    }, [strokeColor, strokeWidth]);
-
     // Draw the guide character/word
     const drawGuide = useCallback(() => {
         const canvas = canvasRef.current;
@@ -139,6 +105,40 @@ const WritingPad = () => {
         ctx.fillText(text, centerX, centerY);
         ctx.restore();
     }, [currentItem, mode]);
+
+    // Initialize canvas
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        // Set canvas size
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth;
+        contextRef.current = ctx;
+
+        // Draw initial guide if enabled
+        if (showGuide) {
+            drawGuide();
+        }
+    }, [currentIndex, mode, showGuide, drawGuide, strokeColor, strokeWidth]);
+
+    // Update stroke settings
+    useEffect(() => {
+        if (contextRef.current) {
+            contextRef.current.strokeStyle = strokeColor;
+            contextRef.current.lineWidth = strokeWidth;
+        }
+    }, [strokeColor, strokeWidth]);
 
     // Drawing handlers
     const startDrawing = ({ nativeEvent }) => {
