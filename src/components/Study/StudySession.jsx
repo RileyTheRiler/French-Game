@@ -43,14 +43,17 @@ const StudySession = () => {
     }, [vocabulary]);
 
     useEffect(() => {
-        if (filterCategory === 'all') {
-            setDownloadStatus('disabled');
-            return;
-        }
-        setDownloadStatus('checking');
-        isCategoryDownloaded(filterCategory).then(isDown => {
-            setDownloadStatus(isDown ? 'downloaded' : 'idle');
-        });
+        const timer = setTimeout(() => {
+            if (filterCategory === 'all') {
+                setDownloadStatus('disabled');
+                return;
+            }
+            setDownloadStatus('checking');
+            isCategoryDownloaded(filterCategory).then(isDown => {
+                setDownloadStatus(isDown ? 'downloaded' : 'idle');
+            });
+        }, 0);
+        return () => clearTimeout(timer);
     }, [filterCategory]);
 
     const handleDownload = async () => {
@@ -83,16 +86,21 @@ const StudySession = () => {
             return matchesCEFR && matchesCategory;
         });
 
-        setDueWords(filtered);
-        setCurrentIndex(0);
-        setIsFlipped(false);
-        setSessionComplete(filtered.length === 0);
-        setCorrectCount(0);
-        setWrongCount(0);
-        setCurrentStreak(0);
-        setBestStreak(0);
-        setSessionReward(null);
+        const timer = setTimeout(() => {
+            setDueWords(filtered);
+            setCurrentIndex(0);
+            setIsFlipped(false);
+            setSessionComplete(filtered.length === 0);
+            setCorrectCount(0);
+            setWrongCount(0);
+            setCurrentStreak(0);
+            setBestStreak(0);
+            setSessionReward(null);
+        }, 0);
+
         preloadAudioForWords(filtered);
+
+        return () => clearTimeout(timer);
     }, [filterCEFR, filterCategory, getDueWords, preloadAudioForWords]);
 
     useEffect(() => {

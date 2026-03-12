@@ -84,18 +84,21 @@ const VisualStoryCards = () => {
 
     // Load cards on mount or filter change
     useEffect(() => {
-        let filtered = [...vocabularyList];
+        const timer = setTimeout(() => {
+            let filtered = [...vocabularyList];
 
-        if (selectedCategory) {
-            filtered = filtered.filter(w => w.category === selectedCategory);
-        }
+            if (selectedCategory) {
+                filtered = filtered.filter(w => w.category === selectedCategory);
+            }
 
-        // Shuffle cards
-        filtered = filtered.sort(() => Math.random() - 0.5);
+            // Shuffle cards
+            filtered = filtered.sort(() => Math.random() - 0.5);
 
-        setCards(filtered);
-        setCurrentIndex(0);
-        setIsFlipped(false);
+            setCards(filtered);
+            setCurrentIndex(0);
+            setIsFlipped(false);
+        }, 0);
+        return () => clearTimeout(timer);
     }, [selectedCategory]);
 
     // Play audio
