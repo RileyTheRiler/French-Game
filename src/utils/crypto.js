@@ -1,8 +1,11 @@
+// OWASP recommended 600,000 iterations for PBKDF2-HMAC-SHA256
 const PBKDF2_CONFIG = {
     name: 'PBKDF2',
-    iterations: 100000,
+    iterations: 600000,
     hash: 'SHA-256'
 };
+
+const LEGACY_ITERATIONS = 100000;
 
 /**
  * Constant-time comparison of two strings to prevent timing attacks.
@@ -62,7 +65,8 @@ export async function hashPassword(password) {
     const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     const saltHex = saltArray.map(b => b.toString(16).padStart(2, '0')).join('');
 
-    return `${saltHex}:${hashHex}`;
+    // Return versioned hash format: iterations:salt:hash
+    return `${PBKDF2_CONFIG.iterations}:${saltHex}:${hashHex}`;
 }
 
 export async function verifyPassword(storedHash, password) {
@@ -76,9 +80,23 @@ export async function verifyPassword(storedHash, password) {
     }
 
     const parts = storedHash.split(':');
-    if (parts.length !== 2) return false;
+    let iterations = PBKDF2_CONFIG.iterations;
+    let saltHex, originalHashHex;
 
-    const [saltHex, originalHashHex] = parts;
+    if (parts.length === 2) {
+        // Legacy hash format: salt:hash (100k iterations)
+        iterations = LEGACY_ITERATIONS;
+        [saltHex, originalHashHex] = parts;
+    } else if (parts.length === 3) {
+        // Versioned hash format: iterations:salt:hash
+        const parsedIterations = parseInt(parts[0], 10);
+        if (isNaN(parsedIterations)) return false;
+        iterations = parsedIterations;
+        [, saltHex, originalHashHex] = parts;
+    } else {
+        return false;
+    }
+
     if (!saltHex || !originalHashHex) return false;
 
     // Safety check for hex validity
@@ -100,7 +118,9 @@ export async function verifyPassword(storedHash, password) {
 
     const hashBuffer = await crypto.subtle.deriveBits(
         {
-            ...PBKDF2_CONFIG,
+            name: 'PBKDF2',
+            hash: 'SHA-256',
+            iterations: iterations,
             salt: salt
         },
         key,

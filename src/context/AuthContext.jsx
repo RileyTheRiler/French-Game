@@ -79,9 +79,23 @@ export const AuthProvider = ({ children }) => {
                 throw new Error('Invalid credentials');
             }
 
-            // Auto-migrate legacy plaintext passwords
-            // verifyPassword handles checking plaintext, but we should upgrade storage
-            if (record.password === password) {
+            // Auto-migrate legacy passwords (plaintext or 2-part hash) to 3-part versioned hash
+            // verifyPassword handles checking all formats, but we should upgrade storage
+            // 3-part format looks like: '600000:<saltHex>:<hashHex>'
+            let needsUpgrade = false;
+            const parts = record.password.split(':');
+
+            if (parts.length < 3) {
+                needsUpgrade = true;
+            } else {
+                const iterations = parseInt(parts[0], 10);
+                // Also upgrade if the current iterations are less than the recommended amount
+                if (iterations < 600000) {
+                    needsUpgrade = true;
+                }
+            }
+
+            if (needsUpgrade) {
                 const newHash = await hashPassword(password);
                 credentials[email] = { ...record, password: newHash };
                 localStorage.setItem(CREDENTIALS_KEY, JSON.stringify(credentials));

@@ -3,12 +3,36 @@ import { describe, it, expect } from 'vitest';
 import { hashPassword, verifyPassword } from './crypto';
 
 describe('Crypto Utils', () => {
-    it('should hash a password and return a salt:hash string', async () => {
+    // Helper to generate a legacy 100k iteration hash for testing
+    const legacyHashPassword = async (password) => {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password);
+        const salt = crypto.getRandomValues(new Uint8Array(16));
+
+        const key = await crypto.subtle.importKey('raw', data, { name: 'PBKDF2' }, false, ['deriveBits', 'deriveKey']);
+        const hashBuffer = await crypto.subtle.deriveBits(
+            { name: 'PBKDF2', hash: 'SHA-256', iterations: 100000, salt: salt },
+            key,
+            256
+        );
+
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const saltArray = Array.from(salt);
+        const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        const saltHex = saltArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+        return `${saltHex}:${hashHex}`;
+    };
+
+    it('should hash a password and return a versioned iterations:salt:hash string', async () => {
         const password = 'mySecretPassword';
         const hashedPassword = await hashPassword(password);
 
         expect(hashedPassword).toContain(':');
-        const [salt, hash] = hashedPassword.split(':');
+        const parts = hashedPassword.split(':');
+        expect(parts.length).toBe(3);
+        const [iterations, salt, hash] = parts;
+        expect(iterations).toBe('600000');
         expect(salt.length).toBeGreaterThan(0);
         expect(hash.length).toBeGreaterThan(0);
     });
@@ -35,6 +59,17 @@ describe('Crypto Utils', () => {
         expect(isValid).toBe(true);
 
         const isInvalid = await verifyPassword(legacyPassword, 'wrongLegacy');
+        expect(isInvalid).toBe(false);
+    });
+
+    it('should handle legacy 2-part hashes correctly', async () => {
+        const password = 'mySecretPassword';
+        const legacyHash = await legacyHashPassword(password);
+
+        const isValid = await verifyPassword(legacyHash, password);
+        expect(isValid).toBe(true);
+
+        const isInvalid = await verifyPassword(legacyHash, 'wrongPassword');
         expect(isInvalid).toBe(false);
     });
 
