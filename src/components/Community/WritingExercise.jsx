@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Send, Lightbulb, CheckCircle, Clock, Star, ChevronRight } from 'lucide-react';
 import { useCommunity } from '../../context/CommunityContext';
@@ -7,6 +8,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 
 const WritingExercise = ({ onBack, initialPromptId = null }) => {
+    // eslint-disable-next-line no-unused-vars
     const { getPrompts, submitWriting, myWritings, WRITING_PROMPTS } = useCommunity();
     const [selectedPrompt, setSelectedPrompt] = useState(null);
     const [text, setText] = useState('');
@@ -19,8 +21,10 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
         if (initialPromptId) {
             const prompt = WRITING_PROMPTS.find(p => p.id === initialPromptId);
             if (prompt) {
-                setSelectedPrompt(prompt);
-                setView('write');
+                setTimeout(() => {
+                    setSelectedPrompt(prompt);
+                    setView('write');
+                }, 0);
             }
         }
     }, [initialPromptId, WRITING_PROMPTS]);
@@ -248,7 +252,9 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
                         <div>
                             <button
                                 onClick={() => setShowHints(!showHints)}
-                                className="flex items-center gap-2 text-amber-400 text-sm hover:text-amber-300 transition-colors"
+                                aria-expanded={showHints}
+                                aria-controls="hints-panel"
+                                className="flex items-center gap-2 text-amber-400 text-sm hover:text-amber-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-md focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900"
                             >
                                 <Lightbulb size={16} />
                                 {showHints ? 'Hide hints' : 'Show hints'}
@@ -256,6 +262,7 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
                             <AnimatePresence>
                                 {showHints && (
                                     <motion.div
+                                        id="hints-panel"
                                         initial={{ height: 0, opacity: 0 }}
                                         animate={{ height: 'auto', opacity: 1 }}
                                         exit={{ height: 0, opacity: 0 }}
@@ -282,7 +289,7 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
                                 value={text}
                                 onChange={(e) => setText(e.target.value)}
                                 placeholder="Écrivez votre réponse ici..."
-                                className="w-full h-48 bg-slate-900/50 border border-white/10 rounded-xl p-4 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors resize-none"
+                                className="w-full h-48 bg-slate-900/50 border border-white/10 rounded-xl p-4 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 focus-visible:ring-2 focus-visible:ring-violet-500/50 transition-colors resize-none"
                             />
                             <div className="flex justify-between items-center mt-2 text-sm">
                                 <span className={`${wordCount < selectedPrompt?.minWords ? 'text-amber-400' :
