@@ -101,15 +101,20 @@ export const SyncProvider = ({ children }) => {
     }, [stats, vocabulary]);
 
     const importData = useCallback(async (file) => {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-        if (parsed.progress) {
-            hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
+        try {
+            const text = await file.text();
+            const parsed = JSON.parse(text);
+            if (parsed.progress) {
+                hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
+            }
+            if (parsed.vocabulary) {
+                hydrateVocabulary(parsed.vocabulary.map(word => ({ ...word, updatedAt: Date.now() })));
+            }
+            setStatus('imported');
+        } catch (err) {
+            console.error('Failed to parse import data:', err);
+            throw new Error('Invalid backup file format. Please ensure you are uploading a valid Lingolift backup JSON file.');
         }
-        if (parsed.vocabulary) {
-            hydrateVocabulary(parsed.vocabulary.map(word => ({ ...word, updatedAt: Date.now() })));
-        }
-        setStatus('imported');
     }, [hydrateProgress, hydrateVocabulary]);
 
     return (
