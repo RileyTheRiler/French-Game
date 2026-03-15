@@ -1,10 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StudySession from './StudySession';
-import { VocabularyContext } from '../../context/VocabularyContext';
+import { VocabularyProvider } from '../../context/VocabularyContext';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mocks
+vi.mock('../../context/VocabularyContext', () => {
+    return {
+        useVocabulary: () => mockVocabulary
+    };
+});
+vi.mock('../../context/ProgressContext', () => {
+    return {
+        useProgress: () => ({
+            addXP: vi.fn(),
+            addCoins: vi.fn(),
+            updateDailyStat: vi.fn(),
+        })
+    };
+});
+vi.mock('../../context/ToastContext', () => {
+    return {
+        useToast: () => ({
+            showToast: vi.fn()
+        })
+    };
+});
+
 vi.mock('../../utils/SoundManager', () => ({
     default: {
         playFlip: vi.fn(),
@@ -27,16 +49,15 @@ const mockVocabulary = {
     ],
     playWordAudio: vi.fn(),
     preloadAudioForWords: vi.fn(),
+    markWordSeen: vi.fn(),
     CATEGORIES: { 'Greetings': { name: 'Greetings' }, 'Animals': { name: 'Animals' } }
 };
 
 const renderWithContext = (ui) => {
     return render(
-        <VocabularyContext.Provider value={mockVocabulary}>
-            <MemoryRouter>
-                {ui}
-            </MemoryRouter>
-        </VocabularyContext.Provider>
+        <MemoryRouter>
+            {ui}
+        </MemoryRouter>
     );
 };
 
