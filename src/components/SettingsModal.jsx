@@ -5,23 +5,6 @@ import DifficultyDial from './ui/DifficultyDial';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { warmVoiceCache } from '../utils/audio';
-
-const SettingsModal = ({ onClose }) => {
-    const { audioEnabled, toggleAudio, offlineAudio, toggleOfflineAudio, resetProgress } = useProgress();
-    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
-    const [confirmReset, setConfirmReset] = React.useState(false);
-    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
-
-    const handleOfflineAudio = async () => {
-        const next = !offlineAudio;
-        toggleOfflineAudio();
-        if (!offlineAudio && next) {
-            setIsCachingAudio(true);
-            warmVoiceCache();
-            await downloadAudioOnce();
-            setIsCachingAudio(false);
-        }
-    };
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
 
@@ -29,6 +12,8 @@ const SettingsModal = ({ onClose }) => {
     const {
         audioEnabled,
         toggleAudio,
+        offlineAudio,
+        toggleOfflineAudio,
         reducedMotion,
         toggleReducedMotion,
         colorTheme,
@@ -41,15 +26,27 @@ const SettingsModal = ({ onClose }) => {
         globalDifficulty,
         setGlobalDifficulty
     } = useProgress();
-    const { resetVocabulary } = useVocabulary();
+    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
     const { user, signIn, signUp, signOut, loading, error } = useAuth();
     const { exportData, importData, status, lastSyncedAt, syncing } = useSync();
     const [confirmReset, setConfirmReset] = React.useState(false);
     const [authMode, setAuthMode] = React.useState('signin');
     const [form, setForm] = React.useState({ email: '', password: '' });
     const [importError, setImportError] = React.useState('');
+    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
     const dialogRef = useRef(null);
     const closeButtonRef = useRef(null);
+
+    const handleOfflineAudio = async () => {
+        const next = !offlineAudio;
+        toggleOfflineAudio();
+        if (!offlineAudio && next) {
+            setIsCachingAudio(true);
+            warmVoiceCache();
+            await downloadAudioOnce();
+            setIsCachingAudio(false);
+        }
+    };
 
     useEffect(() => {
         if (closeButtonRef.current) {
@@ -160,6 +157,7 @@ const SettingsModal = ({ onClose }) => {
                                     ? 'border-indigo-500 bg-indigo-500/20'
                                     : 'border-white/10 bg-slate-800/50 hover:bg-slate-800'
                                     }`}
+                                aria-pressed={difficultySettings?.learnerType === 'casual'}
                             >
                                 <div className="relative z-10">
                                     <span className="block font-bold text-sm mb-1 text-indigo-200">Casual Explorer</span>
@@ -180,6 +178,7 @@ const SettingsModal = ({ onClose }) => {
                                     ? 'border-indigo-500 bg-indigo-500/20'
                                     : 'border-white/10 bg-slate-800/50 hover:bg-slate-800'
                                     }`}
+                                aria-pressed={difficultySettings?.learnerType === 'scholar'}
                             >
                                 <div className="relative z-10">
                                     <span className="block font-bold text-sm mb-1 text-indigo-200">Serious Scholar</span>
@@ -333,9 +332,17 @@ const SettingsModal = ({ onClose }) => {
                         <button
                             onClick={handleOfflineAudio}
                             className={`w-14 h-8 rounded-full transition-colors relative ${offlineAudio ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                            role="switch"
+                            aria-checked={offlineAudio}
+                            aria-label="Toggle offline audio cache"
                         >
                             <motion.div
                                 animate={{ x: offlineAudio ? 26 : 2 }}
+                                className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
+                            />
+                        </button>
+                    </div>
+
                     {/* Privacy & Portability */}
                     <div className="glass-panel p-4 border border-emerald-500/20 bg-emerald-500/5 space-y-3">
                         <div className="flex items-center gap-3">
