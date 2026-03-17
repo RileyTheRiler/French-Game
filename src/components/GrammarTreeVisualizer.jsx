@@ -101,7 +101,8 @@ const GrammarTreeVisualizer = () => {
                                 <button
                                     key={bp.id}
                                     onClick={() => setSelectedId(bp.id)}
-                                    className={`w-full text-left p-3 rounded-lg text-sm transition-all ${selectedId === bp.id
+                                    aria-pressed={selectedId === bp.id}
+                                    className={`w-full text-left p-3 rounded-lg text-sm transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${selectedId === bp.id
                                             ? 'bg-indigo-50 border-indigo-200 border-2 text-indigo-700 shadow-sm'
                                             : 'bg-slate-50 border border-transparent hover:bg-slate-100 text-slate-600'
                                         }`}
@@ -117,7 +118,7 @@ const GrammarTreeVisualizer = () => {
                 {/* Main Stage: Tree View */}
                 <div className="lg:col-span-3">
                     <div className="bg-white rounded-3xl shadow-lg border border-slate-200 p-8 min-h-[500px] flex flex-col overflow-x-auto">
-                        <div className="mb-8 text-center">
+                        <div className="mb-8 text-center" aria-live="polite">
                             <h3 className="text-2xl font-bold text-slate-800 font-serif mb-2">
                                 {selectedBlueprint.sentence}
                             </h3>
@@ -125,7 +126,7 @@ const GrammarTreeVisualizer = () => {
                         </div>
 
                         {/* Tree Container */}
-                        <div className="flex-1 flex justify-center items-start pt-4 overflow-x-auto pb-12">
+                        <div className="flex-1 flex justify-center items-start pt-4 overflow-x-auto pb-12" aria-label="Grammar tree visualization">
                             <div className="min-w-max px-8">
                                 <TreeNode node={selectedBlueprint.structure} />
                             </div>
@@ -133,7 +134,7 @@ const GrammarTreeVisualizer = () => {
 
                         {/* Explanation Footer */}
                         <div className="bg-amber-50 rounded-xl p-4 border border-amber-100 flex items-start gap-3 mt-auto">
-                            <span className="text-2xl">💡</span>
+                            <span className="text-2xl" aria-hidden="true">💡</span>
                             <div>
                                 <h4 className="font-bold text-amber-900 text-sm">Architect's Note</h4>
                                 <p className="text-amber-800 text-sm">{selectedBlueprint.explanation}</p>
