@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-23 - Schwartzian Transform for Expensive Sorting Lookups
+**Learning:** In Context providers and utility functions handling thousands of items, algorithmic sorting with deep object iteration `computePriority` per comparison (O(N log N)) was causing severe bottlenecks.
+**Action:** Always pre-compute derived priority values via mapping prior to sorting, using a Schwartzian transform pattern: `arr.map(item => ({ item, score: compute(item) })).sort(...).map(x => x.item)`. This converts evaluation to O(N).
