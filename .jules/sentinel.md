@@ -18,3 +18,8 @@
 **Vulnerability:** `verifyPassword` used a non-constant time comparison (`===`) for hash verification, allowing potential timing attacks. Additionally, duplicate function definitions in `src/utils/crypto.js` created ambiguity and risk of using an insecure version.
 **Learning:** Copy-paste errors or bad merges can leave dangerous duplicates in utility files. Simple string comparison for hashes leaks timing information about the validity of the hash.
 **Prevention:** Always use a constant-time comparison function (like `crypto.timingSafeEqual` or a manual implementation) for secrets. Ensure linting rules catch duplicate declarations to prevent ambiguous code.
+
+## 2025-02-14 - Unsafe JSON Parsing in File Imports
+**Vulnerability:** `JSON.parse` was used in `SyncContext.jsx` to parse user-uploaded files without a `try...catch` block.
+**Learning:** Parsing user-provided files with `JSON.parse` synchronously without error handling can crash the application or leak internal stack traces when parsing fails (e.g., if the user uploads a malformed file).
+**Prevention:** Always wrap `JSON.parse` calls in `try...catch` blocks when dealing with external input or file uploads. Catch `SyntaxError` and handle it gracefully by logging internally and showing a generic error message to the user.
