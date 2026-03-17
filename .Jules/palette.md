@@ -1,0 +1,3 @@
+## 2024-05-18 - GrammarTreeVisualizer Accessibility
+**Learning:** Dynamic text areas updating without page reloads (like the sentence blueprint changing) are silent to screen readers unless marked appropriately. Also, tree structures need descriptive container labels.
+**Action:** Add `aria-live="polite"` to regions where content changes based on sidebar selection, and use `aria-pressed` for selection states on custom buttons to ensure correct screen reader feedback.
