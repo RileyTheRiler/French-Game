@@ -436,6 +436,7 @@ const PodcastMode = () => {
                         onClick={skipBack}
                         disabled={currentIndex === 0}
                         className="p-3 rounded-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Skip back"
                     >
                         <SkipBack className="w-6 h-6 text-white" />
                     </button>
@@ -443,6 +444,7 @@ const PodcastMode = () => {
                     <button
                         onClick={togglePlayPause}
                         className="p-6 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-500/30"
+                        aria-label={isPlaying ? "Pause" : "Play"}
                     >
                         {isPlaying ? (
                             <Pause className="w-8 h-8 text-white" />
@@ -455,6 +457,7 @@ const PodcastMode = () => {
                         onClick={skipForward}
                         disabled={currentIndex === playlist.length - 1}
                         className="p-3 rounded-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Skip forward"
                     >
                         <SkipForward className="w-6 h-6 text-white" />
                     </button>
@@ -465,6 +468,7 @@ const PodcastMode = () => {
                     <button
                         onClick={() => setShowTranslation(!showTranslation)}
                         className="text-sm text-slate-400 hover:text-white transition-colors"
+                        aria-expanded={showTranslation}
                     >
                         {showTranslation ? 'Hide' : 'Show'} Translation
                     </button>
