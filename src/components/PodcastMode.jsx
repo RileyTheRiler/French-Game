@@ -56,6 +56,7 @@ const PodcastMode = () => {
                 audioRef.current = null;
             }
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // Handle playback speed changes
@@ -63,7 +64,7 @@ const PodcastMode = () => {
         if (audioRef.current) {
             audioRef.current.playbackRate = playbackSpeed;
         }
-    }, [playbackSpeed]);
+    }, [currentItem, playbackSpeed]);
 
     // Start session
     const startSession = useCallback(() => {
@@ -77,6 +78,22 @@ const PodcastMode = () => {
         setSessionComplete(false);
         setXpEarned(0);
     }, [sessionType, selectedCategory]);
+
+    // Finish session
+    const finishSession = useCallback(() => {
+        setIsPlaying(false);
+        if (audioRef.current) {
+            audioRef.current.pause();
+        }
+
+        // Calculate XP (2 XP per item listened)
+        const earned = playlist.length * 2;
+        setXpEarned(earned);
+        addXP(earned);
+        incrementStat('podcastSessionsCompleted');
+
+        setSessionComplete(true);
+    }, [playlist.length, addXP, incrementStat]);
 
     // Play current item
     const playCurrentItem = useCallback(() => {
@@ -99,7 +116,7 @@ const PodcastMode = () => {
                 }
             }, 1500); // 1.5 second pause between items
         };
-    }, [currentItem, currentIndex, playlist.length]);
+    }, [currentItem, currentIndex, playlist.length, finishSession]);
 
     // Auto-play when current item changes
     useEffect(() => {
@@ -137,22 +154,6 @@ const PodcastMode = () => {
         if (currentIndex > 0) {
             setCurrentIndex(prev => prev - 1);
         }
-    };
-
-    // Finish session
-    const finishSession = () => {
-        setIsPlaying(false);
-        if (audioRef.current) {
-            audioRef.current.pause();
-        }
-
-        // Calculate XP (2 XP per item listened)
-        const earned = playlist.length * 2;
-        setXpEarned(earned);
-        addXP(earned);
-        incrementStat('podcastSessionsCompleted');
-
-        setSessionComplete(true);
     };
 
     // Session selection screen
@@ -436,6 +437,7 @@ const PodcastMode = () => {
                         onClick={skipBack}
                         disabled={currentIndex === 0}
                         className="p-3 rounded-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Skip back"
                     >
                         <SkipBack className="w-6 h-6 text-white" />
                     </button>
@@ -443,6 +445,7 @@ const PodcastMode = () => {
                     <button
                         onClick={togglePlayPause}
                         className="p-6 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 transition-all shadow-lg shadow-purple-500/30"
+                        aria-label={isPlaying ? "Pause" : "Play"}
                     >
                         {isPlaying ? (
                             <Pause className="w-8 h-8 text-white" />
@@ -455,6 +458,7 @@ const PodcastMode = () => {
                         onClick={skipForward}
                         disabled={currentIndex === playlist.length - 1}
                         className="p-3 rounded-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Skip forward"
                     >
                         <SkipForward className="w-6 h-6 text-white" />
                     </button>
@@ -465,6 +469,7 @@ const PodcastMode = () => {
                     <button
                         onClick={() => setShowTranslation(!showTranslation)}
                         className="text-sm text-slate-400 hover:text-white transition-colors"
+                        aria-expanded={showTranslation}
                     >
                         {showTranslation ? 'Hide' : 'Show'} Translation
                     </button>
