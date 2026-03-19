@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, MapPin, Star, ChevronRight } from 'lucide-react';
 import { useProgress } from '../../context/ProgressContext';
@@ -39,6 +40,13 @@ const FranceMap = () => {
     const handleRegionClick = (region) => {
         if (isUnlocked(region.id)) {
             setSelectedRegion(region);
+        }
+    };
+
+    const handleKeyDown = (e, region) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleRegionClick(region);
         }
     };
 
@@ -99,10 +107,14 @@ const FranceMap = () => {
                                             stroke={isHovered ? '#fff' : '#1e293b'}
                                             strokeWidth={isHovered ? 3 : 1.5}
                                             opacity={unlocked ? (isHovered ? 1 : 0.8) : 0.4}
-                                            className={unlocked ? 'cursor-pointer' : 'cursor-not-allowed'}
+                                            className={unlocked ? 'cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-white' : 'cursor-not-allowed'}
                                             onMouseEnter={() => setHoveredRegion(region.id)}
                                             onMouseLeave={() => setHoveredRegion(null)}
                                             onClick={() => handleRegionClick(region)}
+                                            onKeyDown={(e) => handleKeyDown(e, region)}
+                                            role="button"
+                                            tabIndex={unlocked ? 0 : -1}
+                                            aria-label={unlocked ? `Explore ${region.name}` : `${region.name} (Locked: Level ${region.unlockLevel} required)`}
                                             whileHover={unlocked ? { scale: 1.05 } : {}}
                                             style={{ transformOrigin: 'center' }}
                                         />
@@ -183,11 +195,15 @@ const FranceMap = () => {
                                     whileHover={unlocked ? { scale: 1.02 } : {}}
                                 >
                                     <Card
-                                        className={`p-4 cursor-pointer transition-all ${unlocked
+                                        role="button"
+                                        tabIndex={unlocked ? 0 : -1}
+                                        aria-label={unlocked ? `Explore ${region.name}` : `${region.name} (Locked: Level ${region.unlockLevel} required)`}
+                                        className={`p-4 cursor-pointer transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${unlocked
                                                 ? 'bg-slate-800/60 hover:bg-slate-700/60 border-slate-600'
                                                 : 'bg-slate-900/60 border-slate-700 opacity-60'
                                             }`}
                                         onClick={() => handleRegionClick(region)}
+                                        onKeyDown={(e) => handleKeyDown(e, region)}
                                     >
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3">
