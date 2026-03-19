@@ -102,7 +102,12 @@ export const SyncProvider = ({ children }) => {
 
     const importData = useCallback(async (file) => {
         const text = await file.text();
-        const parsed = JSON.parse(text);
+        let parsed;
+        try {
+            parsed = JSON.parse(text);
+        } catch {
+            throw new Error('Invalid file format');
+        }
         if (parsed.progress) {
             hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
         }
