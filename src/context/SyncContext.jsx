@@ -105,9 +105,7 @@ export const SyncProvider = ({ children }) => {
         let parsed;
         try {
             parsed = JSON.parse(text);
-        } catch (err) {
-            // eslint-disable-next-line no-unused-vars
-            const _err = err;
+        } catch {
             throw new Error('Invalid file format');
         }
         if (parsed.progress) {
