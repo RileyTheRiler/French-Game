@@ -1,0 +1,3 @@
+## 2026-03-20 - [Dictionary Modal ARIA]
+**Learning:** Modals with multiple interactive icon buttons and custom tabbed navigation components often omit standard ARIA roles (`dialog`, `tablist`, `tab`) and labels (`aria-label`, `aria-selected`), causing severe screen reader navigation issues. This pattern was found and fixed in `DictionaryModal.jsx`.
+**Action:** When implementing or refactoring custom dialogs and tabs, proactively add `role='dialog'`, `aria-modal='true'`, and link the title via `aria-labelledby` for dialogs. Ensure tabs correctly establish `tablist`, `tab`, and `tabpanel` relationships (with `aria-selected` and `aria-controls`) for robust screen reader accessibility.
