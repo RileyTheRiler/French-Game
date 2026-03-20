@@ -281,6 +281,7 @@ function generateOverallComment(errorCount, style) {
     return "Continue à pratiquer, tu vas y arriver !";
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCommunity = () => {
     const context = useContext(CommunityContext);
     if (!context) {

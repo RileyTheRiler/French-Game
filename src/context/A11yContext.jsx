@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useCallback, useEffect, use
 
 const A11yContext = createContext(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useA11y = () => {
     const context = useContext(A11yContext);
     if (!context) {
@@ -12,13 +13,22 @@ export const useA11y = () => {
 
 export const A11yProvider = ({ children }) => {
     const [announcement, setAnnouncement] = useState('');
-    const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-    const [highContrast, setHighContrast] = useState(false);
+    const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        }
+        return false;
+    });
+    const [highContrast, setHighContrast] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(prefers-contrast: more)').matches;
+        }
+        return false;
+    });
 
     // Detect reduced motion preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        setPrefersReducedMotion(mediaQuery.matches);
 
         const handleChange = (e) => setPrefersReducedMotion(e.matches);
         mediaQuery.addEventListener('change', handleChange);
@@ -29,7 +39,6 @@ export const A11yProvider = ({ children }) => {
     // Detect high contrast preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-contrast: more)');
-        setHighContrast(mediaQuery.matches);
 
         const handleChange = (e) => setHighContrast(e.matches);
         mediaQuery.addEventListener('change', handleChange);
