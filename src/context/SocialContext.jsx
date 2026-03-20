@@ -36,25 +36,25 @@ export const SocialProvider = ({ children }) => {
         return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
     });
 
-    const [activeChallenge, setActiveChallenge] = useState({
+    const [activeChallenge, setActiveChallenge] = useState(() => ({
         id: 'chal_weekly_xp',
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
-    });
+    }));
 
     // Compute total current progress
     useEffect(() => {
         const userContribution = Math.max(0, stats.xp - userCoopStartXp);
         const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
 
-        setActiveChallenge(prev => ({
+        setActiveChallenge(prev => prev.current === total ? prev : {
             ...prev,
             current: total,
             isCompleted: total >= prev.target
-        }));
+        });
     }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
 
     const claimCoopReward = useCallback(() => {
@@ -193,6 +193,7 @@ export const SocialProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSocial = () => {
     const context = useContext(SocialContext);
     if (!context) {
