@@ -22,7 +22,9 @@ const LearningPathContext = createContext();
  * - Adaptive parameters (difficulty, pace)
  */
 export const LearningPathProvider = ({ children }) => {
+    // eslint-disable-next-line no-unused-vars
     const { stats, categoryStats, dailyStats, errorPatterns, weakWords, getWeeklySummary } = useProgress();
+    // eslint-disable-next-line no-unused-vars
     const { vocabulary, getDueWords, getWeightedPracticeWords } = useVocabulary();
 
     // Skill profile computed from user data
@@ -269,6 +271,7 @@ export const LearningPathProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useLearningPath = () => {
     const context = useContext(LearningPathContext);
     if (!context) {
