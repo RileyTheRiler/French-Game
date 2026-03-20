@@ -101,15 +101,22 @@ export const SyncProvider = ({ children }) => {
     }, [stats, vocabulary]);
 
     const importData = useCallback(async (file) => {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-        if (parsed.progress) {
-            hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
+        try {
+            const text = await file.text();
+            const parsed = JSON.parse(text);
+            if (parsed.progress) {
+                hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
+            }
+            if (parsed.vocabulary) {
+                hydrateVocabulary(parsed.vocabulary.map(word => ({ ...word, updatedAt: Date.now() })));
+            }
+            setStatus('imported');
+        } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error('Failed to import data:', err);
+            setStatus('error: Invalid file format');
+            throw new Error('Invalid file format');
         }
-        if (parsed.vocabulary) {
-            hydrateVocabulary(parsed.vocabulary.map(word => ({ ...word, updatedAt: Date.now() })));
-        }
-        setStatus('imported');
     }, [hydrateProgress, hydrateVocabulary]);
 
     return (
