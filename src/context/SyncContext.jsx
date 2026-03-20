@@ -112,7 +112,6 @@ export const SyncProvider = ({ children }) => {
             }
             setStatus('imported');
         } catch (err) {
-            // eslint-disable-next-line no-console
             console.error('Failed to import data:', err);
             setStatus('error: Invalid file format');
             throw new Error('Invalid file format');
