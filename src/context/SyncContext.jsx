@@ -105,7 +105,7 @@ export const SyncProvider = ({ children }) => {
         let parsed;
         try {
             parsed = JSON.parse(text);
-        } catch (e) {
+        } catch {
             // Throw generic error to avoid exposing internals
             throw new Error('Invalid file format');
         }
