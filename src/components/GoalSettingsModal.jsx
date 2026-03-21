@@ -49,6 +49,9 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
         <AnimatePresence>
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
                 <motion.div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="modal-title"
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
@@ -57,33 +60,46 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                     <Card className="overflow-hidden flex flex-col max-h-[90vh]">
                         {/* Header */}
                         <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-                            <h2 className="text-2xl font-bold flex items-center gap-3">
+                            <h2 id="modal-title" className="text-2xl font-bold flex items-center gap-3">
                                 {activeTab === 'goals' ? <Target className="text-blue-400" /> : <Settings className="text-purple-400" />}
                                 {activeTab === 'goals' ? 'Learning Goals' : 'Difficulty Settings'}
                             </h2>
-                            <Button variant="ghost" size="icon" onClick={onClose}>
+                            <Button variant="ghost" size="icon" aria-label="Close settings" onClick={onClose}>
                                 <X size={24} />
                             </Button>
                         </div>
 
                         {/* Tabs */}
-                        <div className="flex border-b border-white/10">
+                        <div role="tablist" aria-label="Settings tabs" className="flex border-b border-white/10">
                             <button
+                                role="tab"
+                                id="tab-goals"
+                                aria-selected={activeTab === 'goals'}
+                                aria-controls="panel-goals"
                                 onClick={() => setActiveTab('goals')}
-                                className={`flex-1 p-4 text-center font-bold transition-colors ${activeTab === 'goals' ? 'bg-blue-500/20 text-blue-300 border-b-2 border-blue-500' : 'text-slate-400 hover:bg-white/5'}`}
+                                className={`flex-1 p-4 text-center font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${activeTab === 'goals' ? 'bg-blue-500/20 text-blue-300 border-b-2 border-blue-500' : 'text-slate-400 hover:bg-white/5'}`}
                             >
                                 Valid Goals
                             </button>
                             <button
+                                role="tab"
+                                id="tab-difficulty"
+                                aria-selected={activeTab === 'difficulty'}
+                                aria-controls="panel-difficulty"
                                 onClick={() => setActiveTab('difficulty')}
-                                className={`flex-1 p-4 text-center font-bold transition-colors ${activeTab === 'difficulty' ? 'bg-purple-500/20 text-purple-300 border-b-2 border-purple-500' : 'text-slate-400 hover:bg-white/5'}`}
+                                className={`flex-1 p-4 text-center font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${activeTab === 'difficulty' ? 'bg-purple-500/20 text-purple-300 border-b-2 border-purple-500' : 'text-slate-400 hover:bg-white/5'}`}
                             >
                                 Game Difficulty
                             </button>
                         </div>
 
                         {/* Content */}
-                        <div className="p-8 overflow-y-auto space-y-8">
+                        <div
+                            role="tabpanel"
+                            id={`panel-${activeTab}`}
+                            aria-labelledby={`tab-${activeTab}`}
+                            className="p-8 overflow-y-auto space-y-8"
+                        >
                             {activeTab === 'goals' ? (
                                 <>
                                     {/* Goal Presets */}
