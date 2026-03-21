@@ -62,6 +62,16 @@ const ConjugationBlitz = () => {
         if (inputRef.current) inputRef.current.focus();
     };
 
+    const endGame = useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    }, [score, addXP]);
+
     // Timer Logic
     useEffect(() => {
         if (status === 'playing') {
@@ -76,24 +86,9 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
+    }, [status, endGame]);
 
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        checkAnswer();
-    };
-
-    const checkAnswer = () => {
+    const checkAnswer = useCallback(() => {
         const normalizedInput = userInput.trim().toLowerCase();
         const correctAnswer = currentChallenge.answer.toLowerCase();
 
@@ -107,22 +102,30 @@ const ConjugationBlitz = () => {
         }]);
 
         if (isCorrect) {
-            SoundManager.playSuccess();
             setScore(s => s + 1);
+            setCombo(c => c + 1);
+            setTimeLeft(t => Math.min(t + 2, 60)); // +2s per correct
+            SoundManager.playSuccess();
             setStreak(prev => {
                 const newStreak = prev + 1;
                 if (newStreak % 5 === 0) SoundManager.playLevelUp(); // Mini milestone sound?
                 return newStreak;
             });
-            // Add slight time bonus?
-            setTimeLeft(t => Math.min(t + 2, 60)); // +2 seconds cap at 60
+            loadNextChallenge();
         } else {
+            setCombo(0);
+            setTimeLeft(t => Math.max(t - 3, 0)); // -3s penalty
             SoundManager.playMiss();
             setStreak(0);
-            // Shake effect handled by UI state potentially, but for speed we just move on
+            // Could add shake effect or error display here
+            setUserInput('');
+            loadNextChallenge();
         }
+    }, [userInput, currentChallenge, loadNextChallenge]);
 
-        loadNextChallenge();
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        checkAnswer();
     };
 
     // Formatting helper
