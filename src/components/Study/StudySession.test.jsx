@@ -1,8 +1,35 @@
+import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StudySession from './StudySession';
-import { VocabularyContext } from '../../context/VocabularyContext';
 import { MemoryRouter } from 'react-router-dom';
+
+// Mock the module before importing VocabularyContext
+vi.mock('../../context/VocabularyContext', () => {
+    const React = require('react');
+    const MockVocabularyContext = React.createContext();
+    return {
+        VocabularyContext: MockVocabularyContext,
+        useVocabulary: () => React.useContext(MockVocabularyContext)
+    };
+});
+
+import { VocabularyContext } from '../../context/VocabularyContext';
+import { ProgressProvider } from '../../context/ProgressContext';
+
+// Mock ProgressContext to avoid complex dependencies
+vi.mock('../../context/ProgressContext', () => {
+    return {
+        useProgress: () => ({
+            addXP: vi.fn(),
+            stats: { xp: 0, streak: 0, level: 1, difficultySettings: { learnerType: 'casual' }, categoryPerformance: {} },
+            globalDifficulty: 25,
+            updateDailyStat: vi.fn(),
+            logWordAttempt: vi.fn()
+        }),
+        ProgressProvider: ({ children }) => <div>{children}</div>
+    };
+});
 
 // Mocks
 vi.mock('../../utils/SoundManager', () => ({
@@ -27,16 +54,23 @@ const mockVocabulary = {
     ],
     playWordAudio: vi.fn(),
     preloadAudioForWords: vi.fn(),
+    markWordSeen: vi.fn(),
     CATEGORIES: { 'Greetings': { name: 'Greetings' }, 'Animals': { name: 'Animals' } }
 };
 
+import { ToastProvider } from '../../context/ToastContext';
+
 const renderWithContext = (ui) => {
     return render(
-        <VocabularyContext.Provider value={mockVocabulary}>
-            <MemoryRouter>
-                {ui}
-            </MemoryRouter>
-        </VocabularyContext.Provider>
+        <MemoryRouter>
+            <ProgressProvider>
+                <ToastProvider>
+                    <VocabularyContext.Provider value={mockVocabulary}>
+                        {ui}
+                    </VocabularyContext.Provider>
+                </ToastProvider>
+            </ProgressProvider>
+        </MemoryRouter>
     );
 };
 
