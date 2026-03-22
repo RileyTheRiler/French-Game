@@ -208,9 +208,14 @@ export const VocabularyProvider = ({ children }) => {
 
     const getDueWords = useCallback(() => {
         const now = Date.now();
+        // ⚡ Bolt Optimization: Schwartzian transform
+        // Precomputes the expensive priority score to reduce operations
+        // from O(N log N) to O(N) during the sorting phase.
         return vocabularyRef.current
             .filter(word => (!word.snoozeUntil || word.snoozeUntil <= now) && word.nextReview <= now)
-            .sort((a, b) => computePriority(b) - computePriority(a));
+            .map(word => ({ word, priorityScore: computePriority(word) }))
+            .sort((a, b) => b.priorityScore - a.priorityScore)
+            .map(item => item.word);
     }, [computePriority]);
 
     const getPracticeQueue = useCallback((mode = 'default', limit) => {
@@ -218,14 +223,17 @@ export const VocabularyProvider = ({ children }) => {
     }, []);
 
     const getWeightedPracticeWords = useCallback((limit = 30) => {
+        // ⚡ Bolt Optimization: Schwartzian transform
+        // Precomputes priority and uses reference pointers ({ word })
+        // instead of expensive object spreads (...word) to save memory.
         return vocabulary
             .map(word => ({
-                ...word,
+                word,
                 priorityScore: computePriority(word)
             }))
             .sort((a, b) => b.priorityScore - a.priorityScore)
             .slice(0, limit)
-            .map(hydrateWord);
+            .map(item => hydrateWord(item.word));
     }, [vocabulary, computePriority]);
 
     useEffect(() => {
@@ -469,4 +477,5 @@ export const VocabularyProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useVocabulary = () => useContext(VocabularyContext);
