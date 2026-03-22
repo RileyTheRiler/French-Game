@@ -98,6 +98,7 @@ const MediaPlayer = ({ clip, onQuizStart }) => {
                                 size="sm"
                                 onClick={() => setIsPlaying(!isPlaying)}
                                 className="text-white hover:bg-white/10"
+                                aria-label={isPlaying ? "Pause" : "Play"}
                             >
                                 {isPlaying ? <Pause size={20} /> : <Play size={20} />}
                             </Button>
@@ -106,6 +107,7 @@ const MediaPlayer = ({ clip, onQuizStart }) => {
                                 size="sm"
                                 onClick={() => setCurrentTime(0)}
                                 className="text-white hover:bg-white/10"
+                                aria-label="Restart"
                             >
                                 <RotateCcw size={18} />
                             </Button>
@@ -128,6 +130,8 @@ const MediaPlayer = ({ clip, onQuizStart }) => {
                                 size="sm"
                                 onClick={() => setShowSubtitles(!showSubtitles)}
                                 className={`text-white hover:bg-white/10 ${!showSubtitles ? 'opacity-50' : ''}`}
+                                aria-label="Toggle subtitles"
+                                aria-pressed={showSubtitles}
                             >
                                 <Subtitles size={20} />
                             </Button>
