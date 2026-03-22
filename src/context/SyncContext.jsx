@@ -139,4 +139,5 @@ export const SyncProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSync = () => useContext(SyncContext);
