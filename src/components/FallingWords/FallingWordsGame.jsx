@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-=======
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 >>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
 import { motion, AnimatePresence } from 'framer-motion';
 import { Mic, Volume2 } from 'lucide-react';

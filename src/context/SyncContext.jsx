@@ -102,7 +102,20 @@ export const SyncProvider = ({ children }) => {
 
     const importData = useCallback(async (file) => {
         const text = await file.text();
-        const parsed = JSON.parse(text);
+        let parsed;
+        try {
+            parsed = JSON.parse(text);
+        } catch (err) {
+            if (err instanceof SyntaxError) {
+                throw new Error('Invalid file format');
+            }
+            throw err;
+        }
+
+        if (!parsed || typeof parsed !== 'object') {
+            throw new Error('Invalid file format');
+        }
+
         if (parsed.progress) {
             hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
         }
@@ -126,4 +139,5 @@ export const SyncProvider = ({ children }) => {
     );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSync = () => useContext(SyncContext);
