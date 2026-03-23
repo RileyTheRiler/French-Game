@@ -65,7 +65,8 @@ const EtymologyMap = ({ wordId, onClose }) => {
                     <div className="p-4 bg-amber-100/50 text-center">
                         <button
                             onClick={onClose}
-                            className="text-amber-700 hover:text-amber-900 font-bold text-sm"
+                            className="text-amber-700 hover:text-amber-900 font-bold text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 rounded-lg px-2 py-1"
+                            aria-label="Close etymology details"
                         >
                             Close the Archives
                         </button>
