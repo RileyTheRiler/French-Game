@@ -41,20 +41,29 @@ export const SocialProvider = ({ children }) => {
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
-        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
     });
 
     // Compute total current progress
     useEffect(() => {
-        const userContribution = Math.max(0, stats.xp - userCoopStartXp);
-        const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
+        const calculateProgress = () => {
+            const userContribution = Math.max(0, stats.xp - userCoopStartXp);
+            const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
 
-        setActiveChallenge(prev => ({
-            ...prev,
-            current: total,
-            isCompleted: total >= prev.target
-        }));
+            setActiveChallenge(prev => {
+                if (prev.current === total && prev.isCompleted === (total >= prev.target)) return prev;
+                return {
+                    ...prev,
+                    current: total,
+                    isCompleted: total >= prev.target
+                };
+            });
+        };
+
+        // Wrap in setTimeout to defer state update outside the immediate render phase
+        const timeoutId = setTimeout(calculateProgress, 0);
+        return () => clearTimeout(timeoutId);
     }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
 
     const claimCoopReward = useCallback(() => {
