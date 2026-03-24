@@ -276,6 +276,7 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Speaking to your best friend, use:',
         answer: 'Tu',
         options: ['Tu', 'Vous'],
+<<<<<<< HEAD
         xpReward: 10
     },
     // Passé Composé
@@ -379,8 +380,11 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Il ___ beau quand je suis sorti. (The weather was nice when I went out)',
         answer: 'faisait',
         options: ['a fait', 'faisait', 'fait', 'fera'],
-        xpReward: 20,
+        xpReward: 20
+=======
+        xpReward: 10,
         difficulty: 'beginner'
+>>>>>>> 6fc497749fb50d44ec751c63ecd2a683f4559701
     }
 ];
 

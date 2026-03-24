@@ -1,28 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StudySession from './StudySession';
-import { useVocabulary } from '../../context/VocabularyContext';
+import { VocabularyContext } from '../../context/VocabularyContext';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mocks
-vi.mock('../../context/VocabularyContext', () => ({
-    useVocabulary: vi.fn(),
-}));
-
-vi.mock('../../context/ProgressContext', () => ({
-    useProgress: vi.fn(() => ({
-        addXP: vi.fn(),
-        addCoins: vi.fn(),
-        updateDailyStat: vi.fn(),
-    })),
-}));
-
-vi.mock('../../context/ToastContext', () => ({
-    useToast: vi.fn(() => ({
-        showToast: vi.fn(),
-    })),
-}));
-
 vi.mock('../../utils/SoundManager', () => ({
     default: {
         playFlip: vi.fn(),
@@ -50,16 +32,17 @@ const mockVocabulary = {
 
 const renderWithContext = (ui) => {
     return render(
-        <MemoryRouter>
-            {ui}
-        </MemoryRouter>
+        <VocabularyContext.Provider value={mockVocabulary}>
+            <MemoryRouter>
+                {ui}
+            </MemoryRouter>
+        </VocabularyContext.Provider>
     );
 };
 
 describe('StudySession', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        useVocabulary.mockReturnValue(mockVocabulary);
     });
 
     it('renders empty state when no due words', () => {
