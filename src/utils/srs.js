@@ -183,22 +183,16 @@ export const isPassingGrade = (grade) => normalizeGrade(grade) >= 3;
 export const sortByReviewPriority = (words) => {
     const now = Date.now();
 
-    return [...words].sort((a, b) => {
-        const aState = a.srs || getInitialState();
-        const bState = b.srs || getInitialState();
-
-        const aRetention = calculateRetentionProbability(aState);
-        const bRetention = calculateRetentionProbability(bState);
-
-        const aOverdue = (now - aState.dueDate) / DAY_MS;
-        const bOverdue = (now - bState.dueDate) / DAY_MS;
-
-        // Priority score: low retention + overdue = high priority
-        const aPriority = (1 - aRetention) + Math.max(0, aOverdue * 0.1);
-        const bPriority = (1 - bRetention) + Math.max(0, bOverdue * 0.1);
-
-        return bPriority - aPriority;
-    });
+    // Optimization: Schwartzian transform precalculates retention/priority once (O(N)) instead of per-comparison (O(N log N)).
+    return words.map(word => {
+        const state = word.srs || getInitialState();
+        const retention = calculateRetentionProbability(state);
+        const overdue = (now - state.dueDate) / DAY_MS;
+        const priorityScore = (1 - retention) + Math.max(0, overdue * 0.1);
+        return { word, priorityScore };
+    })
+    .sort((a, b) => b.priorityScore - a.priorityScore)
+    .map(item => item.word);
 };
 
 // =============================================================================
