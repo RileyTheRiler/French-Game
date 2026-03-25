@@ -327,6 +327,7 @@ const WritingPad = () => {
                 <button
                     onClick={() => navigate('/')}
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    aria-label="Go back to home"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -341,6 +342,7 @@ const WritingPad = () => {
                     <button
                         onClick={playAudio}
                         className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        aria-label="Play pronunciation audio"
                     >
                         <Volume2 className="w-5 h-5 text-slate-300" />
                     </button>
@@ -415,6 +417,8 @@ const WritingPad = () => {
                             }
                         }}
                         className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
+                        aria-label={showGuide ? "Hide drawing guide" : "Show drawing guide"}
+                        aria-pressed={showGuide}
                     >
                         {showGuide ? (
                             <Eye className="w-4 h-4 text-purple-400" />
@@ -452,6 +456,8 @@ const WritingPad = () => {
                                 }`}
                             style={{ backgroundColor: color.value }}
                             title={color.name}
+                            aria-label={`Select ${color.name} color`}
+                            aria-pressed={strokeColor === color.value}
                         />
                     ))}
                 </div>
@@ -466,6 +472,8 @@ const WritingPad = () => {
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
+                            aria-label={`Set brush size to ${width}`}
+                            aria-pressed={strokeWidth === width}
                         >
                             <div
                                 className="bg-white rounded-full"
@@ -481,6 +489,7 @@ const WritingPad = () => {
                         onClick={undo}
                         variant="secondary"
                         className="px-4"
+                        aria-label="Undo last stroke"
                     >
                         <Undo className="w-4 h-4 mr-1" />
                         Undo
@@ -489,6 +498,7 @@ const WritingPad = () => {
                         onClick={clearCanvas}
                         variant="secondary"
                         className="px-4"
+                        aria-label="Clear drawing canvas"
                     >
                         <Eraser className="w-4 h-4 mr-1" />
                         Clear
