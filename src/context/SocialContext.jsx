@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProgress } from './ProgressContext';
 
 const SocialContext = createContext();
@@ -166,7 +166,7 @@ export const SocialProvider = ({ children }) => {
         setUserCoopStartXp(0);
     }, []);
 
-    const value = useMemo(() => ({
+    const value = {
         friends,
         addFriend,
         removeFriend,
@@ -175,16 +175,7 @@ export const SocialProvider = ({ children }) => {
         leaveCoopGroup,
         activeChallenge,
         claimCoopReward
-    }), [
-        friends,
-        addFriend,
-        removeFriend,
-        coopGroup,
-        createCoopGroup,
-        leaveCoopGroup,
-        activeChallenge,
-        claimCoopReward
-    ]);
+    };
 
     return (
         <SocialContext.Provider value={value}>
@@ -193,7 +184,6 @@ export const SocialProvider = ({ children }) => {
     );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useSocial = () => {
     const context = useContext(SocialContext);
     if (!context) {

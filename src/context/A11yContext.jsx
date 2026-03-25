@@ -1,8 +1,7 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 
 const A11yContext = createContext(null);
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useA11y = () => {
     const context = useContext(A11yContext);
     if (!context) {
@@ -76,12 +75,12 @@ export const A11yProvider = ({ children }) => {
         }, 1000);
     }, []);
 
-    const value = useMemo(() => ({
+    const value = {
         announce,
         prefersReducedMotion,
         highContrast,
         setHighContrast
-    }), [announce, prefersReducedMotion, highContrast]);
+    };
 
     return (
         <A11yContext.Provider value={value}>
