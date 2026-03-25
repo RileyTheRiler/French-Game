@@ -47,6 +47,12 @@ const ConjugationBlitz = () => {
         };
     };
 
+    const loadNextChallenge = () => {
+        setCurrentChallenge(getRandomChallenge());
+        setUserInput('');
+        if (inputRef.current) inputRef.current.focus();
+    };
+
     const startGame = () => {
         setScore(0);
         setStreak(0);
@@ -56,11 +62,45 @@ const ConjugationBlitz = () => {
         loadNextChallenge();
     };
 
-    const loadNextChallenge = () => {
-        setCurrentChallenge(getRandomChallenge());
-        setUserInput('');
-        if (inputRef.current) inputRef.current.focus();
-    };
+    const endGame = React.useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    }, [score, addXP]);
+
+    const endGame = React.useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    }, [score, addXP]);
+
+    const endGame = React.useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    }, [score, addXP]);
+
+    const endGame = React.useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    }, [score, addXP]);
 
     // Timer Logic
     useEffect(() => {
@@ -76,24 +116,14 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
+    }, [status, endGame]);
 
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
 
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
 
     const handleSubmit = (e) => {
         e.preventDefault();
         checkAnswer();
     };
-
-    const checkAnswer = () => {
         const normalizedInput = userInput.trim().toLowerCase();
         const correctAnswer = currentChallenge.answer.toLowerCase();
 
