@@ -50,11 +50,17 @@ export const SocialProvider = ({ children }) => {
         const userContribution = Math.max(0, stats.xp - userCoopStartXp);
         const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
 
-        setActiveChallenge(prev => ({
-            ...prev,
-            current: total,
-            isCompleted: total >= prev.target
-        }));
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setActiveChallenge(prev => {
+            const isCompleted = total >= prev.target;
+            if (prev.current === total && prev.isCompleted === isCompleted) return prev;
+
+            return {
+                ...prev,
+                current: total,
+                isCompleted
+            };
+        });
     }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
 
     const claimCoopReward = useCallback(() => {

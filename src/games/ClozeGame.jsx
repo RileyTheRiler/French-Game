@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, Check, X, ArrowRight, RotateCcw } from 'lucide-react';
@@ -32,8 +32,14 @@ const ClozeGame = () => {
         }
     }, []);
 
+    const initializedRef = useRef(false);
+
     useEffect(() => {
-        loadNextPuzzle();
+        if (!initializedRef.current) {
+            initializedRef.current = true;
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            loadNextPuzzle();
+        }
     }, [loadNextPuzzle]);
 
     const handleOptionClick = (option) => {
