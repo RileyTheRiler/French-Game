@@ -62,24 +62,6 @@ const SRSReviewQueue = () => {
     const [selectedOption, setSelectedOption] = useState(null);
     const [clozeAnswered, setClozeAnswered] = useState(false);
 
-    // Build review queue on mount
-    useEffect(() => {
-        const dueWords = getDueWords();
-        const prioritized = sortByReviewPriority(dueWords).slice(0, 20);
-
-        // Mix modes: 70% flashcard, 30% cloze
-        const queue = prioritized.map(word => ({
-            ...word,
-            mode: Math.random() < 0.7 ? 'flashcard' : 'cloze',
-            retention: calculateRetentionProbability(word.srs)
-        }));
-
-        setReviewQueue(queue);
-        if (queue.length > 0) {
-            initializeCard(queue[0]);
-        }
-    }, []);
-
     const initializeCard = useCallback((word) => {
         setIsRevealed(false);
         setStartTime(Date.now());
@@ -102,7 +84,33 @@ const SRSReviewQueue = () => {
         }
     }, []);
 
+    // Build review queue on mount
+    useEffect(() => {
+        const dueWords = getDueWords();
+        const prioritized = sortByReviewPriority(dueWords).slice(0, 20);
+
+        // Mix modes: 70% flashcard, 30% cloze
+        const queue = prioritized.map(word => ({
+            ...word,
+            mode: Math.random() < 0.7 ? 'flashcard' : 'cloze',
+            retention: calculateRetentionProbability(word.srs)
+        }));
+
+        setReviewQueue(queue);
+        if (queue.length > 0) {
+            initializeCard(queue[0]);
+        }
+    }, [getDueWords, initializeCard]);
+
     const currentWord = reviewQueue[currentIndex];
+
+    const finishSession = useCallback(() => {
+        triggerConfetti();
+        SoundManager.playLevelUp();
+        addXP(stats.xpEarned);
+        addCoins(Math.floor(stats.correct * 2));
+        setSessionComplete(true);
+    }, [stats, addXP, addCoins]);
 
     const handleGrade = useCallback((gradeKey) => {
         if (!currentWord) return;
@@ -141,7 +149,7 @@ const SRSReviewQueue = () => {
         } else {
             finishSession();
         }
-    }, [currentWord, currentIndex, reviewQueue, startTime, updateWordProgress, initializeCard]);
+    }, [currentWord, currentIndex, reviewQueue, updateWordProgress, initializeCard, finishSession]);
 
     const handleClozeAnswer = useCallback((option) => {
         if (clozeAnswered || !clozeData) return;
@@ -162,14 +170,6 @@ const SRSReviewQueue = () => {
     const handleClozeGrade = useCallback((gradeKey) => {
         handleGrade(gradeKey);
     }, [handleGrade]);
-
-    const finishSession = useCallback(() => {
-        triggerConfetti();
-        SoundManager.playLevelUp();
-        addXP(stats.xpEarned);
-        addCoins(Math.floor(stats.correct * 2));
-        setSessionComplete(true);
-    }, [stats, addXP, addCoins]);
 
     if (reviewQueue.length === 0) {
         return (

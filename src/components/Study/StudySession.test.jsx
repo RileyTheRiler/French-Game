@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StudySession from './StudySession';
 import { VocabularyContext } from '../../context/VocabularyContext';
+import { ProgressProvider } from '../../context/ProgressContext';
 import { MemoryRouter } from 'react-router-dom';
 
 // Mocks
@@ -32,11 +33,13 @@ const mockVocabulary = {
 
 const renderWithContext = (ui) => {
     return render(
-        <VocabularyContext.Provider value={mockVocabulary}>
-            <MemoryRouter>
-                {ui}
-            </MemoryRouter>
-        </VocabularyContext.Provider>
+        <ProgressProvider>
+            <VocabularyContext.Provider value={mockVocabulary}>
+                <MemoryRouter>
+                    {ui}
+                </MemoryRouter>
+            </VocabularyContext.Provider>
+        </ProgressProvider>
     );
 };
 
