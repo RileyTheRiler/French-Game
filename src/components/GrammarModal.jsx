@@ -11,7 +11,7 @@ const GrammarModal = ({ isOpen, onClose }) => {
 
     // Tip of the Day based on date
     const tipOfTheDay = useMemo(() => {
-        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+        const dayOfYear = Math.floor((new Date().getTime() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
         return GRAMMAR_TIPS[dayOfYear % GRAMMAR_TIPS.length];
     }, []);
 
