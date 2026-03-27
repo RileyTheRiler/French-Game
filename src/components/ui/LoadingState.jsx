@@ -9,7 +9,7 @@ export const LoadingState = ({ message = "Loading...", fullScreen = false }) => 
                 animate={{ rotate: 360 }}
                 transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
             >
-                <Loader2 size={48} className="text-indigo-400" />
+                <Loader2 size={48} className="text-indigo-400" aria-hidden="true" />
             </motion.div>
             <motion.p
                 initial={{ opacity: 0.5 }}
@@ -24,14 +24,22 @@ export const LoadingState = ({ message = "Loading...", fullScreen = false }) => 
 
     if (fullScreen) {
         return (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm">
+            <div
+                role="alert"
+                aria-busy="true"
+                className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-sm"
+            >
                 {content}
             </div>
         );
     }
 
     return (
-        <div className="w-full h-full min-h-[300px] flex items-center justify-center">
+        <div
+            role="status"
+            aria-live="polite"
+            className="w-full h-full min-h-[300px] flex items-center justify-center"
+        >
             {content}
         </div>
     );
