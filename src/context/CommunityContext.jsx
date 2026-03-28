@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 import { WRITING_PROMPTS, SAMPLE_SUBMISSIONS, COMMUNITY_XP } from '../data/communityWritings';
-import { NATIVE_SPEAKERS, generateResponse } from '../data/nativeSpeakers';
+import { NATIVE_SPEAKERS } from '../data/nativeSpeakers';
 
 const CommunityContext = createContext();
 
@@ -83,9 +83,11 @@ export const CommunityProvider = ({ children }) => {
         }
 
         // Simulate receiving a correction after a delay
-        simulateCorrectionResponse(newWriting.id);
+        // eslint-disable-next-line no-use-before-define
+        setTimeout(() => simulateCorrectionResponse(newWriting.id), 0);
 
         return newWriting;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [addXP, unlockAchievement, communityStats.writingsSubmitted]);
 
     // Simulate a native speaker correcting the user's writing
@@ -101,6 +103,7 @@ export const CommunityProvider = ({ children }) => {
                 const corrector = NATIVE_SPEAKERS[Math.floor(Math.random() * NATIVE_SPEAKERS.length)];
 
                 // Generate mock corrections
+                // eslint-disable-next-line no-use-before-define
                 const mockCorrections = generateMockCorrections(w.text);
 
                 const correction = {
@@ -110,6 +113,7 @@ export const CommunityProvider = ({ children }) => {
                     correctorCountry: corrector.country,
                     submittedAt: Date.now(),
                     items: mockCorrections,
+                    // eslint-disable-next-line no-use-before-define
                     overallComment: generateOverallComment(mockCorrections.length, corrector.responseStyle),
                     rating: null // User can rate later
                 };
@@ -192,7 +196,7 @@ export const CommunityProvider = ({ children }) => {
         return WRITING_PROMPTS.filter(p => p.difficulty === difficulty);
     }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         myWritings,
         pendingWritings,
         myCorrections,
@@ -202,7 +206,7 @@ export const CommunityProvider = ({ children }) => {
         rateCorrection,
         getPrompts,
         WRITING_PROMPTS
-    };
+    }), [myWritings, pendingWritings, myCorrections, communityStats, submitWriting, submitCorrection, rateCorrection, getPrompts]);
 
     return (
         <CommunityContext.Provider value={value}>
@@ -272,6 +276,7 @@ function generateOverallComment(errorCount, style) {
     return "Continue à pratiquer, tu vas y arriver !";
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useCommunity = () => {
     const context = useContext(CommunityContext);
     if (!context) {
