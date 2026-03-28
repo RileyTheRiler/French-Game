@@ -84,7 +84,7 @@ export const CommunityProvider = ({ children }) => {
 
         // Simulate receiving a correction after a delay
         // eslint-disable-next-line no-use-before-define
-        setTimeout(() => simulateCorrectionResponse(newWriting.id), 0);
+        simulateCorrectionResponse(newWriting.id);
 
         return newWriting;
     // eslint-disable-next-line react-hooks/exhaustive-deps

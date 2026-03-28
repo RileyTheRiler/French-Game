@@ -130,7 +130,7 @@ export const MessagingProvider = ({ children }) => {
 
         // Simulate partner response
         // eslint-disable-next-line no-use-before-define
-        setTimeout(() => simulatePartnerResponse(partnerId, text), 0);
+        simulatePartnerResponse(partnerId, text);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [addXP, unlockAchievement, messagingStats.totalMessages]);
 
