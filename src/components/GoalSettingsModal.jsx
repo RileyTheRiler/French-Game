@@ -67,16 +67,24 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                         </div>
 
                         {/* Tabs */}
-                        <div className="flex border-b border-white/10">
+                        <div className="flex border-b border-white/10" role="tablist" aria-label="Settings Categories">
                             <button
+                                id="tab-goals"
+                                role="tab"
+                                aria-selected={activeTab === 'goals'}
+                                aria-controls="panel-goals"
                                 onClick={() => setActiveTab('goals')}
-                                className={`flex-1 p-4 text-center font-bold transition-colors ${activeTab === 'goals' ? 'bg-blue-500/20 text-blue-300 border-b-2 border-blue-500' : 'text-slate-400 hover:bg-white/5'}`}
+                                className={`flex-1 p-4 text-center font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset ${activeTab === 'goals' ? 'bg-blue-500/20 text-blue-300 border-b-2 border-blue-500 focus-visible:ring-blue-500' : 'text-slate-400 hover:bg-white/5 focus-visible:ring-slate-400'}`}
                             >
                                 Valid Goals
                             </button>
                             <button
+                                id="tab-difficulty"
+                                role="tab"
+                                aria-selected={activeTab === 'difficulty'}
+                                aria-controls="panel-difficulty"
                                 onClick={() => setActiveTab('difficulty')}
-                                className={`flex-1 p-4 text-center font-bold transition-colors ${activeTab === 'difficulty' ? 'bg-purple-500/20 text-purple-300 border-b-2 border-purple-500' : 'text-slate-400 hover:bg-white/5'}`}
+                                className={`flex-1 p-4 text-center font-bold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset ${activeTab === 'difficulty' ? 'bg-purple-500/20 text-purple-300 border-b-2 border-purple-500 focus-visible:ring-purple-500' : 'text-slate-400 hover:bg-white/5 focus-visible:ring-slate-400'}`}
                             >
                                 Game Difficulty
                             </button>
@@ -85,7 +93,7 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                         {/* Content */}
                         <div className="p-8 overflow-y-auto space-y-8">
                             {activeTab === 'goals' ? (
-                                <>
+                                <div id="panel-goals" role="tabpanel" aria-labelledby="tab-goals" className="space-y-8">
                                     {/* Goal Presets */}
                                     <div className="space-y-4">
                                         <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">Quick Presets</label>
@@ -219,9 +227,9 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                                             />
                                         </div>
                                     </div>
-                                </>
+                                </div>
                             ) : (
-                                <>
+                                <div id="panel-difficulty" role="tabpanel" aria-labelledby="tab-difficulty" className="space-y-8">
                                     <div className="p-6 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 mb-6">
                                         <h3 className="text-lg font-bold text-purple-200 mb-2 flex items-center gap-2">
                                             <Zap size={20} />
@@ -270,7 +278,7 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                                             <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${localDifficulty.showHints ? 'left-7' : 'left-1'}`} />
                                         </button>
                                     </div>
-                                </>
+                                </div>
                             )}
                         </div>
 
