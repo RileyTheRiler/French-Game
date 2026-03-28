@@ -2,26 +2,10 @@ import React, { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Volume2, VolumeX, AlertTriangle, RotateCcw, X, Check, CloudUpload, CloudDownload, UserRound, Zap, Brain, Target } from 'lucide-react';
 import DifficultyDial from './ui/DifficultyDial';
+import { Button } from './ui/Button';
 import { useProgress } from '../context/ProgressContext';
 import { useVocabulary } from '../context/VocabularyContext';
 import { warmVoiceCache } from '../utils/audio';
-
-const SettingsModal = ({ onClose }) => {
-    const { audioEnabled, toggleAudio, offlineAudio, toggleOfflineAudio, resetProgress } = useProgress();
-    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
-    const [confirmReset, setConfirmReset] = React.useState(false);
-    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
-
-    const handleOfflineAudio = async () => {
-        const next = !offlineAudio;
-        toggleOfflineAudio();
-        if (!offlineAudio && next) {
-            setIsCachingAudio(true);
-            warmVoiceCache();
-            await downloadAudioOnce();
-            setIsCachingAudio(false);
-        }
-    };
 import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
 
@@ -29,6 +13,8 @@ const SettingsModal = ({ onClose }) => {
     const {
         audioEnabled,
         toggleAudio,
+        offlineAudio,
+        toggleOfflineAudio,
         reducedMotion,
         toggleReducedMotion,
         colorTheme,
@@ -41,13 +27,16 @@ const SettingsModal = ({ onClose }) => {
         globalDifficulty,
         setGlobalDifficulty
     } = useProgress();
-    const { resetVocabulary } = useVocabulary();
+    const { resetVocabulary, downloadAudioOnce } = useVocabulary();
     const { user, signIn, signUp, signOut, loading, error } = useAuth();
     const { exportData, importData, status, lastSyncedAt, syncing } = useSync();
+
     const [confirmReset, setConfirmReset] = React.useState(false);
     const [authMode, setAuthMode] = React.useState('signin');
     const [form, setForm] = React.useState({ email: '', password: '' });
     const [importError, setImportError] = React.useState('');
+    const [isCachingAudio, setIsCachingAudio] = React.useState(false);
+
     const dialogRef = useRef(null);
     const closeButtonRef = useRef(null);
 
@@ -69,6 +58,17 @@ const SettingsModal = ({ onClose }) => {
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [onClose]);
 
+    const handleOfflineAudio = async () => {
+        const next = !offlineAudio;
+        toggleOfflineAudio();
+        if (!offlineAudio && next) {
+            setIsCachingAudio(true);
+            warmVoiceCache();
+            await downloadAudioOnce();
+            setIsCachingAudio(false);
+        }
+    };
+
     const handleReset = () => {
         resetProgress();
         resetVocabulary();
@@ -85,7 +85,7 @@ const SettingsModal = ({ onClose }) => {
                 await signUp({ email: form.email, password: form.password });
             }
             setForm({ email: '', password: '' });
-        } catch (err) {
+        } catch (_err) {
             // error handled by context
         }
     };
@@ -282,13 +282,13 @@ const SettingsModal = ({ onClose }) => {
                                     />
                                 </div>
                                 {error && <p className="text-xs text-red-400">{error}</p>}
-                                <button
+                                <Button
                                     type="submit"
-                                    disabled={loading}
-                                    className="w-full py-2 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-sm transition disabled:opacity-70"
+                                    isLoading={loading}
+                                    className="w-full"
                                 >
-                                    {loading ? 'Working…' : authMode === 'signin' ? 'Sign In' : 'Create Account'}
-                                </button>
+                                    {authMode === 'signin' ? 'Sign In' : 'Create Account'}
+                                </Button>
                             </form>
                         )}
                     </div>
@@ -336,6 +336,11 @@ const SettingsModal = ({ onClose }) => {
                         >
                             <motion.div
                                 animate={{ x: offlineAudio ? 26 : 2 }}
+                                className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
+                            />
+                        </button>
+                    </div>
+
                     {/* Privacy & Portability */}
                     <div className="glass-panel p-4 border border-emerald-500/20 bg-emerald-500/5 space-y-3">
                         <div className="flex items-center gap-3">
