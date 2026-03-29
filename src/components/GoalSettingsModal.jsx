@@ -47,7 +47,12 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="modal-title"
+            >
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -57,11 +62,11 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                     <Card className="overflow-hidden flex flex-col max-h-[90vh]">
                         {/* Header */}
                         <div className="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
-                            <h2 className="text-2xl font-bold flex items-center gap-3">
+                            <h2 id="modal-title" className="text-2xl font-bold flex items-center gap-3">
                                 {activeTab === 'goals' ? <Target className="text-blue-400" /> : <Settings className="text-purple-400" />}
                                 {activeTab === 'goals' ? 'Learning Goals' : 'Difficulty Settings'}
                             </h2>
-                            <Button variant="ghost" size="icon" onClick={onClose}>
+                            <Button variant="ghost" size="icon" aria-label="Close settings" onClick={onClose}>
                                 <X size={24} />
                             </Button>
                         </div>
