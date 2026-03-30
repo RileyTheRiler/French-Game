@@ -19,15 +19,15 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
         if (initialPromptId) {
             const prompt = WRITING_PROMPTS.find(p => p.id === initialPromptId);
             if (prompt) {
-                // To avoid triggering synchronous cascading renders, return early if state is unchanged.
-                if (selectedPrompt?.id === prompt.id) return;
-
                 // eslint-disable-next-line react-hooks/set-state-in-effect
-                setSelectedPrompt(prompt);
-                setView('write');
+                setSelectedPrompt(prev => {
+                    if (prev?.id === prompt.id) return prev;
+                    setView('write');
+                    return prompt;
+                });
             }
         }
-    }, [initialPromptId, WRITING_PROMPTS, selectedPrompt?.id]);
+    }, [initialPromptId, WRITING_PROMPTS]);
 
     const wordCount = text.trim().split(/\s+/).filter(w => w).length;
 
