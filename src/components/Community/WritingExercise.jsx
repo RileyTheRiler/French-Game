@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Send, Lightbulb, CheckCircle, Clock, Star, ChevronRight } from 'lucide-react';
 import { useCommunity } from '../../context/CommunityContext';
 import { Card } from '../ui/Card';
@@ -7,7 +7,7 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 
 const WritingExercise = ({ onBack, initialPromptId = null }) => {
-    const { getPrompts, submitWriting, myWritings, WRITING_PROMPTS } = useCommunity();
+    const { submitWriting, myWritings, WRITING_PROMPTS } = useCommunity();
     const [selectedPrompt, setSelectedPrompt] = useState(null);
     const [text, setText] = useState('');
     const [showHints, setShowHints] = useState(false);
@@ -19,11 +19,15 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
         if (initialPromptId) {
             const prompt = WRITING_PROMPTS.find(p => p.id === initialPromptId);
             if (prompt) {
+                // To avoid triggering synchronous cascading renders, return early if state is unchanged.
+                if (selectedPrompt?.id === prompt.id) return;
+
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setSelectedPrompt(prompt);
                 setView('write');
             }
         }
-    }, [initialPromptId, WRITING_PROMPTS]);
+    }, [initialPromptId, WRITING_PROMPTS, selectedPrompt?.id]);
 
     const wordCount = text.trim().split(/\s+/).filter(w => w).length;
 

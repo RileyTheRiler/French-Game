@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-18 - Early Return in Effect Synchronized State Updates
+**Learning:** `setState` inside `useEffect` causes synchronous cascading renders. If architectural changes aren't feasible to convert the component to lazy initialization or derive state during render, adding an early return (e.g., `if (prevState.id === nextState.id) return;`) prevents infinite loops while allowing the use of `eslint-disable-next-line react-hooks/set-state-in-effect`.
+**Action:** Use early return checks before `setState` in `useEffect` to safely suppress `react-hooks/set-state-in-effect` when large refactors are out of scope.
