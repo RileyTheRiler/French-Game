@@ -5,3 +5,7 @@
 ## 2024-05-24 - Polymorphic Interactive Components
 **Learning:** Manually converting every clickable `div` to a button is tedious and prone to regression. A centralized solution is better.
 **Action:** Modify core UI components (like `Card`) to be polymorphic. If `onClick` is detected, automatically render a `<button>` with accessibility resets (`text-left`, `appearance-none`) and focus rings. This enforces accessibility by default across the app.
+
+## 2024-05-25 - Dev-Time Accessibility Enforcers
+**Learning:** Icon-only buttons are a frequent accessibility regression. Developers often forget `aria-label` when using `size="icon"`.
+**Action:** Implement runtime checks in development mode (e.g., `import.meta.env.DEV`) within core UI components (like `Button`) to `console.warn` when required accessibility props are missing. This provides immediate feedback to developers without impacting production.
