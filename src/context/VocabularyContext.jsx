@@ -364,7 +364,19 @@ export const VocabularyProvider = ({ children }) => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
-                    const data = JSON.parse(e.target.result);
+                    let data;
+                    try {
+                        data = JSON.parse(e.target.result);
+                    } catch (err) {
+                        if (err instanceof SyntaxError) {
+                            throw new Error('Invalid file format');
+                        }
+                        throw err;
+                    }
+
+                    if (!data || typeof data !== 'object') {
+                        throw new Error('Invalid file format');
+                    }
 
                     if (data.type !== 'french-game-deck' || !data.deck) {
                         throw new Error('Invalid deck file format');
