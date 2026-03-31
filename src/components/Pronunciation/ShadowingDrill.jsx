@@ -148,7 +148,7 @@ const ShadowingDrill = ({ onExit, onComplete }) => {
                 {/* Actions */}
                 <div className="flex gap-4">
                     <Button onClick={playTarget} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full px-8 py-6 text-lg">
-                        <Volume2 className="mr-2" /> Listen
+                        <Volume2 className="mr-2" aria-hidden="true" /> Listen
                     </Button>
                 </div>
 
@@ -162,7 +162,7 @@ const ShadowingDrill = ({ onExit, onComplete }) => {
                         />
                     ) : (
                         <div className="flex flex-col items-center text-slate-500 gap-2">
-                            <Activity size={24} />
+                            <Activity size={24} aria-hidden="true" />
                             <span className="text-sm">Spectrogram Ready</span>
                         </div>
                     )}
@@ -174,8 +174,9 @@ const ShadowingDrill = ({ onExit, onComplete }) => {
                         <Button
                             onClick={startRecording}
                             className="bg-red-500 hover:bg-red-600 rounded-full w-20 h-20 shadow-red-500/50 shadow-lg"
+                            aria-label="Start recording"
                         >
-                            <Mic size={32} />
+                            <Mic size={32} aria-hidden="true" />
                         </Button>
                     )}
 
@@ -183,8 +184,9 @@ const ShadowingDrill = ({ onExit, onComplete }) => {
                         <Button
                             onClick={stopRecording}
                             className="bg-slate-700 hover:bg-slate-600 rounded-full w-20 h-20 animate-pulse border-2 border-red-500"
+                            aria-label="Stop recording"
                         >
-                            <MicOff size={32} />
+                            <MicOff size={32} aria-hidden="true" />
                         </Button>
                     )}
 
