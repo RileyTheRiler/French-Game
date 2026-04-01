@@ -32,6 +32,9 @@ const GrammarModal = ({ isOpen, onClose }) => {
                 onClick={onClose}
             >
                 <motion.div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="grammar-modal-title"
                     initial={{ scale: 0.9, y: 20 }}
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.9, y: 20 }}
@@ -46,7 +49,7 @@ const GrammarModal = ({ isOpen, onClose }) => {
                                     <BookOpen size={28} className="text-emerald-400" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-black text-white">Grammar Tips</h2>
+                                    <h2 id="grammar-modal-title" className="text-2xl font-black text-white">Grammar Tips</h2>
                                     <p className="text-emerald-300/80 text-sm font-medium">
                                         {GRAMMAR_TIPS.length} Tips Available
                                     </p>
@@ -94,12 +97,15 @@ const GrammarModal = ({ isOpen, onClose }) => {
                             <Button variant="ghost" onClick={prevTip} className="gap-2">
                                 <ChevronLeft size={20} /> Previous
                             </Button>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1" role="tablist" aria-label="Grammar tips navigation">
                                 {GRAMMAR_TIPS.map((_, idx) => (
                                     <button
                                         key={idx}
+                                        role="tab"
+                                        aria-selected={idx === currentIndex}
+                                        aria-label={`Tip ${idx + 1}`}
                                         onClick={() => setCurrentIndex(idx)}
-                                        className={`w-2 h-2 rounded-full transition-all ${idx === currentIndex ? 'bg-emerald-500 w-6' : 'bg-slate-700 hover:bg-slate-600'
+                                        className={`w-2 h-2 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${idx === currentIndex ? 'bg-emerald-500 w-6' : 'bg-slate-700 hover:bg-slate-600'
                                             }`}
                                     />
                                 ))}
