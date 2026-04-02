@@ -333,9 +333,17 @@ const SettingsModal = ({ onClose }) => {
                         <button
                             onClick={handleOfflineAudio}
                             className={`w-14 h-8 rounded-full transition-colors relative ${offlineAudio ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                            role="switch"
+                            aria-checked={offlineAudio}
+                            aria-label="Toggle offline audio"
                         >
                             <motion.div
                                 animate={{ x: offlineAudio ? 26 : 2 }}
+                                className="absolute top-1 left-0 w-6 h-6 bg-white rounded-full shadow-lg"
+                            />
+                        </button>
+                    </div>
+
                     {/* Privacy & Portability */}
                     <div className="glass-panel p-4 border border-emerald-500/20 bg-emerald-500/5 space-y-3">
                         <div className="flex items-center gap-3">
