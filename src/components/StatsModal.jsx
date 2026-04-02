@@ -115,8 +115,8 @@ const StatsModal = ({ isOpen, onClose }) => {
                                     </p>
                                 </div>
                             </div>
-                            <Button variant="ghost" onClick={onClose} className="rounded-full h-10 w-10 p-0">
-                                <X size={20} />
+                            <Button variant="ghost" onClick={onClose} className="rounded-full h-10 w-10 p-0" aria-label="Close stats modal">
+                                <X size={20} aria-hidden="true" />
                             </Button>
                         </div>
 

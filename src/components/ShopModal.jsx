@@ -207,6 +207,7 @@ const ShopModal = ({ onClose }) => {
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                            aria-label="Close shop"
                         >
                             <X className="text-slate-400" />
                         </button>
