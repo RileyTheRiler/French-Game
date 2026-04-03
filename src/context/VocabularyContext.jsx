@@ -218,14 +218,17 @@ export const VocabularyProvider = ({ children }) => {
     }, []);
 
     const getWeightedPracticeWords = useCallback((limit = 30) => {
+        // Bolt Optimization: Use Schwartzian transform without object spreading (...word)
+        // Expected Impact: Avoids O(N) shallow copies of large word objects during the mapping phase,
+        // reducing memory allocation and improving execution speed for large vocabularies.
         return vocabulary
             .map(word => ({
-                ...word,
+                word,
                 priorityScore: computePriority(word)
             }))
             .sort((a, b) => b.priorityScore - a.priorityScore)
             .slice(0, limit)
-            .map(hydrateWord);
+            .map(item => hydrateWord(item.word));
     }, [vocabulary, computePriority]);
 
     useEffect(() => {
