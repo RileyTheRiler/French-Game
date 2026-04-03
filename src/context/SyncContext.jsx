@@ -102,7 +102,24 @@ export const SyncProvider = ({ children }) => {
 
     const importData = useCallback(async (file) => {
         const text = await file.text();
-        const parsed = JSON.parse(text);
+        let parsed;
+
+        // Security Enhancement: Wrap JSON.parse in try...catch to prevent
+        // unhandled exceptions from malformed inputs and sanitize error messages.
+        // Verify parsed result is a valid object to avoid TypeErrors.
+        try {
+            parsed = JSON.parse(text);
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                throw new Error('Invalid file format');
+            }
+            throw error;
+        }
+
+        if (!parsed || typeof parsed !== 'object') {
+            throw new Error('Invalid file format');
+        }
+
         if (parsed.progress) {
             hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
         }
