@@ -27,35 +27,53 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
-            <div className="glass-panel w-full max-w-lg p-6 relative h-[80vh] flex flex-col">
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="dictionary-title"
+                className="glass-panel w-full max-w-lg p-6 relative h-[80vh] flex flex-col"
+            >
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+                    aria-label="Close dialog"
+                    className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
 
-                <h2 className="text-3xl font-black text-center mb-6 title-gradient">Resources</h2>
+                <h2 id="dictionary-title" className="text-3xl font-black text-center mb-6 title-gradient">Resources</h2>
 
                 {/* Tabs */}
-                <div className="flex space-x-2 mb-6 bg-white/5 p-1 rounded-xl">
+                <div role="tablist" aria-label="Resource tabs" className="flex space-x-2 mb-6 bg-white/5 p-1 rounded-xl">
                     <button
+                        role="tab"
+                        id="tab-vocab"
+                        aria-selected={activeTab === 'vocab'}
+                        aria-controls="dictionary-tabpanel"
                         onClick={() => setActiveTab('vocab')}
-                        className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'vocab' ? 'bg-[var(--accent-primary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
+                        className={`flex-1 py-2 rounded-lg font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] ${activeTab === 'vocab' ? 'bg-[var(--accent-primary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
                     >
                         Dictionary
                     </button>
                     <button
+                        role="tab"
+                        id="tab-saved"
+                        aria-selected={activeTab === 'saved'}
+                        aria-controls="dictionary-tabpanel"
                         onClick={() => setActiveTab('saved')}
-                        className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'saved' ? 'bg-amber-500 text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
+                        className={`flex-1 py-2 rounded-lg font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${activeTab === 'saved' ? 'bg-amber-500 text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
                     >
                         Saved
                     </button>
                     <button
+                        role="tab"
+                        id="tab-grammar"
+                        aria-selected={activeTab === 'grammar'}
+                        aria-controls="dictionary-tabpanel"
                         onClick={() => setActiveTab('grammar')}
-                        className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'grammar' ? 'bg-[var(--accent-secondary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
+                        className={`flex-1 py-2 rounded-lg font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-secondary)] ${activeTab === 'grammar' ? 'bg-[var(--accent-secondary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
                     >
                         Grammar
                     </button>
@@ -69,7 +87,13 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                     className="w-full bg-black/20 border border-white/10 rounded-xl p-4 text-white mb-6 focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
                 />
 
-                <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                <div
+                    id="dictionary-tabpanel"
+                    role="tabpanel"
+                    aria-labelledby={`tab-${activeTab}`}
+                    tabIndex={0}
+                    className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar focus:outline-none focus-visible:ring-2 focus-visible:ring-white/20 rounded-lg"
+                >
                     {activeTab === 'vocab' || activeTab === 'saved' ? (
                         filteredVocab.length > 0 ? (
                             filteredVocab.map(word => {
@@ -81,10 +105,11 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                                                 <div className="flex items-center gap-2">
                                                     <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
                                                     <button
+                                                        aria-label={`Play audio for ${word.french}`}
                                                         onClick={() => playWordAudio(word, { preferCache: true, offlineOnly: offlineAudio })}
-                                                        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors"
+                                                        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
                                                     >
-                                                        <Volume2 size={14} />
+                                                        <Volume2 aria-hidden="true" size={14} />
                                                     </button>
                                                 </div>
                                                 <p className="text-[var(--text-secondary)]">{word.english}</p>
@@ -103,10 +128,10 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                                                 </span>
                                                 <button
                                                     onClick={() => toggleSaveWord(word.id)}
-                                                    className={`transition-all hover:scale-110 ${word.isSaved ? 'text-amber-400' : 'text-white/20 hover:text-amber-200'}`}
+                                                    className={`transition-all hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded ${word.isSaved ? 'text-amber-400' : 'text-white/20 hover:text-amber-200'}`}
                                                     aria-label={word.isSaved ? "Unsave" : "Save"}
                                                 >
-                                                    <Star size={20} fill={word.isSaved ? "currentColor" : "none"} />
+                                                    <Star aria-hidden="true" size={20} fill={word.isSaved ? "currentColor" : "none"} />
                                                 </button>
                                             </div>
                                         </div>
