@@ -5,3 +5,6 @@
 ## 2024-05-24 - Polymorphic Interactive Components
 **Learning:** Manually converting every clickable `div` to a button is tedious and prone to regression. A centralized solution is better.
 **Action:** Modify core UI components (like `Card`) to be polymorphic. If `onClick` is detected, automatically render a `<button>` with accessibility resets (`text-left`, `appearance-none`) and focus rings. This enforces accessibility by default across the app.
+## 2024-06-03 - WritingPad Accessibility
+**Learning:** Adding new dependencies to canvas initialization `useEffect` hooks can cause critical regressions (like erasing the drawing) if the hook also contains canvas clearing or dimension-setting logic.
+**Action:** When refactoring to fix hoisting/linter errors in canvas components, carefully separate pure drawing/context updates from initialization logic to prevent unintended resets.
