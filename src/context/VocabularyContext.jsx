@@ -366,8 +366,8 @@ export const VocabularyProvider = ({ children }) => {
                 try {
                     const data = JSON.parse(e.target.result);
 
-                    if (data.type !== 'french-game-deck' || !data.deck) {
-                        throw new Error('Invalid deck file format');
+                    if (!data || typeof data !== 'object' || data.type !== 'french-game-deck' || !data.deck) {
+                        throw new Error('Invalid file format');
                     }
 
                     const importedWordsIds = [];
@@ -395,11 +395,11 @@ export const VocabularyProvider = ({ children }) => {
                     );
 
                     resolve(newDeck);
-                } catch (err) {
-                    reject(new Error('Failed to parse deck file: ' + err.message));
+                } catch {
+                    reject(new Error('Invalid file format'));
                 }
             };
-            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.onerror = () => reject(new Error('Invalid file format'));
             reader.readAsText(file);
         });
     }, [vocabulary, addCustomWord, createDeck]);
