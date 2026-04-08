@@ -5,3 +5,7 @@
 ## 2024-05-24 - Polymorphic Interactive Components
 **Learning:** Manually converting every clickable `div` to a button is tedious and prone to regression. A centralized solution is better.
 **Action:** Modify core UI components (like `Card`) to be polymorphic. If `onClick` is detected, automatically render a `<button>` with accessibility resets (`text-left`, `appearance-none`) and focus rings. This enforces accessibility by default across the app.
+
+## 2024-05-25 - ARIA Labels on Interactive UI Controls
+**Learning:** Found multiple instances where interactive controls relying solely on color or shape (like stroke width buttons, color pickers, and tool toggles in the WritingPad component) lacked accessible names, making them completely opaque to screen reader users.
+**Action:** When implementing custom visual controls (like color swatches or size selectors), always add explicit `aria-label` attributes to the interactive `<button>` containers and apply `aria-hidden="true"` to the internal decorative elements (such as colored divs or SVGs).
