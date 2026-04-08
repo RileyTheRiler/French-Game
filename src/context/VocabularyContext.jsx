@@ -63,12 +63,22 @@ export const VocabularyProvider = ({ children }) => {
     const vocabularyRef = useRef(vocabulary);
 
     useEffect(() => {
-        localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+        // ⚡ Bolt Performance Optimization:
+        // Debounce LocalStorage writes to prevent synchronous blocking of the main thread
+        // when saving large vocabulary lists during high-frequency review sessions.
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+        }, 1000);
         vocabularyRef.current = vocabulary;
+        return () => clearTimeout(timeoutId);
     }, [vocabulary]);
 
     useEffect(() => {
-        localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        // ⚡ Bolt Performance Optimization: Debounce custom decks save
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        }, 1000);
+        return () => clearTimeout(timeoutId);
     }, [customDecks]);
 
     const resetVocabulary = useCallback(() => {
