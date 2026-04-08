@@ -327,8 +327,9 @@ const WritingPad = () => {
                 <button
                     onClick={() => navigate('/')}
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    aria-label="Go back"
                 >
-                    <ArrowLeft className="w-5 h-5 text-slate-300" />
+                    <ArrowLeft className="w-5 h-5 text-slate-300" aria-hidden="true" />
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -341,8 +342,9 @@ const WritingPad = () => {
                     <button
                         onClick={playAudio}
                         className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        aria-label="Play audio"
                     >
-                        <Volume2 className="w-5 h-5 text-slate-300" />
+                        <Volume2 className="w-5 h-5 text-slate-300" aria-hidden="true" />
                     </button>
                 </div>
             </div>
@@ -415,11 +417,12 @@ const WritingPad = () => {
                             }
                         }}
                         className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
+                        aria-label={showGuide ? "Hide guide" : "Show guide"}
                     >
                         {showGuide ? (
-                            <Eye className="w-4 h-4 text-purple-400" />
+                            <Eye className="w-4 h-4 text-purple-400" aria-hidden="true" />
                         ) : (
-                            <EyeOff className="w-4 h-4 text-slate-400" />
+                            <EyeOff className="w-4 h-4 text-slate-400" aria-hidden="true" />
                         )}
                     </button>
 
@@ -452,6 +455,7 @@ const WritingPad = () => {
                                 }`}
                             style={{ backgroundColor: color.value }}
                             title={color.name}
+                            aria-label={`Select ${color.name} color`}
                         />
                     ))}
                 </div>
@@ -466,10 +470,12 @@ const WritingPad = () => {
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
+                            aria-label={`Set stroke width to ${width}`}
                         >
                             <div
                                 className="bg-white rounded-full"
                                 style={{ width: width * 2, height: width * 2 }}
+                                aria-hidden="true"
                             />
                         </button>
                     ))}
