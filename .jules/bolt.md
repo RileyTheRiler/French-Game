@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-23 - Constants in Context Dependencies
+**Learning:** When applying `useMemo` to context values or computations, including imported constants or outer scope variables (e.g., `WRITING_PROMPTS`, `NATIVE_SPEAKERS`) in the dependency array causes the React linter to flag them as unnecessary dependencies via `react-hooks/exhaustive-deps`, leading to build failures.
+**Action:** Exclude static constants and imports from dependency arrays when wrapping context provider values in `useMemo`.
