@@ -26,36 +26,54 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
     const now = useMemo(() => Date.now(), [vocabulary]);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dictionary-modal-title"
+        >
             <div className="glass-panel w-full max-w-lg p-6 relative h-[80vh] flex flex-col">
                 <button
                     onClick={onClose}
                     className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+                    aria-label="Close modal"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
 
-                <h2 className="text-3xl font-black text-center mb-6 title-gradient">Resources</h2>
+                <h2 id="dictionary-modal-title" className="text-3xl font-black text-center mb-6 title-gradient">Resources</h2>
 
                 {/* Tabs */}
-                <div className="flex space-x-2 mb-6 bg-white/5 p-1 rounded-xl">
+                <div className="flex space-x-2 mb-6 bg-white/5 p-1 rounded-xl" role="tablist" aria-label="Resource Types">
                     <button
+                        role="tab"
+                        aria-selected={activeTab === 'vocab'}
+                        aria-controls="panel-vocab"
+                        id="tab-vocab"
                         onClick={() => setActiveTab('vocab')}
-                        className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'vocab' ? 'bg-[var(--accent-primary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
+                        className={`flex-1 py-2 rounded-lg font-bold transition-all focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] focus-visible:outline-none ${activeTab === 'vocab' ? 'bg-[var(--accent-primary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
                     >
                         Dictionary
                     </button>
                     <button
+                        role="tab"
+                        aria-selected={activeTab === 'saved'}
+                        aria-controls="panel-saved"
+                        id="tab-saved"
                         onClick={() => setActiveTab('saved')}
-                        className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'saved' ? 'bg-amber-500 text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
+                        className={`flex-1 py-2 rounded-lg font-bold transition-all focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:outline-none ${activeTab === 'saved' ? 'bg-amber-500 text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
                     >
                         Saved
                     </button>
                     <button
+                        role="tab"
+                        aria-selected={activeTab === 'grammar'}
+                        aria-controls="panel-grammar"
+                        id="tab-grammar"
                         onClick={() => setActiveTab('grammar')}
-                        className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'grammar' ? 'bg-[var(--accent-secondary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
+                        className={`flex-1 py-2 rounded-lg font-bold transition-all focus-visible:ring-2 focus-visible:ring-[var(--accent-secondary)] focus-visible:outline-none ${activeTab === 'grammar' ? 'bg-[var(--accent-secondary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
                     >
                         Grammar
                     </button>
@@ -66,10 +84,17 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                     placeholder={`Search ${activeTab === 'vocab' ? 'dictionary' : 'grammar'}...`}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-black/20 border border-white/10 rounded-xl p-4 text-white mb-6 focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
+                    className="w-full bg-black/20 border border-white/10 rounded-xl p-4 text-white mb-6 focus:outline-none focus:border-[var(--accent-primary)] focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] transition-colors"
+                    aria-label={`Search ${activeTab === 'vocab' ? 'dictionary' : 'grammar'}`}
                 />
 
-                <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                <div
+                    className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar"
+                    role="tabpanel"
+                    id={`panel-${activeTab}`}
+                    aria-labelledby={`tab-${activeTab}`}
+                    tabIndex={0}
+                >
                     {activeTab === 'vocab' || activeTab === 'saved' ? (
                         filteredVocab.length > 0 ? (
                             filteredVocab.map(word => {
@@ -82,9 +107,10 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                                                     <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
                                                     <button
                                                         onClick={() => playWordAudio(word, { preferCache: true, offlineOnly: offlineAudio })}
-                                                        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors"
+                                                        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-300 focus-visible:outline-none"
+                                                        aria-label={`Play audio for ${word.french}`}
                                                     >
-                                                        <Volume2 size={14} />
+                                                        <Volume2 size={14} aria-hidden="true" />
                                                     </button>
                                                 </div>
                                                 <p className="text-[var(--text-secondary)]">{word.english}</p>
