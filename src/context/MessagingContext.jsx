@@ -1,6 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
-import { NATIVE_SPEAKERS, generateResponse, detectErrors, CONVERSATION_STARTERS } from '../data/nativeSpeakers';
+import { NATIVE_SPEAKERS, generateResponse, detectErrors } from '../data/nativeSpeakers';
 
 const MessagingContext = createContext();
 
@@ -99,39 +99,6 @@ export const MessagingProvider = ({ children }) => {
         }
     }, [connectedPartners, addXP, unlockAchievement]);
 
-    // Send a message
-    const sendMessage = useCallback((partnerId, text) => {
-        const userMessage = {
-            id: `msg_${Date.now()}`,
-            senderId: 'user',
-            senderName: 'You',
-            text,
-            timestamp: Date.now(),
-            read: true
-        };
-
-        setConversations(prev => ({
-            ...prev,
-            [partnerId]: [...(prev[partnerId] || []), userMessage]
-        }));
-
-        setMessagingStats(prev => ({
-            ...prev,
-            totalMessages: prev.totalMessages + 1
-        }));
-
-        // Award XP for messaging
-        addXP(2);
-
-        // Check for milestone achievements
-        if (messagingStats.totalMessages === 49) { // 50th message
-            unlockAchievement?.('native_connection');
-        }
-
-        // Simulate partner response
-        simulatePartnerResponse(partnerId, text);
-    }, [addXP, unlockAchievement, messagingStats.totalMessages]);
-
     // Simulate partner typing and response
     const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
         const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
@@ -179,6 +146,39 @@ export const MessagingProvider = ({ children }) => {
             }));
         }, randomDelay);
     }, []);
+
+    // Send a message
+    const sendMessage = useCallback((partnerId, text) => {
+        const userMessage = {
+            id: `msg_${Date.now()}`,
+            senderId: 'user',
+            senderName: 'You',
+            text,
+            timestamp: Date.now(),
+            read: true
+        };
+
+        setConversations(prev => ({
+            ...prev,
+            [partnerId]: [...(prev[partnerId] || []), userMessage]
+        }));
+
+        setMessagingStats(prev => ({
+            ...prev,
+            totalMessages: prev.totalMessages + 1
+        }));
+
+        // Award XP for messaging
+        addXP(2);
+
+        // Check for milestone achievements
+        if (messagingStats.totalMessages === 49) { // 50th message
+            unlockAchievement?.('native_connection');
+        }
+
+        // Simulate partner response
+        simulatePartnerResponse(partnerId, text);
+    }, [addXP, unlockAchievement, messagingStats.totalMessages]);
 
     // Mark messages as read
     const markAsRead = useCallback((partnerId) => {
@@ -245,7 +245,8 @@ export const MessagingProvider = ({ children }) => {
         ];
     }, [conversations]);
 
-    const value = {
+    // Memoize context value to prevent unnecessary re-renders of consumer components
+    const value = useMemo(() => ({
         conversations,
         connectedPartners,
         messagingStats,
@@ -258,7 +259,19 @@ export const MessagingProvider = ({ children }) => {
         getUnreadCount,
         getSuggestedReplies,
         NATIVE_SPEAKERS
-    };
+    }), [
+        conversations,
+        connectedPartners,
+        messagingStats,
+        typingPartner,
+        getAvailablePartners,
+        connectWithPartner,
+        sendMessage,
+        markAsRead,
+        getConversation,
+        getUnreadCount,
+        getSuggestedReplies
+    ]);
 
     return (
         <MessagingContext.Provider value={value}>

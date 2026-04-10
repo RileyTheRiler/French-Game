@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 import { WRITING_PROMPTS, SAMPLE_SUBMISSIONS, COMMUNITY_XP } from '../data/communityWritings';
-import { NATIVE_SPEAKERS, generateResponse } from '../data/nativeSpeakers';
+import { NATIVE_SPEAKERS } from '../data/nativeSpeakers';
 
 const CommunityContext = createContext();
 
@@ -52,42 +52,6 @@ export const CommunityProvider = ({ children }) => {
         }));
     }, [myWritings, myCorrections, communityStats]);
 
-    // Submit a new writing
-    const submitWriting = useCallback((text, promptId) => {
-        const prompt = WRITING_PROMPTS.find(p => p.id === promptId);
-
-        const newWriting = {
-            id: `my_writing_${Date.now()}`,
-            promptId,
-            promptTitle: prompt?.title || 'Free Writing',
-            text,
-            submittedAt: Date.now(),
-            status: 'pending',
-            corrections: []
-        };
-
-        setMyWritings(prev => [newWriting, ...prev]);
-
-        // Update stats and award XP
-        setCommunityStats(prev => ({
-            ...prev,
-            writingsSubmitted: prev.writingsSubmitted + 1
-        }));
-
-        // First writing bonus
-        if (communityStats.writingsSubmitted === 0) {
-            addXP(COMMUNITY_XP.firstWritingSubmitted);
-            unlockAchievement?.('first_writing');
-        } else {
-            addXP(COMMUNITY_XP.submitWriting);
-        }
-
-        // Simulate receiving a correction after a delay
-        simulateCorrectionResponse(newWriting.id);
-
-        return newWriting;
-    }, [addXP, unlockAchievement, communityStats.writingsSubmitted]);
-
     // Simulate a native speaker correcting the user's writing
     const simulateCorrectionResponse = useCallback((writingId) => {
         // Random delay between 10-30 seconds
@@ -129,6 +93,42 @@ export const CommunityProvider = ({ children }) => {
             addXP(COMMUNITY_XP.receiveCorrection);
         }, delay);
     }, [addXP]);
+
+    // Submit a new writing
+    const submitWriting = useCallback((text, promptId) => {
+        const prompt = WRITING_PROMPTS.find(p => p.id === promptId);
+
+        const newWriting = {
+            id: `my_writing_${Date.now()}`,
+            promptId,
+            promptTitle: prompt?.title || 'Free Writing',
+            text,
+            submittedAt: Date.now(),
+            status: 'pending',
+            corrections: []
+        };
+
+        setMyWritings(prev => [newWriting, ...prev]);
+
+        // Update stats and award XP
+        setCommunityStats(prev => ({
+            ...prev,
+            writingsSubmitted: prev.writingsSubmitted + 1
+        }));
+
+        // First writing bonus
+        if (communityStats.writingsSubmitted === 0) {
+            addXP(COMMUNITY_XP.firstWritingSubmitted);
+            unlockAchievement?.('first_writing');
+        } else {
+            addXP(COMMUNITY_XP.submitWriting);
+        }
+
+        // Simulate receiving a correction after a delay
+        simulateCorrectionResponse(newWriting.id);
+
+        return newWriting;
+    }, [addXP, unlockAchievement, communityStats.writingsSubmitted]);
 
     // Submit a correction for someone else's writing
     const submitCorrection = useCallback((writingId, correctionItems, comment) => {
@@ -192,7 +192,8 @@ export const CommunityProvider = ({ children }) => {
         return WRITING_PROMPTS.filter(p => p.difficulty === difficulty);
     }, []);
 
-    const value = {
+    // Memoize context value to prevent unnecessary re-renders of consumer components
+    const value = useMemo(() => ({
         myWritings,
         pendingWritings,
         myCorrections,
@@ -202,7 +203,16 @@ export const CommunityProvider = ({ children }) => {
         rateCorrection,
         getPrompts,
         WRITING_PROMPTS
-    };
+    }), [
+        myWritings,
+        pendingWritings,
+        myCorrections,
+        communityStats,
+        submitWriting,
+        submitCorrection,
+        rateCorrection,
+        getPrompts
+    ]);
 
     return (
         <CommunityContext.Provider value={value}>
