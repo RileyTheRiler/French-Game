@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 
 const SocialContext = createContext();
@@ -41,7 +41,7 @@ export const SocialProvider = ({ children }) => {
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
-        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
     });
 
@@ -50,11 +50,17 @@ export const SocialProvider = ({ children }) => {
         const userContribution = Math.max(0, stats.xp - userCoopStartXp);
         const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
 
-        setActiveChallenge(prev => ({
-            ...prev,
-            current: total,
-            isCompleted: total >= prev.target
-        }));
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setActiveChallenge(prev => {
+            if (prev.current === total && prev.isCompleted === (total >= prev.target)) {
+                return prev;
+            }
+            return {
+                ...prev,
+                current: total,
+                isCompleted: total >= prev.target
+            };
+        });
     }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
 
     const claimCoopReward = useCallback(() => {
@@ -166,7 +172,8 @@ export const SocialProvider = ({ children }) => {
         setUserCoopStartXp(0);
     }, []);
 
-    const value = {
+    // Memoize context value to prevent unnecessary re-renders
+    const value = useMemo(() => ({
         friends,
         addFriend,
         removeFriend,
@@ -175,7 +182,16 @@ export const SocialProvider = ({ children }) => {
         leaveCoopGroup,
         activeChallenge,
         claimCoopReward
-    };
+    }), [
+        friends,
+        addFriend,
+        removeFriend,
+        coopGroup,
+        createCoopGroup,
+        leaveCoopGroup,
+        activeChallenge,
+        claimCoopReward
+    ]);
 
     return (
         <SocialContext.Provider value={value}>
