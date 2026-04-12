@@ -81,40 +81,6 @@ const WritingPad = () => {
         ? ACCENT_CHARACTERS[currentIndex]
         : TRACE_WORDS[currentIndex];
 
-    // Initialize canvas
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        // Set canvas size
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * 2;
-        canvas.height = rect.height * 2;
-        canvas.style.width = `${rect.width}px`;
-        canvas.style.height = `${rect.height}px`;
-
-        const ctx = canvas.getContext('2d');
-        ctx.scale(2, 2);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = strokeWidth;
-        contextRef.current = ctx;
-
-        // Draw initial guide if enabled
-        if (showGuide) {
-            drawGuide();
-        }
-    }, [currentIndex, mode, showGuide]);
-
-    // Update stroke settings
-    useEffect(() => {
-        if (contextRef.current) {
-            contextRef.current.strokeStyle = strokeColor;
-            contextRef.current.lineWidth = strokeWidth;
-        }
-    }, [strokeColor, strokeWidth]);
-
     // Draw the guide character/word
     const drawGuide = useCallback(() => {
         const canvas = canvasRef.current;
@@ -140,31 +106,43 @@ const WritingPad = () => {
         ctx.restore();
     }, [currentItem, mode]);
 
-    // Drawing handlers
-    const startDrawing = ({ nativeEvent }) => {
-        const { offsetX, offsetY } = getCoordinates(nativeEvent);
-        contextRef.current.beginPath();
-        contextRef.current.moveTo(offsetX, offsetY);
-        setIsDrawing(true);
-    };
+    // Initialize canvas
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
 
-    const draw = ({ nativeEvent }) => {
-        if (!isDrawing) return;
-        const { offsetX, offsetY } = getCoordinates(nativeEvent);
-        contextRef.current.lineTo(offsetX, offsetY);
-        contextRef.current.stroke();
-    };
+        // Set canvas size
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
 
-    const stopDrawing = () => {
-        if (isDrawing) {
-            contextRef.current.closePath();
-            setIsDrawing(false);
-            saveToHistory();
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth;
+        contextRef.current = ctx;
+
+        // Draw initial guide if enabled
+        if (showGuide) {
+            drawGuide();
         }
-    };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentIndex, mode, showGuide, drawGuide]);
+
+    // Update stroke settings
+    useEffect(() => {
+        if (contextRef.current) {
+            contextRef.current.strokeStyle = strokeColor;
+            contextRef.current.lineWidth = strokeWidth;
+        }
+    }, [strokeColor, strokeWidth]);
 
     // Get coordinates for both mouse and touch events
-    const getCoordinates = (event) => {
+    const getCoordinates = useCallback((event) => {
         if (event.touches && event.touches[0]) {
             const canvas = canvasRef.current;
             const rect = canvas.getBoundingClientRect();
@@ -177,36 +155,30 @@ const WritingPad = () => {
             offsetX: event.offsetX,
             offsetY: event.offsetY,
         };
-    };
+    }, []);
 
-    // Touch event handlers
-    const handleTouchStart = (e) => {
-        e.preventDefault();
-        startDrawing({ nativeEvent: e });
-    };
-
-    const handleTouchMove = (e) => {
-        e.preventDefault();
-        draw({ nativeEvent: e });
-    };
-
-    const handleTouchEnd = (e) => {
-        e.preventDefault();
-        stopDrawing();
-    };
+    // Clear canvas
+    const clearCanvas = useCallback(() => {
+        const canvas = canvasRef.current;
+        const ctx = contextRef.current;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (showGuide) drawGuide();
+        setHistory([]);
+        setHistoryIndex(-1);
+    }, [drawGuide, showGuide]);
 
     // Save canvas state to history
-    const saveToHistory = () => {
+    const saveToHistory = useCallback(() => {
         const canvas = canvasRef.current;
         const imageData = canvas.toDataURL();
         const newHistory = history.slice(0, historyIndex + 1);
         newHistory.push(imageData);
         setHistory(newHistory);
         setHistoryIndex(newHistory.length - 1);
-    };
+    }, [history, historyIndex]);
 
     // Undo last stroke
-    const undo = () => {
+    const undo = useCallback(() => {
         if (historyIndex <= 0) {
             clearCanvas();
             return;
@@ -223,17 +195,48 @@ const WritingPad = () => {
             ctx.drawImage(img, 0, 0, canvas.width / 2, canvas.height / 2);
         };
         setHistoryIndex(previousIndex);
-    };
+    }, [clearCanvas, drawGuide, history, historyIndex, showGuide]);
 
-    // Clear canvas
-    const clearCanvas = () => {
-        const canvas = canvasRef.current;
-        const ctx = contextRef.current;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (showGuide) drawGuide();
-        setHistory([]);
-        setHistoryIndex(-1);
-    };
+    // Drawing handlers
+    const startDrawing = useCallback(({ nativeEvent }) => {
+        const { offsetX, offsetY } = getCoordinates(nativeEvent);
+        contextRef.current.beginPath();
+        contextRef.current.moveTo(offsetX, offsetY);
+        setIsDrawing(true);
+    }, [getCoordinates]);
+
+    const draw = useCallback(({ nativeEvent }) => {
+        if (!isDrawing) return;
+        const { offsetX, offsetY } = getCoordinates(nativeEvent);
+        contextRef.current.lineTo(offsetX, offsetY);
+        contextRef.current.stroke();
+    }, [getCoordinates, isDrawing]);
+
+    const stopDrawing = useCallback(() => {
+        if (isDrawing) {
+            contextRef.current.closePath();
+            setIsDrawing(false);
+            saveToHistory();
+        }
+    }, [isDrawing, saveToHistory]);
+
+
+    // Touch event handlers
+    const handleTouchStart = useCallback((e) => {
+        e.preventDefault();
+        startDrawing({ nativeEvent: e });
+    }, [startDrawing]);
+
+    const handleTouchMove = useCallback((e) => {
+        e.preventDefault();
+        draw({ nativeEvent: e });
+    }, [draw]);
+
+    const handleTouchEnd = useCallback((e) => {
+        e.preventDefault();
+        stopDrawing();
+    }, [stopDrawing]);
+
 
     // Complete current item and move to next
     const completeItem = () => {
@@ -325,10 +328,11 @@ const WritingPad = () => {
             {/* Header */}
             <div className="p-4 flex items-center justify-between">
                 <button
+                    aria-label="Go back"
                     onClick={() => navigate('/')}
-                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 outline-none"
                 >
-                    <ArrowLeft className="w-5 h-5 text-slate-300" />
+                    <ArrowLeft className="w-5 h-5 text-slate-300" aria-hidden="true" />
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -339,10 +343,11 @@ const WritingPad = () => {
 
                 <div className="flex items-center gap-2">
                     <button
+                        aria-label="Play pronunciation"
                         onClick={playAudio}
-                        className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 outline-none"
                     >
-                        <Volume2 className="w-5 h-5 text-slate-300" />
+                        <Volume2 className="w-5 h-5 text-slate-300" aria-hidden="true" />
                     </button>
                 </div>
             </div>
@@ -407,6 +412,8 @@ const WritingPad = () => {
                 <div className="relative bg-slate-800 rounded-2xl border-2 border-slate-700 overflow-hidden">
                     {/* Guide toggle */}
                     <button
+                        aria-label="Toggle drawing guide"
+                        aria-pressed={showGuide}
                         onClick={() => {
                             setShowGuide(!showGuide);
                             if (!showGuide) {
@@ -414,12 +421,12 @@ const WritingPad = () => {
                                 drawGuide();
                             }
                         }}
-                        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
+                        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 outline-none"
                     >
                         {showGuide ? (
-                            <Eye className="w-4 h-4 text-purple-400" />
+                            <Eye className="w-4 h-4 text-purple-400" aria-hidden="true" />
                         ) : (
-                            <EyeOff className="w-4 h-4 text-slate-400" />
+                            <EyeOff className="w-4 h-4 text-slate-400" aria-hidden="true" />
                         )}
                     </button>
 
@@ -445,8 +452,10 @@ const WritingPad = () => {
                     {STROKE_COLORS.map(color => (
                         <button
                             key={color.value}
+                            aria-label={color.name}
+                            aria-pressed={strokeColor === color.value}
                             onClick={() => setStrokeColor(color.value)}
-                            className={`w-8 h-8 rounded-full border-2 transition-transform ${strokeColor === color.value
+                            className={`w-8 h-8 rounded-full border-2 transition-transform focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 outline-none ${strokeColor === color.value
                                 ? 'border-white scale-110'
                                 : 'border-transparent hover:scale-105'
                                 }`}
@@ -461,13 +470,16 @@ const WritingPad = () => {
                     {STROKE_WIDTHS.map(width => (
                         <button
                             key={width}
+                            aria-label={`Brush size ${width}`}
+                            aria-pressed={strokeWidth === width}
                             onClick={() => setStrokeWidth(width)}
-                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${strokeWidth === width
+                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 outline-none ${strokeWidth === width
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
                         >
                             <div
+                                aria-hidden="true"
                                 className="bg-white rounded-full"
                                 style={{ width: width * 2, height: width * 2 }}
                             />
