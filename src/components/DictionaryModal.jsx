@@ -4,7 +4,7 @@ import { useProgress } from '../context/ProgressContext';
 import { playWordAudio } from '../utils/audio';
 import { GRAMMAR_TIPS } from '../data/grammar';
 import { Star, Pin, Clock3, BellOff, Volume2 } from 'lucide-react';
-import { formatRelativeTime, formatDateTime } from '../utils/time';
+import { formatRelativeTime } from '../utils/time';
 import { Button } from './ui/Button';
 
 const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
@@ -23,39 +23,58 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
         tip.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tip.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    const now = useMemo(() => Date.now(), [vocabulary]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const now = useMemo(() => new Date().getTime(), [vocabulary]);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="dictionary-modal-title"
+        >
             <div className="glass-panel w-full max-w-lg p-6 relative h-[80vh] flex flex-col">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+                    aria-label="Close modal"
+                    className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-full"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
 
-                <h2 className="text-3xl font-black text-center mb-6 title-gradient">Resources</h2>
+                <h2 id="dictionary-modal-title" className="text-3xl font-black text-center mb-6 title-gradient">Resources</h2>
 
                 {/* Tabs */}
-                <div className="flex space-x-2 mb-6 bg-white/5 p-1 rounded-xl">
+                <div role="tablist" aria-label="Dictionary Resources" className="flex space-x-2 mb-6 bg-white/5 p-1 rounded-xl">
                     <button
+                        role="tab"
+                        id="tab-vocab"
+                        aria-selected={activeTab === 'vocab'}
+                        aria-controls="panel-vocab"
                         onClick={() => setActiveTab('vocab')}
-                        className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'vocab' ? 'bg-[var(--accent-primary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
+                        className={`flex-1 py-2 rounded-lg font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-primary)] ${activeTab === 'vocab' ? 'bg-[var(--accent-primary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
                     >
                         Dictionary
                     </button>
                     <button
+                        role="tab"
+                        id="tab-saved"
+                        aria-selected={activeTab === 'saved'}
+                        aria-controls="panel-saved"
                         onClick={() => setActiveTab('saved')}
-                        className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'saved' ? 'bg-amber-500 text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
+                        className={`flex-1 py-2 rounded-lg font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 ${activeTab === 'saved' ? 'bg-amber-500 text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
                     >
                         Saved
                     </button>
                     <button
+                        role="tab"
+                        id="tab-grammar"
+                        aria-selected={activeTab === 'grammar'}
+                        aria-controls="panel-grammar"
                         onClick={() => setActiveTab('grammar')}
-                        className={`flex-1 py-2 rounded-lg font-bold transition-all ${activeTab === 'grammar' ? 'bg-[var(--accent-secondary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
+                        className={`flex-1 py-2 rounded-lg font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent-secondary)] ${activeTab === 'grammar' ? 'bg-[var(--accent-secondary)] text-white shadow-lg' : 'hover:bg-white/10 text-white/50'}`}
                     >
                         Grammar
                     </button>
@@ -69,7 +88,12 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                     className="w-full bg-black/20 border border-white/10 rounded-xl p-4 text-white mb-6 focus:outline-none focus:border-[var(--accent-primary)] transition-colors"
                 />
 
-                <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                <div
+                    className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar"
+                    role="tabpanel"
+                    id={`panel-${activeTab}`}
+                    aria-labelledby={`tab-${activeTab}`}
+                >
                     {activeTab === 'vocab' || activeTab === 'saved' ? (
                         filteredVocab.length > 0 ? (
                             filteredVocab.map(word => {
@@ -82,9 +106,10 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                                                     <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
                                                     <button
                                                         onClick={() => playWordAudio(word, { preferCache: true, offlineOnly: offlineAudio })}
-                                                        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors"
+                                                        aria-label={`Play audio for ${word.french}`}
+                                                        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300"
                                                     >
-                                                        <Volume2 size={14} />
+                                                        <Volume2 size={14} aria-hidden="true" />
                                                     </button>
                                                 </div>
                                                 <p className="text-[var(--text-secondary)]">{word.english}</p>
@@ -103,10 +128,10 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                                                 </span>
                                                 <button
                                                     onClick={() => toggleSaveWord(word.id)}
-                                                    className={`transition-all hover:scale-110 ${word.isSaved ? 'text-amber-400' : 'text-white/20 hover:text-amber-200'}`}
-                                                    aria-label={word.isSaved ? "Unsave" : "Save"}
+                                                    className={`transition-all hover:scale-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 rounded-full ${word.isSaved ? 'text-amber-400' : 'text-white/20 hover:text-amber-200'}`}
+                                                    aria-label={word.isSaved ? `Remove ${word.french} from saved words` : `Save ${word.french}`}
                                                 >
-                                                    <Star size={20} fill={word.isSaved ? "currentColor" : "none"} />
+                                                    <Star size={20} fill={word.isSaved ? "currentColor" : "none"} aria-hidden="true" />
                                                 </button>
                                             </div>
                                         </div>
@@ -114,18 +139,18 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className={`rounded-full px-3 py-1 h-8 text-xs ${word.pinned ? 'text-emerald-300' : ''}`}
+                                                className={`rounded-full px-3 py-1 h-8 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 ${word.pinned ? 'text-emerald-300' : ''}`}
                                                 onClick={() => togglePinWord(word.id)}
                                             >
-                                                <Pin size={12} className="mr-1" /> {word.pinned ? 'Unpin' : 'Pin'}
+                                                <Pin size={12} className="mr-1" aria-hidden="true" /> {word.pinned ? 'Unpin' : 'Pin'}
                                             </Button>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="rounded-full px-3 py-1 h-8 text-xs"
+                                                className="rounded-full px-3 py-1 h-8 text-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
                                                 onClick={() => snoozed ? clearSnooze(word.id) : snoozeWord(word.id)}
                                             >
-                                                <BellOff size={12} className="mr-1" /> {snoozed ? `Unsnooze` : 'Snooze'}
+                                                <BellOff size={12} className="mr-1" aria-hidden="true" /> {snoozed ? `Unsnooze` : 'Snooze'}
                                             </Button>
                                         </div>
                                     </div>
