@@ -5,3 +5,7 @@
 ## 2024-05-24 - Polymorphic Interactive Components
 **Learning:** Manually converting every clickable `div` to a button is tedious and prone to regression. A centralized solution is better.
 **Action:** Modify core UI components (like `Card`) to be polymorphic. If `onClick` is detected, automatically render a `<button>` with accessibility resets (`text-left`, `appearance-none`) and focus rings. This enforces accessibility by default across the app.
+
+## 2024-05-25 - Accessible Pagination Dots
+**Learning:** Interactive pagination dots in modals and carousels often lack screen reader support and visible focus states, making them inaccessible to keyboard and assistive technology users.
+**Action:** Always wrap pagination dots in a `role="tablist"` container, assign `role="tab"`, `aria-selected`, and descriptive `aria-label`s to each dot, and provide a clear visual focus state using `focus-visible` utility classes combined with `outline-none`.
