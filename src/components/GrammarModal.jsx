@@ -32,6 +32,9 @@ const GrammarModal = ({ isOpen, onClose }) => {
                 onClick={onClose}
             >
                 <motion.div
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="grammar-modal-title"
                     initial={{ scale: 0.9, y: 20 }}
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.9, y: 20 }}
@@ -43,17 +46,17 @@ const GrammarModal = ({ isOpen, onClose }) => {
                         <div className="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-emerald-500/20 to-teal-500/20">
                             <div className="flex items-center gap-4">
                                 <div className="p-3 bg-emerald-500/30 rounded-2xl">
-                                    <BookOpen size={28} className="text-emerald-400" />
+                                    <BookOpen size={28} className="text-emerald-400" aria-hidden="true" />
                                 </div>
                                 <div>
-                                    <h2 className="text-2xl font-black text-white">Grammar Tips</h2>
+                                    <h2 id="grammar-modal-title" className="text-2xl font-black text-white">Grammar Tips</h2>
                                     <p className="text-emerald-300/80 text-sm font-medium">
                                         {GRAMMAR_TIPS.length} Tips Available
                                     </p>
                                 </div>
                             </div>
-                            <Button variant="ghost" onClick={onClose} className="rounded-full h-10 w-10 p-0">
-                                <X size={20} />
+                            <Button variant="ghost" onClick={onClose} className="rounded-full h-10 w-10 p-0" aria-label="Close grammar tips">
+                                <X size={20} aria-hidden="true" />
                             </Button>
                         </div>
 
@@ -92,20 +95,23 @@ const GrammarModal = ({ isOpen, onClose }) => {
                         {/* Navigation */}
                         <div className="p-6 border-t border-white/10 flex justify-between items-center">
                             <Button variant="ghost" onClick={prevTip} className="gap-2">
-                                <ChevronLeft size={20} /> Previous
+                                <ChevronLeft size={20} aria-hidden="true" /> Previous
                             </Button>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1" role="tablist" aria-label="Grammar Tips Pagination">
                                 {GRAMMAR_TIPS.map((_, idx) => (
                                     <button
                                         key={idx}
+                                        role="tab"
+                                        aria-selected={idx === currentIndex}
+                                        aria-label={`Grammar tip ${idx + 1}`}
                                         onClick={() => setCurrentIndex(idx)}
-                                        className={`w-2 h-2 rounded-full transition-all ${idx === currentIndex ? 'bg-emerald-500 w-6' : 'bg-slate-700 hover:bg-slate-600'
+                                        className={`w-2 h-2 rounded-full transition-all outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${idx === currentIndex ? 'bg-emerald-500 w-6' : 'bg-slate-700 hover:bg-slate-600'
                                             }`}
                                     />
                                 ))}
                             </div>
                             <Button variant="ghost" onClick={nextTip} className="gap-2">
-                                Next <ChevronRight size={20} />
+                                Next <ChevronRight size={20} aria-hidden="true" />
                             </Button>
                         </div>
                     </Card>
