@@ -332,7 +332,10 @@ const SettingsModal = ({ onClose }) => {
                         </div>
                         <button
                             onClick={handleOfflineAudio}
-                            className={`w-14 h-8 rounded-full transition-colors relative ${offlineAudio ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                            className={`w-14 h-8 rounded-full transition-colors relative focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 ${offlineAudio ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                            role="switch"
+                            aria-checked={offlineAudio}
+                            aria-label="Toggle offline audio cache"
                         >
                             <motion.div
                                 animate={{ x: offlineAudio ? 26 : 2 }}
