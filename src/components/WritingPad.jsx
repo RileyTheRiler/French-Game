@@ -325,10 +325,11 @@ const WritingPad = () => {
             {/* Header */}
             <div className="p-4 flex items-center justify-between">
                 <button
+                    aria-label="Go back"
                     onClick={() => navigate('/')}
-                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 outline-none"
                 >
-                    <ArrowLeft className="w-5 h-5 text-slate-300" />
+                    <ArrowLeft aria-hidden="true" className="w-5 h-5 text-slate-300" />
                 </button>
 
                 <div className="flex items-center gap-2">
@@ -339,10 +340,11 @@ const WritingPad = () => {
 
                 <div className="flex items-center gap-2">
                     <button
+                        aria-label="Play audio"
                         onClick={playAudio}
-                        className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 outline-none"
                     >
-                        <Volume2 className="w-5 h-5 text-slate-300" />
+                        <Volume2 aria-hidden="true" className="w-5 h-5 text-slate-300" />
                     </button>
                 </div>
             </div>
@@ -407,6 +409,8 @@ const WritingPad = () => {
                 <div className="relative bg-slate-800 rounded-2xl border-2 border-slate-700 overflow-hidden">
                     {/* Guide toggle */}
                     <button
+                        aria-label={showGuide ? "Hide drawing guide" : "Show drawing guide"}
+                        aria-pressed={showGuide}
                         onClick={() => {
                             setShowGuide(!showGuide);
                             if (!showGuide) {
@@ -414,12 +418,12 @@ const WritingPad = () => {
                                 drawGuide();
                             }
                         }}
-                        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
+                        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 outline-none"
                     >
                         {showGuide ? (
-                            <Eye className="w-4 h-4 text-purple-400" />
+                            <Eye aria-hidden="true" className="w-4 h-4 text-purple-400" />
                         ) : (
-                            <EyeOff className="w-4 h-4 text-slate-400" />
+                            <EyeOff aria-hidden="true" className="w-4 h-4 text-slate-400" />
                         )}
                     </button>
 
@@ -441,12 +445,14 @@ const WritingPad = () => {
             {/* Tools */}
             <div className="px-4 mt-4 space-y-3">
                 {/* Color picker */}
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2" role="group" aria-label="Ink colors">
                     {STROKE_COLORS.map(color => (
                         <button
                             key={color.value}
+                            aria-label={`Select ${color.name} color`}
+                            aria-pressed={strokeColor === color.value}
                             onClick={() => setStrokeColor(color.value)}
-                            className={`w-8 h-8 rounded-full border-2 transition-transform ${strokeColor === color.value
+                            className={`w-8 h-8 rounded-full border-2 transition-transform focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 outline-none ${strokeColor === color.value
                                 ? 'border-white scale-110'
                                 : 'border-transparent hover:scale-105'
                                 }`}
@@ -457,17 +463,20 @@ const WritingPad = () => {
                 </div>
 
                 {/* Stroke width */}
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-3" role="group" aria-label="Brush sizes">
                     {STROKE_WIDTHS.map(width => (
                         <button
                             key={width}
+                            aria-label={`Brush size ${width}`}
+                            aria-pressed={strokeWidth === width}
                             onClick={() => setStrokeWidth(width)}
-                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${strokeWidth === width
+                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 outline-none ${strokeWidth === width
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
                         >
                             <div
+                                aria-hidden="true"
                                 className="bg-white rounded-full"
                                 style={{ width: width * 2, height: width * 2 }}
                             />
