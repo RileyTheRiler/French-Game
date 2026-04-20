@@ -366,8 +366,12 @@ export const VocabularyProvider = ({ children }) => {
                 try {
                     const data = JSON.parse(e.target.result);
 
+                    if (!data || typeof data !== 'object') {
+                        throw new Error('Invalid file format');
+                    }
+
                     if (data.type !== 'french-game-deck' || !data.deck) {
-                        throw new Error('Invalid deck file format');
+                        throw new Error('Invalid file format');
                     }
 
                     const importedWordsIds = [];
@@ -395,8 +399,8 @@ export const VocabularyProvider = ({ children }) => {
                     );
 
                     resolve(newDeck);
-                } catch (err) {
-                    reject(new Error('Failed to parse deck file: ' + err.message));
+                } catch {
+                    reject(new Error('Invalid file format'));
                 }
             };
             reader.onerror = () => reject(new Error('Failed to read file'));
