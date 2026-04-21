@@ -67,23 +67,37 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                         </div>
 
                         {/* Tabs */}
-                        <div className="flex border-b border-white/10">
+                        <div className="flex border-b border-white/10" role="tablist" aria-label="Goal Settings Tabs">
                             <button
+                                role="tab"
+                                aria-selected={activeTab === 'goals'}
+                                aria-controls="tabpanel-goals"
+                                id="tab-goals"
                                 onClick={() => setActiveTab('goals')}
-                                className={`flex-1 p-4 text-center font-bold transition-colors ${activeTab === 'goals' ? 'bg-blue-500/20 text-blue-300 border-b-2 border-blue-500' : 'text-slate-400 hover:bg-white/5'}`}
+                                className={`flex-1 p-4 text-center font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500 ${activeTab === 'goals' ? 'bg-blue-500/20 text-blue-300 border-b-2 border-blue-500' : 'text-slate-400 hover:bg-white/5'}`}
                             >
                                 Valid Goals
                             </button>
                             <button
+                                role="tab"
+                                aria-selected={activeTab === 'difficulty'}
+                                aria-controls="tabpanel-difficulty"
+                                id="tab-difficulty"
                                 onClick={() => setActiveTab('difficulty')}
-                                className={`flex-1 p-4 text-center font-bold transition-colors ${activeTab === 'difficulty' ? 'bg-purple-500/20 text-purple-300 border-b-2 border-purple-500' : 'text-slate-400 hover:bg-white/5'}`}
+                                className={`flex-1 p-4 text-center font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500 ${activeTab === 'difficulty' ? 'bg-purple-500/20 text-purple-300 border-b-2 border-purple-500' : 'text-slate-400 hover:bg-white/5'}`}
                             >
                                 Game Difficulty
                             </button>
                         </div>
 
                         {/* Content */}
-                        <div className="p-8 overflow-y-auto space-y-8">
+                        <div
+                            id={`tabpanel-${activeTab}`}
+                            role="tabpanel"
+                            aria-labelledby={`tab-${activeTab}`}
+                            className="p-8 overflow-y-auto space-y-8"
+                            tabIndex={0}
+                        >
                             {activeTab === 'goals' ? (
                                 <>
                                     {/* Goal Presets */}
