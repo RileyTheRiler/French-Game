@@ -5,3 +5,7 @@
 ## 2024-05-24 - Polymorphic Interactive Components
 **Learning:** Manually converting every clickable `div` to a button is tedious and prone to regression. A centralized solution is better.
 **Action:** Modify core UI components (like `Card`) to be polymorphic. If `onClick` is detected, automatically render a `<button>` with accessibility resets (`text-left`, `appearance-none`) and focus rings. This enforces accessibility by default across the app.
+
+## 2024-05-25 - Icon-only Button Accessibility
+**Learning:** Icon-only buttons using the `size="icon"` variant often lack accessible names, making them difficult to use for screen reader users.
+**Action:** When creating icon-only buttons, always ensure an `aria-label` attribute is added to the `<Button>` component and an `aria-hidden="true"` attribute is added to the inner `<svg>` or icon component.
