@@ -18,7 +18,8 @@ export const A11yProvider = ({ children }) => {
     // Detect reduced motion preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        setPrefersReducedMotion(mediaQuery.matches);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPrefersReducedMotion(prev => prev !== mediaQuery.matches ? mediaQuery.matches : prev);
 
         const handleChange = (e) => setPrefersReducedMotion(e.matches);
         mediaQuery.addEventListener('change', handleChange);
@@ -29,7 +30,8 @@ export const A11yProvider = ({ children }) => {
     // Detect high contrast preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-contrast: more)');
-        setHighContrast(mediaQuery.matches);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setHighContrast(prev => prev !== mediaQuery.matches ? mediaQuery.matches : prev);
 
         const handleChange = (e) => setHighContrast(e.matches);
         mediaQuery.addEventListener('change', handleChange);
