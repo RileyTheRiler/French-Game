@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 
 // Confetti particle component
-const Particle = ({ style, color }) => (
+const Particle = ({ style, color, id }) => (
     <div
         className="absolute pointer-events-none"
         style={{
@@ -10,7 +10,7 @@ const Particle = ({ style, color }) => (
             backgroundColor: color,
             width: '10px',
             height: '10px',
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+            borderRadius: id % 2 === 0 ? '50%' : '2px',
         }}
     />
 );
@@ -27,7 +27,8 @@ const ConfettiEffect = ({
 
     useEffect(() => {
         if (!active) {
-            setParticles([]);
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setParticles(prev => prev.length === 0 ? prev : []);
             return;
         }
 
@@ -78,7 +79,7 @@ const ConfettiEffect = ({
                         className="w-3 h-3"
                         style={{
                             backgroundColor: particle.color,
-                            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+                            borderRadius: particle.id % 2 === 0 ? '50%' : '2px',
                             transform: `scale(${particle.scale})`,
                         }}
                     />

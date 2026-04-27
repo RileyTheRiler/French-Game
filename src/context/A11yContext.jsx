@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
 const A11yContext = createContext(null);
 
@@ -18,7 +18,8 @@ export const A11yProvider = ({ children }) => {
     // Detect reduced motion preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-        setPrefersReducedMotion(mediaQuery.matches);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPrefersReducedMotion(prev => prev !== mediaQuery.matches ? mediaQuery.matches : prev);
 
         const handleChange = (e) => setPrefersReducedMotion(e.matches);
         mediaQuery.addEventListener('change', handleChange);
@@ -29,7 +30,8 @@ export const A11yProvider = ({ children }) => {
     // Detect high contrast preference
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-contrast: more)');
-        setHighContrast(mediaQuery.matches);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setHighContrast(prev => prev !== mediaQuery.matches ? mediaQuery.matches : prev);
 
         const handleChange = (e) => setHighContrast(e.matches);
         mediaQuery.addEventListener('change', handleChange);
@@ -75,12 +77,13 @@ export const A11yProvider = ({ children }) => {
         }, 1000);
     }, []);
 
-    const value = {
+    // Memoize context value to prevent unnecessary re-renders
+    const value = useMemo(() => ({
         announce,
         prefersReducedMotion,
         highContrast,
         setHighContrast
-    };
+    }), [announce, prefersReducedMotion, highContrast, setHighContrast]);
 
     return (
         <A11yContext.Provider value={value}>
