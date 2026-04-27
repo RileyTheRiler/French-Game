@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, Zap, Trophy, RotateCcw, ArrowRight, X } from 'lucide-react';
@@ -63,6 +63,16 @@ const ConjugationBlitz = () => {
     };
 
     // Timer Logic
+    const endGame = useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    }, [score, addXP]);
+
     useEffect(() => {
         if (status === 'playing') {
             timerRef.current = setInterval(() => {
@@ -76,17 +86,7 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
-
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
+    }, [status, endGame]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
