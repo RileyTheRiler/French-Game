@@ -366,7 +366,7 @@ export const VocabularyProvider = ({ children }) => {
                 try {
                     const data = JSON.parse(e.target.result);
 
-                    if (data.type !== 'french-game-deck' || !data.deck) {
+                    if (!data || typeof data !== 'object' || data.type !== 'french-game-deck' || !data.deck) {
                         throw new Error('Invalid deck file format');
                     }
 
@@ -395,8 +395,8 @@ export const VocabularyProvider = ({ children }) => {
                     );
 
                     resolve(newDeck);
-                } catch (err) {
-                    reject(new Error('Failed to parse deck file: ' + err.message));
+                } catch {
+                    reject(new Error('Failed to parse deck file'));
                 }
             };
             reader.onerror = () => reject(new Error('Failed to read file'));
