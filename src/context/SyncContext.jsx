@@ -112,15 +112,18 @@ export const SyncProvider = ({ children }) => {
         setStatus('imported');
     }, [hydrateProgress, hydrateVocabulary]);
 
+    // Memoize context value to prevent unnecessary re-renders in consumer components
+    const value = useMemo(() => ({
+        syncing,
+        lastSyncedAt,
+        status,
+        performSync,
+        exportData,
+        importData
+    }), [syncing, lastSyncedAt, status, performSync, exportData, importData]);
+
     return (
-        <SyncContext.Provider value={{
-            syncing,
-            lastSyncedAt,
-            status,
-            performSync,
-            exportData,
-            importData
-        }}>
+        <SyncContext.Provider value={value}>
             {children}
         </SyncContext.Provider>
     );
