@@ -5,3 +5,6 @@
 ## 2024-05-24 - Polymorphic Interactive Components
 **Learning:** Manually converting every clickable `div` to a button is tedious and prone to regression. A centralized solution is better.
 **Action:** Modify core UI components (like `Card`) to be polymorphic. If `onClick` is detected, automatically render a `<button>` with accessibility resets (`text-left`, `appearance-none`) and focus rings. This enforces accessibility by default across the app.
+## 2024-05-24 - Accessible Interactive Controls
+**Learning:** Custom interactive visual controls (like color swatches or size selectors) lack context for screen readers when they only rely on visual cues.
+**Action:** Group related custom controls in a container with `role="group"` and an `aria-label`, explicitly add `aria-label` and `aria-pressed` to the interactive buttons, and apply `aria-hidden="true"` to internal decorative elements.
