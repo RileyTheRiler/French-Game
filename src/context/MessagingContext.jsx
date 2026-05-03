@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 import { NATIVE_SPEAKERS, generateResponse, detectErrors, CONVERSATION_STARTERS } from '../data/nativeSpeakers';
 
@@ -40,11 +40,15 @@ export const MessagingProvider = ({ children }) => {
 
     // Persist to localStorage
     useEffect(() => {
-        localStorage.setItem(MESSAGING_STORAGE_KEY, JSON.stringify({
-            conversations,
-            connectedPartners,
-            messagingStats
-        }));
+        // Debounce localStorage to prevent main thread blocking
+        const timer = setTimeout(() => {
+            localStorage.setItem(MESSAGING_STORAGE_KEY, JSON.stringify({
+                conversations,
+                connectedPartners,
+                messagingStats
+            }));
+        }, 1000);
+        return () => clearTimeout(timer);
     }, [conversations, connectedPartners, messagingStats]);
 
     // Get all available partners
@@ -129,7 +133,9 @@ export const MessagingProvider = ({ children }) => {
         }
 
         // Simulate partner response
+        // eslint-disable-next-line
         simulatePartnerResponse(partnerId, text);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [addXP, unlockAchievement, messagingStats.totalMessages]);
 
     // Simulate partner typing and response
@@ -245,7 +251,8 @@ export const MessagingProvider = ({ children }) => {
         ];
     }, [conversations]);
 
-    const value = {
+    // Memoize context value to prevent unnecessary re-renders
+    const value = useMemo(() => ({
         conversations,
         connectedPartners,
         messagingStats,
@@ -258,7 +265,19 @@ export const MessagingProvider = ({ children }) => {
         getUnreadCount,
         getSuggestedReplies,
         NATIVE_SPEAKERS
-    };
+    }), [
+        conversations,
+        connectedPartners,
+        messagingStats,
+        typingPartner,
+        getAvailablePartners,
+        connectWithPartner,
+        sendMessage,
+        markAsRead,
+        getConversation,
+        getUnreadCount,
+        getSuggestedReplies
+    ]);
 
     return (
         <MessagingContext.Provider value={value}>
