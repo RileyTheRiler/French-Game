@@ -441,35 +441,40 @@ const WritingPad = () => {
             {/* Tools */}
             <div className="px-4 mt-4 space-y-3">
                 {/* Color picker */}
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2" role="group" aria-label="Stroke color">
                     {STROKE_COLORS.map(color => (
                         <button
                             key={color.value}
                             onClick={() => setStrokeColor(color.value)}
-                            className={`w-8 h-8 rounded-full border-2 transition-transform ${strokeColor === color.value
+                            className={`w-8 h-8 rounded-full border-2 transition-transform focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none ${strokeColor === color.value
                                 ? 'border-white scale-110'
                                 : 'border-transparent hover:scale-105'
                                 }`}
                             style={{ backgroundColor: color.value }}
                             title={color.name}
+                            aria-label={`Select ${color.name} color`}
+                            aria-pressed={strokeColor === color.value}
                         />
                     ))}
                 </div>
 
                 {/* Stroke width */}
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-3" role="group" aria-label="Stroke width">
                     {STROKE_WIDTHS.map(width => (
                         <button
                             key={width}
                             onClick={() => setStrokeWidth(width)}
-                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${strokeWidth === width
+                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:outline-none ${strokeWidth === width
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
+                            aria-label={`Set stroke width to ${width} pixels`}
+                            aria-pressed={strokeWidth === width}
                         >
                             <div
                                 className="bg-white rounded-full"
                                 style={{ width: width * 2, height: width * 2 }}
+                                aria-hidden="true"
                             />
                         </button>
                     ))}
