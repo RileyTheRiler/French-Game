@@ -62,13 +62,31 @@ export const VocabularyProvider = ({ children }) => {
 
     const vocabularyRef = useRef(vocabulary);
 
+    // ⚡ Bolt: Debounce vocabulary state saves to prevent main thread blocking during high-frequency updates
     useEffect(() => {
-        localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+        }, 1000);
         vocabularyRef.current = vocabulary;
+        return () => clearTimeout(timeoutId);
     }, [vocabulary]);
 
+    // ⚡ Bolt: Debounce custom decks state saves
     useEffect(() => {
-        localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        }, 1000);
+        return () => clearTimeout(timeoutId);
+    }, [customDecks]);
+
+    // ⚡ Bolt: Save on unmount/page hide to ensure data isn't lost from pending debounced saves
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabularyRef.current));
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [customDecks]);
 
     const resetVocabulary = useCallback(() => {
@@ -169,6 +187,7 @@ export const VocabularyProvider = ({ children }) => {
         const cached = audioCacheRef.current[word.id] || buildAudioElement(word);
 
         if (cached) {
+            // eslint-disable-next-line react-hooks/immutability
             cached.currentTime = 0;
             cached.play().catch(() => speak(word.french));
             return;

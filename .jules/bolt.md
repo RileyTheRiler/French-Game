@@ -10,3 +10,6 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+## 2024-05-08 - Debounce Large LocalStorage Saves in Contexts
+**Learning:** Found a performance bottleneck where large Context states (like vocabulary and custom decks) were being saved synchronously to `localStorage` on every minor state update. This blocks the main thread during high-frequency updates, causing jank.
+**Action:** Always wrap `localStorage.setItem` in a `setTimeout` (e.g., 1000ms) within `useEffect` when persisting large Context states, and clear the timeout to debounce the saves. Additionally, add a `beforeunload` event listener to ensure pending saves are committed if the user navigates away or closes the tab.
