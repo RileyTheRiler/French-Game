@@ -326,7 +326,8 @@ const WritingPad = () => {
             <div className="p-4 flex items-center justify-between">
                 <button
                     onClick={() => navigate('/')}
-                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    aria-label="Go back"
+                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 outline-none"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -340,7 +341,8 @@ const WritingPad = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={playAudio}
-                        className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        aria-label="Play pronunciation"
+                        className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 outline-none"
                     >
                         <Volume2 className="w-5 h-5 text-slate-300" />
                     </button>
@@ -414,7 +416,8 @@ const WritingPad = () => {
                                 drawGuide();
                             }
                         }}
-                        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
+                        aria-label={showGuide ? "Hide guide" : "Show guide"}
+                        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 outline-none"
                     >
                         {showGuide ? (
                             <Eye className="w-4 h-4 text-purple-400" />
@@ -441,12 +444,18 @@ const WritingPad = () => {
             {/* Tools */}
             <div className="px-4 mt-4 space-y-3">
                 {/* Color picker */}
-                <div className="flex items-center justify-center gap-2">
+                <div
+                    className="flex items-center justify-center gap-2"
+                    role="group"
+                    aria-label="Stroke color"
+                >
                     {STROKE_COLORS.map(color => (
                         <button
                             key={color.value}
                             onClick={() => setStrokeColor(color.value)}
-                            className={`w-8 h-8 rounded-full border-2 transition-transform ${strokeColor === color.value
+                            aria-label={color.name}
+                            aria-pressed={strokeColor === color.value}
+                            className={`w-8 h-8 rounded-full border-2 transition-transform focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 outline-none ${strokeColor === color.value
                                 ? 'border-white scale-110'
                                 : 'border-transparent hover:scale-105'
                                 }`}
@@ -457,17 +466,24 @@ const WritingPad = () => {
                 </div>
 
                 {/* Stroke width */}
-                <div className="flex items-center justify-center gap-3">
+                <div
+                    className="flex items-center justify-center gap-3"
+                    role="group"
+                    aria-label="Stroke width"
+                >
                     {STROKE_WIDTHS.map(width => (
                         <button
                             key={width}
                             onClick={() => setStrokeWidth(width)}
-                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${strokeWidth === width
+                            aria-label={`${width} pixels`}
+                            aria-pressed={strokeWidth === width}
+                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 outline-none ${strokeWidth === width
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
                         >
                             <div
+                                aria-hidden="true"
                                 className="bg-white rounded-full"
                                 style={{ width: width * 2, height: width * 2 }}
                             />
