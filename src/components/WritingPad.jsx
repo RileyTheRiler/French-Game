@@ -327,6 +327,7 @@ const WritingPad = () => {
                 <button
                     onClick={() => navigate('/')}
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    aria-label="Back to Main Menu"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -341,6 +342,7 @@ const WritingPad = () => {
                     <button
                         onClick={playAudio}
                         className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        aria-label="Play pronunciation"
                     >
                         <Volume2 className="w-5 h-5 text-slate-300" />
                     </button>
@@ -349,7 +351,7 @@ const WritingPad = () => {
 
             {/* Mode selector */}
             <div className="px-4 mb-4">
-                <div className="flex bg-slate-800/50 rounded-xl p-1 max-w-md mx-auto">
+                <div className="flex bg-slate-800/50 rounded-xl p-1 max-w-md mx-auto" role="group" aria-label="Practice Mode">
                     <button
                         onClick={() => { setMode('characters'); setCurrentIndex(0); clearCanvas(); }}
                         className={`flex-1 py-2 px-4 rounded-lg font-medium text-sm transition-colors ${mode === 'characters'
@@ -415,6 +417,7 @@ const WritingPad = () => {
                             }
                         }}
                         className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
+                        aria-label={showGuide ? "Hide writing guide" : "Show writing guide"}
                     >
                         {showGuide ? (
                             <Eye className="w-4 h-4 text-purple-400" />
@@ -441,7 +444,7 @@ const WritingPad = () => {
             {/* Tools */}
             <div className="px-4 mt-4 space-y-3">
                 {/* Color picker */}
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2" role="group" aria-label="Stroke Color">
                     {STROKE_COLORS.map(color => (
                         <button
                             key={color.value}
@@ -457,7 +460,7 @@ const WritingPad = () => {
                 </div>
 
                 {/* Stroke width */}
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-3" role="group" aria-label="Stroke Width">
                     {STROKE_WIDTHS.map(width => (
                         <button
                             key={width}
@@ -466,10 +469,13 @@ const WritingPad = () => {
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
+                            aria-label={`Stroke width ${width}`}
+                            aria-pressed={strokeWidth === width}
                         >
                             <div
                                 className="bg-white rounded-full"
                                 style={{ width: width * 2, height: width * 2 }}
+                                aria-hidden="true"
                             />
                         </button>
                     ))}
