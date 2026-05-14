@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import { ChevronDown, ChevronUp, Lightbulb } from 'lucide-react';
 import { GRAMMAR_TIPS } from '../../data/grammarTips';
 
@@ -7,6 +7,7 @@ import { GRAMMAR_TIPS } from '../../data/grammarTips';
 
 const MonitorFeedback = ({ feedback, message, tipId }) => {
     const [showTip, setShowTip] = useState(false);
+    const contentId = useId();
 
     if (!feedback) return null;
 
@@ -37,6 +38,9 @@ const MonitorFeedback = ({ feedback, message, tipId }) => {
                         <div className="mt-3 border-t border-white/20 pt-3">
                             <button
                                 onClick={() => setShowTip(!showTip)}
+                                aria-expanded={showTip}
+                                aria-controls={contentId}
+                                aria-label={showTip ? `Collapse tip: ${tip.title}` : `Expand tip: ${tip.title}`}
                                 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-200 hover:text-white transition-colors"
                             >
                                 <Lightbulb size={14} />
@@ -45,7 +49,7 @@ const MonitorFeedback = ({ feedback, message, tipId }) => {
                             </button>
 
                             {showTip && (
-                                <div className="mt-2 p-3 bg-slate-900/50 rounded-lg text-xs text-slate-300 leading-relaxed">
+                                <div id={contentId} className="mt-2 p-3 bg-slate-900/50 rounded-lg text-xs text-slate-300 leading-relaxed">
                                     <p className="mb-2">{tip.shortTip}</p>
                                     {tip.examples.length > 0 && (
                                         <div className="mt-2 space-y-1">
