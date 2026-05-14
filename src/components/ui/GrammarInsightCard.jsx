@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useId } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lightbulb, ChevronDown, ChevronUp, ExternalLink, BookOpen, AlertTriangle } from 'lucide-react';
 import { Card } from './Card';
@@ -19,6 +19,7 @@ const GrammarInsightCard = ({
     className = ''
 }) => {
     const [isExpanded, setIsExpanded] = useState(!compact);
+    const contentId = useId();
 
     if (!tip) return null;
 
@@ -70,7 +71,12 @@ const GrammarInsightCard = ({
                     </div>
 
                     {compact && (
-                        <button className="text-slate-500 hover:text-white transition-colors">
+                        <button
+                            className="text-slate-500 hover:text-white transition-colors"
+                            aria-expanded={isExpanded}
+                            aria-label={isExpanded ? "Collapse grammar insight" : "Expand grammar insight"}
+                            aria-controls={contentId}
+                        >
                             {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </button>
                     )}
@@ -80,6 +86,7 @@ const GrammarInsightCard = ({
                 <AnimatePresence>
                     {isExpanded && (
                         <motion.div
+                            id={contentId}
                             initial={compact ? { height: 0, opacity: 0 } : false}
                             animate={{ height: 'auto', opacity: 1 }}
                             exit={{ height: 0, opacity: 0 }}
