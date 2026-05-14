@@ -63,13 +63,32 @@ export const VocabularyProvider = ({ children }) => {
     const vocabularyRef = useRef(vocabulary);
 
     useEffect(() => {
-        localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
         vocabularyRef.current = vocabulary;
+
+        // Memoize context value to prevent unnecessary re-renders
+        // Debounce synchronous localStorage.setItem to avoid blocking main thread during frequent word progress updates
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+        }, 1000);
+        return () => clearTimeout(timeoutId);
     }, [vocabulary]);
 
     useEffect(() => {
-        localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        }, 1000);
+        return () => clearTimeout(timeoutId);
     }, [customDecks]);
+
+    // Ensure data isn't lost if the user leaves the page before the debounce timer fires
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [vocabulary, customDecks]);
 
     const resetVocabulary = useCallback(() => {
         const reset = INITIAL_VOCABULARY.map(word => ({ ...word, updatedAt: Date.now() }));
