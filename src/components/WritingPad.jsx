@@ -441,7 +441,7 @@ const WritingPad = () => {
             {/* Tools */}
             <div className="px-4 mt-4 space-y-3">
                 {/* Color picker */}
-                <div className="flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center gap-2" role="group" aria-label="Stroke colors">
                     {STROKE_COLORS.map(color => (
                         <button
                             key={color.value}
@@ -451,13 +451,13 @@ const WritingPad = () => {
                                 : 'border-transparent hover:scale-105'
                                 }`}
                             style={{ backgroundColor: color.value }}
-                            title={color.name}
+                            aria-label={color.name}
                         />
                     ))}
                 </div>
 
                 {/* Stroke width */}
-                <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-3" role="group" aria-label="Stroke widths">
                     {STROKE_WIDTHS.map(width => (
                         <button
                             key={width}
@@ -466,6 +466,7 @@ const WritingPad = () => {
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
+                            aria-label={`Stroke width ${width}`}
                         >
                             <div
                                 className="bg-white rounded-full"
