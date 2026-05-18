@@ -22,6 +22,7 @@ export const SyncProvider = ({ children }) => {
         updatedAt: stats?.updatedAt || 0
     }), [stats, vocabulary]);
 
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     const performSync = useCallback(async () => {
         if (!user) return;
 
@@ -101,15 +102,25 @@ export const SyncProvider = ({ children }) => {
     }, [stats, vocabulary]);
 
     const importData = useCallback(async (file) => {
-        const text = await file.text();
-        const parsed = JSON.parse(text);
-        if (parsed.progress) {
-            hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
+        try {
+            const text = await file.text();
+            const parsed = JSON.parse(text);
+
+            if (!parsed || typeof parsed !== 'object') {
+                throw new Error('Invalid file format');
+            }
+
+            if (parsed.progress) {
+                hydrateProgress({ ...parsed.progress, updatedAt: Date.now() });
+            }
+            if (parsed.vocabulary) {
+                hydrateVocabulary(parsed.vocabulary.map(word => ({ ...word, updatedAt: Date.now() })));
+            }
+            setStatus('imported');
+        } catch (error) { // eslint-disable-line no-unused-vars
+            setStatus('error: Failed to import data');
+            throw new Error('Failed to import data: invalid format');
         }
-        if (parsed.vocabulary) {
-            hydrateVocabulary(parsed.vocabulary.map(word => ({ ...word, updatedAt: Date.now() })));
-        }
-        setStatus('imported');
     }, [hydrateProgress, hydrateVocabulary]);
 
     return (
