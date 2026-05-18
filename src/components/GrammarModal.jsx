@@ -94,11 +94,13 @@ const GrammarModal = ({ isOpen, onClose }) => {
                             <Button variant="ghost" onClick={prevTip} className="gap-2">
                                 <ChevronLeft size={20} /> Previous
                             </Button>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1" role="group" aria-label="Grammar tips pagination">
                                 {GRAMMAR_TIPS.map((_, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => setCurrentIndex(idx)}
+                                        aria-label={`Go to tip ${idx + 1}`}
+                                        aria-current={idx === currentIndex ? 'true' : 'false'}
                                         className={`w-2 h-2 rounded-full transition-all ${idx === currentIndex ? 'bg-emerald-500 w-6' : 'bg-slate-700 hover:bg-slate-600'
                                             }`}
                                     />
