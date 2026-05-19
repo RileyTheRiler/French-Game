@@ -21,6 +21,7 @@ const ClozeGame = () => {
     const MAX_QUESTIONS = 5;
 
     useEffect(() => {
+        // eslint-disable-next-line no-use-before-define
         loadNextPuzzle();
     }, []);
 
