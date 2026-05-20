@@ -10,3 +10,6 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+## 2024-05-24 - Debouncing Synchronous Storage Saves
+**Learning:** Frequent React state updates trigger synchronous storage saves which block the main thread and cause jank.
+**Action:** Debounce synchronous storage writes within effect hooks using a timer, and ensure data integrity by flushing state to storage synchronously on the beforeunload event.
