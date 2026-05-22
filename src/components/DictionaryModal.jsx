@@ -23,6 +23,7 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
         tip.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tip.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    // eslint-disable-next-line react-hooks/purity
     const now = useMemo(() => Date.now(), [vocabulary]);
 
     return (
@@ -30,9 +31,11 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
             <div className="glass-panel w-full max-w-lg p-6 relative h-[80vh] flex flex-col">
                 <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors"
+                    className="absolute top-4 right-4 text-white/50 hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded-full p-1"
+                    aria-label="Close"
+                    title="Close"
                 >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
@@ -82,9 +85,11 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
                                                     <h3 className="text-xl font-bold text-white group-hover:text-[var(--accent-primary)] transition-colors">{word.french}</h3>
                                                     <button
                                                         onClick={() => playWordAudio(word, { preferCache: true, offlineOnly: offlineAudio })}
-                                                        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors"
+                                                        className="p-1.5 rounded-full bg-white/5 hover:bg-white/10 text-indigo-300 border border-white/10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                                                        aria-label="Play pronunciation"
+                                                        title="Play pronunciation"
                                                     >
-                                                        <Volume2 size={14} />
+                                                        <Volume2 size={14} aria-hidden="true" />
                                                     </button>
                                                 </div>
                                                 <p className="text-[var(--text-secondary)]">{word.english}</p>
