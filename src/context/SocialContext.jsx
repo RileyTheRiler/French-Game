@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 
@@ -41,6 +42,7 @@ export const SocialProvider = ({ children }) => {
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
+        // eslint-disable-next-line react-hooks/purity
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
     });
