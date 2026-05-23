@@ -63,12 +63,28 @@ export const VocabularyProvider = ({ children }) => {
     const vocabularyRef = useRef(vocabulary);
 
     useEffect(() => {
-        localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+        }, 1000);
         vocabularyRef.current = vocabulary;
+        return () => clearTimeout(timeoutId);
     }, [vocabulary]);
 
+    // Also save on unmount/page hide to ensure data isn't lost
     useEffect(() => {
-        localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        const handleBeforeUnload = () => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [vocabulary, customDecks]);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        }, 1000);
+        return () => clearTimeout(timeoutId);
     }, [customDecks]);
 
     const resetVocabulary = useCallback(() => {
@@ -169,6 +185,7 @@ export const VocabularyProvider = ({ children }) => {
         const cached = audioCacheRef.current[word.id] || buildAudioElement(word);
 
         if (cached) {
+            // eslint-disable-next-line react-hooks/immutability
             cached.currentTime = 0;
             cached.play().catch(() => speak(word.french));
             return;
