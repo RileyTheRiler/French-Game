@@ -114,7 +114,7 @@ export const SyncProvider = ({ children }) => {
                 hydrateVocabulary(parsed.vocabulary.map(word => ({ ...word, updatedAt: Date.now() })));
             }
             setStatus('imported');
-        } catch (err) {
+        } catch {
             setStatus('error: Failed to import data');
         }
     }, [hydrateProgress, hydrateVocabulary]);
