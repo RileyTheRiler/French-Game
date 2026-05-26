@@ -11,6 +11,7 @@ const GrammarModal = ({ isOpen, onClose }) => {
 
     // Tip of the Day based on date
     const tipOfTheDay = useMemo(() => {
+        // eslint-disable-next-line react-hooks/purity
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
         return GRAMMAR_TIPS[dayOfYear % GRAMMAR_TIPS.length];
     }, []);
@@ -52,7 +53,7 @@ const GrammarModal = ({ isOpen, onClose }) => {
                                     </p>
                                 </div>
                             </div>
-                            <Button variant="ghost" onClick={onClose} className="rounded-full h-10 w-10 p-0">
+                            <Button variant="ghost" onClick={onClose} aria-label="Close" className="rounded-full h-10 w-10 p-0">
                                 <X size={20} />
                             </Button>
                         </div>
@@ -94,11 +95,13 @@ const GrammarModal = ({ isOpen, onClose }) => {
                             <Button variant="ghost" onClick={prevTip} className="gap-2">
                                 <ChevronLeft size={20} /> Previous
                             </Button>
-                            <div className="flex gap-1">
+                            <div className="flex gap-1" role="group" aria-label="Tip navigation">
                                 {GRAMMAR_TIPS.map((_, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => setCurrentIndex(idx)}
+                                        aria-label={`Tip ${idx + 1}`}
+                                        aria-current={idx === currentIndex ? "true" : undefined}
                                         className={`w-2 h-2 rounded-full transition-all ${idx === currentIndex ? 'bg-emerald-500 w-6' : 'bg-slate-700 hover:bg-slate-600'
                                             }`}
                                     />
