@@ -10,3 +10,6 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+## 2025-03-01 - Debouncing local storage in vocabulary provider
+**Learning:** Frequent, synchronous serialization of large state arrays (like the vocabulary list) into local storage blocks the main thread during high-frequency updates, degrading UI responsiveness.
+**Action:** Debounce local storage write operations within state effect hooks using timeout functions, and ensure data is not lost by adding a window unload event listener to flush pending writes.

@@ -61,15 +61,35 @@ export const VocabularyProvider = ({ children }) => {
     });
 
     const vocabularyRef = useRef(vocabulary);
+    const customDecksRef = useRef(customDecks);
 
     useEffect(() => {
-        localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
         vocabularyRef.current = vocabulary;
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabulary));
+        }, 1000);
+        return () => clearTimeout(timeoutId);
     }, [vocabulary]);
 
     useEffect(() => {
-        localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        customDecksRef.current = customDecks;
+        const timeoutId = setTimeout(() => {
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecks));
+        }, 1000);
+        return () => clearTimeout(timeoutId);
     }, [customDecks]);
+
+    useEffect(() => {
+        const handleUnload = () => {
+            localStorage.setItem('frenchApp_vocab', JSON.stringify(vocabularyRef.current));
+            localStorage.setItem('frenchApp_decks', JSON.stringify(customDecksRef.current));
+        };
+        window.addEventListener('beforeunload', handleUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleUnload);
+            handleUnload();
+        };
+    }, []);
 
     const resetVocabulary = useCallback(() => {
         const reset = INITIAL_VOCABULARY.map(word => ({ ...word, updatedAt: Date.now() }));
