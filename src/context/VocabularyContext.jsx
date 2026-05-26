@@ -366,7 +366,7 @@ export const VocabularyProvider = ({ children }) => {
                 try {
                     const data = JSON.parse(e.target.result);
 
-                    if (data.type !== 'french-game-deck' || !data.deck) {
+                    if (!data || typeof data !== 'object' || data.type !== 'french-game-deck' || !data.deck) {
                         throw new Error('Invalid deck file format');
                     }
 
