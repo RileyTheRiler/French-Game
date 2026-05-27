@@ -327,6 +327,7 @@ const WritingPad = () => {
                 <button
                     onClick={() => navigate('/')}
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    aria-label="Go back"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -341,6 +342,7 @@ const WritingPad = () => {
                     <button
                         onClick={playAudio}
                         className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        aria-label="Play pronunciation audio"
                     >
                         <Volume2 className="w-5 h-5 text-slate-300" />
                     </button>
@@ -415,6 +417,8 @@ const WritingPad = () => {
                             }
                         }}
                         className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
+                        aria-label={showGuide ? "Hide guide" : "Show guide"}
+                        aria-pressed={showGuide}
                     >
                         {showGuide ? (
                             <Eye className="w-4 h-4 text-purple-400" />
@@ -441,7 +445,11 @@ const WritingPad = () => {
             {/* Tools */}
             <div className="px-4 mt-4 space-y-3">
                 {/* Color picker */}
-                <div className="flex items-center justify-center gap-2">
+                <div
+                    className="flex items-center justify-center gap-2"
+                    role="group"
+                    aria-label="Stroke color"
+                >
                     {STROKE_COLORS.map(color => (
                         <button
                             key={color.value}
@@ -452,12 +460,18 @@ const WritingPad = () => {
                                 }`}
                             style={{ backgroundColor: color.value }}
                             title={color.name}
+                            aria-label={`Color: ${color.name}`}
+                            aria-pressed={strokeColor === color.value}
                         />
                     ))}
                 </div>
 
                 {/* Stroke width */}
-                <div className="flex items-center justify-center gap-3">
+                <div
+                    className="flex items-center justify-center gap-3"
+                    role="group"
+                    aria-label="Stroke width"
+                >
                     {STROKE_WIDTHS.map(width => (
                         <button
                             key={width}
@@ -466,6 +480,8 @@ const WritingPad = () => {
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
+                            aria-label={`Stroke width: ${width}`}
+                            aria-pressed={strokeWidth === width}
                         >
                             <div
                                 className="bg-white rounded-full"
