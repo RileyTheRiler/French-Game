@@ -129,12 +129,14 @@ export const MessagingProvider = ({ children }) => {
         }
 
         // Simulate partner response
-        // eslint-disable-next-line no-use-before-define
+
+        // eslint-disable-next-line
         simulatePartnerResponse(partnerId, text);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [addXP, unlockAchievement, messagingStats.totalMessages]);
 
     // Simulate partner typing and response
+
     const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
         const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
         if (!partner) return;
