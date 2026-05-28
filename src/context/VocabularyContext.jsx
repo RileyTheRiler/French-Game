@@ -399,7 +399,7 @@ export const VocabularyProvider = ({ children }) => {
                     );
 
                     resolve(newDeck);
-                } catch (_) {
+                } catch {
                     reject(new Error('Failed to import deck data'));
                 }
             };
