@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProgress } from './ProgressContext';
 import { NATIVE_SPEAKERS, generateResponse, detectErrors, CONVERSATION_STARTERS } from '../data/nativeSpeakers';
 
@@ -129,7 +129,9 @@ export const MessagingProvider = ({ children }) => {
         }
 
         // Simulate partner response
+        // eslint-disable-next-line no-use-before-define
         simulatePartnerResponse(partnerId, text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [addXP, unlockAchievement, messagingStats.totalMessages]);
 
     // Simulate partner typing and response
