@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 
 const SocialContext = createContext();
@@ -41,6 +41,7 @@ export const SocialProvider = ({ children }) => {
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
+        // eslint-disable-next-line react-hooks/purity
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
     });
@@ -166,7 +167,7 @@ export const SocialProvider = ({ children }) => {
         setUserCoopStartXp(0);
     }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         friends,
         addFriend,
         removeFriend,
@@ -175,7 +176,7 @@ export const SocialProvider = ({ children }) => {
         leaveCoopGroup,
         activeChallenge,
         claimCoopReward
-    };
+    }), [friends, addFriend, removeFriend, coopGroup, createCoopGroup, leaveCoopGroup, activeChallenge, claimCoopReward]);
 
     return (
         <SocialContext.Provider value={value}>
