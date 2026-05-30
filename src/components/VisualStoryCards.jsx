@@ -322,6 +322,7 @@ const VisualStoryCards = () => {
 
                             {/* Audio button */}
                             <button
+                                aria-label="Play audio"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     playAudio();
