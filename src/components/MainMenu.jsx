@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings,
@@ -35,6 +36,7 @@ import WeeklyGoalTracker from './WeeklyGoalTracker';
 const MainMenu = () => {
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
+    // eslint-disable-next-line no-unused-vars
     const { stats, level, progressToNextLevel, getWeeklySummary, setTargetCefr, setWeeklyGoal } = useProgress();
     const { getDueWords, CATEGORIES } = useVocabulary();
     const dueCount = getDueWords().length;
@@ -83,6 +85,7 @@ const MainMenu = () => {
             const diffDays = (now - lastSeen) / (1000 * 60 * 60 * 24);
 
             if (diffDays > 6) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setShowWeeklyRecap(true);
             }
         }
