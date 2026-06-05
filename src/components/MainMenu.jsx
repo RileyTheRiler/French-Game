@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Book, Trophy, Play, MessageCircle, PenTool, Map, Star, Lock, Settings,
@@ -35,6 +36,7 @@ import WeeklyGoalTracker from './WeeklyGoalTracker';
 const MainMenu = () => {
     const navigate = useNavigate();
     const { t, i18n } = useTranslation();
+    // eslint-disable-next-line no-unused-vars
     const { stats, level, progressToNextLevel, getWeeklySummary, setTargetCefr, setWeeklyGoal } = useProgress();
     const { getDueWords, CATEGORIES } = useVocabulary();
     const dueCount = getDueWords().length;
@@ -83,6 +85,7 @@ const MainMenu = () => {
             const diffDays = (now - lastSeen) / (1000 * 60 * 60 * 24);
 
             if (diffDays > 6) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setShowWeeklyRecap(true);
             }
         }
@@ -612,19 +615,19 @@ const MainMenu = () => {
             {/* Top Bar Actions */}
             <div className="absolute top-4 right-4 flex gap-2 z-10">
                 <LanguageSwitcher />
-                <Button variant="ghost" size="sm" onClick={() => setShowLeaderboard(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowLeaderboard(true)} className="rounded-full h-12 w-12 p-0" aria-label="Leaderboard" title="Leaderboard">
                     <Trophy size={20} className="text-yellow-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowSocial(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowSocial(true)} className="rounded-full h-12 w-12 p-0" aria-label="Social" title="Social">
                     <Users size={20} className="text-violet-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowDictionary(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowDictionary(true)} className="rounded-full h-12 w-12 p-0" aria-label="Dictionary" title="Dictionary">
                     <Book size={20} className="text-blue-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowSettings(true)} className="rounded-full h-12 w-12 p-0" aria-label="Settings" title="Settings">
                     <Settings size={20} className="text-slate-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowShop(true)} className="rounded-full h-12 w-12 p-0 relative">
+                <Button variant="ghost" size="sm" onClick={() => setShowShop(true)} className="rounded-full h-12 w-12 p-0 relative" aria-label="Shop" title="Shop">
                     <ShoppingBag size={20} className="text-amber-400" />
                     {stats.coins > 0 && (
                         <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold">
@@ -632,16 +635,16 @@ const MainMenu = () => {
                         </span>
                     )}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowAchievements(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowAchievements(true)} className="rounded-full h-12 w-12 p-0" aria-label="Achievements" title="Achievements">
                     <Award size={20} className="text-orange-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowGrammar(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowGrammar(true)} className="rounded-full h-12 w-12 p-0" aria-label="Grammar" title="Grammar">
                     <BookOpen size={20} className="text-emerald-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => navigate('/mastery')} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => navigate('/mastery')} className="rounded-full h-12 w-12 p-0" aria-label="Mastery" title="Mastery">
                     <BarChart3 size={20} className="text-indigo-400" />
                 </Button>
-                <Button variant="ghost" size="sm" onClick={() => setShowGoals(true)} className="rounded-full h-12 w-12 p-0">
+                <Button variant="ghost" size="sm" onClick={() => setShowGoals(true)} className="rounded-full h-12 w-12 p-0" aria-label="Goals" title="Goals">
                     <Target size={20} className="text-red-400" />
                 </Button>
             </div>
