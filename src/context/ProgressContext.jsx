@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { calculateLevel, getLevelProgress } from '../utils/gamificationUtils';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { checkStreakMilestone } from '../data/leagues';
@@ -120,6 +120,8 @@ export const ProgressProvider = ({ children }) => {
         lastWeeklyRecap: null
     }), []);
 
+    const statsRef = useRef();
+
     const [stats, setStats] = useState(() => {
         try {
             const saved = localStorage.getItem('frenchApp_progress');
@@ -147,6 +149,7 @@ export const ProgressProvider = ({ children }) => {
     });
 
     useEffect(() => {
+        statsRef.current = stats;
         const timeoutId = setTimeout(() => {
             localStorage.setItem('frenchApp_progress', JSON.stringify(stats));
         }, 1000);
@@ -156,11 +159,18 @@ export const ProgressProvider = ({ children }) => {
     // Also save on unmount/page hide to ensure data isn't lost
     useEffect(() => {
         const handleBeforeUnload = () => {
-            localStorage.setItem('frenchApp_progress', JSON.stringify(stats));
+            if (statsRef.current) {
+                localStorage.setItem('frenchApp_progress', JSON.stringify(statsRef.current));
+            }
         };
         window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-    }, [stats]);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+            if (statsRef.current) {
+                localStorage.setItem('frenchApp_progress', JSON.stringify(statsRef.current));
+            }
+        };
+    }, []);
 
     // Audio & Theme State
     const [audioEnabled, setAudioEnabled] = useState(() => {
