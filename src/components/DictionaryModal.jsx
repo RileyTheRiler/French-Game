@@ -4,7 +4,7 @@ import { useProgress } from '../context/ProgressContext';
 import { playWordAudio } from '../utils/audio';
 import { GRAMMAR_TIPS } from '../data/grammar';
 import { Star, Pin, Clock3, BellOff, Volume2 } from 'lucide-react';
-import { formatRelativeTime, formatDateTime } from '../utils/time';
+import { formatRelativeTime } from '../utils/time';
 import { Button } from './ui/Button';
 
 const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
@@ -23,6 +23,7 @@ const DictionaryModal = ({ onClose, initialSearchTerm = '' }) => {
         tip.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         tip.content.toLowerCase().includes(searchTerm.toLowerCase())
     );
+    // eslint-disable-next-line react-hooks/purity, react-hooks/exhaustive-deps
     const now = useMemo(() => Date.now(), [vocabulary]);
 
     return (
