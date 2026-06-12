@@ -81,40 +81,6 @@ const WritingPad = () => {
         ? ACCENT_CHARACTERS[currentIndex]
         : TRACE_WORDS[currentIndex];
 
-    // Initialize canvas
-    useEffect(() => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-
-        // Set canvas size
-        const rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * 2;
-        canvas.height = rect.height * 2;
-        canvas.style.width = `${rect.width}px`;
-        canvas.style.height = `${rect.height}px`;
-
-        const ctx = canvas.getContext('2d');
-        ctx.scale(2, 2);
-        ctx.lineCap = 'round';
-        ctx.lineJoin = 'round';
-        ctx.strokeStyle = strokeColor;
-        ctx.lineWidth = strokeWidth;
-        contextRef.current = ctx;
-
-        // Draw initial guide if enabled
-        if (showGuide) {
-            drawGuide();
-        }
-    }, [currentIndex, mode, showGuide]);
-
-    // Update stroke settings
-    useEffect(() => {
-        if (contextRef.current) {
-            contextRef.current.strokeStyle = strokeColor;
-            contextRef.current.lineWidth = strokeWidth;
-        }
-    }, [strokeColor, strokeWidth]);
-
     // Draw the guide character/word
     const drawGuide = useCallback(() => {
         const canvas = canvasRef.current;
@@ -139,6 +105,41 @@ const WritingPad = () => {
         ctx.fillText(text, centerX, centerY);
         ctx.restore();
     }, [currentItem, mode]);
+
+    // Initialize canvas
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+
+        // Set canvas size
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * 2;
+        canvas.height = rect.height * 2;
+        canvas.style.width = `${rect.width}px`;
+        canvas.style.height = `${rect.height}px`;
+
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2, 2);
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = strokeWidth;
+        contextRef.current = ctx;
+
+        // Draw initial guide if enabled
+        if (showGuide) {
+            drawGuide();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentIndex, mode, showGuide, drawGuide]);
+
+    // Update stroke settings
+    useEffect(() => {
+        if (contextRef.current) {
+            contextRef.current.strokeStyle = strokeColor;
+            contextRef.current.lineWidth = strokeWidth;
+        }
+    }, [strokeColor, strokeWidth]);
 
     // Drawing handlers
     const startDrawing = ({ nativeEvent }) => {
@@ -326,7 +327,8 @@ const WritingPad = () => {
             <div className="p-4 flex items-center justify-between">
                 <button
                     onClick={() => navigate('/')}
-                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                    aria-label="Go back to previous page"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -340,7 +342,8 @@ const WritingPad = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={playAudio}
-                        className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        aria-label="Play audio"
                     >
                         <Volume2 className="w-5 h-5 text-slate-300" />
                     </button>
@@ -414,7 +417,8 @@ const WritingPad = () => {
                                 drawGuide();
                             }
                         }}
-                        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
+                        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        aria-label={showGuide ? "Hide guide" : "Show guide"}
                     >
                         {showGuide ? (
                             <Eye className="w-4 h-4 text-purple-400" />
@@ -446,12 +450,13 @@ const WritingPad = () => {
                         <button
                             key={color.value}
                             onClick={() => setStrokeColor(color.value)}
-                            className={`w-8 h-8 rounded-full border-2 transition-transform ${strokeColor === color.value
+                            className={`w-8 h-8 rounded-full border-2 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900 ${strokeColor === color.value
                                 ? 'border-white scale-110'
                                 : 'border-transparent hover:scale-105'
                                 }`}
                             style={{ backgroundColor: color.value }}
                             title={color.name}
+                            aria-label={`Select ${color.name} color`}
                         />
                     ))}
                 </div>
@@ -462,10 +467,11 @@ const WritingPad = () => {
                         <button
                             key={width}
                             onClick={() => setStrokeWidth(width)}
-                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${strokeWidth === width
+                            className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${strokeWidth === width
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
+                            aria-label={`Set stroke width to ${width} pixels`}
                         >
                             <div
                                 className="bg-white rounded-full"
