@@ -178,7 +178,8 @@ const VisualStoryCards = () => {
             <div className="p-4 flex items-center justify-between">
                 <button
                     onClick={() => navigate('/')}
-                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                    aria-label="Go back to dashboard"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -194,8 +195,11 @@ const VisualStoryCards = () => {
 
                 <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-purple-500' : 'bg-slate-800/50 hover:bg-slate-700/50'
-                        }`}
+                    className={`p-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${
+                        showFilters ? 'bg-purple-500' : 'bg-slate-800/50 hover:bg-slate-700/50'
+                    }`}
+                    aria-label={showFilters ? "Hide category filters" : "Show category filters"}
+                    aria-expanded={showFilters}
                 >
                     <Filter className="w-5 h-5 text-white" />
                 </button>
@@ -246,14 +250,16 @@ const VisualStoryCards = () => {
                     <button
                         onClick={prevCard}
                         disabled={currentIndex === 0}
-                        className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        aria-label="Previous card"
                     >
                         <ChevronLeft className="w-6 h-6 text-white" />
                     </button>
 
                     <button
                         onClick={() => setIsFlipped(!isFlipped)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors text-slate-300 text-sm"
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors text-slate-300 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        aria-expanded={isFlipped}
                     >
                         {isFlipped ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         Tap to {isFlipped ? 'hide' : 'reveal'}
@@ -262,7 +268,8 @@ const VisualStoryCards = () => {
                     <button
                         onClick={nextCard}
                         disabled={currentIndex === cards.length - 1}
-                        className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        aria-label="Next card"
                     >
                         <ChevronRight className="w-6 h-6 text-white" />
                     </button>
@@ -326,10 +333,11 @@ const VisualStoryCards = () => {
                                     e.stopPropagation();
                                     playAudio();
                                 }}
-                                className={`absolute top-4 right-4 p-3 rounded-full transition-colors ${audioPlaying
-                                    ? 'bg-white text-purple-600'
-                                    : 'bg-white/20 hover:bg-white/30 text-white'
-                                    }`}
+                                className={`absolute top-4 right-4 p-3 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${
+                                    audioPlaying ? 'bg-white text-purple-600' : 'bg-white/20 hover:bg-white/30 text-white'
+                                }`}
+                                aria-label="Play pronunciation audio"
+                                disabled={audioPlaying}
                             >
                                 <Volume2 className={`w-5 h-5 ${audioPlaying ? 'animate-pulse' : ''}`} />
                             </button>
