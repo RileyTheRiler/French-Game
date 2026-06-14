@@ -62,7 +62,7 @@ const getCategoryGradient = (category) => {
 
 const VisualStoryCards = () => {
     const navigate = useNavigate();
-    const { addXP, stats, globalDifficulty } = useProgress();
+    const { addXP, globalDifficulty } = useProgress();
     const { recordReview } = useVocabulary();
     const difficultyConfig = React.useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
 
@@ -93,6 +93,7 @@ const VisualStoryCards = () => {
         // Shuffle cards
         filtered = filtered.sort(() => Math.random() - 0.5);
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCards(filtered);
         setCurrentIndex(0);
         setIsFlipped(false);
