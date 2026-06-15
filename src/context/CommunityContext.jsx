@@ -83,9 +83,11 @@ export const CommunityProvider = ({ children }) => {
         }
 
         // Simulate receiving a correction after a delay
+        // eslint-disable-next-line no-use-before-define
         simulateCorrectionResponse(newWriting.id);
 
         return newWriting;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [addXP, unlockAchievement, communityStats.writingsSubmitted]);
 
     // Simulate a native speaker correcting the user's writing
