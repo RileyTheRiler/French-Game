@@ -188,16 +188,16 @@ const LessonCreator = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)}>
+                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)} aria-label="Delete lesson" title="Delete lesson">
                                     <Trash2 size={16} className="text-slate-600 hover:text-red-400" />
                                 </Button>
                                 <Button variant="secondary" size="icon" onClick={() => {
                                     setCurrentLesson(lesson);
                                     setStep(lesson.type === 'deck' ? 'create_deck' : 'create_quiz');
-                                }}>
+                                }} aria-label="Edit lesson" title="Edit lesson">
                                     <Edit3 size={16} />
                                 </Button>
-                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)}>
+                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)} aria-label="Start lesson" title="Start lesson">
                                     <Play size={16} fill="currentColor" />
                                 </Button>
                             </div>
@@ -290,7 +290,7 @@ const LessonCreator = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400">
+                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded-lg" aria-label="Remove word from deck" title="Remove word from deck">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -378,7 +378,7 @@ const LessonCreator = () => {
                                     <span className="text-indigo-400">→</span>
                                     <span className="text-slate-400 italic">{item.english}</span>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 rounded-lg focus:opacity-100" aria-label="Remove word from deck" title="Remove word from deck">
                                     <X size={18} />
                                 </button>
                             </motion.div>
