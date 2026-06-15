@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 import { WRITING_PROMPTS, SAMPLE_SUBMISSIONS, COMMUNITY_XP } from '../data/communityWritings';
 import { NATIVE_SPEAKERS, generateResponse } from '../data/nativeSpeakers';
@@ -83,9 +83,11 @@ export const CommunityProvider = ({ children }) => {
         }
 
         // Simulate receiving a correction after a delay
+        // eslint-disable-next-line no-use-before-define
         simulateCorrectionResponse(newWriting.id);
 
         return newWriting;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [addXP, unlockAchievement, communityStats.writingsSubmitted]);
 
     // Simulate a native speaker correcting the user's writing
@@ -192,7 +194,7 @@ export const CommunityProvider = ({ children }) => {
         return WRITING_PROMPTS.filter(p => p.difficulty === difficulty);
     }, []);
 
-    const value = {
+    const value = useMemo(() => ({
         myWritings,
         pendingWritings,
         myCorrections,
@@ -202,7 +204,7 @@ export const CommunityProvider = ({ children }) => {
         rateCorrection,
         getPrompts,
         WRITING_PROMPTS
-    };
+    }), [myWritings, pendingWritings, myCorrections, communityStats, submitWriting, submitCorrection, rateCorrection, getPrompts]);
 
     return (
         <CommunityContext.Provider value={value}>
