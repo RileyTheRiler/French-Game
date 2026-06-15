@@ -61,7 +61,7 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                                 {activeTab === 'goals' ? <Target className="text-blue-400" /> : <Settings className="text-purple-400" />}
                                 {activeTab === 'goals' ? 'Learning Goals' : 'Difficulty Settings'}
                             </h2>
-                            <Button variant="ghost" size="icon" onClick={onClose}>
+                            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close modal" title="Close modal">
                                 <X size={24} />
                             </Button>
                         </div>
