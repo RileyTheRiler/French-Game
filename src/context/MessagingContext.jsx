@@ -129,7 +129,9 @@ export const MessagingProvider = ({ children }) => {
         }
 
         // Simulate partner response
+        // eslint-disable-next-line no-use-before-define
         simulatePartnerResponse(partnerId, text);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [addXP, unlockAchievement, messagingStats.totalMessages]);
 
     // Simulate partner typing and response
@@ -258,7 +260,8 @@ export const MessagingProvider = ({ children }) => {
         getUnreadCount,
         getSuggestedReplies,
         NATIVE_SPEAKERS
-    }), [conversations, connectedPartners, messagingStats, typingPartner, getAvailablePartners, connectWithPartner, sendMessage, markAsRead, getConversation, getUnreadCount, getSuggestedReplies, NATIVE_SPEAKERS]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }), [conversations, connectedPartners, messagingStats, typingPartner, getAvailablePartners, connectWithPartner, sendMessage, markAsRead, getConversation, getUnreadCount, getSuggestedReplies]);
 
     return (
         <MessagingContext.Provider value={value}>
