@@ -22,6 +22,7 @@ export const SyncProvider = ({ children }) => {
         updatedAt: stats?.updatedAt || 0
     }), [stats, vocabulary]);
 
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     const performSync = useCallback(async () => {
         if (!user) return;
 
@@ -112,15 +113,17 @@ export const SyncProvider = ({ children }) => {
         setStatus('imported');
     }, [hydrateProgress, hydrateVocabulary]);
 
+    const value = useMemo(() => ({
+        syncing,
+        lastSyncedAt,
+        status,
+        performSync,
+        exportData,
+        importData
+    }), [syncing, lastSyncedAt, status, performSync, exportData, importData]);
+
     return (
-        <SyncContext.Provider value={{
-            syncing,
-            lastSyncedAt,
-            status,
-            performSync,
-            exportData,
-            importData
-        }}>
+        <SyncContext.Provider value={value}>
             {children}
         </SyncContext.Provider>
     );
