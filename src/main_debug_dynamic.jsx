@@ -16,7 +16,9 @@ async function debug() {
             console.log(`${path} OK`);
         } catch (e) {
             console.error(`DEBUG: Import failed for ${path}`, e);
-            document.body.innerHTML += `<h3>Error in ${path}: ${e.message}</h3>`;
+            const errEl = document.createElement("h3");
+            errEl.textContent = `Error in ${path}: ${e.message}`;
+            document.body.appendChild(errEl);
         }
     }
 }
