@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-23 - Missing Context Value Memoization
+**Learning:** Missing memoization on Context Providers' value props is a pervasive anti-pattern in this codebase (found in SyncContext today). Passing object literals directly causes cascading re-renders across all consumer components whenever the provider re-renders.
+**Action:** Always wrap the object passed to the value prop of a React Context Provider in a memoization hook with explicit dependency arrays.
