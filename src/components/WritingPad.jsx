@@ -326,6 +326,7 @@ const WritingPad = () => {
             <div className="p-4 flex items-center justify-between">
                 <button
                     onClick={() => navigate('/')}
+                    aria-label="Go back to dashboard"
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
@@ -340,6 +341,7 @@ const WritingPad = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={playAudio}
+                        aria-label="Play pronunciation"
                         className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
                     >
                         <Volume2 className="w-5 h-5 text-slate-300" />
@@ -414,6 +416,7 @@ const WritingPad = () => {
                                 drawGuide();
                             }
                         }}
+                        aria-label={showGuide ? "Hide writing guide" : "Show writing guide"}
                         className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
                     >
                         {showGuide ? (
