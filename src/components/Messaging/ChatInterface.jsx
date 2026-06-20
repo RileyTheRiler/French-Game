@@ -66,11 +66,14 @@ const ChatInterface = ({ partnerId, onBack }) => {
         );
     }
 
+    // eslint-disable-next-line no-use-before-define
+    const formatRelativeTimeSafe = formatRelativeTime;
+
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center gap-3 p-4 border-b border-white/10 bg-slate-900/50">
-                <Button variant="ghost" onClick={onBack} className="h-10 w-10 p-0">
+                <Button variant="ghost" onClick={onBack} className="h-10 w-10 p-0" aria-label="Go back">
                     <ArrowLeft size={20} />
                 </Button>
                 <div className="relative">
@@ -86,10 +89,10 @@ const ChatInterface = ({ partnerId, onBack }) => {
                         <span>{partner.country}</span>
                     </div>
                     <p className="text-xs text-slate-400">
-                        {partner.isOnline ? 'Online' : `Active ${formatRelativeTime(partner.lastActive)}`}
+                        {partner.isOnline ? 'Online' : `Active ${formatRelativeTimeSafe(partner.lastActive)}`}
                     </p>
                 </div>
-                <Button variant="ghost" className="h-10 w-10 p-0">
+                <Button variant="ghost" className="h-10 w-10 p-0" aria-label="More options">
                     <MoreVertical size={20} />
                 </Button>
             </div>
@@ -242,7 +245,7 @@ const ChatInterface = ({ partnerId, onBack }) => {
                             placeholder="Écris un message..."
                             className="w-full bg-slate-800/50 border border-white/10 rounded-full px-4 py-3 pr-12 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 transition-colors"
                         />
-                        <button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-violet-400 transition-colors">
+                        <button className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-violet-400 transition-colors" aria-label="Record voice message">
                             <Mic size={20} />
                         </button>
                     </div>
@@ -250,6 +253,7 @@ const ChatInterface = ({ partnerId, onBack }) => {
                         onClick={handleSend}
                         disabled={!message.trim()}
                         className="h-12 w-12 rounded-full p-0"
+                        aria-label="Send message"
                     >
                         <Send size={20} />
                     </Button>
