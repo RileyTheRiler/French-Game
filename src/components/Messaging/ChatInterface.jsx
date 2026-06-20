@@ -66,6 +66,9 @@ const ChatInterface = ({ partnerId, onBack }) => {
         );
     }
 
+    // eslint-disable-next-line no-use-before-define
+    const formatRelativeTimeSafe = formatRelativeTime;
+
     return (
         <div className="flex flex-col h-full">
             {/* Header */}
@@ -86,7 +89,7 @@ const ChatInterface = ({ partnerId, onBack }) => {
                         <span>{partner.country}</span>
                     </div>
                     <p className="text-xs text-slate-400">
-                        {partner.isOnline ? 'Online' : `Active ${formatRelativeTime(partner.lastActive)}`}
+                        {partner.isOnline ? 'Online' : `Active ${formatRelativeTimeSafe(partner.lastActive)}`}
                     </p>
                 </div>
                 <Button variant="ghost" className="h-10 w-10 p-0" aria-label="More options">
