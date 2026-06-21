@@ -179,6 +179,7 @@ const VisualStoryCards = () => {
                 <button
                     onClick={() => navigate('/')}
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    aria-label="Go back"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
