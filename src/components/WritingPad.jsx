@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     ArrowLeft, Eraser, Undo, RotateCcw, Check,
@@ -141,6 +142,42 @@ const WritingPad = () => {
         }
     }, [strokeColor, strokeWidth]);
 
+    // Get coordinates for both mouse and touch events
+    const getCoordinates = (event) => {
+        if (event.touches && event.touches[0]) {
+            const canvas = canvasRef.current;
+            const rect = canvas.getBoundingClientRect();
+            return {
+                offsetX: event.touches[0].clientX - rect.left,
+                offsetY: event.touches[0].clientY - rect.top,
+            };
+        }
+        return {
+            offsetX: event.offsetX,
+            offsetY: event.offsetY,
+        };
+    };
+
+    // Clear canvas
+    const clearCanvas = () => {
+        const canvas = canvasRef.current;
+        const ctx = contextRef.current;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (showGuide) drawGuide();
+        setHistory([]);
+        setHistoryIndex(-1);
+    };
+
+    // Save canvas state to history
+    const saveToHistory = () => {
+        const canvas = canvasRef.current;
+        const imageData = canvas.toDataURL();
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push(imageData);
+        setHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+    };
+
     // Drawing handlers
     const startDrawing = ({ nativeEvent }) => {
         const { offsetX, offsetY } = getCoordinates(nativeEvent);
@@ -164,22 +201,6 @@ const WritingPad = () => {
         }
     };
 
-    // Get coordinates for both mouse and touch events
-    const getCoordinates = (event) => {
-        if (event.touches && event.touches[0]) {
-            const canvas = canvasRef.current;
-            const rect = canvas.getBoundingClientRect();
-            return {
-                offsetX: event.touches[0].clientX - rect.left,
-                offsetY: event.touches[0].clientY - rect.top,
-            };
-        }
-        return {
-            offsetX: event.offsetX,
-            offsetY: event.offsetY,
-        };
-    };
-
     // Touch event handlers
     const handleTouchStart = (e) => {
         e.preventDefault();
@@ -194,16 +215,6 @@ const WritingPad = () => {
     const handleTouchEnd = (e) => {
         e.preventDefault();
         stopDrawing();
-    };
-
-    // Save canvas state to history
-    const saveToHistory = () => {
-        const canvas = canvasRef.current;
-        const imageData = canvas.toDataURL();
-        const newHistory = history.slice(0, historyIndex + 1);
-        newHistory.push(imageData);
-        setHistory(newHistory);
-        setHistoryIndex(newHistory.length - 1);
     };
 
     // Undo last stroke
@@ -224,16 +235,6 @@ const WritingPad = () => {
             ctx.drawImage(img, 0, 0, canvas.width / 2, canvas.height / 2);
         };
         setHistoryIndex(previousIndex);
-    };
-
-    // Clear canvas
-    const clearCanvas = () => {
-        const canvas = canvasRef.current;
-        const ctx = contextRef.current;
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if (showGuide) drawGuide();
-        setHistory([]);
-        setHistoryIndex(-1);
     };
 
     // Complete current item and move to next
