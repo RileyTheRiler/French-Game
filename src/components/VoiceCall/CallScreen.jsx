@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { PhoneOff, Mic, MicOff, User } from 'lucide-react';
 
@@ -68,10 +69,12 @@ const CallScreen = ({ npcName, isNpcSpeaking, isUserListening, onEndCall, onTogg
                 {/* Mic Button */}
                 <button
                     onClick={onToggleMic}
-                    className={`w-16 h-16 rounded-full flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 ${isUserListening
+                    className={`w-16 h-16 rounded-full flex items-center justify-center transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${isUserListening
                         ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.5)]'
                         : 'bg-slate-800 hover:bg-slate-700 text-slate-400'
                         }`}
+                    aria-label={isUserListening ? "Mute microphone" : "Unmute microphone"}
+                    title={isUserListening ? "Mute microphone" : "Unmute microphone"}
                 >
                     {isUserListening ? <Mic size={28} /> : <MicOff size={28} />}
                 </button>
@@ -79,7 +82,9 @@ const CallScreen = ({ npcName, isNpcSpeaking, isUserListening, onEndCall, onTogg
                 {/* End Call Button */}
                 <button
                     onClick={onEndCall}
-                    className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 active:scale-95"
+                    className="w-16 h-16 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center shadow-lg transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    aria-label="End call"
+                    title="End call"
                 >
                     <PhoneOff size={28} />
                 </button>
