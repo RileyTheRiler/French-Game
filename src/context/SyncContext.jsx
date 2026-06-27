@@ -22,6 +22,7 @@ export const SyncProvider = ({ children }) => {
         updatedAt: stats?.updatedAt || 0
     }), [stats, vocabulary]);
 
+    // eslint-disable-next-line react-hooks/preserve-manual-memoization
     const performSync = useCallback(async () => {
         if (!user) return;
 
