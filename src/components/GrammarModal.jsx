@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { X, BookOpen, ChevronLeft, ChevronRight, Lightbulb } from 'lucide-react';
 import { GRAMMAR_TIPS } from '../data/grammar';
 import { Card } from './ui/Card';
@@ -11,6 +11,7 @@ const GrammarModal = ({ isOpen, onClose }) => {
 
     // Tip of the Day based on date
     const tipOfTheDay = useMemo(() => {
+        // eslint-disable-next-line react-hooks/purity
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
         return GRAMMAR_TIPS[dayOfYear % GRAMMAR_TIPS.length];
     }, []);
@@ -99,7 +100,8 @@ const GrammarModal = ({ isOpen, onClose }) => {
                                     <button
                                         key={idx}
                                         onClick={() => setCurrentIndex(idx)}
-                                        className={`w-2 h-2 rounded-full transition-all ${idx === currentIndex ? 'bg-emerald-500 w-6' : 'bg-slate-700 hover:bg-slate-600'
+                                        aria-label={`Go to grammar tip ${idx + 1}`}
+                                        className={`w-2 h-2 rounded-full transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${idx === currentIndex ? 'bg-emerald-500 w-6' : 'bg-slate-700 hover:bg-slate-600'
                                             }`}
                                     />
                                 ))}
