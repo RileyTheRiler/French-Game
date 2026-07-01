@@ -190,6 +190,7 @@ export const VocabularyProvider = ({ children }) => {
         const cached = audioCacheRef.current[word.id] || buildAudioElement(word);
 
         if (cached) {
+            // eslint-disable-next-line
             cached.currentTime = 0;
             cached.play().catch(() => speak(word.french));
             return;
