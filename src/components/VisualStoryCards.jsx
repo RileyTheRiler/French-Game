@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import {
     ArrowLeft, ChevronLeft, ChevronRight, Volume2,
@@ -62,7 +63,7 @@ const getCategoryGradient = (category) => {
 
 const VisualStoryCards = () => {
     const navigate = useNavigate();
-    const { addXP, stats, globalDifficulty } = useProgress();
+    const { addXP, globalDifficulty } = useProgress();
     const { recordReview } = useVocabulary();
     const difficultyConfig = React.useMemo(() => getDifficultyConfig(globalDifficulty), [globalDifficulty]);
 
