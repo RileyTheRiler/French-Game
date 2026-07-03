@@ -93,6 +93,7 @@ const VisualStoryCards = () => {
         // Shuffle cards
         filtered = filtered.sort(() => Math.random() - 0.5);
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setCards(filtered);
         setCurrentIndex(0);
         setIsFlipped(false);
