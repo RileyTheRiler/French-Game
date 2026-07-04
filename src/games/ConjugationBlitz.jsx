@@ -68,6 +68,7 @@ const ConjugationBlitz = () => {
             timerRef.current = setInterval(() => {
                 setTimeLeft(prev => {
                     if (prev <= 1) {
+                        // eslint-disable-next-line no-use-before-define
                         endGame();
                         return 0;
                     }
