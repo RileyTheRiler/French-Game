@@ -21,7 +21,6 @@ const ClozeGame = () => {
     const MAX_QUESTIONS = 5;
 
     useEffect(() => {
-        // eslint-disable-next-line no-use-before-define
         loadNextPuzzle();
     }, []);
 
@@ -63,8 +62,7 @@ const ClozeGame = () => {
             setStatus('finished');
         } else {
             setQuestionCount(c => c + 1);
-            // eslint-disable-next-line no-use-before-define
-        loadNextPuzzle();
+            loadNextPuzzle();
         }
     };
 

@@ -129,7 +129,6 @@ export const MessagingProvider = ({ children }) => {
         }
 
         // Simulate partner response
-        // eslint-disable-next-line no-use-before-define
         simulatePartnerResponse(partnerId, text);
     }, [addXP, unlockAchievement, messagingStats.totalMessages]);
 
