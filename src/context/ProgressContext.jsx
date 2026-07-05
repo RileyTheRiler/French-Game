@@ -356,14 +356,12 @@ export const ProgressProvider = ({ children }) => {
     }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
 
     // Check achievements when relevant stats change
-    }, [stats.xp, stats.unlockedAchievements, stats.dailyStats, stats.streak, stats.wordsLearned, showAchievement]);
-
     useEffect(() => {
         const timer = setTimeout(() => {
             checkAchievements();
         }, 0);
         return () => clearTimeout(timer);
-    }, [stats.xp, stats.wordsLearned, stats.storiesCompleted, stats.conversationsCompleted, stats.streak, checkAchievements]);
+    }, [stats.xp, stats.unlockedAchievements, stats.dailyStats, stats.streak, stats.wordsLearned, stats.storiesCompleted, stats.conversationsCompleted, checkAchievements, showAchievement]);
 
 
     const addCoins = useCallback((amount) => {
