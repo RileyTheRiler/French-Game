@@ -83,6 +83,7 @@ const MainMenu = () => {
             const diffDays = (now - lastSeen) / (1000 * 60 * 60 * 24);
 
             if (diffDays > 6) {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setShowWeeklyRecap(true);
             }
         }
