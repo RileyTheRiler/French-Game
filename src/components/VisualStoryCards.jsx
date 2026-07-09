@@ -178,7 +178,8 @@ const VisualStoryCards = () => {
             <div className="p-4 flex items-center justify-between">
                 <button
                     onClick={() => navigate('/')}
-                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    aria-label="Go back"
+                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -194,7 +195,8 @@ const VisualStoryCards = () => {
 
                 <button
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-purple-500' : 'bg-slate-800/50 hover:bg-slate-700/50'
+                    aria-label="Toggle filters"
+                    className={`p-2 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 ${showFilters ? 'bg-purple-500' : 'bg-slate-800/50 hover:bg-slate-700/50'
                         }`}
                 >
                     <Filter className="w-5 h-5 text-white" />
@@ -246,7 +248,8 @@ const VisualStoryCards = () => {
                     <button
                         onClick={prevCard}
                         disabled={currentIndex === 0}
-                        className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Previous card"
+                        className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                     >
                         <ChevronLeft className="w-6 h-6 text-white" />
                     </button>
@@ -262,7 +265,8 @@ const VisualStoryCards = () => {
                     <button
                         onClick={nextCard}
                         disabled={currentIndex === cards.length - 1}
-                        className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Next card"
+                        className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                     >
                         <ChevronRight className="w-6 h-6 text-white" />
                     </button>
