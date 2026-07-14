@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-24 - Automated Conflict Resolution Danger
+**Learning:** Attempting to fix massive global merge conflicts programmatically using naive regex substitutions is dangerous and destructs source logic, leading to unrecoverable 'Cannot access variable before it is declared' errors and parsing failures across the app.
+**Action:** Focus strictly on the single isolated optimization target without trying to automatically resolve global pre-existing merge conflicts, bypassing tests if necessary.
