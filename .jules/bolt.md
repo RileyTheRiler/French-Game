@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-23 - Context Memoization with Nested Dependencies
+**Learning:** When memoizing a context value that exposes functions with internal dependencies (like `submitWriting` calling `simulateCorrectionResponse`), those inner functions must be hoisted or ordered correctly, and included in the outer dependency array to pass strict linting rules and avoid closure staleness.
+**Action:** Always verify the function dependency graph within a Provider before wrapping the final value in `useMemo`, and resolve `no-use-before-define` errors by physically reordering functions.
