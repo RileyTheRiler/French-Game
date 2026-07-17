@@ -356,9 +356,7 @@ export const ProgressProvider = ({ children }) => {
     }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
 
     // Check achievements when relevant stats change
-    }, [stats.xp, stats.unlockedAchievements, stats.dailyStats, stats.streak, stats.wordsLearned, showAchievement]);
-
-    useEffect(() => {
+        useEffect(() => {
         const timer = setTimeout(() => {
             checkAchievements();
         }, 0);
