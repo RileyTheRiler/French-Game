@@ -326,7 +326,8 @@ const WritingPad = () => {
             <div className="p-4 flex items-center justify-between">
                 <button
                     onClick={() => navigate('/')}
-                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                    aria-label="Go back"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -340,7 +341,8 @@ const WritingPad = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={playAudio}
-                        className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        aria-label="Play audio pronunciation"
                     >
                         <Volume2 className="w-5 h-5 text-slate-300" />
                     </button>
@@ -414,7 +416,9 @@ const WritingPad = () => {
                                 drawGuide();
                             }
                         }}
-                        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
+                        className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        aria-label={showGuide ? "Hide drawing guide" : "Show drawing guide"}
+                        aria-pressed={showGuide}
                     >
                         {showGuide ? (
                             <Eye className="w-4 h-4 text-purple-400" />
