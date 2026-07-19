@@ -177,8 +177,9 @@ const VisualStoryCards = () => {
             {/* Header */}
             <div className="p-4 flex items-center justify-between">
                 <button
+                    aria-label="Go back to home"
                     onClick={() => navigate('/')}
-                    className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    className="focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -193,8 +194,9 @@ const VisualStoryCards = () => {
                 </div>
 
                 <button
+                    aria-label="Toggle filters"
                     onClick={() => setShowFilters(!showFilters)}
-                    className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-purple-500' : 'bg-slate-800/50 hover:bg-slate-700/50'
+                    className={`focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 p-2 rounded-lg transition-colors ${showFilters ? 'bg-purple-500' : 'bg-slate-800/50 hover:bg-slate-700/50'
                         }`}
                 >
                     <Filter className="w-5 h-5 text-white" />
@@ -214,7 +216,7 @@ const VisualStoryCards = () => {
                             <div className="flex flex-wrap gap-2">
                                 <button
                                     onClick={() => setSelectedCategory(null)}
-                                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${selectedCategory === null
+                                    className={`focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${selectedCategory === null
                                         ? 'bg-purple-500 text-white'
                                         : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                                         }`}
@@ -225,7 +227,7 @@ const VisualStoryCards = () => {
                                     <button
                                         key={key}
                                         onClick={() => setSelectedCategory(key)}
-                                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all ${selectedCategory === key
+                                        className={`focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${selectedCategory === key
                                             ? 'bg-purple-500 text-white'
                                             : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                                             }`}
@@ -244,25 +246,27 @@ const VisualStoryCards = () => {
                 {/* Navigation arrows */}
                 <div className="w-full max-w-lg flex items-center justify-between mb-4">
                     <button
+                        aria-label="Previous card"
                         onClick={prevCard}
                         disabled={currentIndex === 0}
-                        className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                         <ChevronLeft className="w-6 h-6 text-white" />
                     </button>
 
                     <button
                         onClick={() => setIsFlipped(!isFlipped)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors text-slate-300 text-sm"
+                        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/50 hover:bg-slate-700/50 transition-colors text-slate-300 text-sm"
                     >
                         {isFlipped ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         Tap to {isFlipped ? 'hide' : 'reveal'}
                     </button>
 
                     <button
+                        aria-label="Next card"
                         onClick={nextCard}
                         disabled={currentIndex === cards.length - 1}
-                        className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        className="focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
                     >
                         <ChevronRight className="w-6 h-6 text-white" />
                     </button>
@@ -326,7 +330,8 @@ const VisualStoryCards = () => {
                                     e.stopPropagation();
                                     playAudio();
                                 }}
-                                className={`absolute top-4 right-4 p-3 rounded-full transition-colors ${audioPlaying
+                                aria-label="Play pronunciation audio"
+                                className={`focus:outline-none focus-visible:ring-2 focus-visible:ring-white absolute top-4 right-4 p-3 rounded-full transition-colors ${audioPlaying
                                     ? 'bg-white text-purple-600'
                                     : 'bg-white/20 hover:bg-white/30 text-white'
                                     }`}
