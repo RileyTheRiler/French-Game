@@ -112,15 +112,21 @@ export const SyncProvider = ({ children }) => {
         setStatus('imported');
     }, [hydrateProgress, hydrateVocabulary]);
 
+    // ⚡ Bolt Performance Optimization:
+    // Memoize the context value to prevent unnecessary re-renders of all consumer components
+    // every time the SyncProvider re-renders. This reduces render cycles across the application.
+    // Impact: Avoids cascading re-renders in components consuming useSync(), improving overall UI responsiveness.
+    const contextValue = useMemo(() => ({
+        syncing,
+        lastSyncedAt,
+        status,
+        performSync,
+        exportData,
+        importData
+    }), [syncing, lastSyncedAt, status, performSync, exportData, importData]);
+
     return (
-        <SyncContext.Provider value={{
-            syncing,
-            lastSyncedAt,
-            status,
-            performSync,
-            exportData,
-            importData
-        }}>
+        <SyncContext.Provider value={contextValue}>
             {children}
         </SyncContext.Provider>
     );
