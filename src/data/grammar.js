@@ -276,6 +276,7 @@ export const GRAMMAR_DRILLS = [
         prompt: 'Speaking to your best friend, use:',
         answer: 'Tu',
         options: ['Tu', 'Vous'],
+<<<<<<< HEAD
         xpReward: 10
     },
     // Passé Composé
