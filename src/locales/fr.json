@@ -69,6 +69,17 @@
                 "title": "Chasse aux Erreurs",
                 "desc": "Trouvez les fautes dans les phrases."
             }
+        },
+        "top_bar": {
+            "leaderboard": "Classement",
+            "social": "Social",
+            "dictionary": "Dictionnaire",
+            "settings": "Paramètres",
+            "shop": "Boutique",
+            "achievements": "Succès",
+            "grammar": "Grammaire",
+            "mastery": "Maîtrise",
+            "goals": "Objectifs"
         }
     },
     "settings": {
