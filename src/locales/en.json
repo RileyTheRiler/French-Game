@@ -69,6 +69,17 @@
                 "title": "Error Spotting",
                 "desc": "Find mistakes in French sentences."
             }
+        },
+        "top_bar": {
+            "leaderboard": "Leaderboard",
+            "social": "Social",
+            "dictionary": "Dictionary",
+            "settings": "Settings",
+            "shop": "Shop",
+            "achievements": "Achievements",
+            "grammar": "Grammar",
+            "mastery": "Mastery",
+            "goals": "Goals"
         }
     },
     "settings": {
