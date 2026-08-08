@@ -9,22 +9,22 @@ const SubtitleOverlay = ({ currentSubtitle, showEnglish, onWordClick }) => {
             <div className="mb-2 pointer-events-auto">
                 <span className="bg-black/60 backdrop-blur-sm px-4 py-2 rounded-xl text-xl md:text-2xl font-bold text-white shadow-lg inline-block">
                     {currentSubtitle.tokens.map((token, index) => (
-                        <span
+                        token.definition ? (
+                        <button
                             key={index}
-                            onClick={() => {
-                                // Only interactive if it's a word (simple heuristic: has definition)
-                                if (token.definition) {
-                                    onWordClick(token.text);
-                                }
-                            }}
+                            onClick={() => onWordClick(token.text)}
                             className={`
-                                inline-block px-1 rounded cursor-pointer transition-colors
-                                ${token.definition ? 'hover:text-[var(--accent-primary)] hover:bg-white/10' : ''}
+                                inline-block px-1 rounded cursor-pointer transition-colors appearance-none text-left focus:outline-none focus-visible:ring-2 border-none bg-transparent hover:text-[var(--accent-primary)] hover:bg-white/10
                             `}
-                            title={token.definition || ''}
+                            title={token.definition}
                         >
                             {token.text}
+                        </button>
+                    ) : (
+                        <span key={index} className="inline-block px-1 rounded">
+                            {token.text}
                         </span>
+                    )
                     ))}
                 </span>
             </div>
