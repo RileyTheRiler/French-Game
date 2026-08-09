@@ -18,3 +18,8 @@
 **Vulnerability:** `verifyPassword` used a non-constant time comparison (`===`) for hash verification, allowing potential timing attacks. Additionally, duplicate function definitions in `src/utils/crypto.js` created ambiguity and risk of using an insecure version.
 **Learning:** Copy-paste errors or bad merges can leave dangerous duplicates in utility files. Simple string comparison for hashes leaks timing information about the validity of the hash.
 **Prevention:** Always use a constant-time comparison function (like `crypto.timingSafeEqual` or a manual implementation) for secrets. Ensure linting rules catch duplicate declarations to prevent ambiguous code.
+
+## 2025-02-28 - Unsafe DOM Manipulation in Debug Scripts
+**Vulnerability:** `innerHTML` was used directly with dynamic input (`e.message` and `path`) when rendering error messages in `src/main_debug_dynamic.jsx`. This creates a DOM-based Cross-Site Scripting (XSS) vulnerability if the path or error message is controllable by an attacker or contains unsanitized data.
+**Learning:** Even in "debug" or internal scripts, using `innerHTML` with dynamic variables introduces XSS risks. Developers often use `innerHTML +=` for quick debugging UI without considering security implications.
+**Prevention:** Avoid `innerHTML` entirely for dynamically constructed content. Use safe DOM manipulation methods like `document.createElement()` and `textContent` to ensure the content is properly escaped by the browser, preventing script execution.
