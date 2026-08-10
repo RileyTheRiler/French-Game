@@ -177,6 +177,7 @@ const VisualStoryCards = () => {
             {/* Header */}
             <div className="p-4 flex items-center justify-between">
                 <button
+                    aria-label="Back to home"
                     onClick={() => navigate('/')}
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
                 >
@@ -193,6 +194,7 @@ const VisualStoryCards = () => {
                 </div>
 
                 <button
+                    aria-label={showFilters ? "Hide filters" : "Show filters"}
                     onClick={() => setShowFilters(!showFilters)}
                     className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-purple-500' : 'bg-slate-800/50 hover:bg-slate-700/50'
                         }`}
@@ -244,6 +246,7 @@ const VisualStoryCards = () => {
                 {/* Navigation arrows */}
                 <div className="w-full max-w-lg flex items-center justify-between mb-4">
                     <button
+                        aria-label="Previous card"
                         onClick={prevCard}
                         disabled={currentIndex === 0}
                         className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -260,6 +263,7 @@ const VisualStoryCards = () => {
                     </button>
 
                     <button
+                        aria-label="Next card"
                         onClick={nextCard}
                         disabled={currentIndex === cards.length - 1}
                         className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
@@ -322,6 +326,7 @@ const VisualStoryCards = () => {
 
                             {/* Audio button */}
                             <button
+                                aria-label="Play pronunciation"
                                 onClick={(e) => {
                                     e.stopPropagation();
                                     playAudio();

@@ -62,6 +62,16 @@ const ConjugationBlitz = () => {
         if (inputRef.current) inputRef.current.focus();
     };
 
+    const endGame = () => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    };
+
     // Timer Logic
     useEffect(() => {
         if (status === 'playing') {
@@ -76,17 +86,8 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
+    }, [status, endGame]);
 
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
-
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
 
     const handleSubmit = (e) => {
         e.preventDefault();

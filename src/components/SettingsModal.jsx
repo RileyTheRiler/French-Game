@@ -22,7 +22,7 @@ const SettingsModal = ({ onClose }) => {
             setIsCachingAudio(false);
         }
     };
-import { useAuth } from '../context/AuthContext';
+// import { useAuth } from '../context/AuthContext';
 import { useSync } from '../context/SyncContext';
 
 const SettingsModal = ({ onClose }) => {
