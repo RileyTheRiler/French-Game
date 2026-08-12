@@ -20,23 +20,22 @@ const ClozeGame = () => {
     const [questionCount, setQuestionCount] = useState(0);
     const MAX_QUESTIONS = 5;
 
-    useEffect(() => {
-        loadNextPuzzle();
-    }, []);
-
-    const loadNextPuzzle = () => {
+    const loadNextPuzzle = useCallback(() => {
         const newPuzzle = generateCloze(1); // Default to level 1 for now
         if (newPuzzle) {
             setPuzzle(newPuzzle);
             setSelectedOption(null);
             setStatus('playing');
         } else {
-            // Fallback or error state if generator fails
             setStatus('finished');
         }
-    };
+    }, []);
 
-    const handleOptionClick = (option) => {
+    useEffect(() => {
+        loadNextPuzzle();
+    }, [loadNextPuzzle]);
+
+const handleOptionClick = (option) => {
         if (status !== 'playing') return;
 
         setSelectedOption(option);
