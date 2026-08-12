@@ -1,3 +1,8 @@
+## 2024-05-17 - DOM XSS in Debug Script
+**Vulnerability:** Use of innerHTML with unescaped dynamic variables in src/main_debug_dynamic.jsx.
+**Learning:** Even internal or debug scripts can introduce XSS if they reflect user-controllable or dynamic path data directly into the DOM.
+**Prevention:** Always use safe DOM manipulation methods like document.createElement and textContent when rendering dynamic data.
+
 ## 2024-05-22 - Client-Side Hashing & Legacy Migration
 **Vulnerability:** User passwords were stored in plaintext in `localStorage`.
 **Learning:** Client-side apps without a backend often default to insecure storage. Migrating data on the client requires careful handling of "legacy" states (plaintext) vs "secure" states (hashed) during the first login after the fix.
