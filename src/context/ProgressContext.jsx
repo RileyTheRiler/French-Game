@@ -353,10 +353,7 @@ export const ProgressProvider = ({ children }) => {
             return newUnlocks;
         }
         return [];
-    }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement]);
-
-    // Check achievements when relevant stats change
-    }, [stats.xp, stats.unlockedAchievements, stats.dailyStats, stats.streak, stats.wordsLearned, showAchievement]);
+    }, [stats.xp, stats.streak, stats.wordsLearned, stats.unlockedAchievements, showAchievement, stats.dailyStats]);
 
     useEffect(() => {
         const timer = setTimeout(() => {
