@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { SENTENCE_BLUEPRINTS } from '../data/sentenceBlueprints';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -80,7 +80,8 @@ const TreeNode = ({ node, depth = 0 }) => {
 
 const GrammarTreeVisualizer = () => {
     const [selectedId, setSelectedId] = useState(SENTENCE_BLUEPRINTS[0].id);
-    const selectedBlueprint = SENTENCE_BLUEPRINTS.find(b => b.id === selectedId);
+    // Performance: Memoize the blueprint lookup to avoid O(N) find operation on every re-render.
+    const selectedBlueprint = useMemo(() => SENTENCE_BLUEPRINTS.find(b => b.id === selectedId), [selectedId]);
 
     return (
         <div className="max-w-6xl mx-auto p-6">
