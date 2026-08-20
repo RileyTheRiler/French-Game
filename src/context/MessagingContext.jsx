@@ -173,7 +173,7 @@ export const MessagingProvider = ({ children }) => {
 
         // Simulate partner response
         simulatePartnerResponse(partnerId, text);
-    }, [addXP, unlockAchievement, messagingStats.totalMessages]);
+    }, [addXP, unlockAchievement, messagingStats.totalMessages, simulatePartnerResponse]);
 
     // Mark messages as read
     const markAsRead = useCallback((partnerId) => {
