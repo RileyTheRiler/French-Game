@@ -99,6 +99,49 @@ export const MessagingProvider = ({ children }) => {
         }
     }, [connectedPartners, addXP, unlockAchievement]);
 
+    // Simulate partner typing and response
+    const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
+        const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
+        if (!partner) return;
+
+        // Show typing indicator
+        setTypingPartner(partnerId);
+
+        // Simulate typing delay based on partner's typing speed
+        const baseDelay = partner.typingSpeed || 1500;
+        const randomDelay = baseDelay + Math.random() * 1000;
+
+        setTimeout(() => {
+            setTypingPartner(null);
+
+            // Generate response
+            const responseText = Array.isArray(partner.greetings)
+                ? partner.greetings[Math.floor(Math.random() * partner.greetings.length)]
+                : "C'est intéressant !";
+
+            const newMessage = {
+                id: Date.now().toString(),
+                text: responseText,
+                senderId: partnerId,
+                timestamp: Date.now(),
+                isRead: false
+            };
+
+            setConversations(prev => ({
+                ...prev,
+                [partnerId]: {
+                    ...prev[partnerId],
+                    messages: [...(prev[partnerId]?.messages || []), newMessage],
+                    lastMessageAt: newMessage.timestamp,
+                    unreadCount: (prev[partnerId]?.unreadCount || 0) + 1
+                }
+            }));
+
+            // Notify user of new message (if not actively in that chat)
+            // This would normally trigger a toast or notification sound
+        }, randomDelay);
+    }, []);
+
     // Send a message
     const sendMessage = useCallback((partnerId, text) => {
         const userMessage = {
@@ -130,55 +173,7 @@ export const MessagingProvider = ({ children }) => {
 
         // Simulate partner response
         simulatePartnerResponse(partnerId, text);
-    }, [addXP, unlockAchievement, messagingStats.totalMessages]);
-
-    // Simulate partner typing and response
-    const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
-        const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
-        if (!partner) return;
-
-        // Show typing indicator
-        setTypingPartner(partnerId);
-
-        // Simulate typing delay based on partner's typing speed
-        const baseDelay = partner.typingSpeed || 1500;
-        const randomDelay = baseDelay + Math.random() * 1000;
-
-        setTimeout(() => {
-            setTypingPartner(null);
-
-            // Generate response
-            const responseText = generateResponse(partner, userMessage);
-
-            // Check for errors in user's message and possibly correct them
-            const errors = detectErrors(userMessage);
-            let finalResponse = responseText;
-
-            if (errors.length > 0 && Math.random() > 0.5) {
-                // Sometimes add a correction
-                const error = errors[0];
-                const correctionPrefix = partner.responsePatterns.correction[
-                    Math.floor(Math.random() * partner.responsePatterns.correction.length)
-                ].replace('{correction}', error.suggestion);
-                finalResponse = correctionPrefix + "\n\n" + responseText;
-            }
-
-            const partnerMessage = {
-                id: `msg_${Date.now()}`,
-                senderId: partnerId,
-                senderName: partner.name,
-                text: finalResponse,
-                timestamp: Date.now(),
-                read: false,
-                correction: errors.length > 0 ? errors[0] : null
-            };
-
-            setConversations(prev => ({
-                ...prev,
-                [partnerId]: [...(prev[partnerId] || []), partnerMessage]
-            }));
-        }, randomDelay);
-    }, []);
+    }, [addXP, unlockAchievement, messagingStats.totalMessages, simulatePartnerResponse]);
 
     // Mark messages as read
     const markAsRead = useCallback((partnerId) => {
