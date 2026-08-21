@@ -200,6 +200,8 @@ export const ProgressProvider = ({ children }) => {
         document.body.dataset.theme = colorTheme;
     }, [colorTheme]);
 
+
+
     const toggleAudio = useCallback(() => setAudioEnabled(prev => !prev), []);
     const toggleOfflineAudio = useCallback(() => setOfflineAudio(prev => !prev), []);
     const toggleReducedMotion = useCallback(() => setReducedMotion(prev => !prev), []);
