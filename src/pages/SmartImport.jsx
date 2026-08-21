@@ -49,8 +49,9 @@ const SmartImport = () => {
                 <button
                     onClick={() => navigate('/')}
                     className="p-2 rounded-full hover:bg-slate-800 transition-colors"
+                    aria-label="Go back"
                 >
-                    <ArrowLeft className="text-slate-400" />
+                    <ArrowLeft className="text-slate-400" aria-hidden="true" />
                 </button>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                     Smart Content Importer
