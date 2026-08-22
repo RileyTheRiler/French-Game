@@ -102,7 +102,9 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     }, []);
 
-    const value = {
+    // Performance: Memoized context value to prevent unnecessary re-renders of consuming components
+    // Impact: Avoids re-rendering all children when AuthProvider re-renders without value changes
+    const value = useMemo(() => ({
         user,
         loading,
         error,
@@ -110,7 +112,7 @@ export const AuthProvider = ({ children }) => {
         signIn,
         signUp,
         signOut
-    };
+    }), [user, loading, error, providers, signIn, signUp, signOut]);
 
     return (
         <AuthContext.Provider value={value}>
