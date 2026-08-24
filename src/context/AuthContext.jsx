@@ -102,7 +102,8 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     }, []);
 
-    const value = {
+    // Bolt: Memoize context value object to prevent unnecessary re-renders of consumers
+    const value = useMemo(() => ({
         user,
         loading,
         error,
@@ -110,7 +111,7 @@ export const AuthProvider = ({ children }) => {
         signIn,
         signUp,
         signOut
-    };
+    }), [user, loading, error, providers, signIn, signUp, signOut]);
 
     return (
         <AuthContext.Provider value={value}>
