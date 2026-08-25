@@ -23,8 +23,8 @@ const ClozeGame = () => {
     const loadNextPuzzle = () => {
         const newPuzzle = generateCloze(1); // Default to level 1 for now
         if (newPuzzle) {
-            setCurrentPuzzle(newPuzzle);
-            setScore(0);
+            setPuzzle(newPuzzle);
+            setSelectedOption(null);
             setStatus('playing');
         } else {
             setStatus('finished');

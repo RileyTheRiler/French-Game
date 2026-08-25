@@ -50,11 +50,14 @@ export const SocialProvider = ({ children }) => {
         const userContribution = Math.max(0, stats.xp - userCoopStartXp);
         const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
 
-        setActiveChallenge(prev => ({
-            ...prev,
-            current: total,
-            isCompleted: total >= prev.target
-        }));
+        // Use timeout to prevent synchronous state update warning
+        setTimeout(() => {
+            setActiveChallenge(prev => ({
+                ...prev,
+                current: total,
+                isCompleted: total >= prev.target
+            }));
+        }, 0);
     }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
 
     const claimCoopReward = useCallback(() => {

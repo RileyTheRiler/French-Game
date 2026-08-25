@@ -76,7 +76,7 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
+    }, [status, endGame]);
 
     const endGame = () => {
         clearInterval(timerRef.current);
