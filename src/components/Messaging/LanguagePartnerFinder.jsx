@@ -40,7 +40,7 @@ const LanguagePartnerFinder = ({ onBack, onSelectPartner }) => {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center gap-3">
-                <Button variant="ghost" onClick={onBack} className="h-10 w-10 p-0">
+                <Button variant="ghost" onClick={onBack} className="h-10 w-10 p-0" aria-label="Go back">
                     <ArrowLeft size={20} />
                 </Button>
                 <div>
