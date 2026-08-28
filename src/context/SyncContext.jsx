@@ -112,15 +112,19 @@ export const SyncProvider = ({ children }) => {
         setStatus('imported');
     }, [hydrateProgress, hydrateVocabulary]);
 
+    // ⚡ Bolt: Memoize context value to prevent unnecessary re-renders in components utilizing sync state
+    // Impact: Prevents wide-scale component re-renders when sync status transitions (syncing, offline, up_to_date)
+    const contextValue = useMemo(() => ({
+        syncing,
+        lastSyncedAt,
+        status,
+        performSync,
+        exportData,
+        importData
+    }), [syncing, lastSyncedAt, status, performSync, exportData, importData]);
+
     return (
-        <SyncContext.Provider value={{
-            syncing,
-            lastSyncedAt,
-            status,
-            performSync,
-            exportData,
-            importData
-        }}>
+        <SyncContext.Provider value={contextValue}>
             {children}
         </SyncContext.Provider>
     );
