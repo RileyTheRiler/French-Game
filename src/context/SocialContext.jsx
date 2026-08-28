@@ -41,9 +41,16 @@ export const SocialProvider = ({ children }) => {
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
-        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: null,
         participants: []
     });
+
+    useEffect(() => {
+        setActiveChallenge(prev => ({
+            ...prev,
+            endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString()
+        }));
+    }, []);
 
     // Compute total current progress
     useEffect(() => {
