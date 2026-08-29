@@ -290,7 +290,7 @@ const LessonCreator = () => {
                                         ))}
                                     </div>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400">
+                                <button aria-label="Remove item" onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400">
                                     <X size={18} />
                                 </button>
                             </div>
@@ -378,7 +378,7 @@ const LessonCreator = () => {
                                     <span className="text-indigo-400">→</span>
                                     <span className="text-slate-400 italic">{item.english}</span>
                                 </div>
-                                <button onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                                <button aria-label="Remove word" onClick={() => removeWordFromDeck(item.id)} className="text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
                                     <X size={18} />
                                 </button>
                             </motion.div>
