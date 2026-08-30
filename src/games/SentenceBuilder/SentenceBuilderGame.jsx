@@ -61,14 +61,6 @@ const SentenceBuilderGame = ({ onExit }) => {
         }
     };
 
-    const nextLevel = () => {
-        if (currentScenarioIndex < SCENARIOS.length - 1) {
-            setCurrentScenarioIndex(curr => curr + 1);
-        } else {
-            setCurrentScenarioIndex(0);
-        }
-    };
-
     if (!scenario) return null;
 
     return (

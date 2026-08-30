@@ -99,6 +99,59 @@ export const MessagingProvider = ({ children }) => {
         }
     }, [connectedPartners, addXP, unlockAchievement]);
 
+    // Simulate partner typing and response
+    const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
+        const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
+        if (!partner) return;
+
+        // Show typing indicator
+        setTypingPartner(partnerId);
+
+        // Simulate typing delay based on partner's typing speed
+        const baseDelay = partner.typingSpeed || 1500;
+        const randomDelay = baseDelay + Math.random() * 1000;
+
+        setTimeout(() => {
+            // Very simple response logic
+            let responseText = "";
+
+            // Check if user made mistakes (simulate grammar check)
+            const errors = detectErrors(userMessage);
+
+            if (errors.length > 0 && Math.random() > 0.5) {
+                // Partner corrects you 50% of the time there's an error
+                responseText = partner.responsePatterns.correction[
+                    Math.floor(Math.random() * partner.responsePatterns.correction.length)
+                ] + " " + errors[0].correction;
+            } else if (userMessage.includes('?')) {
+                // Answer a question
+                responseText = partner.responsePatterns.answer[
+                    Math.floor(Math.random() * partner.responsePatterns.answer.length)
+                ];
+            } else {
+                // Standard reply
+                responseText = partner.responsePatterns.greeting[
+                    Math.floor(Math.random() * partner.responsePatterns.greeting.length)
+                ];
+            }
+
+            setConversations(prev => ({
+                ...prev,
+                [partnerId]: [...(prev[partnerId] || []), {
+                    id: Date.now().toString(),
+                    text: responseText,
+                    sender: 'partner',
+                    timestamp: Date.now()
+                }]
+            }));
+            setTypingPartner(null);
+
+            // Increment stats
+            setMessagingStats(prev => ({ ...prev, nativeInteractions: prev.nativeInteractions + 1 }));
+
+        }, randomDelay);
+    }, []);
+
     // Send a message
     const sendMessage = useCallback((partnerId, text) => {
         const userMessage = {
@@ -130,7 +183,7 @@ export const MessagingProvider = ({ children }) => {
 
         // Simulate partner response
         simulatePartnerResponse(partnerId, text);
-    }, [addXP, unlockAchievement, messagingStats.totalMessages]);
+    }, [addXP, unlockAchievement, messagingStats.totalMessages, simulatePartnerResponse]);
 
     // Simulate partner typing and response
     const simulatePartnerResponse = useCallback((partnerId, userMessage) => {

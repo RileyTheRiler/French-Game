@@ -255,7 +255,6 @@ export const detectErrors = (text) => {
     return errors;
 };
 
-const randomChoice = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
 // Conversation starters for different topics
 export const CONVERSATION_STARTERS = {
