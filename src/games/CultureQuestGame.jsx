@@ -23,6 +23,12 @@ const CultureQuestGame = () => {
     const [isAnswered, setIsAnswered] = useState(false);
     const [gameComplete, setGameComplete] = useState(false);
 
+    const finishGame = () => {
+        setStatus('finished');
+        SoundManager.playLevelUp();
+        addXP(score * 2);
+    };
+
     useEffect(() => {
         // Wrap in setTimeout to prevent synchronous state update warning
         setTimeout(() => {

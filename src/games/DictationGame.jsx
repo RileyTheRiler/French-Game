@@ -65,6 +65,24 @@ const DictationGame = () => {
         window.speechSynthesis.getVoices();
     }, []);
 
+    const handleSuccess = () => {
+        setHasAttempted(true);
+        setIsCorrect(true);
+        // Add XP locally, rely on ProgressContext for global
+        addXP(20);
+        SoundManager.playMatch();
+        setTimeout(() => {
+            loadNextSentence();
+        }, 1500);
+    };
+
+    const handleError = () => {
+        setHasAttempted(true);
+        setIsCorrect(false);
+        setErrors(prev => prev + 1);
+        SoundManager.playMiss();
+    };
+
     const checkAnswer = () => {
         if (!userInput.trim()) return;
 
