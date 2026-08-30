@@ -175,6 +175,7 @@ const VideoPlayer = ({ video, onClose }) => {
 
                     <div className="flex items-center space-x-4">
                         <button
+                            aria-label="Change playback speed"
                             onClick={handleSpeedChange}
                             className="bg-white/10 hover:bg-white/20 text-white text-sm font-bold px-3 py-1 rounded-lg backdrop-blur-sm transition-colors"
                         >
@@ -182,6 +183,7 @@ const VideoPlayer = ({ video, onClose }) => {
                         </button>
 
                         <button
+                            aria-label={showEnglish ? "Hide English subtitles" : "Show English subtitles"}
                             onClick={() => setShowEnglish(!showEnglish)}
                             className={`flex items-center space-x-2 px-3 py-1 rounded-lg backdrop-blur-sm text-sm font-bold transition-all ${showEnglish ? 'bg-[var(--accent-primary)] text-white' : 'bg-white/10 text-white/50'
                                 }`}
