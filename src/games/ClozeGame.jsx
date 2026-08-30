@@ -20,6 +20,19 @@ const ClozeGame = () => {
     const [questionCount, setQuestionCount] = useState(0);
     const MAX_QUESTIONS = 5;
 
+    const loadNextPuzzle = () => {
+        const newPuzzle = generateCloze(1); // Default to level 1 for now
+        if (newPuzzle) {
+            setPuzzle(newPuzzle);
+            setBlanks(new Array(newPuzzle.blanks.length).fill(null));
+            setScore(0);
+            setStatus('playing');
+        } else {
+            console.error("Failed to generate cloze puzzle");
+            setStatus('finished');
+        }
+    };
+
     useEffect(() => {
         loadNextPuzzle();
     }, []);
