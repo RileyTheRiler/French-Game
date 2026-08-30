@@ -86,7 +86,7 @@ export const CommunityProvider = ({ children }) => {
         simulateCorrectionResponse(newWriting.id);
 
         return newWriting;
-    }, [addXP, unlockAchievement, communityStats.writingsSubmitted]);
+    }, [addXP, unlockAchievement, communityStats.writingsSubmitted, simulateCorrectionResponse]);
 
     // Simulate a native speaker correcting the user's writing
     const simulateCorrectionResponse = useCallback((writingId) => {
