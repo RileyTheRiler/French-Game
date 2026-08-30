@@ -63,6 +63,16 @@ const ConjugationBlitz = () => {
     };
 
     // Timer Logic
+    const endGame = useCallback(() => {
+        clearInterval(timerRef.current);
+        setStatus('finished');
+        SoundManager.playLevelUp(); // or some generic finish sound
+
+        // Calculate total XP
+        const baseXP = score * 2;
+        addXP(baseXP);
+    }, [score, addXP]);
+
     useEffect(() => {
         if (status === 'playing') {
             timerRef.current = setInterval(() => {
@@ -76,24 +86,42 @@ const ConjugationBlitz = () => {
             }, 1000);
         }
         return () => clearInterval(timerRef.current);
-    }, [status]);
+    }, [status, endGame]);
 
-    const endGame = () => {
-        clearInterval(timerRef.current);
-        setStatus('finished');
-        SoundManager.playLevelUp(); // or some generic finish sound
 
-        // Calculate total XP
-        const baseXP = score * 2;
-        addXP(baseXP);
-    };
+
+    const checkAnswer = useCallback(() => {
+        const normalizedInput = userInput.trim().toLowerCase();
+        const correctAnswer = currentChallenge.answer.toLowerCase();
+
+        const isCorrect = normalizedInput === correctAnswer;
+
+        // Record result
+        setResults(prev => [...prev, {
+            challenge: currentChallenge,
+            userAnswer: normalizedInput,
+            isCorrect
+        }]);
+
+        if (isCorrect) {
+            setScore(s => s + 10);
+            SoundManager.playCorrect();
+        } else {
+            SoundManager.playIncorrect();
+        }
+
+        setFeedback(isCorrect ? 'correct' : 'incorrect');
+
+        setTimeout(() => {
+            setFeedback(null);
+            loadNextChallenge();
+        }, 800);
+    }, [userInput, currentChallenge, loadNextChallenge]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
         checkAnswer();
     };
-
-    const checkAnswer = () => {
         const normalizedInput = userInput.trim().toLowerCase();
         const correctAnswer = currentChallenge.answer.toLowerCase();
 
