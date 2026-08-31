@@ -179,6 +179,7 @@ const VisualStoryCards = () => {
                 <button
                     onClick={() => navigate('/')}
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    aria-label="Go back to home"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -196,6 +197,7 @@ const VisualStoryCards = () => {
                     onClick={() => setShowFilters(!showFilters)}
                     className={`p-2 rounded-lg transition-colors ${showFilters ? 'bg-purple-500' : 'bg-slate-800/50 hover:bg-slate-700/50'
                         }`}
+                    aria-label="Toggle filters"
                 >
                     <Filter className="w-5 h-5 text-white" />
                 </button>
@@ -247,6 +249,7 @@ const VisualStoryCards = () => {
                         onClick={prevCard}
                         disabled={currentIndex === 0}
                         className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Previous card"
                     >
                         <ChevronLeft className="w-6 h-6 text-white" />
                     </button>
@@ -263,6 +266,7 @@ const VisualStoryCards = () => {
                         onClick={nextCard}
                         disabled={currentIndex === cards.length - 1}
                         className="p-3 rounded-full bg-slate-800/50 hover:bg-slate-700/50 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        aria-label="Next card"
                     >
                         <ChevronRight className="w-6 h-6 text-white" />
                     </button>
@@ -330,6 +334,7 @@ const VisualStoryCards = () => {
                                     ? 'bg-white text-purple-600'
                                     : 'bg-white/20 hover:bg-white/30 text-white'
                                     }`}
+                                aria-label="Play audio"
                             >
                                 <Volume2 className={`w-5 h-5 ${audioPlaying ? 'animate-pulse' : ''}`} />
                             </button>
