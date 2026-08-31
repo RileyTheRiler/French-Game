@@ -382,7 +382,6 @@ export const GRAMMAR_DRILLS = [
         options: ['a fait', 'faisait', 'fait', 'fera'],
         xpReward: 20
     }
-    }
 ];
 
 export const DRILL_CATEGORIES = {
