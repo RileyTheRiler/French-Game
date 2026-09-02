@@ -327,6 +327,7 @@ const WritingPad = () => {
                 <button
                     onClick={() => navigate('/')}
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                    aria-label="Go back"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
                 </button>
@@ -341,6 +342,7 @@ const WritingPad = () => {
                     <button
                         onClick={playAudio}
                         className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
+                        aria-label="Play audio"
                     >
                         <Volume2 className="w-5 h-5 text-slate-300" />
                     </button>
@@ -415,6 +417,7 @@ const WritingPad = () => {
                             }
                         }}
                         className="absolute top-3 right-3 z-10 p-2 rounded-lg bg-slate-700/80 hover:bg-slate-600/80 transition-colors"
+                        aria-label={showGuide ? "Hide guide" : "Show guide"}
                     >
                         {showGuide ? (
                             <Eye className="w-4 h-4 text-purple-400" />
@@ -466,6 +469,7 @@ const WritingPad = () => {
                                 ? 'bg-purple-500'
                                 : 'bg-slate-800 hover:bg-slate-700'
                                 }`}
+                            aria-label={`Set brush size to ${width}`}
                         >
                             <div
                                 className="bg-white rounded-full"
