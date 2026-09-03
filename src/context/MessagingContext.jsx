@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 import { NATIVE_SPEAKERS, generateResponse, detectErrors, CONVERSATION_STARTERS } from '../data/nativeSpeakers';
 
@@ -245,7 +245,9 @@ export const MessagingProvider = ({ children }) => {
         ];
     }, [conversations]);
 
-    const value = {
+    // ⚡ Bolt: Memoize context value to prevent unnecessary re-renders in consumers
+    // Impact: Improves typing and messaging performance by preventing re-renders of the whole conversation
+    const value = useMemo(() => ({
         conversations,
         connectedPartners,
         messagingStats,
@@ -258,7 +260,7 @@ export const MessagingProvider = ({ children }) => {
         getUnreadCount,
         getSuggestedReplies,
         NATIVE_SPEAKERS
-    };
+    }), [conversations, connectedPartners, messagingStats, typingPartner, getAvailablePartners, connectWithPartner, sendMessage, markAsRead, getConversation, getUnreadCount, getSuggestedReplies]);
 
     return (
         <MessagingContext.Provider value={value}>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 
 const SocialContext = createContext();
@@ -166,7 +166,9 @@ export const SocialProvider = ({ children }) => {
         setUserCoopStartXp(0);
     }, []);
 
-    const value = {
+    // ⚡ Bolt: Memoize context value to prevent unnecessary re-renders in consumers
+    // Impact: Reduces re-renders when social states (friends list, coop group) update
+    const value = useMemo(() => ({
         friends,
         addFriend,
         removeFriend,
@@ -175,7 +177,7 @@ export const SocialProvider = ({ children }) => {
         leaveCoopGroup,
         activeChallenge,
         claimCoopReward
-    };
+    }), [friends, addFriend, removeFriend, coopGroup, createCoopGroup, leaveCoopGroup, activeChallenge, claimCoopReward]);
 
     return (
         <SocialContext.Provider value={value}>
