@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useProgress } from './ProgressContext';
 
 const SocialContext = createContext();
@@ -41,7 +41,7 @@ export const SocialProvider = ({ children }) => {
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
-        // Removed impure endDate initialized in state to prevent render errors
+        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
     });
 
@@ -166,9 +166,7 @@ export const SocialProvider = ({ children }) => {
         setUserCoopStartXp(0);
     }, []);
 
-    // ⚡ Bolt: Memoize context value to prevent unnecessary re-renders in consumers
-    // Impact: Reduces re-renders when social states (friends list, coop group) update
-    const value = useMemo(() => ({
+    const value = {
         friends,
         addFriend,
         removeFriend,
@@ -177,7 +175,7 @@ export const SocialProvider = ({ children }) => {
         leaveCoopGroup,
         activeChallenge,
         claimCoopReward
-    }), [friends, addFriend, removeFriend, coopGroup, createCoopGroup, leaveCoopGroup, activeChallenge, claimCoopReward]);
+    };
 
     return (
         <SocialContext.Provider value={value}>
