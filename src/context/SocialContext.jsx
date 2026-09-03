@@ -41,7 +41,7 @@ export const SocialProvider = ({ children }) => {
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
-        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        // Removed impure endDate initialized in state to prevent render errors
         participants: []
     });
 
