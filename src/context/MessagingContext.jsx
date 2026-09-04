@@ -100,6 +100,74 @@ export const MessagingProvider = ({ children }) => {
     }, [connectedPartners, addXP, unlockAchievement]);
 
     // Send a message
+
+    // Simulate partner typing and response
+    const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
+        const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
+        if (!partner) return;
+
+        // Show typing indicator
+        setTypingPartner(partnerId);
+
+        // Simulate typing delay based on partner's typing speed
+        const baseDelay = partner.typingSpeed || 1500;
+        const randomDelay = baseDelay + Math.random() * 1000;
+
+        setTimeout(() => {
+            const { text, type, metadata, errors, triggers } = generateResponse(
+                partnerId,
+                userMessage,
+                conversations[partnerId]?.history || [],
+                {
+                    xp: 0, // Mock for now
+                    streak: 0
+                }
+            );
+
+            const newMsg = {
+                id: `msg_${Date.now()}`,
+                senderId: partnerId,
+                text,
+                type,
+                timestamp: Date.now(),
+                read: false,
+                metadata
+            };
+
+            setConversations(prev => ({
+                ...prev,
+                [partnerId]: {
+                    ...prev[partnerId],
+                    history: [...(prev[partnerId]?.history || []), newMsg],
+                    lastMessageAt: Date.now()
+                }
+            }));
+
+            setTypingPartner(null);
+
+            // Handle corrections if any
+            if (errors && errors.length > 0) {
+                // Could emit a toast or highlight in UI
+            }
+
+            // Handle special triggers
+            if (triggers?.includes('share_photo')) {
+                // Partner sends a photo
+                setTimeout(() => {
+                    // Logic to send a photo message
+                }, 1000);
+            }
+
+            // Play notification sound
+            try {
+                const audio = new Audio('/sounds/notification.mp3');
+                audio.volume = 0.5;
+                audio.play();
+            } catch(e) {}
+
+        }, randomDelay);
+    }, []);
+
     const sendMessage = useCallback((partnerId, text) => {
         const userMessage = {
             id: `msg_${Date.now()}`,
