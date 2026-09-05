@@ -102,7 +102,10 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     }, []);
 
-    const value = {
+    // ⚡ Bolt Performance Optimization
+    // Memoize the context value to prevent unnecessary re-renders in all consuming components
+    // Expected impact: Reduces re-renders of child components when the provider re-renders without value changes
+    const value = useMemo(() => ({
         user,
         loading,
         error,
@@ -110,7 +113,7 @@ export const AuthProvider = ({ children }) => {
         signIn,
         signUp,
         signOut
-    };
+    }), [user, loading, error, providers, signIn, signUp, signOut]);
 
     return (
         <AuthContext.Provider value={value}>
