@@ -139,7 +139,7 @@ const DeckEditor = ({ deck, onSave, onClose }) => {
                         <h2 className="text-2xl font-bold">
                             {deck ? 'Edit Deck' : 'Create Deck'}
                         </h2>
-                        <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
+                        <button aria-label="Close editor" onClick={onClose} className="p-2 hover:bg-white/10 rounded-full">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
