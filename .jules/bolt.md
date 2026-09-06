@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-24 - Context Memoization with Global Constants
+**Learning:** Context values in this codebase often bundle local state with imported global constants (like `WRITING_PROMPTS`). Memoizing these values is critical to prevent re-renders, but the global constants must be intentionally excluded from the `useMemo` dependency array to pass CI linting rules.
+**Action:** When defining context values, always use `useMemo` when local state is present and explicitly exclude imported global constants from dependency arrays to avoid linting errors.
