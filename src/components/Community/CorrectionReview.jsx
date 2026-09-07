@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { ArrowLeft, Check, X, MessageSquare, Star, Flag, ChevronRight, Edit3 } from 'lucide-react';
 import { useCommunity } from '../../context/CommunityContext';
 import { Card } from '../ui/Card';

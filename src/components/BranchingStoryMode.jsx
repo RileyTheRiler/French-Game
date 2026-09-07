@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
 import {
     Book, ChevronLeft, Award, Lock, BookOpen, Play, Pause,
     RotateCcw, Trophy, Star, Volume2, Check, X, ChevronRight,
@@ -115,7 +115,7 @@ const StoryReader = ({ story, onBack, onComplete, savedProgress, onSaveProgress 
         if (onSaveProgress && currentNode?.type !== 'ending') {
             onSaveProgress(story.id, { currentNode: currentNodeId, history });
         }
-    }, [currentNodeId, history]);
+    }, [currentNodeId, history, currentNode?.type, onSaveProgress, story.id]);
 
     const handleChoice = (choice) => {
         SoundManager.playPop();

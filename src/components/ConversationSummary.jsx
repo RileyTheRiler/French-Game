@@ -68,7 +68,7 @@ const ScoreRing = ({ score, label, color = 'indigo' }) => {
 /**
  * Metric Card Component
  */
-const MetricCard = ({ icon: Icon, label, value, description, color = 'slate' }) => {
+const MetricCard = ({ label, value, description, color = 'slate' }) => {
     const colorClasses = {
         slate: 'bg-slate-800/50 border-slate-700/50',
         indigo: 'bg-indigo-500/10 border-indigo-500/30',

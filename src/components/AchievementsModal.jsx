@@ -8,7 +8,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 
 const AchievementsModal = ({ isOpen, onClose }) => {
-    const { achievements, stats, level } = useProgress();
+    const { achievements } = useProgress();
 
     if (!isOpen) return null;
 
@@ -45,7 +45,7 @@ const AchievementsModal = ({ isOpen, onClose }) => {
                                     </p>
                                 </div>
                             </div>
-                            <Button variant="ghost" onClick={onClose} className="rounded-full h-10 w-10 p-0">
+                            <Button variant="ghost" onClick={onClose} aria-label="Close achievements" className="rounded-full h-10 w-10 p-0">
                                 <X size={20} />
                             </Button>
                         </div>
