@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { CheckCircle, XCircle, Trophy, ArrowRight, RefreshCcw } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -19,6 +19,24 @@ const ComprehensionQuiz = ({ clip, onComplete }) => {
 
     const questions = clip.comprehensionQuestions;
     const currentQuestion = questions[currentIndex];
+
+    const finishQuiz = () => {
+        const percent = Math.round((score / questions.length) * 100);
+        const xpEarned = Math.round((score / questions.length) * clip.xpReward);
+
+        addXP(xpEarned);
+        updateMediaProgress?.(clip.id, true, percent);
+
+        setQuizComplete(true);
+        if (percent >= 70) {
+            confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+            });
+            SoundManager.playLevelUp();
+        }
+    };
 
     const handleAnswer = (index) => {
         if (isAnswered) return;
@@ -44,23 +62,7 @@ const ComprehensionQuiz = ({ clip, onComplete }) => {
         }
     };
 
-    const finishQuiz = () => {
-        const percent = Math.round((score / questions.length) * 100);
-        const xpEarned = Math.round((score / questions.length) * clip.xpReward);
 
-        addXP(xpEarned);
-        updateMediaProgress?.(clip.id, true, percent);
-
-        setQuizComplete(true);
-        if (percent >= 70) {
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-            SoundManager.playLevelUp();
-        }
-    };
 
     if (quizComplete) {
         const percent = Math.round((score / questions.length) * 100);

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
     Globe, BookOpen, ChevronLeft, Award, Star,
     Zap, Info, Share2, Sparkles, Map, Heart
 } from 'lucide-react';
 import { CULTURE_ARTICLES } from '../data/cultureData';
 import { useProgress } from '../context/ProgressContext';
+import { speak } from '../utils/audio';
 import { getDifficultyConfig } from './ui/DifficultyDial';
 import { Badge } from './ui/Badge';
 import { Button } from './ui/Button';
