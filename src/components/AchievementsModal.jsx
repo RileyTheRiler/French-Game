@@ -8,7 +8,7 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 
 const AchievementsModal = ({ isOpen, onClose }) => {
-    const { achievements, stats, level } = useProgress();
+    const { achievements } = useProgress();
 
     if (!isOpen) return null;
 
