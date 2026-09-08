@@ -36,14 +36,15 @@ export const SocialProvider = ({ children }) => {
         return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
     });
 
-    const [activeChallenge, setActiveChallenge] = useState({
+    const getInitialEndDate = () => new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
+    const [activeChallenge, setActiveChallenge] = useState(() => ({
         id: 'chal_weekly_xp',
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
-        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: getInitialEndDate(),
         participants: []
-    });
+    }));
 
     // Compute total current progress
     useEffect(() => {
