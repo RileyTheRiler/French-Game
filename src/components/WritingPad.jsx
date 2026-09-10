@@ -326,6 +326,8 @@ const WritingPad = () => {
             <div className="p-4 flex items-center justify-between">
                 <button
                     onClick={() => navigate('/')}
+
+                    aria-label="Go back"
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
                 >
                     <ArrowLeft className="w-5 h-5 text-slate-300" />
@@ -340,6 +342,8 @@ const WritingPad = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={playAudio}
+
+                        aria-label="Play pronunciation"
                         className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
                     >
                         <Volume2 className="w-5 h-5 text-slate-300" />
@@ -407,6 +411,8 @@ const WritingPad = () => {
                 <div className="relative bg-slate-800 rounded-2xl border-2 border-slate-700 overflow-hidden">
                     {/* Guide toggle */}
                     <button
+
+                        aria-label={showGuide ? "Hide drawing guide" : "Show drawing guide"}
                         onClick={() => {
                             setShowGuide(!showGuide);
                             if (!showGuide) {
@@ -444,6 +450,8 @@ const WritingPad = () => {
                 <div className="flex items-center justify-center gap-2">
                     {STROKE_COLORS.map(color => (
                         <button
+
+                            aria-label={`Select ${color.name} color`}
                             key={color.value}
                             onClick={() => setStrokeColor(color.value)}
                             className={`w-8 h-8 rounded-full border-2 transition-transform ${strokeColor === color.value
@@ -460,6 +468,8 @@ const WritingPad = () => {
                 <div className="flex items-center justify-center gap-3">
                     {STROKE_WIDTHS.map(width => (
                         <button
+
+                            aria-label={`Set stroke width to ${width} pixels`}
                             key={width}
                             onClick={() => setStrokeWidth(width)}
                             className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${strokeWidth === width
