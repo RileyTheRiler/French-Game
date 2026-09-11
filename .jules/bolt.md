@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-24 - Do Not Blindly Trust Reviewers on Missing Imports
+**Learning:** The simulated code reviewer claimed an import statement (`useMemo`) was missing when optimizing `AuthContext.jsx`. However, examining the file's current imports with `cat` showed it was already imported on a grouped line: `import React, { createContext, useContext, useEffect, useMemo, useState, useCallback } from 'react';`.
+**Action:** Always verify the file's current imports (e.g., using `grep` or `cat`) before attempting to fix missing imports, as reviewers may make incorrect assumptions when imports are grouped on a single line.
