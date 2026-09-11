@@ -5,3 +5,6 @@
 ## 2024-05-24 - Polymorphic Interactive Components
 **Learning:** Manually converting every clickable `div` to a button is tedious and prone to regression. A centralized solution is better.
 **Action:** Modify core UI components (like `Card`) to be polymorphic. If `onClick` is detected, automatically render a `<button>` with accessibility resets (`text-left`, `appearance-none`) and focus rings. This enforces accessibility by default across the app.
+## 2024-09-11 - Add ARIA Labels to Icon-Only Buttons
+**Learning:** Found several icon-only buttons missing ARIA labels in GoalSettingsModal and LessonCreator, which impairs accessibility for screen reader users.
+**Action:** Added descriptive aria-label attributes to ensure icon-only buttons are screen reader friendly.
