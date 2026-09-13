@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-23 - AuthContext value memoization
+**Learning:** AuthContext in `src/context/AuthContext.jsx` was passing an unmemoized object directly to the Provider's `value` prop. This causes all consuming components to re-render whenever the AuthProvider parent re-renders, even if none of the context values actually changed.
+**Action:** Memoize the context value using `useMemo` with the correct dependency array before passing it to the Provider to avoid unnecessary re-renders.
