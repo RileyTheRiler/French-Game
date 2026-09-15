@@ -49,6 +49,7 @@ const SmartImport = () => {
                 <button
                     onClick={() => navigate('/')}
                     className="p-2 rounded-full hover:bg-slate-800 transition-colors"
+                    aria-label="Go back"
                 >
                     <ArrowLeft className="text-slate-400" />
                 </button>
