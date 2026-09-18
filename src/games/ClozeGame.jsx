@@ -20,6 +20,17 @@ const ClozeGame = () => {
     const [questionCount, setQuestionCount] = useState(0);
     const MAX_QUESTIONS = 5;
 
+    const loadNextPuzzle = () => {
+        const newPuzzle = generateCloze(1); // Default to level 1 for now
+        if (newPuzzle) {
+            setPuzzle(newPuzzle);
+            setUserAnswers(Array(newPuzzle.blanks.length).fill(''));
+            setStatus('playing');
+        } else {
+            setStatus('finished');
+        }
+    };
+
     useEffect(() => {
         loadNextPuzzle();
     }, []);

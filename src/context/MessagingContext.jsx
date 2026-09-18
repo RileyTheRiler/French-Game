@@ -100,6 +100,59 @@ export const MessagingProvider = ({ children }) => {
     }, [connectedPartners, addXP, unlockAchievement]);
 
     // Send a message
+    // Simulate partner typing and response
+    const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
+        const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
+        if (!partner) return;
+
+        // Basic keyword matching for demo purposes
+        const keywords = userMessage.toLowerCase().split(' ');
+        let reply = "Je ne comprends pas. (I don't understand.)";
+
+        if (keywords.includes('bonjour') || keywords.includes('salut')) {
+            reply = "Salut ! Comment ça va ?";
+        } else if (keywords.includes('bien') || keywords.includes('ça va')) {
+            reply = "Super ! Tu veux faire quoi aujourd'hui ?";
+        } else if (keywords.includes('film') || keywords.includes('cinéma')) {
+            reply = "J'adore le cinéma ! Quel est ton film préféré ?";
+        } else if (keywords.includes('manger') || keywords.includes('restaurant')) {
+            reply = "Miam ! J'aime la cuisine italienne et toi ?";
+        } else if (keywords.includes('merci')) {
+            reply = "De rien !";
+        } else if (keywords.includes('au revoir') || keywords.includes('à plus')) {
+            reply = "À bientôt !";
+        }
+
+        // Simulate typing delay
+        const typingDelay = Math.random() * 1000 + 500;
+        setTimeout(() => {
+            setTypingStatus(prev => ({ ...prev, [partnerId]: true }));
+        }, 500);
+
+        const randomDelay = Math.random() * 2000 + 1500;
+        setTimeout(() => {
+            const botMessage = {
+                id: Date.now().toString(),
+                text: reply,
+                sender: 'partner',
+                timestamp: new Date().toISOString()
+            };
+            setMessages(prev => {
+                const currentConversation = prev[partnerId] || [];
+                return {
+                    ...prev,
+                    [partnerId]: [...currentConversation, botMessage]
+                };
+            });
+            setUnreadCounts(prev => ({
+                ...prev,
+                [partnerId]: (prev[partnerId] || 0) + 1
+            }));
+            setTypingStatus(prev => ({ ...prev, [partnerId]: false }));
+            SoundManager.playMessageReceived();
+        }, randomDelay);
+    }, []);
+
     const sendMessage = useCallback((partnerId, text) => {
         const userMessage = {
             id: `msg_${Date.now()}`,
