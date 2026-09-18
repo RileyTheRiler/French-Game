@@ -24,9 +24,10 @@ const ClozeGame = () => {
         const newPuzzle = generateCloze(1); // Default to level 1 for now
         if (newPuzzle) {
             setPuzzle(newPuzzle);
-            setUserAnswers(Array(newPuzzle.blanks.length).fill(''));
+            setSelectedOption(null);
             setStatus('playing');
         } else {
+            // Fallback or error state if generator fails
             setStatus('finished');
         }
     };
@@ -35,17 +36,7 @@ const ClozeGame = () => {
         loadNextPuzzle();
     }, []);
 
-    const loadNextPuzzle = () => {
-        const newPuzzle = generateCloze(1); // Default to level 1 for now
-        if (newPuzzle) {
-            setPuzzle(newPuzzle);
-            setSelectedOption(null);
-            setStatus('playing');
-        } else {
-            // Fallback or error state if generator fails
-            setStatus('finished');
-        }
-    };
+
 
     const handleOptionClick = (option) => {
         if (status !== 'playing') return;
