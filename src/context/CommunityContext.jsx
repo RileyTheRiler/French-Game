@@ -86,49 +86,8 @@ export const CommunityProvider = ({ children }) => {
         simulateCorrectionResponse(newWriting.id);
 
         return newWriting;
-    }, [addXP, unlockAchievement, communityStats.writingsSubmitted]);
+    }, [addXP, unlockAchievement, communityStats.writingsSubmitted, simulateCorrectionResponse]);
 
-    // Simulate a native speaker correcting the user's writing
-    const simulateCorrectionResponse = useCallback((writingId) => {
-        // Random delay between 10-30 seconds
-        const delay = 10000 + Math.random() * 20000;
-
-        setTimeout(() => {
-            setMyWritings(prev => prev.map(w => {
-                if (w.id !== writingId) return w;
-
-                // Pick a random native speaker
-                const corrector = NATIVE_SPEAKERS[Math.floor(Math.random() * NATIVE_SPEAKERS.length)];
-
-                // Generate mock corrections
-                const mockCorrections = generateMockCorrections(w.text);
-
-                const correction = {
-                    correctorId: corrector.id,
-                    correctorName: corrector.name,
-                    correctorAvatar: corrector.avatar,
-                    correctorCountry: corrector.country,
-                    submittedAt: Date.now(),
-                    items: mockCorrections,
-                    overallComment: generateOverallComment(mockCorrections.length, corrector.responseStyle),
-                    rating: null // User can rate later
-                };
-
-                return {
-                    ...w,
-                    status: 'corrected',
-                    corrections: [...w.corrections, correction]
-                };
-            }));
-
-            setCommunityStats(prev => ({
-                ...prev,
-                correctionsReceived: prev.correctionsReceived + 1
-            }));
-
-            addXP(COMMUNITY_XP.receiveCorrection);
-        }, delay);
-    }, [addXP]);
 
     // Submit a correction for someone else's writing
     const submitCorrection = useCallback((writingId, correctionItems, comment) => {
