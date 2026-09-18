@@ -33,7 +33,7 @@ const ClozeGame = () => {
     };
 
     useEffect(() => {
-        loadNextPuzzle();
+        setTimeout(() => loadNextPuzzle(), 0);
     }, []);
 
 
