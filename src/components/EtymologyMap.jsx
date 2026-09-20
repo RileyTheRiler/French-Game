@@ -10,6 +10,9 @@ const EtymologyMap = ({ wordId, onClose }) => {
     return (
         <AnimatePresence>
             <motion.div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="etymology-title"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -26,7 +29,7 @@ const EtymologyMap = ({ wordId, onClose }) => {
                     {/* Header: The Ancient Scroll Look */}
                     <div className="bg-amber-100 p-6 border-b border-amber-200 relative overflow-hidden">
                         <div className="absolute top-0 right-0 p-4 opacity-10 font-serif text-6xl">🏛️</div>
-                        <h2 className="text-3xl font-serif font-bold text-amber-900 mb-1 capitalize">
+                        <h2 id="etymology-title" className="text-3xl font-serif font-bold text-amber-900 mb-1 capitalize">
                             {data.word}
                         </h2>
                         <div className="text-amber-700 font-mono text-sm tracking-widest uppercase">

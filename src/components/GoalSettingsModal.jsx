@@ -94,6 +94,7 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                                                 <button
                                                     key={preset.id}
                                                     onClick={() => applyPreset(preset)}
+                                                    aria-label={`Select quick preset: ${preset.name}, ${preset.dailyXP} XP per day, ${preset.timeEstimate}`}
                                                     className={`p-4 rounded-xl border-2 transition-all text-left ${selectedPreset === preset.id
                                                         ? 'border-emerald-500 bg-emerald-500/20 shadow-lg shadow-emerald-500/20'
                                                         : 'border-white/10 bg-white/5 hover:border-white/30'}
@@ -173,6 +174,7 @@ const GoalSettingsModal = ({ isOpen, onClose }) => {
                                                 <button
                                                     key={level}
                                                     onClick={() => setLocalGoals(prev => ({ ...prev, targetCEFR: level }))}
+                                                    aria-label={`Select target CEFR level ${level}`}
                                                     className={`p-4 rounded-xl border-2 transition-all ${localGoals.targetCEFR === level
                                                         ? 'border-blue-500 bg-blue-500/20 text-white shadow-lg shadow-blue-500/20'
                                                         : 'border-white/10 bg-white/5 text-slate-400 hover:border-white/30'}`}
