@@ -273,13 +273,16 @@ const WritingPad = () => {
             >
                 <div className="max-w-md mx-auto">
                     <motion.div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="practice-complete-title"
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         className="text-center"
                     >
                         <Card className="p-8 bg-gradient-to-br from-green-900/40 to-emerald-900/40 border-green-500/30">
                             <div className="text-6xl mb-4">✍️</div>
-                            <h2 className="text-2xl font-bold text-white mb-2">
+                            <h2 id="practice-complete-title" className="text-2xl font-bold text-white mb-2">
                                 Great Practice!
                             </h2>
                             <p className="text-slate-300 mb-6">
@@ -325,6 +328,7 @@ const WritingPad = () => {
             {/* Header */}
             <div className="p-4 flex items-center justify-between">
                 <button
+                    aria-label="Go back to home"
                     onClick={() => navigate('/')}
                     className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
                 >
@@ -339,6 +343,7 @@ const WritingPad = () => {
 
                 <div className="flex items-center gap-2">
                     <button
+                        aria-label="Play pronunciation"
                         onClick={playAudio}
                         className="p-2 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 transition-colors"
                     >
@@ -407,6 +412,7 @@ const WritingPad = () => {
                 <div className="relative bg-slate-800 rounded-2xl border-2 border-slate-700 overflow-hidden">
                     {/* Guide toggle */}
                     <button
+                        aria-label={showGuide ? 'Hide guide' : 'Show guide'}
                         onClick={() => {
                             setShowGuide(!showGuide);
                             if (!showGuide) {
@@ -452,6 +458,7 @@ const WritingPad = () => {
                                 }`}
                             style={{ backgroundColor: color.value }}
                             title={color.name}
+                            aria-label={`Select ${color.name} color`}
                         />
                     ))}
                 </div>
@@ -461,6 +468,7 @@ const WritingPad = () => {
                     {STROKE_WIDTHS.map(width => (
                         <button
                             key={width}
+                            aria-label={`Select stroke width ${width}`}
                             onClick={() => setStrokeWidth(width)}
                             className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors ${strokeWidth === width
                                 ? 'bg-purple-500'
