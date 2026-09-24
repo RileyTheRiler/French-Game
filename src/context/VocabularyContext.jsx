@@ -208,9 +208,12 @@ export const VocabularyProvider = ({ children }) => {
 
     const getDueWords = useCallback(() => {
         const now = Date.now();
+        // ⚡ Bolt: Cache priority computation before sorting (Schwartzian transform) to avoid O(N log N) recalculations
         return vocabularyRef.current
             .filter(word => (!word.snoozeUntil || word.snoozeUntil <= now) && word.nextReview <= now)
-            .sort((a, b) => computePriority(b) - computePriority(a));
+            .map(word => ({ word, priority: computePriority(word) }))
+            .sort((a, b) => b.priority - a.priority)
+            .map(item => item.word);
     }, [computePriority]);
 
     const getPracticeQueue = useCallback((mode = 'default', limit) => {
@@ -219,13 +222,14 @@ export const VocabularyProvider = ({ children }) => {
 
     const getWeightedPracticeWords = useCallback((limit = 30) => {
         return vocabulary
+            // ⚡ Bolt: Optimize memory allocation by using a lightweight wrapper for sorting rather than shallow-copying the entire word object N times
             .map(word => ({
-                ...word,
+                word,
                 priorityScore: computePriority(word)
             }))
             .sort((a, b) => b.priorityScore - a.priorityScore)
             .slice(0, limit)
-            .map(hydrateWord);
+            .map(item => hydrateWord({ ...item.word, priorityScore: item.priorityScore }));
     }, [vocabulary, computePriority]);
 
     useEffect(() => {
