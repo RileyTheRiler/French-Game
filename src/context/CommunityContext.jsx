@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useProgress } from './ProgressContext';
 import { WRITING_PROMPTS, SAMPLE_SUBMISSIONS, COMMUNITY_XP } from '../data/communityWritings';
 import { NATIVE_SPEAKERS, generateResponse } from '../data/nativeSpeakers';
@@ -192,7 +192,8 @@ export const CommunityProvider = ({ children }) => {
         return WRITING_PROMPTS.filter(p => p.difficulty === difficulty);
     }, []);
 
-    const value = {
+    // ⚡ Bolt: Memoizing the context value prevents all consuming components from re-rendering when the Provider's parent component re-renders (assuming the actual state hasn't changed).
+    const value = useMemo(() => ({
         myWritings,
         pendingWritings,
         myCorrections,
@@ -202,7 +203,7 @@ export const CommunityProvider = ({ children }) => {
         rateCorrection,
         getPrompts,
         WRITING_PROMPTS
-    };
+    }), [myWritings, pendingWritings, myCorrections, communityStats, submitWriting, submitCorrection, rateCorrection, getPrompts, WRITING_PROMPTS]);
 
     return (
         <CommunityContext.Provider value={value}>
