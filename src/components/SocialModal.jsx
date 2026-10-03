@@ -116,6 +116,7 @@ const SocialModal = ({ onClose }) => {
                     <div className="flex border-b border-white/10 overflow-x-auto">
                         {tabs.map((t) => (
                             <button
+                                aria-label={`Switch to ${t.label} tab`}
                                 key={t.id}
                                 onClick={() => {
                                     setTab(t.id);
