@@ -102,7 +102,8 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     }, []);
 
-    const value = {
+    // ⚡ Bolt: Memoize context value to prevent all consuming components from re-rendering when the Provider's parent component re-renders (assuming the actual state hasn't changed).
+    const value = useMemo(() => ({
         user,
         loading,
         error,
@@ -110,7 +111,7 @@ export const AuthProvider = ({ children }) => {
         signIn,
         signUp,
         signOut
-    };
+    }), [user, loading, error, providers, signIn, signUp, signOut]);
 
     return (
         <AuthContext.Provider value={value}>

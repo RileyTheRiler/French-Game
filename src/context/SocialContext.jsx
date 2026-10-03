@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback , useMemo} from 'react';
 import { useProgress } from './ProgressContext';
 
 const SocialContext = createContext();
@@ -36,29 +36,28 @@ export const SocialProvider = ({ children }) => {
         return stored ? JSON.parse(stored).friendsProgress || 5000 : 5000; // Start with some progress
     });
 
-    const [activeChallenge, setActiveChallenge] = useState({
+    const [activeChallenge, setActiveChallenge] = useState(() => ({
         id: 'chal_weekly_xp',
         title: 'Team XP Weekly',
         target: 10000,
         current: 0,
         endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
         participants: []
-    });
+    }));
 
     // Compute total current progress
-    useEffect(() => {
+    const computedChallenge = useMemo(() => {
         const userContribution = Math.max(0, stats.xp - userCoopStartXp);
         const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
-
-        setActiveChallenge(prev => ({
-            ...prev,
+        return {
+            ...activeChallenge,
             current: total,
-            isCompleted: total >= prev.target
-        }));
-    }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
+            isCompleted: total >= activeChallenge.target
+        };
+    }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge]);
 
     const claimCoopReward = useCallback(() => {
-        if (!activeChallenge.isCompleted) return;
+        if (!computedChallenge.isCompleted) return;
 
         // Award bonus
         addXP(500); // Bonus XP
@@ -78,7 +77,7 @@ export const SocialProvider = ({ children }) => {
         setFriendsProgress(0);
 
         return 500; // Return reward amount
-    }, [activeChallenge.isCompleted, stats.xp, addXP]);
+    }, [computedChallenge.isCompleted, stats.xp, addXP]);
 
     // Persist to local storage
     useEffect(() => {
@@ -166,16 +165,17 @@ export const SocialProvider = ({ children }) => {
         setUserCoopStartXp(0);
     }, []);
 
-    const value = {
+    // ⚡ Bolt: Memoize context value to prevent all consuming components from re-rendering when the Provider's parent component re-renders (assuming the actual state hasn't changed).
+    const value = useMemo(() => ({
         friends,
         addFriend,
         removeFriend,
         coopGroup,
         createCoopGroup,
         leaveCoopGroup,
-        activeChallenge,
+        activeChallenge: computedChallenge,
         claimCoopReward
-    };
+    }), [friends, addFriend, removeFriend, coopGroup, createCoopGroup, leaveCoopGroup, computedChallenge, claimCoopReward]);
 
     return (
         <SocialContext.Provider value={value}>
