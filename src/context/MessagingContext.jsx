@@ -100,39 +100,7 @@ export const MessagingProvider = ({ children }) => {
     }, [connectedPartners, addXP, unlockAchievement]);
 
     // Send a message
-    const sendMessage = useCallback((partnerId, text) => {
-        const userMessage = {
-            id: `msg_${Date.now()}`,
-            senderId: 'user',
-            senderName: 'You',
-            text,
-            timestamp: Date.now(),
-            read: true
-        };
-
-        setConversations(prev => ({
-            ...prev,
-            [partnerId]: [...(prev[partnerId] || []), userMessage]
-        }));
-
-        setMessagingStats(prev => ({
-            ...prev,
-            totalMessages: prev.totalMessages + 1
-        }));
-
-        // Award XP for messaging
-        addXP(2);
-
-        // Check for milestone achievements
-        if (messagingStats.totalMessages === 49) { // 50th message
-            unlockAchievement?.('native_connection');
-        }
-
-        // Simulate partner response
-        simulatePartnerResponse(partnerId, text);
-    }, [addXP, unlockAchievement, messagingStats.totalMessages]);
-
-    // Simulate partner typing and response
+        // Simulate partner typing and response
     const simulatePartnerResponse = useCallback((partnerId, userMessage) => {
         const partner = NATIVE_SPEAKERS.find(s => s.id === partnerId);
         if (!partner) return;
@@ -179,6 +147,41 @@ export const MessagingProvider = ({ children }) => {
             }));
         }, randomDelay);
     }, []);
+
+    const sendMessage = useCallback((partnerId, text) => {
+        const userMessage = {
+            id: `msg_${Date.now()}`,
+            senderId: 'user',
+            senderName: 'You',
+            text,
+            timestamp: Date.now(),
+            read: true
+        };
+
+        setConversations(prev => ({
+            ...prev,
+            [partnerId]: [...(prev[partnerId] || []), userMessage]
+        }));
+
+        setMessagingStats(prev => ({
+            ...prev,
+            totalMessages: prev.totalMessages + 1
+        }));
+
+        // Award XP for messaging
+        addXP(2);
+
+        // Check for milestone achievements
+        if (messagingStats.totalMessages === 49) { // 50th message
+            unlockAchievement?.('native_connection');
+        }
+
+        // Simulate partner response
+        simulatePartnerResponse(partnerId, text);
+    }, [addXP, unlockAchievement, messagingStats.totalMessages, simulatePartnerResponse]);
+
+    // Simulate partner typing and response
+
 
     // Mark messages as read
     const markAsRead = useCallback((partnerId) => {
