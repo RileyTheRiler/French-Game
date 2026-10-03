@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect , useMemo} from 'react';
 
 const A11yContext = createContext(null);
 
@@ -75,12 +75,13 @@ export const A11yProvider = ({ children }) => {
         }, 1000);
     }, []);
 
-    const value = {
+    // ⚡ Bolt: Memoize context value to prevent all consuming components from re-rendering when the Provider's parent component re-renders (assuming the actual state hasn't changed).
+    const value = useMemo(() => ({
         announce,
         prefersReducedMotion,
         highContrast,
         setHighContrast
-    };
+    }), [announce, prefersReducedMotion, highContrast, setHighContrast]);
 
     return (
         <A11yContext.Provider value={value}>
