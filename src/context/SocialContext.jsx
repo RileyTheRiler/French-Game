@@ -46,19 +46,18 @@ export const SocialProvider = ({ children }) => {
     }));
 
     // Compute total current progress
-    useEffect(() => {
+    const computedChallenge = useMemo(() => {
         const userContribution = Math.max(0, stats.xp - userCoopStartXp);
         const total = Math.min(activeChallenge.target, userContribution + friendsProgress);
-
-        setActiveChallenge(prev => ({
-            ...prev,
+        return {
+            ...activeChallenge,
             current: total,
-            isCompleted: total >= prev.target
-        }));
-    }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge.target]);
+            isCompleted: total >= activeChallenge.target
+        };
+    }, [stats.xp, userCoopStartXp, friendsProgress, activeChallenge]);
 
     const claimCoopReward = useCallback(() => {
-        if (!activeChallenge.isCompleted) return;
+        if (!computedChallenge.isCompleted) return;
 
         // Award bonus
         addXP(500); // Bonus XP
@@ -78,7 +77,7 @@ export const SocialProvider = ({ children }) => {
         setFriendsProgress(0);
 
         return 500; // Return reward amount
-    }, [activeChallenge.isCompleted, stats.xp, addXP]);
+    }, [computedChallenge.isCompleted, stats.xp, addXP]);
 
     // Persist to local storage
     useEffect(() => {
@@ -174,9 +173,9 @@ export const SocialProvider = ({ children }) => {
         coopGroup,
         createCoopGroup,
         leaveCoopGroup,
-        activeChallenge,
+        activeChallenge: computedChallenge,
         claimCoopReward
-    }), [friends, addFriend, removeFriend, coopGroup, createCoopGroup, leaveCoopGroup, activeChallenge, claimCoopReward]);
+    }), [friends, addFriend, removeFriend, coopGroup, createCoopGroup, leaveCoopGroup, computedChallenge, claimCoopReward]);
 
     return (
         <SocialContext.Provider value={value}>
