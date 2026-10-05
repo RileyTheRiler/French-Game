@@ -1,6 +1,5 @@
 console.log("DEBUG ENTRY POINT EXECUTING");
 import React from 'react';
-import { createRoot } from 'react-dom/client';
 
 const root = document.getElementById('root');
 if (root) {
