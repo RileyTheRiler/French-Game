@@ -43,7 +43,7 @@ const WordDetailModal = ({ isOpen, onClose, word, onSave }) => {
                         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                             Add to Dictionary
                         </h2>
-                        <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+                        <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors" aria-label="Close modal">
                             <X size={24} />
                         </button>
                     </div>
