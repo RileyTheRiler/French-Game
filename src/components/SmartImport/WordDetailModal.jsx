@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Save, Volume2 } from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Save, X } from 'lucide-react';
 
 const WordDetailModal = ({ isOpen, onClose, word, onSave }) => {
     const [english, setEnglish] = useState('');
@@ -43,7 +43,7 @@ const WordDetailModal = ({ isOpen, onClose, word, onSave }) => {
                         <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
                             Add to Dictionary
                         </h2>
-                        <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+                        <button onClick={onClose} aria-label="Close modal" className="text-slate-400 hover:text-white transition-colors">
                             <X size={24} />
                         </button>
                     </div>
