@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Save, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Save, Volume2 } from 'lucide-react';
 
 const WordDetailModal = ({ isOpen, onClose, word, onSave }) => {
     const [english, setEnglish] = useState('');
