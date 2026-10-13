@@ -70,7 +70,7 @@ const GrammarInsightCard = ({
                     </div>
 
                     {compact && (
-                        <button className="text-slate-500 hover:text-white transition-colors">
+                        <button aria-label={isExpanded ? "Collapse insight" : "Expand insight"} className="text-slate-500 hover:text-white transition-colors">
                             {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
                         </button>
                     )}
