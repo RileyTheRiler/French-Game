@@ -43,7 +43,8 @@ const MainMenu = () => {
     const [targetLevel, setTargetLevel] = useState(stats.targetCefr || 'B1');
 
     // Calculate weak words count
-    const weakWordsCount = Object.values(stats.weakWords || {}).filter(w => w.strength < 70).length;
+    // ⚡ Bolt: Memoize weakWordsCount to avoid unnecessary calculations and array filtering on every render
+    const weakWordsCount = useMemo(() => Object.values(stats.weakWords || {}).filter(w => w.strength < 70).length, [stats.weakWords]);
 
     const [showLeaderboard, setShowLeaderboard] = useState(false);
     const [showDictionary, setShowDictionary] = useState(false);
