@@ -148,7 +148,7 @@ const CorrectionReview = ({ onBack }) => {
                                         <span className="text-slate-500 ml-2">({c.explanation})</span>
                                     )}
                                 </div>
-                                <button onClick={() => removeCorrection(c.id)} className="text-slate-500 hover:text-red-400">
+                                <button aria-label="Remove correction" onClick={() => removeCorrection(c.id)} className="text-slate-500 hover:text-red-400">
                                     <X size={16} />
                                 </button>
                             </div>
@@ -165,7 +165,7 @@ const CorrectionReview = ({ onBack }) => {
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Button variant="ghost" onClick={onBack} className="h-10 w-10 p-0">
+                        <Button aria-label="Go back" variant="ghost" onClick={onBack} className="h-10 w-10 p-0">
                             <ArrowLeft size={20} />
                         </Button>
                         <h2 className="text-xl font-bold text-white">Help Others</h2>
@@ -232,7 +232,7 @@ const CorrectionReview = ({ onBack }) => {
         return (
             <div className="space-y-6">
                 <div className="flex items-center gap-3">
-                    <Button variant="ghost" onClick={() => setView('list')} className="h-10 w-10 p-0">
+                    <Button aria-label="Go back" variant="ghost" onClick={() => setView('list')} className="h-10 w-10 p-0">
                         <ArrowLeft size={20} />
                     </Button>
                     <h2 className="text-xl font-bold text-white">My Corrections</h2>
@@ -273,7 +273,7 @@ const CorrectionReview = ({ onBack }) => {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-3">
-                <Button variant="ghost" onClick={() => {
+                <Button aria-label="Go back" variant="ghost" onClick={() => {
                     setSelectedWriting(null);
                     setCorrections([]);
                     setComment('');
