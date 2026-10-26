@@ -188,16 +188,16 @@ const LessonCreator = () => {
                                 </div>
                             </div>
                             <div className="flex gap-2">
-                                <Button variant="ghost" size="icon" onClick={() => deleteLesson(lesson.id)}>
+                                <Button variant="ghost" size="icon" aria-label="Delete lesson" onClick={() => deleteLesson(lesson.id)}>
                                     <Trash2 size={16} className="text-slate-600 hover:text-red-400" />
                                 </Button>
-                                <Button variant="secondary" size="icon" onClick={() => {
+                                <Button variant="secondary" size="icon" aria-label="Edit lesson" onClick={() => {
                                     setCurrentLesson(lesson);
                                     setStep(lesson.type === 'deck' ? 'create_deck' : 'create_quiz');
                                 }}>
                                     <Edit3 size={16} />
                                 </Button>
-                                <Button variant="primary" size="icon" onClick={() => startStudy(lesson)}>
+                                <Button variant="primary" size="icon" aria-label="Start studying lesson" onClick={() => startStudy(lesson)}>
                                     <Play size={16} fill="currentColor" />
                                 </Button>
                             </div>
