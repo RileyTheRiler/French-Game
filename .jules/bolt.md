@@ -10,3 +10,7 @@
 ## 2024-05-22 - Context Memoization & Merge Conflicts
 **Learning:** Found critical contexts (`VocabularyContext`, `ProgressContext`) with massive merge conflicts and missing memoization. The `ToastContext` also lacks memoization for its value, causing unnecessary re-renders in all consumers whenever a toast is triggered.
 **Action:** When fixing merge conflicts in Context Providers, always enforce `useMemo` on the `value` prop to prevent performance regressions. Broken builds hide performance metrics.
+
+## 2024-05-25 - Massive array re-renders
+**Learning:** The `MainMenu` component was creating a massive `menuItems` array on every render. Because the array is almost 400 lines of object configurations and the component re-renders often (stats, modals, timers), it created massive garbage collection pressure. The only external dependency in the array is the `t` translation function.
+**Action:** Large, static or semi-static configuration arrays defined inside React components should always be wrapped in `useMemo` (or moved outside the component entirely if they have no props/state dependencies) to avoid unnecessary recreation.
