@@ -209,7 +209,8 @@ const MainMenu = () => {
         visible: { y: 0, opacity: 1 }
     };
 
-    const menuItems = [
+    // ⚡ Bolt: Memoizing the large menuItems array prevents its recreation on every render of MainMenu, reducing garbage collection and CPU overhead when state changes (e.g. modals opening, progress updating).
+    const menuItems = useMemo(() => [
         {
             id: 'neighborhood',
             title: t('menu.items.quartier.title'),
@@ -600,7 +601,7 @@ const MainMenu = () => {
             minLevel: 1,
             path: '/lab/sentence-blueprint'
         }
-    ];
+    ], [t]);
 
     const formatNumber = (num) => {
         return new Intl.NumberFormat(i18n.language).format(num);
