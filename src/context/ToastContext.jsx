@@ -129,6 +129,7 @@ const Toast = ({ toast, onClose }) => {
                     )}
                 </div>
                 <button
+                    aria-label="Close notification"
                     onClick={onClose}
                     className="shrink-0 p-1 hover:bg-white/10 rounded-lg transition-colors"
                 >
