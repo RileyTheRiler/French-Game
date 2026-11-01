@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, CheckCircle, BookOpen, ArrowLeft, Lightbulb } from 'lucide-react';
 import { Card } from './ui/Card';
@@ -13,13 +13,10 @@ const GrammarLessonView = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
     const [selectedLesson, setSelectedLesson] = useState(null);
-    // ⚡ Bolt Performance Optimization:
-    // Memoize the getLessonsByLevel result to prevent unnecessary array creation and filtering on every render.
-    // Impact: Reduces CPU cycles and garbage collection during component updates (e.g., when other state changes).
-    const lessons = useMemo(() => getLessonsByLevel(2), []); // Show all available for now
 
     // If no lesson selected, show list
     if (!selectedLesson) {
+        const lessons = getLessonsByLevel(2); // Show all available for now
 
         return (
             <GameLayout
