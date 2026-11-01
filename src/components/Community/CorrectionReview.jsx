@@ -148,7 +148,7 @@ const CorrectionReview = ({ onBack }) => {
                                         <span className="text-slate-500 ml-2">({c.explanation})</span>
                                     )}
                                 </div>
-                                <button onClick={() => removeCorrection(c.id)} className="text-slate-500 hover:text-red-400">
+                                <button onClick={() => removeCorrection(c.id)} className="text-slate-500 hover:text-red-400" aria-label="Remove correction">
                                     <X size={16} />
                                 </button>
                             </div>
