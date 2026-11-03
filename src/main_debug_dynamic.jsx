@@ -16,7 +16,10 @@ async function debug() {
             console.log(`${path} OK`);
         } catch (e) {
             console.error(`DEBUG: Import failed for ${path}`, e);
-            document.body.innerHTML += `<h3>Error in ${path}: ${e.message}</h3>`;
+            // Sentinel: Prevent XSS by using safe DOM methods instead of innerHTML
+            const errorContainer = document.createElement('h3');
+            errorContainer.textContent = `Error in ${path}: ${e.message}`;
+            document.body.appendChild(errorContainer);
         }
     }
 }
