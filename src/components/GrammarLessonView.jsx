@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, CheckCircle, BookOpen, ArrowLeft, Lightbulb } from 'lucide-react';
 import { Card } from './ui/Card';
@@ -13,10 +13,12 @@ const GrammarLessonView = () => {
     const navigate = useNavigate();
     const { addXP } = useProgress();
     const [selectedLesson, setSelectedLesson] = useState(null);
+    // ⚡ Bolt: Memoize the grammar lessons array to prevent recreating it on every re-render of the GrammarLessonView.
+    // Impact: Avoids unnecessary filtering/creation overhead for the unchanging default view list.
+    const lessons = useMemo(() => getLessonsByLevel(2), []); // Show all available for now
 
     // If no lesson selected, show list
     if (!selectedLesson) {
-        const lessons = getLessonsByLevel(2); // Show all available for now
 
         return (
             <GameLayout
