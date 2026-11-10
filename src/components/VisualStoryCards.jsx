@@ -93,9 +93,11 @@ const VisualStoryCards = () => {
         // Shuffle cards
         filtered = filtered.sort(() => Math.random() - 0.5);
 
-        setCards(filtered);
-        setCurrentIndex(0);
-        setIsFlipped(false);
+        setTimeout(() => {
+            setCards(filtered);
+            setCurrentIndex(0);
+            setIsFlipped(false);
+        }, 0);
     }, [selectedCategory]);
 
     // Play audio
