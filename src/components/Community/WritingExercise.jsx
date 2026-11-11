@@ -59,7 +59,7 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
             <div className="space-y-6">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <Button variant="ghost" onClick={onBack} className="h-10 w-10 p-0">
+                        <Button variant="ghost" onClick={onBack} className="h-10 w-10 p-0" aria-label="Back to prompts">
                             <ArrowLeft size={20} />
                         </Button>
                         <h2 className="text-xl font-bold text-white">Writing Exercises</h2>
@@ -119,7 +119,7 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
         return (
             <div className="space-y-6">
                 <div className="flex items-center gap-3">
-                    <Button variant="ghost" onClick={() => setView('prompts')} className="h-10 w-10 p-0">
+                    <Button variant="ghost" onClick={() => setView('prompts')} className="h-10 w-10 p-0" aria-label="Back to prompts">
                         <ArrowLeft size={20} />
                     </Button>
                     <h2 className="text-xl font-bold text-white">My Writings</h2>
@@ -191,7 +191,7 @@ const WritingExercise = ({ onBack, initialPromptId = null }) => {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-3">
-                <Button variant="ghost" onClick={handleNewWriting} className="h-10 w-10 p-0">
+                <Button variant="ghost" onClick={handleNewWriting} className="h-10 w-10 p-0" aria-label="Back to prompts">
                     <ArrowLeft size={20} />
                 </Button>
                 <div>
